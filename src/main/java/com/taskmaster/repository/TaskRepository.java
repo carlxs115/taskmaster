@@ -6,6 +6,7 @@ import com.taskmaster.model.TaskStatus;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 /**
@@ -15,33 +16,52 @@ import java.util.List;
 public interface TaskRepository extends JpaRepository<Task, Long> {
 
     /**
-     * Todas las tareas raíz de un proyecto (sin tarea padre).
-     * Spring genera: SELECT * FROM tasks WHERE project_id = ? AND parent_task_id IS NULL
+     * Todas las tareas raíz de un proyecto (no eliminadas y sin tarea padre).
+     * Spring genera: SELECT * FROM tasks WHERE project_id = ? AND parent_task_id IS NULL AND deleted = false
      */
-    List<Task> findByProjectIdAndParentTaskIsNull(Long projectId);
+    List<Task> findByProjectIdAndParentTaskIsNullAndDeletedFalse(Long projectId);
 
     /**
-     * Subtareas de una tarea concreta.
-     * Spring genera: SELECT * FROM tasks WHERE parent_task_id = ?
+     * Subtareas activas de una tarea concreta.
+     * Spring genera: SELECT * FROM tasks WHERE parent_task_id = ? AND deleted = false
      */
-    List<Task> findByParentTaskId(Long parentTaskId);
+    List<Task> findByParentTaskIdAndDeletedFalse(Long parentTaskId);
 
     /**
-     * Filtro por estado dentro de un proyecto.
-     * Spring genera: SELECT * FROM tasks WHERE project_id = ? AND status = ?
+     * Filtro por estado dentro de un proyecto - solo tareas activas.
+     * Spring genera: SELECT * FROM tasks WHERE project_id = ? AND status = ? AND deleted = false
      */
-    List<Task> findByProjectIdAndStatus(Long projectId, TaskStatus status);
+    List<Task> findByProjectIdAndStatusAndDeletedFalse(Long projectId, TaskStatus status);
 
     /**
-     * Filtro por prioridad dentro de un proyecto.
-     * Spring genera: SELECT * FROM tasks WHERE project_id = ? AND priority = ?
+     * Filtro por prioridad dentro de un proyecto - solo tareas activas.
+     * Spring genera: SELECT * FROM tasks WHERE project_id = ? AND priority = ? AND deleted = false
      */
-    List<Task> findByProjectIdAndPriority(Long projectId, TaskPriority priority);
+    List<Task> findByProjectIdAndPriorityAndDeletedFalse(Long projectId, TaskPriority priority);
 
     /**
      * Comprueba si una tarea tiene subtareas pendientes.
      * Útil para la regla de negocio: no se puede completar una tarea
      * si tiene subtareas en estado TODO o IN_PROGRESS.
+     *
+     * Spring genera: SELECT COUNT(*) > 0 FROM tasks WHERE parent_task_id = ? AND status != ? AND deleted = false
      */
-    boolean existsByParentTaskIdAndStatusNot(Long parentTaskId, TaskStatus status);
+    boolean existsByParentTaskIdAndStatusNotAndDeletedFalse(Long parentTaskId, TaskStatus status);
+
+    /**
+     * PAPELERA ÚNICA POR USUARIO - tareas eliminadas.
+     * Navega la relación Task -> Project -> User para obtener todas las tareas
+     * eliminadas del usuario sin importar el proyecto.
+     * Spring genera: SELECT * FROM tasks t
+     *                JOIN projects p ON t.project_id = p.id
+     *                WHERE p.user_id = ? AND t.deleted = true
+     */
+    List<Task> findByProjectUserIdAndDeletedTrue(Long userId);
+
+    /**
+     * PAPELERA ÚNICA POR USUARIO — proyectos eliminados.
+     * Se usa para el vaciado automático según el periodo configurado.
+     * Spring genera: SELECT * FROM tasks WHERE deleted = true AND deleted_at < ?
+     */
+    List<Task> findByDeletedTrueAndDeletedAtBefore(LocalDateTime cutoffDate);
 }

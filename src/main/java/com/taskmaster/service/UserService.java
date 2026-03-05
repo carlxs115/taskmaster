@@ -1,13 +1,20 @@
 package com.taskmaster.service;
 
 import com.taskmaster.model.User;
+import com.taskmaster.model.UserSettings;
 import com.taskmaster.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDate;
+
 /**
  * SERVICIO DE USER
+ *
+ * Gestiona el registro y búsqueda de usuarios.
+ * Al registrar un usuario se crea automáticamente su configuración
+ * por defecto (UserSettings) con papelera de 30 días.
  *
  * @Service      → Le dice a Spring que esta clase es un servicio.
  *                 Spring la crea automáticamente y la gestiona como un Bean.
@@ -25,7 +32,17 @@ public class UserService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
 
-    public User register(String username, String email, String password) {
+    /**
+     * Registra un nuevo usuario.
+     *
+     * Pasos:
+     * 1. Comprueba que el username no esté ya en uso
+     * 2. Comprueba que el email no esté ya en uso
+     * 3. Cifra la contraseña con BCrypt
+     * 4. Crea la configuración por defecto (UserSettings)
+     * 5. Guarda el usuario en la BD
+     */
+    public User register(String username, String email, String password, LocalDate birthDate) {
 
         // Validación: username único
         if (userRepository.existsByUsername(username)) {
@@ -37,12 +54,21 @@ public class UserService {
             throw new RuntimeException("El email ya está registrado");
         }
 
+        // Creamos la configuración por defecto del usuario.
+        // trashRetentionDays = 30 por defecto (definido en la entidad con @Builder.Default)
+        UserSettings settings = UserSettings.builder().build();
+
         // Construimos el usuario con el patrón Builder que nos da Lombok
         User user = User.builder()
                 .username(username)
                 .email(email)
                 .password(passwordEncoder.encode(password)) // Cifrado BCrypt
+                .birthDate(birthDate)
+                .settings(settings)
                 .build();
+
+        // Vinculamos la configuración al usuario antes de guardar.
+        settings.setUser(user);
 
         return userRepository.save(user);
     }

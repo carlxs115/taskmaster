@@ -72,4 +72,19 @@ public class Project {
     protected void onCreate(){
         this.createdAt = LocalDateTime.now();
     }
+
+    /**
+     * SOFT DELETE — Papelera de reciclaje
+     *
+     * En vez de borrar físicamente el proyecto de la BD,
+     * lo marcamos como eliminado con deleted = true.
+     * deletedAt guarda cuándo fue enviado a la papelera,
+     * para calcular cuándo debe borrarse definitivamente
+     * según las preferencias del usuario.
+     */
+    @Column(nullable = false)
+    @Builder.Default
+    private boolean deleted = false;
+
+    private LocalDateTime deletedAt;
 }

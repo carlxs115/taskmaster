@@ -137,4 +137,17 @@ public class Task {
         if (this.status == null) this.status = TaskStatus.TODO;
         if (this.priority == null) this.priority = TaskPriority.MEDIUM;
     }
+
+    /**
+     * SOFT DELETE — Papelera de reciclaje
+     *
+     * Mismo mecanismo que en Project.
+     * Si deleted = true → la tarea está en la papelera.
+     * Si deleted = false → la tarea está activa.
+     */
+    @Column(nullable = false)
+    @Builder.Default
+    private boolean deleted = false;
+
+    private LocalDateTime deletedAt;
 }

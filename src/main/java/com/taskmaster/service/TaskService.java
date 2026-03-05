@@ -9,6 +9,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 
 /**
@@ -16,6 +17,7 @@ import java.util.List;
  *
  * Contiene la lógica de negocio más importante de TaskMaster,
  * incluyendo la regla: "no se puede completar una tarea si tiene subtareas pendientes".
+ * Incluye soft delete - las tareas eliminadas van a la papelera única del usuario en vez de borrarse físicamente.
  */
 @Service
 @RequiredArgsConstructor
@@ -25,21 +27,29 @@ public class TaskService {
     private final ProjectService projectService;
 
     /**
-     * Devuelve las tareas raíz de un proyecto (sin tarea padre).
+     * Devuelve las tareas raíz de un proyecto (sin tarea padre y no eliminadas).
      * Las subtareas se cargan desde cada tarea con getSubTasks().
      */
     public List<Task> getTasksByProject(Long projectId, Long userId) {
         // Validamos que el proyecto pertenece al usuario
         projectService.getProjectByIdAndUser(projectId, userId);
 
-        return taskRepository.findByProjectIdAndParentTaskIsNull(projectId);
+        return taskRepository.findByProjectIdAndParentTaskIsNullAndDeletedFalse(projectId);
     }
 
     /**
-     * Devuelve las subtareas de una tarea concreta.
+     * Devuelve las subtareas activas de una tarea concreta.
      */
     public List<Task> getSubTasks(Long parentTaskId) {
-        return taskRepository.findByParentTaskId(parentTaskId);
+        return taskRepository.findByParentTaskIdAndDeletedFalse(parentTaskId);
+    }
+
+    /**
+     * PAPELERA — devuelve todas las tareas eliminadas del usuario
+     * independientemente del proyecto al que pertenezcan.
+     */
+    public List<Task> getDeletedTasksByUser(Long userId) {
+        return taskRepository.findByProjectUserIdAndDeletedTrue(userId);
     }
 
     /**
@@ -48,7 +58,7 @@ public class TaskService {
     public List<Task> getTasksByStatus(Long projectId, TaskStatus status, Long userId) {
         projectService.getProjectByIdAndUser(projectId, userId);
 
-        return taskRepository.findByProjectIdAndStatus(projectId, status);
+        return taskRepository.findByProjectIdAndStatusAndDeletedFalse(projectId, status);
     }
 
     /**
@@ -57,7 +67,7 @@ public class TaskService {
     public List<Task> getTasksByPriority(Long projectId, TaskPriority priority, Long userId) {
         projectService.getProjectByIdAndUser(projectId, userId);
 
-        return taskRepository.findByProjectIdAndPriority(projectId, priority);
+        return taskRepository.findByProjectIdAndPriorityAndDeletedFalse(projectId, priority);
     }
 
     /**
@@ -75,7 +85,8 @@ public class TaskService {
                 .priority(priority != null ? priority : TaskPriority.MEDIUM)
                 .status(TaskStatus.TODO)
                 .dueDate(dueDate)
-                .project(project);
+                .project(project)
+                .deleted(false);
 
         // Si tiene tarea padre, la asignamos
         if (parentTaskId != null) {
@@ -90,10 +101,9 @@ public class TaskService {
      * Actualiza los campos de una tarea existente.
      */
     public Task updateTask(Long taskId, String title, String description,
-                           TaskPriority priority, LocalDate dueDate, Long projectId, Long userId) {
+                           TaskPriority priority, LocalDate dueDate, Long userId) {
 
         Task task = findById(taskId);
-
         projectService.getProjectByIdAndUser(task.getProject().getId(), userId);
 
         task.setTitle(title);
@@ -114,6 +124,8 @@ public class TaskService {
      * existsByParentTaskIdAndStatusNot(taskId, TaskStatus.DONE)
      * devuelve true si hay alguna subtarea que NO esté en DONE,
      * es decir, que esté pendiente → lanzamos excepción.
+     *
+     * Las subtareas en la papelera no cuentan como pendientes.
      */
     public Task changeStatus(Long taskId, TaskStatus newStatus, Long userId) {
         Task task = findById(taskId);
@@ -121,7 +133,7 @@ public class TaskService {
 
         if (newStatus == TaskStatus.DONE) {
             boolean hasSubTasksPending = taskRepository
-                    .existsByParentTaskIdAndStatusNot(taskId, TaskStatus.DONE);
+                    .existsByParentTaskIdAndStatusNotAndDeletedFalse(taskId, TaskStatus.DONE);
 
             if (hasSubTasksPending) {
                 throw new RuntimeException("No puedes completar esta tarea porque tiene subtareas pendientes");
@@ -133,13 +145,56 @@ public class TaskService {
     }
 
     /**
-     * Elimina una tarea. Al tener cascade = ALL, se eliminan también
-     * todas sus subtareas automáticamente.
+     * SOFT DELETE — Envía una tarea a la papelera.
+     *
+     * Las subtareas también se envían a la papelera en cascada
+     * mediante el método recursivo softDeleteRecursive.
      */
     public void deleteTask(Long taskId, Long userId) {
         Task task = findById(taskId);
         projectService.getProjectByIdAndUser(task.getProject().getId(), userId);
-        taskRepository.delete(task);
+        softDeleteRecursive(task);
+    }
+
+    /**
+     * Marca una tarea y todas sus subtareas como eliminadas.
+     * Se llama recursivamente para cubrir subtareas de subtareas ilimitadas.
+     */
+    private void softDeleteRecursive(Task task) {
+        task.setDeleted(true);
+        task.setDeletedAt(LocalDateTime.now());
+        taskRepository.save(task);
+
+        List<Task> subTasks = taskRepository.findByParentTaskIdAndDeletedFalse(task.getId());
+        for (Task subTask : subTasks) {
+            softDeleteRecursive(subTask);
+        }
+    }
+
+    /**
+     * RESTAURAR - Saca una tarea de la papelera.
+     * Solo restaura la tarea seleccionada, no sus subtareas automáticamente.
+     */
+    public Task restoreTask(Long taskId, Long userId) {
+        Task task = taskRepository.findById(taskId)
+                .filter(t -> t.getProject().getUser().getId().equals(userId) && t.isDeleted())
+                .orElseThrow(() -> new RuntimeException("Tarea no encontrada en la papelera"));
+
+        task.setDeleted(false);
+        task.setDeletedAt(null);
+        return taskRepository.save(task);
+    }
+
+    /**
+     * VACIADO AUTOMÁTICO - Borra físicamente las tareas cuya fecha
+     * de eliminación supera el periodo de retención configurado.
+     *
+     * @param retentionDays días configurados en UserSettings (7, 15 o 30)
+     */
+    public void purgeExpiredTasks(int retentionDays) {
+        LocalDateTime cutoff = LocalDateTime.now().minusDays(retentionDays);
+        List<Task> expired = taskRepository.findByDeletedTrueAndDeletedAtBefore(cutoff);
+        taskRepository.deleteAll(expired);
     }
 
     /**

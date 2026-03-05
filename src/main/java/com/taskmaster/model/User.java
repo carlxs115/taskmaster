@@ -5,6 +5,7 @@ import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import lombok.*;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -57,6 +58,9 @@ public class User {
     @NotBlank(message = "La contraseña es obligatoria")
     private String password;
 
+    @Column(nullable = false)
+    private LocalDate birthDate;
+
     /**
      * @Column(updatable = false) → Este campo se asigna una vez y nunca se actualiza
      */
@@ -82,4 +86,14 @@ public class User {
     protected void onCreate(){
         this.createdAt = LocalDateTime.now();
     }
+
+    /**
+     * Configuración del usuario.
+     * Se crea automáticamente al registrar el usuario en UserService.
+     * cascade = ALL → si se borra el usuario, se borra también su configuración
+     */
+    @OneToOne(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+    @ToString.Exclude
+    @EqualsAndHashCode.Exclude
+    private UserSettings settings;
 }
