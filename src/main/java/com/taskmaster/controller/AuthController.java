@@ -54,6 +54,7 @@ public class AuthController {
      * ResponseEntity -> Permite controlar el código HTTP de la respuesta.
      *                  201 Created es el código correcto para creación de recursos.
      */
+    @PostMapping("/register")
     public ResponseEntity<UserResponse> register(@Valid @RequestBody RegisterRequest request) {
         User user = userService.register(
                 request.getUsername(),
