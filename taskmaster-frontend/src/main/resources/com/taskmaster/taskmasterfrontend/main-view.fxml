@@ -1,0 +1,137 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.text.*?>
+
+<BorderPane xmlns:fx="http://javafx.com/fxml"
+            fx:controller="com.taskmaster.taskmasterfrontend.controller.MainController"
+            style="-fx-background-color: #f5f5f5;">
+
+    <!-- ===== BARRA SUPERIOR ===== -->
+    <top>
+        <HBox style="-fx-background-color: #2d2d2d; -fx-padding: 12 20 12 20;"
+              alignment="CENTER_LEFT" spacing="10">
+
+            <Label text="TaskMaster"
+                   style="-fx-font-size: 20px; -fx-font-weight: bold; -fx-text-fill: white;"/>
+
+            <!-- Espaciador para empujar los botones a la derecha -->
+            <Region HBox.hgrow="ALWAYS"/>
+
+            <Label fx:id="usernameLabel"
+                   style="-fx-text-fill: #cccccc; -fx-font-size: 13px;"/>
+
+            <Button text="⚙"
+                    onAction="#handleSettings"
+                    style="-fx-background-color: transparent; -fx-text-fill: white;
+                           -fx-font-size: 16px; -fx-cursor: hand;"/>
+
+            <Button text="Cerrar sesión"
+                    onAction="#handleLogout"
+                    style="-fx-background-color: #e74c3c; -fx-text-fill: white;
+                           -fx-font-size: 12px; -fx-background-radius: 4px; -fx-cursor: hand;"/>
+        </HBox>
+    </top>
+
+    <!-- ===== CONTENIDO PRINCIPAL ===== -->
+    <center>
+        <HBox>
+
+            <!-- ===== SIDEBAR IZQUIERDO — PROYECTOS ===== -->
+            <VBox style="-fx-background-color: #2d2d2d; -fx-min-width: 220px; -fx-max-width: 220px;"
+                  spacing="0">
+
+                <padding>
+                    <Insets top="20" right="0" bottom="20" left="0"/>
+                </padding>
+
+                <Label text="PROYECTOS"
+                       style="-fx-text-fill: #888888; -fx-font-size: 11px;
+                              -fx-font-weight: bold; -fx-padding: 0 16 8 16;"/>
+
+                <!-- Lista de proyectos -->
+                <ListView fx:id="projectListView"
+                          VBox.vgrow="ALWAYS"
+                          style="-fx-background-color: transparent; -fx-border-color: transparent;"/>
+
+                <!-- Botón nuevo proyecto -->
+                <Button text="+ Nuevo proyecto"
+                        onAction="#handleNewProject"
+                        style="-fx-background-color: #3498db; -fx-text-fill: white;
+                               -fx-font-size: 12px; -fx-cursor: hand;
+                               -fx-background-radius: 4px; -fx-margin: 10px;"
+                        maxWidth="Infinity">
+                    <VBox.margin>
+                        <Insets top="10" right="16" bottom="0" left="16"/>
+                    </VBox.margin>
+                </Button>
+
+                <!-- Botón papelera -->
+                <Button text="🗑 Papelera"
+                        onAction="#handleTrash"
+                        style="-fx-background-color: transparent; -fx-text-fill: #888888;
+                               -fx-font-size: 12px; -fx-cursor: hand;"
+                        maxWidth="Infinity">
+                    <VBox.margin>
+                        <Insets top="8" right="16" bottom="0" left="16"/>
+                    </VBox.margin>
+                </Button>
+
+            </VBox>
+
+            <!-- ===== PANEL DERECHO — TAREAS ===== -->
+            <VBox HBox.hgrow="ALWAYS" style="-fx-background-color: #f5f5f5;" spacing="0">
+
+                <!-- Cabecera del panel de tareas -->
+                <HBox style="-fx-background-color: white; -fx-padding: 16 20 16 20;
+                             -fx-border-color: #e0e0e0; -fx-border-width: 0 0 1 0;"
+                      alignment="CENTER_LEFT" spacing="12">
+
+                    <Label fx:id="projectTitleLabel"
+                           text="Selecciona un proyecto"
+                           style="-fx-font-size: 18px; -fx-font-weight: bold; -fx-text-fill: #2d2d2d;"/>
+
+                    <Region HBox.hgrow="ALWAYS"/>
+
+                    <!-- Filtros -->
+                    <ComboBox fx:id="statusFilter"
+                              promptText="Estado"
+                              onAction="#handleStatusFilter"
+                              style="-fx-font-size: 12px;"/>
+
+                    <ComboBox fx:id="priorityFilter"
+                              promptText="Prioridad"
+                              onAction="#handlePriorityFilter"
+                              style="-fx-font-size: 12px;"/>
+
+                    <Button text="+ Nueva tarea"
+                            fx:id="newTaskButton"
+                            onAction="#handleNewTask"
+                            disable="true"
+                            style="-fx-background-color: #3498db; -fx-text-fill: white;
+                                   -fx-font-size: 12px; -fx-background-radius: 4px;
+                                   -fx-cursor: hand;"/>
+                </HBox>
+
+                <!-- Lista de tareas -->
+                <ScrollPane VBox.vgrow="ALWAYS" fitToWidth="true"
+                            style="-fx-background-color: transparent; -fx-border-color: transparent;">
+                    <VBox fx:id="taskContainer" spacing="8">
+                        <padding>
+                            <Insets top="16" right="20" bottom="16" left="20"/>
+                        </padding>
+
+                        <!-- Mensaje cuando no hay proyecto seleccionado -->
+                        <Label fx:id="emptyLabel"
+                               text="👈 Selecciona un proyecto para ver sus tareas"
+                               style="-fx-text-fill: #aaaaaa; -fx-font-size: 14px;"/>
+                    </VBox>
+                </ScrollPane>
+
+            </VBox>
+        </HBox>
+    </center>
+
+</BorderPane>

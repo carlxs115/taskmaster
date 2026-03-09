@@ -11,6 +11,7 @@ module com.taskmaster.taskmasterfrontend {
 
     opens com.taskmaster.taskmasterfrontend to javafx.fxml;
     opens com.taskmaster.taskmasterfrontend.controller to javafx.fxml;
+    opens com.taskmaster.taskmasterfrontend.util to com.fasterxml.jackson.databind;
 
     exports com.taskmaster.taskmasterfrontend;
     exports com.taskmaster.taskmasterfrontend.controller;
