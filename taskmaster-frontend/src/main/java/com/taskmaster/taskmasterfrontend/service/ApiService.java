@@ -55,6 +55,7 @@ public class ApiService {
      * Formato: "Basic " + Base64("username:password")
      */
     private String getAuthHeader() {
+        System.out.println("DEBUG Auth - username: " + username + " / password: " + password);
         String credentials = username + ":" + password;
         return "Basic " + Base64.getEncoder().encodeToString(credentials.getBytes());
     }
@@ -89,6 +90,20 @@ public class ApiService {
                 .header("Content-Type", "application/json")
                 .header("Authorization", getAuthHeader())
                 .POST(HttpRequest.BodyPublishers.ofString(json))
+                .build();
+
+        return httpClient.send(request, HttpResponse.BodyHandlers.ofString());
+    }
+
+    /**
+     * Petición POST con autenticación y sin body (parámetros en la URL).
+     */
+    public HttpResponse<String> postWithAuthNoBody(String endpoint) throws Exception {
+        HttpRequest request = HttpRequest.newBuilder()
+                .uri(URI.create(BASE_URL + endpoint))
+                .header("Content-Type", "application/json")
+                .header("Authorization", getAuthHeader())
+                .POST(HttpRequest.BodyPublishers.noBody())
                 .build();
 
         return httpClient.send(request, HttpResponse.BodyHandlers.ofString());

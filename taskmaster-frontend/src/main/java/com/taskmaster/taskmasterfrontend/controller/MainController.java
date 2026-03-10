@@ -13,6 +13,7 @@ import javafx.scene.control.*;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
+import javafx.stage.Modality;
 import javafx.stage.Stage;
 
 import java.io.IOException;
@@ -205,8 +206,24 @@ public class MainController {
 
     @FXML
     private void handleNewProject() {
-        // TODO: abrir diálogo de nuevo proyecto
-        showAlert("Próximamente", "Crear proyecto - en desarrollo");
+        try {
+            FXMLLoader loader = new FXMLLoader(
+                    getClass().getResource("/com/taskmaster/taskmasterfrontend/new-project-dialog.fxml")
+            );
+            VBox root = loader.load();
+            NewProjectController controller = loader.getController();
+
+            // Cuando se cree el proyecto recargamos la lista
+            controller.setOnProjectCreated(this::loadProjects);
+
+            Stage dialog = new Stage();
+            dialog.setTitle("Nuevo proyecto");
+            dialog.setScene(new Scene(root, 400, 300));
+            dialog.initModality(Modality.APPLICATION_MODAL);
+            dialog.showAndWait();
+        } catch (IOException e) {
+            showAlert("Error", "No se pudo abrir el diálogo");
+        }
     }
 
     @FXML
