@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<VBox xmlns:fx="http://javafx.com/fxml"
+      fx:controller="com.taskmaster.taskmasterfrontend.controller.NewTaskController"
+      spacing="16"
+      style="-fx-background-color: white; -fx-padding: 24;">
+
+    <Label text="Nueva tarea"
+           style="-fx-font-size: 18px; -fx-font-weight: bold; -fx-text-fill: #2d2d2d;"/>
+
+    <VBox spacing="6">
+        <Label text="Título *" style="-fx-font-size: 13px; -fx-text-fill: #2d2d2d;"/>
+        <TextField fx:id="titleField"
+                   promptText="Título de la tarea"
+                   style="-fx-pref-height: 38px;"/>
+    </VBox>
+
+    <VBox spacing="6">
+        <Label text="Descripción" style="-fx-font-size: 13px; -fx-text-fill: #2d2d2d;"/>
+        <TextArea fx:id="descriptionField"
+                  promptText="Descripción opcional"
+                  style="-fx-pref-height: 80px;"
+                  wrapText="true"/>
+    </VBox>
+
+    <HBox spacing="16">
+        <VBox spacing="6" HBox.hgrow="ALWAYS">
+            <Label text="Prioridad" style="-fx-font-size: 13px; -fx-text-fill: #2d2d2d;"/>
+            <ComboBox fx:id="priorityCombo"
+                      maxWidth="Infinity"
+                      style="-fx-pref-height: 38px;"/>
+        </VBox>
+
+        <VBox spacing="6" HBox.hgrow="ALWAYS">
+            <Label text="Fecha límite" style="-fx-font-size: 13px; -fx-text-fill: #2d2d2d;"/>
+            <DatePicker fx:id="dueDatePicker"
+                        maxWidth="Infinity"
+                        style="-fx-pref-height: 38px;"/>
+        </VBox>
+    </HBox>
+
+    <Label fx:id="errorLabel"
+           style="-fx-text-fill: #e74c3c; -fx-font-size: 12px;"
+           visible="false"/>
+
+    <HBox spacing="10" alignment="CENTER_RIGHT">
+        <Button text="Cancelar"
+                onAction="#handleCancel"
+                style="-fx-background-color: #e0e0e0; -fx-text-fill: #2d2d2d;
+                       -fx-background-radius: 4px; -fx-cursor: hand;"/>
+        <Button text="Crear tarea"
+                onAction="#handleCreate"
+                style="-fx-background-color: #3498db; -fx-text-fill: white;
+                       -fx-background-radius: 4px; -fx-cursor: hand;"/>
+    </HBox>
+
+</VBox>

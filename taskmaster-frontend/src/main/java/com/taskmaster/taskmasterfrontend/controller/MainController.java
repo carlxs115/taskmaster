@@ -2,6 +2,7 @@ package com.taskmaster.taskmasterfrontend.controller;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.taskmaster.taskmasterfrontend.util.AppContext;
 import javafx.application.Platform;
 import javafx.collections.FXCollections;
@@ -18,6 +19,8 @@ import javafx.stage.Stage;
 
 import java.io.IOException;
 import java.net.http.HttpResponse;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * MAINCONTROLLER
@@ -40,7 +43,10 @@ public class MainController {
     private Long selectedProjectId;
 
     // ObjectMapper para parsear JSON
-    private final ObjectMapper objectMapper = new ObjectMapper();
+    private final ObjectMapper objectMapper = new ObjectMapper()
+            .registerModule(new JavaTimeModule());
+
+    private final List<Long> projectIds = new ArrayList<>();
 
     @FXML
     public void initialize() {
@@ -54,14 +60,21 @@ public class MainController {
                 "Todas", "LOW", "MEDIUM", "HIGH", "URGENT"
         ));
 
-        projectListView.getSelectionModel().selectedItemProperty().addListener(
-                (obs, oldVal, newVal) -> {
-                    if (newVal != null) {
-                        int index = projectListView.getSelectionModel().getSelectedIndex();
-
+        projectListView.getSelectionModel().selectedIndexProperty().addListener(
+                (obs, oldIndex, newIndex) -> {
+                    int index = newIndex.intValue();
+                    if (index >= 0 && index < projectIds.size()) {
+                        selectedProjectId = projectIds.get(index);
+                        String projectName = projectListView.getItems().get(index);
+                        projectTitleLabel.setText(projectName);
+                        newTaskButton.setDisable(false);
+                        emptyLabel.setVisible(false);
+                        loadTasksForProject(selectedProjectId);
                     }
                 }
         );
+
+        loadProjects();
     }
 
     /**
@@ -87,47 +100,14 @@ public class MainController {
                     }
 
                     Platform.runLater(() -> {
+                        projectIds.clear();
+                        projectIds.addAll(ids);
                         projectListView.setItems(FXCollections.observableArrayList(names));
-
-                        // Guardamos los ids para usarlos al seleccionar un proyecto
-                        projectListView.setUserData(ids);
                     });
                 }
             } catch (Exception e) {
                 Platform.runLater(() ->
                         showAlert("Error", "No se pudieron cargar los proyectos"));
-            }
-        }).start();
-    }
-
-    /**
-     * Carga las tareas del proyecto seleccionado.
-     */
-    @SuppressWarnings("unchecked")
-    private void loadProjectTasks(int projectIndex) {
-        var ids = (java.util.ArrayList<Long>) projectListView.getUserData();
-        if (ids == null || projectIndex >= ids.size()) return;
-
-        selectedProjectId = ids.get(projectIndex);
-        String projectName = projectListView.getItems().get(projectIndex);
-
-        projectTitleLabel.setText(projectName);
-        newTaskButton.setDisable(false);
-        emptyLabel.setVisible(false);
-
-        new Thread(() -> {
-            try {
-                HttpResponse<String> response = AppContext.getInstance()
-                        .getApiService()
-                        .get("/api/tasks?projectId=" + selectedProjectId);
-
-                if (response.statusCode() == 200) {
-                    JsonNode tasks = objectMapper.readTree(response.body());
-                    Platform.runLater(() -> renderTasks(tasks));
-                }
-            } catch (Exception e) {
-                Platform.runLater(() ->
-                        showAlert("Error", "No se pudieron cargar las tareas"));
             }
         }).start();
     }
@@ -140,7 +120,7 @@ public class MainController {
         taskContainer.getChildren().clear();
         taskContainer.getChildren().add(emptyLabel);
 
-        if (!tasks.isArray() || tasks.size() == 0) {
+        if (!tasks.isArray() || tasks.isEmpty()) {
             emptyLabel.setText("No hay tareas en este proyecto");
             emptyLabel.setVisible(true);
             return;
@@ -196,11 +176,11 @@ public class MainController {
      */
     private String getPriorityColor(String priority) {
         return switch (priority) {
-            case "URGENT" -> "#e74c3c";
-            case "HIGH" -> "#e67e22";
-            case "MEDIUM" -> "#3498db";
-            case "LOW" -> "#95a5a6";
-            default -> "#95a5a6";
+            case "URGENT"   -> "#e74c3c";
+            case "HIGH"     -> "#e67e22";
+            case "MEDIUM"   -> "#3498db";
+            case "LOW"      -> "#95a5a6";
+            default         -> "#95a5a6";
         };
     }
 
@@ -221,6 +201,7 @@ public class MainController {
             dialog.setScene(new Scene(root, 400, 300));
             dialog.initModality(Modality.APPLICATION_MODAL);
             dialog.showAndWait();
+
         } catch (IOException e) {
             showAlert("Error", "No se pudo abrir el diálogo");
         }
@@ -228,8 +209,43 @@ public class MainController {
 
     @FXML
     private void handleNewTask() {
-        // TODO: abrir diálogo de nueva tarea
-        showAlert("Próximamente", "Crear tarea - en desarrollo");
+        try {
+            FXMLLoader loader = new FXMLLoader(
+                    getClass().getResource("/com/taskmaster/taskmasterfrontend/new-task-dialog.fxml")
+            );
+            VBox root = loader.load();
+            NewTaskController controller = loader.getController();
+
+            controller.setProjectId(selectedProjectId);
+            controller.setOnTaskCreated(this::reloadTasks);
+
+            Stage dialog = new Stage();
+            dialog.setTitle("Nueva tarea");
+            dialog.setScene(new Scene(root, 420, 420));
+            dialog.initModality(Modality.APPLICATION_MODAL);
+            dialog.showAndWait();
+
+        } catch (IOException e) {
+            showAlert("Error", "No se pudo abrir el diálogo");
+        }
+    }
+
+    private void loadTasksForProject(Long projectId) {
+        new Thread(() -> {
+            try {
+                HttpResponse<String> response = AppContext.getInstance()
+                        .getApiService()
+                        .get("/api/tasks?projectId=" + projectId);
+
+                if (response.statusCode() == 200) {
+                    JsonNode tasks = objectMapper.readTree(response.body());
+                    Platform.runLater(() -> renderTasks(tasks));
+                }
+            } catch (Exception e) {
+                Platform.runLater(() ->
+                        showAlert("Error", "No se pudieron cargar las tareas"));
+            }
+        }).start();
     }
 
     @FXML
@@ -268,6 +284,12 @@ public class MainController {
             stage.setTitle("TaskMaster");
         } catch (IOException e) {
             showAlert("Error", "No se pudo cerrar la sesión");
+        }
+    }
+
+    private void reloadTasks() {
+        if (selectedProjectId != null) {
+            loadTasksForProject(selectedProjectId);
         }
     }
 
