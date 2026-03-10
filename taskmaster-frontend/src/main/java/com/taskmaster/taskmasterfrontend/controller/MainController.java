@@ -147,6 +147,7 @@ public class MainController {
         String status = task.get("status").asText();
         String title = task.get("title").asText();
         String priority = task.get("priority").asText();
+        Long taskId = task.get("id").asLong();
 
         // Checkbox de completado
         CheckBox checkBox = new CheckBox();
@@ -154,11 +155,7 @@ public class MainController {
 
         // Título de la tarea
         Label titleLabel = new Label(title);
-        titleLabel.setStyle("-fx-font-size: 13px; -fx-text-fill: #2d2d2d;");
-        if (status.equals("DONE")) {
-            titleLabel.setStyle("-fx-font-size: 13px; -fx-text-fill: #aaaaaa; " +
-                    "-fx-strikethrough: true;");
-        }
+        updateTitleStyle(titleLabel, status.equals("DONE"));
         HBox.setHgrow(titleLabel, Priority.ALWAYS);
 
         // Badge de prioridad
@@ -167,8 +164,64 @@ public class MainController {
                 "-fx-background-radius: 10px; -fx-text-fill: white; " +
                 "-fx-background-color: " + getPriorityColor(priority) + ";");
 
+        /**
+         * Listener del checkbox.
+         * Cuando el usuario lo marca/desmarca llamamos al backend
+         * para cambiar el estado de la tarea.
+         * Si el backend rechaza el cambio (ej: subtareas pendientes)
+         * revertimos el checkbox y mostramos el error.
+         */
+        checkBox.selectedProperty().addListener((javafx.beans.value.ObservableValue<? extends Boolean> obs, Boolean wasSelected, Boolean isSelected) -> {
+            final boolean wasSelectedFinal = wasSelected;
+            final boolean isSelectedFinal = isSelected;
+            String newStatus = isSelectedFinal ? "DONE" : "TODO";
+
+            new Thread(() -> {
+                try {
+                    HttpResponse<String> response = AppContext.getInstance()
+                            .getApiService()
+                            .patch("/api/tasks/" + taskId + "/status?status=" + newStatus, null);
+
+                    Platform.runLater(() -> {
+                        if (response.statusCode() == 200) {
+                            // Actualizamos el estilo del título
+                            updateTitleStyle(titleLabel, isSelectedFinal);
+                        } else {
+                            // Revertimos el checkbox si el backend rechazó el cambio
+                            checkBox.setSelected(wasSelectedFinal);
+
+                            try {
+                                JsonNode error = objectMapper.readTree(response.body());
+                                String msg = error.has("error")
+                                        ? error.get("error").asText()
+                                        : "No se pudo cambiar el estado";
+                                showAlert("Error", msg);
+                            } catch (Exception e) {
+                                showAlert("Error", "No se pudo cambiar el estado");
+                            }
+                        }
+                    });
+                } catch (Exception e) {
+                    checkBox.setSelected(wasSelectedFinal);
+                    showAlert("Error", "Error de conexión con el servidor");
+                }
+            }).start();
+        });
+
         card.getChildren().addAll(checkBox, titleLabel, priorityBadge);
         return card;
+    }
+
+    /**
+     * Actualiza el estilo del título según si la tarea está completada o no.
+     */
+    private void updateTitleStyle(Label titleLabel, boolean done) {
+        if (done) {
+            titleLabel.setStyle("-fx-font-size: 13px; -fx-text-fill: #aaaaaa; " +
+                    "-fx-strikethrough: true;");
+        } else {
+            titleLabel.setStyle("-fx-font-size: 13px; -fx-text-fill: #2d2d2d;");
+        }
     }
 
     /**
