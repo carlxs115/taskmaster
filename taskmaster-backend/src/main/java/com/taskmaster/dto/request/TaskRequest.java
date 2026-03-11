@@ -1,5 +1,6 @@
 package com.taskmaster.dto.request;
 
+import com.taskmaster.model.TaskCategory;
 import com.taskmaster.model.TaskPriority;
 import jakarta.validation.constraints.NotBlank;
 import lombok.Data;
@@ -23,4 +24,5 @@ public class TaskRequest {
     private LocalDate dueDate;
     private Long projectId;
     private Long parentTaskId; // null si es tarea raíz
+    private TaskCategory category;
 }

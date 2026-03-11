@@ -1,7 +1,9 @@
 package com.taskmaster.taskmasterfrontend.controller;
 
 import com.taskmaster.taskmasterfrontend.util.AppContext;
+import javafx.collections.FXCollections;
 import javafx.fxml.FXML;
+import javafx.scene.control.ComboBox;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextArea;
 import javafx.scene.control.TextField;
@@ -23,6 +25,7 @@ public class NewProjectController {
     @FXML private TextField nameField;
     @FXML private TextArea descriptionField;
     @FXML private Label errorLabel;
+    @FXML private ComboBox<String> categoryCombo;
 
     // Callback que se ejecuta cuando el proyecto se crea correctamente
     // Permite notificar al MainController sin acoplamiento directo
@@ -30,6 +33,14 @@ public class NewProjectController {
 
     public void setOnProjectCreated(Runnable callback) {
         this.onProjectCreated = callback;
+    }
+
+    @FXML
+    private void initialize() {
+        categoryCombo.setItems(FXCollections.observableArrayList(
+                "PERSONAL", "ESTUDIOS", "TRABAJO"
+        ));
+        categoryCombo.setValue("PERSONAL");
     }
 
     @FXML
@@ -53,7 +64,7 @@ public class NewProjectController {
                         .getApiService()
                         .postWithAuthNoBody("/api/projects?name=" +
                                 java.net.URLEncoder.encode(name, "UTF-8") + "&description=" +
-                                java.net.URLEncoder.encode(description, "UTF-8"));
+                                java.net.URLEncoder.encode(description, "UTF-8") + "&category=" + categoryCombo.getValue());
 
                 javafx.application.Platform.runLater(() -> {
                     if (response.statusCode() == 201) {

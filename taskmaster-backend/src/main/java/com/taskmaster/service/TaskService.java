@@ -1,9 +1,6 @@
 package com.taskmaster.service;
 
-import com.taskmaster.model.Project;
-import com.taskmaster.model.Task;
-import com.taskmaster.model.TaskPriority;
-import com.taskmaster.model.TaskStatus;
+import com.taskmaster.model.*;
 import com.taskmaster.repository.TaskRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -25,6 +22,13 @@ public class TaskService {
 
     private final TaskRepository taskRepository;
     private final ProjectService projectService;
+
+    /**
+     * Devuelve las tareas personales activas del usuario (sin proyecto).
+     */
+    public List<Task> getPersonalTasks() {
+        return taskRepository.findByProjectIsNullAndDeletedFalse();
+    }
 
     /**
      * Devuelve las tareas raíz de un proyecto (sin tarea padre y no eliminadas).
@@ -71,13 +75,18 @@ public class TaskService {
     }
 
     /**
+     * Tareas activas de una categoría sin proyecto.
+     */
+    public List<Task> getTasksByCategory(TaskCategory category) {
+        return taskRepository.findByCategoryAndProjectIsNullAndDeletedFalse(category);
+    }
+
+    /**
      * Crea una nueva tarea en un proyecto.
      * Si se proporciona parentTaskId, se crea como subtarea.
      */
     public Task createTask(String title, String description, TaskPriority priority,
-                           LocalDate dueDate, Long projectId, Long parentTaskId, Long userId) {
-
-        Project project = projectService.getProjectByIdAndUser(projectId, userId);
+                           LocalDate dueDate, Long projectId, Long parentTaskId, TaskCategory category, Long userId) {
 
         Task.TaskBuilder builder = Task.builder()
                 .title(title)
@@ -85,8 +94,18 @@ public class TaskService {
                 .priority(priority != null ? priority : TaskPriority.MEDIUM)
                 .status(TaskStatus.TODO)
                 .dueDate(dueDate)
-                .project(project)
                 .deleted(false);
+
+        // Si tiene proyecto lo asignamos, si no es tarea personal
+        if (projectId != null) {
+            Project project = projectService.getProjectByIdAndUser(projectId, userId);
+            builder.project(project);
+            // Hereda la categoría del proyecto automáticamente
+            builder.category(project.getCategory());
+        } else {
+            // Tarea sin proyecto - usa la categoría indicada por el usuario
+            builder.category(category != null ? category : TaskCategory.PERSONAL);
+        }
 
         // Si tiene tarea padre, la asignamos
         if (parentTaskId != null) {
@@ -129,7 +148,10 @@ public class TaskService {
      */
     public Task changeStatus(Long taskId, TaskStatus newStatus, Long userId) {
         Task task = findById(taskId);
-        projectService.getProjectByIdAndUser(task.getProject().getId(), userId);
+
+        if (task.getProject() != null) {
+            projectService.getProjectByIdAndUser(task.getProject().getId(), userId);
+        }
 
         if (newStatus == TaskStatus.DONE) {
             boolean hasSubTasksPending = taskRepository

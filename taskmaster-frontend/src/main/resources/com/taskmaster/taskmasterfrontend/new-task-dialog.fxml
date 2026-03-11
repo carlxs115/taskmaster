@@ -27,6 +27,13 @@
                   wrapText="true"/>
     </VBox>
 
+    <VBox fx:id="categoryBox" spacing="6">
+        <Label text="Categoría *" style="-fx-font-size: 13px; -fx-text-fill: #2d2d2d;"/>
+        <ComboBox fx:id="categoryCombo"
+                  maxWidth="Infinity"
+                  style="-fx-pref-height: 38px;"/>
+    </VBox>
+
     <HBox spacing="16">
         <VBox spacing="6" HBox.hgrow="ALWAYS">
             <Label text="Prioridad" style="-fx-font-size: 13px; -fx-text-fill: #2d2d2d;"/>
@@ -40,6 +47,14 @@
             <DatePicker fx:id="dueDatePicker"
                         maxWidth="Infinity"
                         style="-fx-pref-height: 38px;"/>
+        </VBox>
+
+        <VBox spacing="6">
+            <Label text="Proyecto (opcional)" style="-fx-font-size: 13px; -fx-text-fill: #2d2d2d;"/>
+            <ComboBox fx:id="projectCombo"
+                      promptText="Sin proyecto (tarea personal)"
+                      maxWidth="Infinity"
+                      style="-fx-pref-height: 38px;"/>
         </VBox>
     </HBox>
 

@@ -1,6 +1,7 @@
 package com.taskmaster.repository;
 
 import com.taskmaster.model.Task;
+import com.taskmaster.model.TaskCategory;
 import com.taskmaster.model.TaskPriority;
 import com.taskmaster.model.TaskStatus;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -64,4 +65,31 @@ public interface TaskRepository extends JpaRepository<Task, Long> {
      * Spring genera: SELECT * FROM tasks WHERE deleted = true AND deleted_at < ?
      */
     List<Task> findByDeletedTrueAndDeletedAtBefore(LocalDateTime cutoffDate);
+
+    /**
+     * Tareas personales activas del usuario (sin proyecto).
+     * Navega Task -> project es null, y filtra por usuario a través
+     * de otra relación. Como no hay proyecto, filtramos por usuario
+     * directamente - lo haremos en el servicio.
+     * Spring genera: SELECT * FROM tasks WHERE project_id IS NULL AND deleted = false
+     */
+    List<Task> findByProjectIsNullAndDeletedFalse();
+
+    /**
+     * Tareas personales en papelera (sin proyecto).
+     */
+    List<Task> findByProjectIsNullAndDeletedTrue();
+
+    /**
+     * Tareas activas de una categoría concreta sin proyecto.
+     * Spring genera: SELECT * FROM tasks
+     *                WHERE category = ? AND project_id IS NULL AND deleted = false
+     */
+    List<Task> findByCategoryAndProjectIsNullAndDeletedFalse(TaskCategory category);
+
+    /**
+     * Todas las tareas activas de una categoría (con y sin proyecto).
+     * Spring genera: SELECT * FROM tasks WHERE category = ? AND deleted = false
+     */
+    List<Task> findByCategoryAndDeletedFalse(TaskCategory category);
 }

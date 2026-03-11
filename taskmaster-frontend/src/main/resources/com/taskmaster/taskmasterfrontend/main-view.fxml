@@ -47,6 +47,35 @@
                     <Insets top="20" right="0" bottom="20" left="0"/>
                 </padding>
 
+                <!-- CATEGORÍAS -->
+                <Label text="MIS TAREAS"
+                       style="-fx-text-fill: #888888; -fx-font-size: 11px;
+              -fx-font-weight: bold; -fx-padding: 0 16 8 16;"/>
+
+                <Button text="👤 Personal"
+                        onAction="#handleCategoryPersonal"
+                        maxWidth="Infinity"
+                        style="-fx-background-color: transparent; -fx-text-fill: #cccccc;
+               -fx-font-size: 13px; -fx-cursor: hand; -fx-alignment: CENTER-LEFT;
+               -fx-padding: 8 16 8 16;"/>
+
+                <Button text="📚 Estudios"
+                        onAction="#handleCategoryEstudios"
+                        maxWidth="Infinity"
+                        style="-fx-background-color: transparent; -fx-text-fill: #cccccc;
+               -fx-font-size: 13px; -fx-cursor: hand; -fx-alignment: CENTER-LEFT;
+               -fx-padding: 8 16 8 16;"/>
+
+                <Button text="💼 Trabajo"
+                        onAction="#handleCategoryTrabajo"
+                        maxWidth="Infinity"
+                        style="-fx-background-color: transparent; -fx-text-fill: #cccccc;
+               -fx-font-size: 13px; -fx-cursor: hand; -fx-alignment: CENTER-LEFT;
+               -fx-padding: 8 16 8 16;"/>
+
+                <Separator style="-fx-padding: 8 0 8 0;"/>
+
+                <!-- PROYECTOS -->
                 <Label text="PROYECTOS"
                        style="-fx-text-fill: #888888; -fx-font-size: 11px;
                               -fx-font-weight: bold; -fx-padding: 0 16 8 16;"/>

@@ -3,6 +3,7 @@ package com.taskmaster.controller;
 import com.taskmaster.dto.request.TaskRequest;
 import com.taskmaster.dto.response.TaskResponse;
 import com.taskmaster.model.Task;
+import com.taskmaster.model.TaskCategory;
 import com.taskmaster.model.TaskPriority;
 import com.taskmaster.model.TaskStatus;
 import com.taskmaster.security.SecurityUtils;
@@ -103,6 +104,31 @@ public class TaskController {
     }
 
     /**
+     * GET /api/tasks/personal
+     * Devuelve las tareas personales del usuario (sin proyecto).
+     */
+    @GetMapping("/personal")
+    public ResponseEntity<List<TaskResponse>> getPersonalTasks(
+            @AuthenticationPrincipal UserDetails userDetails) {
+
+        List<Task> tasks = taskService.getPersonalTasks();
+        return ResponseEntity.ok(toResponseList(tasks));
+    }
+
+    /**
+     * GET /api/tasks/category/{category}
+     * Devuelve tareas sin proyecto de una categoría concreta.
+     */
+    @GetMapping("/category/{category}")
+    public ResponseEntity<List<TaskResponse>> getTasksByCategory(
+            @PathVariable TaskCategory category,
+            @AuthenticationPrincipal UserDetails userDetails) {
+
+        List<Task> tasks = taskService.getTasksByCategory(category);
+        return ResponseEntity.ok(toResponseList(tasks));
+    }
+
+    /**
      * POST /api/tasks
      * Crea una nueva tarea o subtarea.
      */
@@ -119,6 +145,7 @@ public class TaskController {
                 request.getDueDate(),
                 request.getProjectId(),
                 request.getParentTaskId(),
+                request.getCategory(),
                 userId
         );
         return ResponseEntity.status(HttpStatus.CREATED).body(toResponse(task));
@@ -205,10 +232,11 @@ public class TaskController {
                 .priority(task.getPriority())
                 .dueDate(task.getDueDate())
                 .createdAt(task.getCreatedAt())
-                .projectId(task.getProject().getId())
+                .projectId(task.getProject() != null ? task.getProject().getId() : null)
                 .parentTaskId(task.getParentTask() != null ? task.getParentTask().getId() : null)
                 .deleted(task.isDeleted())
                 .deletedAt(task.getDeletedAt())
+                .category(task.getCategory())
                 .build();
     }
 

@@ -1,6 +1,7 @@
 package com.taskmaster.controller;
 
 import com.taskmaster.model.Project;
+import com.taskmaster.model.TaskCategory;
 import com.taskmaster.security.SecurityUtils;
 import com.taskmaster.service.ProjectService;
 import lombok.RequiredArgsConstructor;
@@ -75,10 +76,11 @@ public class ProjectController {
     public ResponseEntity<Project> createProject(
             @RequestParam String name,
             @RequestParam(required = false) String description,
+            @RequestParam TaskCategory category,
             @AuthenticationPrincipal UserDetails userDetails) {
 
         Long userId = getUserId(userDetails);
-        Project project = projectService.createProject(name, description, userId);
+        Project project = projectService.createProject(name, description, category, userId);
         return ResponseEntity.status(HttpStatus.CREATED).body(project);
     }
 

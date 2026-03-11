@@ -31,6 +31,13 @@
            style="-fx-text-fill: #e74c3c; -fx-font-size: 12px;"
            visible="false"/>
 
+    <VBox spacing="6">
+        <Label text="Categoría *" style="-fx-font-size: 13px; -fx-text-fill: #2d2d2d;"/>
+        <ComboBox fx:id="categoryCombo"
+                  maxWidth="Infinity"
+                  style="-fx-pref-height: 38px;"/>
+    </VBox>
+
     <HBox spacing="10" alignment="CENTER_RIGHT">
         <Button text="Cancelar"
                 onAction="#handleCancel"

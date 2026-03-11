@@ -48,6 +48,8 @@ public class MainController {
 
     private final List<Long> projectIds = new ArrayList<>();
 
+    private String selectedCategory;
+
     @FXML
     public void initialize() {
         // Mostramos el nombre del usuario autenticado
@@ -164,6 +166,9 @@ public class MainController {
                 "-fx-background-radius: 10px; -fx-text-fill: white; " +
                 "-fx-background-color: " + getPriorityColor(priority) + ";");
 
+        // Bandera para evitar que el listener se dispare al actualizar el estilo
+        final boolean[] updating = {false};
+
         /**
          * Listener del checkbox.
          * Cuando el usuario lo marca/desmarca llamamos al backend
@@ -172,6 +177,8 @@ public class MainController {
          * revertimos el checkbox y mostramos el error.
          */
         checkBox.selectedProperty().addListener((javafx.beans.value.ObservableValue<? extends Boolean> obs, Boolean wasSelected, Boolean isSelected) -> {
+            if (updating[0]) return; // ignoramos si ya estamos actualizando
+
             final boolean wasSelectedFinal = wasSelected;
             final boolean isSelectedFinal = isSelected;
             String newStatus = isSelectedFinal ? "DONE" : "TODO";
@@ -184,11 +191,15 @@ public class MainController {
 
                     Platform.runLater(() -> {
                         if (response.statusCode() == 200) {
+                            updating[0] = true;
                             // Actualizamos el estilo del título
                             updateTitleStyle(titleLabel, isSelectedFinal);
+                            updating[0] = false;
                         } else {
+                            updating[0] = true;
                             // Revertimos el checkbox si el backend rechazó el cambio
                             checkBox.setSelected(wasSelectedFinal);
+                            updating[0] = false;
 
                             try {
                                 JsonNode error = objectMapper.readTree(response.body());
@@ -283,6 +294,45 @@ public class MainController {
         }
     }
 
+    @FXML
+    private void handleCategoryPersonal() {
+        loadTasksByCategory("PERSONAL", "👤 Personal");
+    }
+
+    @FXML
+    private void handleCategoryEstudios() {
+        loadTasksByCategory("ESTUDIOS", "📚 Estudios");
+    }
+
+    @FXML
+    private void handleCategoryTrabajo() {
+        loadTasksByCategory("TRABAJO", "💼 Trabajo");
+    }
+
+    private void loadTasksByCategory(String category, String title) {
+        selectedProjectId = null;
+        selectedCategory = category;
+        projectTitleLabel.setText(title);
+        newTaskButton.setDisable(false);
+        emptyLabel.setVisible(false);
+
+        new Thread(() -> {
+            try {
+                HttpResponse<String> response = AppContext.getInstance()
+                        .getApiService()
+                        .get("/api/tasks/category/" + category);
+
+                if (response.statusCode() == 200) {
+                    JsonNode tasks = objectMapper.readTree(response.body());
+                    Platform.runLater(() -> renderTasks(tasks));
+                }
+            } catch (Exception e) {
+                Platform.runLater(() ->
+                        showAlert("Error", "No se pudieron cargar las tareas"));
+            }
+        }).start();
+    }
+
     private void loadTasksForProject(Long projectId) {
         new Thread(() -> {
             try {
@@ -343,6 +393,8 @@ public class MainController {
     private void reloadTasks() {
         if (selectedProjectId != null) {
             loadTasksForProject(selectedProjectId);
+        } else if (selectedCategory != null) {
+            loadTasksByCategory(selectedCategory, projectTitleLabel.getText());
         }
     }
 

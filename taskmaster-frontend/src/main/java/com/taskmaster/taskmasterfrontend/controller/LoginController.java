@@ -105,9 +105,12 @@ public class LoginController {
             Stage stage = (Stage) usernameField.getScene().getWindow();
             stage.setScene(new Scene(loader.load(), 900, 600));
             stage.setTitle("TaskMaster");
-        } catch (IOException e) {
-            showError("Error al cargar la pantalla principal");
-            loginButton.setDisable(false);
+        } catch (Exception e) {
+            e.printStackTrace();
+            Platform.runLater(() -> {
+                showError("Error al cargar la pantalla principal" + e.getMessage());
+                loginButton.setDisable(false);
+            });
         }
     }
 

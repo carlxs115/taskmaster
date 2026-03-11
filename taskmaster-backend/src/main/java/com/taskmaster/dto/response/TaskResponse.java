@@ -1,5 +1,6 @@
 package com.taskmaster.dto.response;
 
+import com.taskmaster.model.TaskCategory;
 import com.taskmaster.model.TaskPriority;
 import com.taskmaster.model.TaskStatus;
 import lombok.Builder;
@@ -28,4 +29,5 @@ public class TaskResponse {
     private Long parentTaskId; // null si es tarea raíz
     private boolean deleted;
     private LocalDateTime deletedAt;
+    private TaskCategory category;
 }

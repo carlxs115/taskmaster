@@ -58,11 +58,15 @@ public class Task {
     private LocalDateTime createdAt;
 
     /**
-     * RELACIÓN CON PROJECT (ManyToOne)
+     * RELACIÓN CON PROJECT (ManyToOne) - Opcional
      * Muchas tareas pertenecen a un proyecto.
+     *
+     * Si project es null -> es una tarea personal (sin proyecto).
+     * Si project tiene valor -> pertenece a un proyecto.
+     * nullable = true -> permite tareas sin proyecto en la BD.
      */
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "project_id", nullable = false)
+    @JoinColumn(name = "project_id", nullable = true)
     private Project project;
 
     /**
@@ -150,4 +154,13 @@ public class Task {
     private boolean deleted = false;
 
     private LocalDateTime deletedAt;
+
+    /**
+     * Categoría de la tarea.
+     * Si la tarea pertenece a un proyecto, hereda su categoría automáticamente.
+     * Si es una tarea sin proyecto, el usuario la asigna manualmente.
+     */
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private TaskCategory category;
 }

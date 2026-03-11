@@ -87,4 +87,12 @@ public class Project {
     private boolean deleted = false;
 
     private LocalDateTime deletedAt;
+
+    /**
+     * Categoría del proyecto.
+     * Todas las tareas y subtareas de este proyecto heredarán esta categoría.
+     */
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private TaskCategory category;
 }

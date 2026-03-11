@@ -1,6 +1,7 @@
 package com.taskmaster.service;
 
 import com.taskmaster.model.Project;
+import com.taskmaster.model.TaskCategory;
 import com.taskmaster.model.User;
 import com.taskmaster.repository.ProjectRepository;
 import lombok.RequiredArgsConstructor;
@@ -51,12 +52,13 @@ public class ProjectService {
     /**
      * Crea un nuevo proyecto para un usuario.
      */
-    public Project createProject(String name, String description, Long userId) {
+    public Project createProject(String name, String description, TaskCategory category, Long userId) {
         User user = userService.findById(userId);
 
         Project project = Project.builder()
                 .name(name)
                 .description(description)
+                .category(category)
                 .user(user)
                 .deleted(false)
                 .build();
