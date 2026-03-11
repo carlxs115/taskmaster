@@ -31,7 +31,7 @@ import java.util.List;
 public class MainController {
 
     @FXML private Label usernameLabel;
-    @FXML private ListView<String> projectListView;
+    @FXML private VBox projectListContainer;
     @FXML private Label projectTitleLabel;
     @FXML private VBox taskContainer;
     @FXML private Label emptyLabel;
@@ -52,6 +52,8 @@ public class MainController {
 
     @FXML
     public void initialize() {
+        newTaskButton.setDisable(false);
+
         // Mostramos el nombre del usuario autenticado
         usernameLabel.setText(AppContext.getInstance().getCurrentUsername());
 
@@ -62,27 +64,13 @@ public class MainController {
                 "Todas", "LOW", "MEDIUM", "HIGH", "URGENT"
         ));
 
-        projectListView.getSelectionModel().selectedIndexProperty().addListener(
-                (obs, oldIndex, newIndex) -> {
-                    int index = newIndex.intValue();
-                    if (index >= 0 && index < projectIds.size()) {
-                        selectedProjectId = projectIds.get(index);
-                        String projectName = projectListView.getItems().get(index);
-                        projectTitleLabel.setText(projectName);
-                        newTaskButton.setDisable(false);
-                        emptyLabel.setVisible(false);
-                        loadTasksForProject(selectedProjectId);
-                    }
-                }
-        );
-
         loadProjects();
     }
 
     /**
      * Carga los proyectos del usuario desde el backend.
      */
-    private void loadProjects() {
+    public void loadProjects() {
         new Thread(() -> {
             try {
                 HttpResponse<String> response = AppContext.getInstance()
@@ -92,9 +80,8 @@ public class MainController {
                 if (response.statusCode() == 200) {
                     JsonNode projects = objectMapper.readTree(response.body());
 
-                    // Guardamos los ids y nombres de los proyectos
-                    var names = new java.util.ArrayList<String>();
-                    var ids = new java.util.ArrayList<Long>();
+                    List<String> names = new ArrayList<>();
+                    List<Long> ids = new ArrayList<>();
 
                     for (JsonNode project : projects) {
                         names.add(project.get("name").asText());
@@ -104,7 +91,39 @@ public class MainController {
                     Platform.runLater(() -> {
                         projectIds.clear();
                         projectIds.addAll(ids);
-                        projectListView.setItems(FXCollections.observableArrayList(names));
+                        projectListContainer.getChildren().clear();
+
+                        for (int i = 0; i < names.size(); i++) {
+                            final int index = i;
+                            final Long projectId = ids.get(i);
+                            final String projectName = names.get(i);
+
+                            Button btn = new Button("📁 " + projectName);
+                            btn.setMaxWidth(Double.MAX_VALUE);
+                            btn.setStyle("-fx-background-color: transparent; -fx-text-fill: #cccccc; " +
+                                    "-fx-font-size: 13px; -fx-cursor: hand; -fx-alignment: CENTER-LEFT; " +
+                                    "-fx-padding: 8 16 8 16;");
+
+                            btn.setOnAction(e -> {
+                                selectedProjectId = projectId;
+                                selectedCategory = null;
+                                projectTitleLabel.setText(projectName);
+                                newTaskButton.setDisable(false);
+                                loadTasksForProject(projectId);
+                            });
+
+                            // Hover effect
+                            btn.setOnMouseEntered(e ->
+                                    btn.setStyle("-fx-background-color: #3d3d3d; -fx-text-fill: white; " +
+                                            "-fx-font-size: 13px; -fx-cursor: hand; -fx-alignment: CENTER-LEFT; " +
+                                            "-fx-padding: 8 16 8 16;"));
+                            btn.setOnMouseExited(e ->
+                                    btn.setStyle("-fx-background-color: transparent; -fx-text-fill: #cccccc; " +
+                                            "-fx-font-size: 13px; -fx-cursor: hand; -fx-alignment: CENTER-LEFT; " +
+                                            "-fx-padding: 8 16 8 16;"));
+
+                            projectListContainer.getChildren().add(btn);
+                        }
                     });
                 }
             } catch (Exception e) {
@@ -123,7 +142,7 @@ public class MainController {
         taskContainer.getChildren().add(emptyLabel);
 
         if (!tasks.isArray() || tasks.isEmpty()) {
-            emptyLabel.setText("No hay tareas en este proyecto");
+            emptyLabel.setText("No hay tareas aquí actualmente");
             emptyLabel.setVisible(true);
             return;
         }
@@ -262,7 +281,7 @@ public class MainController {
 
             Stage dialog = new Stage();
             dialog.setTitle("Nuevo proyecto");
-            dialog.setScene(new Scene(root, 400, 300));
+            dialog.setScene(new Scene(root, 400, 380));
             dialog.initModality(Modality.APPLICATION_MODAL);
             dialog.showAndWait();
 
@@ -280,12 +299,12 @@ public class MainController {
             VBox root = loader.load();
             NewTaskController controller = loader.getController();
 
-            controller.setProjectId(selectedProjectId);
+            controller.initData(selectedProjectId);
             controller.setOnTaskCreated(this::reloadTasks);
 
             Stage dialog = new Stage();
             dialog.setTitle("Nueva tarea");
-            dialog.setScene(new Scene(root, 420, 420));
+            dialog.setScene(new Scene(root, 600, 420));
             dialog.initModality(Modality.APPLICATION_MODAL);
             dialog.showAndWait();
 
@@ -307,6 +326,18 @@ public class MainController {
     @FXML
     private void handleCategoryTrabajo() {
         loadTasksByCategory("TRABAJO", "💼 Trabajo");
+    }
+
+    @FXML
+    private void handleGoHome() {
+        selectedProjectId = null;
+        selectedCategory = null;
+        projectTitleLabel.setText("Proyectos y tareas");
+        newTaskButton.setDisable(false);
+        taskContainer.getChildren().clear();
+        taskContainer.getChildren().add(emptyLabel);
+        emptyLabel.setText("No tienes tareas activas actualmente");
+        emptyLabel.setVisible(true);
     }
 
     private void loadTasksByCategory(String category, String title) {

@@ -28,6 +28,7 @@ public class NewTaskController {
     @FXML private TextField titleField;
     @FXML private TextArea descriptionField;
     @FXML private ComboBox<String> projectCombo;
+    @FXML private VBox projectBox;
     @FXML private ComboBox<String> priorityCombo;
     @FXML private ComboBox<String> categoryCombo;
     @FXML private VBox categoryBox;
@@ -74,6 +75,19 @@ public class NewTaskController {
         );
     }
 
+    public void initData(Long projectId) {
+        this.preSelectedProjectId = projectId;
+        loadProjects();
+
+        // Si viene desde un proyecto ocultamos el combo de proyecto
+        if (projectId != null) {
+            projectBox.setVisible(false);
+            projectBox.setManaged(false);
+            categoryBox.setVisible(false);
+            categoryBox.setManaged(false);
+        }
+    }
+
     /**
      * Carga los proyectos del usuario y los añade al combo.
      * La primera opción es siempre "Sin proyecto (tarea personal)".
@@ -92,7 +106,7 @@ public class NewTaskController {
                     List<Long> ids = new ArrayList<>();
 
                     // Primera opción: sin proyecto
-                    names.add("Sin proyecto (tarea personal)");
+                    names.add("Sin proyecto");
                     ids.add(null);
 
                     for (JsonNode project : projects) {
