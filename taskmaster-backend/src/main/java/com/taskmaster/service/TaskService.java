@@ -123,7 +123,10 @@ public class TaskService {
                            TaskPriority priority, LocalDate dueDate, Long userId) {
 
         Task task = findById(taskId);
-        projectService.getProjectByIdAndUser(task.getProject().getId(), userId);
+
+        if (task.getProject() != null) {
+            projectService.getProjectByIdAndUser(task.getProject().getId(), userId);
+        }
 
         task.setTitle(title);
         task.setDescription(description);
@@ -174,7 +177,12 @@ public class TaskService {
      */
     public void deleteTask(Long taskId, Long userId) {
         Task task = findById(taskId);
-        projectService.getProjectByIdAndUser(task.getProject().getId(), userId);
+
+        // Solo validamos el proyecto si la tarea pertenece a uno
+        if (task.getProject() != null) {
+            projectService.getProjectByIdAndUser(task.getProject().getId(), userId);
+        }
+
         softDeleteRecursive(task);
     }
 

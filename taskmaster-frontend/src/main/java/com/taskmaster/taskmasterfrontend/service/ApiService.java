@@ -55,7 +55,6 @@ public class ApiService {
      * Formato: "Basic " + Base64("username:password")
      */
     private String getAuthHeader() {
-        System.out.println("DEBUG Auth - username: " + username + " / password: " + password);
         String credentials = username + ":" + password;
         return "Basic " + Base64.getEncoder().encodeToString(credentials.getBytes());
     }

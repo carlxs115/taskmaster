@@ -139,6 +139,7 @@ public class MainController {
     private void renderTasks(JsonNode tasks) {
         // Limpiamos el contenedor manteniendo el label vacío
         taskContainer.getChildren().clear();
+        taskContainer.layout();
         taskContainer.getChildren().add(emptyLabel);
 
         if (!tasks.isArray() || tasks.isEmpty()) {
@@ -152,6 +153,8 @@ public class MainController {
         for (JsonNode task : tasks) {
             taskContainer.getChildren().add(createTaskCard(task));
         }
+
+        taskContainer.layout();
     }
 
     /**
@@ -238,7 +241,17 @@ public class MainController {
             }).start();
         });
 
-        card.getChildren().addAll(checkBox, titleLabel, priorityBadge);
+        // Botón editar
+        Button editBtn = new Button("✏️");
+        editBtn.setStyle("-fx-background-color: transparent; -fx-cursor: hand; -fx-font-size: 14px;");
+        editBtn.setOnAction(e -> handleEditTask(taskId, task));
+
+        // Botón eliminar
+        Button deleteBtn = new Button("🗑");
+        deleteBtn.setStyle("-fx-background-color: transparent; -fx-cursor: hand; -fx-font-size: 14px;");
+        deleteBtn.setOnAction(e -> handleDeleteTask(taskId));
+
+        card.getChildren().addAll(checkBox, titleLabel, priorityBadge, editBtn, deleteBtn);
         return card;
     }
 
@@ -338,6 +351,68 @@ public class MainController {
         taskContainer.getChildren().add(emptyLabel);
         emptyLabel.setText("No tienes tareas activas actualmente");
         emptyLabel.setVisible(true);
+    }
+
+    private void handleEditTask(Long taskId, JsonNode task) {
+        try {
+            FXMLLoader loader = new FXMLLoader(
+                    getClass().getResource("/com/taskmaster/taskmasterfrontend/edit-task-dialog.fxml")
+            );
+
+            VBox root = loader.load();
+            EditTaskController controller = loader.getController();
+            controller.initData(task);
+            controller.setOnTaskUpdated(this::reloadTasks);
+
+            Stage dialog = new Stage();
+            dialog.setTitle("Editar tarea");
+            dialog.setScene(new Scene(root, 500, 420));
+            dialog.initModality(Modality.APPLICATION_MODAL);
+            dialog.showAndWait();
+
+        } catch (IOException e) {
+            showAlert("Error", "No se pudo abrir el diálogo");
+        }
+    }
+
+    private void handleDeleteTask(Long taskId) {
+
+        // Capturamos los valores actuales ANTES de abrir el diálogo
+        final Long currentProjectId = selectedProjectId;
+        final String currentCategory = selectedCategory;
+        final String currentTitle = projectTitleLabel.getText();
+
+        Alert confirm = new Alert(Alert.AlertType.CONFIRMATION);
+        confirm.setTitle("Eliminar tarea");
+        confirm.setHeaderText(null);
+        confirm.setContentText("¿Seguro que quieres eliminar esta tarea? Irá a la papelera.");
+
+        confirm.showAndWait().ifPresent(response -> {
+            if (response == ButtonType.OK) {
+                new Thread(() -> {
+                    try {
+                        HttpResponse<String> httpResponse = AppContext.getInstance()
+                                .getApiService()
+                                .delete("/api/tasks/" + taskId);
+
+                        Platform.runLater(() -> {
+                            if (httpResponse.statusCode() == 200 || httpResponse.statusCode() == 204) {
+                                if (currentProjectId != null) {
+                                    loadTasksForProject(currentProjectId);
+                                } else if (currentCategory != null) {
+                                    loadTasksByCategory(currentCategory,currentTitle);
+                                }
+                            } else {
+                                showAlert("Error", "No se pudo eliminar la tarea");
+                            }
+                        });
+                    } catch (Exception e) {
+                        Platform.runLater(() ->
+                                showAlert("Error", "Error de conexión con el servidor"));
+                    }
+                }).start();
+            }
+        });
     }
 
     private void loadTasksByCategory(String category, String title) {
