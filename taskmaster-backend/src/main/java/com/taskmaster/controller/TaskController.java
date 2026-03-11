@@ -1,12 +1,12 @@
 package com.taskmaster.controller;
 
 import com.taskmaster.dto.request.TaskRequest;
+import com.taskmaster.dto.response.HomeResponse;
+import com.taskmaster.dto.response.ProjectWithTasksResponse;
 import com.taskmaster.dto.response.TaskResponse;
-import com.taskmaster.model.Task;
-import com.taskmaster.model.TaskCategory;
-import com.taskmaster.model.TaskPriority;
-import com.taskmaster.model.TaskStatus;
+import com.taskmaster.model.*;
 import com.taskmaster.security.SecurityUtils;
+import com.taskmaster.service.ProjectService;
 import com.taskmaster.service.TaskService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -30,8 +30,50 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class TaskController {
 
+    private final ProjectService projectService;
     private final TaskService taskService;
     private final SecurityUtils securityUtils;
+
+    @GetMapping("/home")
+    public ResponseEntity<HomeResponse> getHome(
+            @AuthenticationPrincipal UserDetails userDetails) {
+
+        Long userId = securityUtils.getUserId(userDetails);
+
+        // Proyectos con sus tareas
+        List<Project> projects = projectService.getProjectByUser(userId);
+        List<ProjectWithTasksResponse> projectsWithTasks = projects.stream()
+                .map(p -> ProjectWithTasksResponse.builder()
+                        .id(p.getId())
+                        .name(p.getName())
+                        .category(p.getCategory().name())
+                        .tasks(taskService.getTasksByProject(p.getId(), userId)
+                                .stream().map(this::toResponse).toList())
+                        .build())
+                .toList();
+
+        // Tareas sueltas por categoría
+        List<TaskResponse> personalTasks = taskService
+                .getTasksByCategory(TaskCategory.PERSONAL)
+                .stream().map(this::toResponse).toList();
+
+        List<TaskResponse> estudiosTasks = taskService
+                .getTasksByCategory(com.taskmaster.model.TaskCategory.ESTUDIOS)
+                .stream().map(this::toResponse).toList();
+
+        List<TaskResponse> trabajoTasks = taskService
+                .getTasksByCategory(com.taskmaster.model.TaskCategory.TRABAJO)
+                .stream().map(this::toResponse).toList();
+
+        HomeResponse homeResponse = HomeResponse.builder()
+                .projects(projectsWithTasks)
+                .personalTasks(personalTasks)
+                .estudiosTasks(estudiosTasks)
+                .trabajoTasks(trabajoTasks)
+                .build();
+
+        return ResponseEntity.ok(homeResponse);
+    }
 
     /**
      * GET /api/tasks?projectId={id}

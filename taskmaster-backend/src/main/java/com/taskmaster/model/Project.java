@@ -1,5 +1,6 @@
 package com.taskmaster.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
 import lombok.*;
@@ -59,6 +60,7 @@ public class Project {
      * Un proyecto puede tener múltiples tareas.
      * Si se borra el proyecto, se borran todas sus tareas (cascade).
      */
+    @JsonIgnore
     @OneToMany(mappedBy = "project", cascade = CascadeType.ALL, orphanRemoval = true)
     @ToString.Exclude
     @EqualsAndHashCode.Exclude

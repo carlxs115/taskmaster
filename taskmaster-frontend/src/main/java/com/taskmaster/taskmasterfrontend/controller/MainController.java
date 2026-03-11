@@ -65,6 +65,8 @@ public class MainController {
         ));
 
         loadProjects();
+        newTaskButton.setDisable(false);
+        loadHome();
     }
 
     /**
@@ -94,16 +96,21 @@ public class MainController {
                         projectListContainer.getChildren().clear();
 
                         for (int i = 0; i < names.size(); i++) {
-                            final int index = i;
                             final Long projectId = ids.get(i);
                             final String projectName = names.get(i);
 
+                            // Contenedor de cada proyecto
+                            HBox projectRow = new HBox();
+                            projectRow.setAlignment(Pos.CENTER_LEFT);
+                            projectRow.setSpacing(4);
+
+                            // Botón principal del proyecto
                             Button btn = new Button("📁 " + projectName);
                             btn.setMaxWidth(Double.MAX_VALUE);
+                            HBox.setHgrow(btn, Priority.ALWAYS);
                             btn.setStyle("-fx-background-color: transparent; -fx-text-fill: #cccccc; " +
                                     "-fx-font-size: 13px; -fx-cursor: hand; -fx-alignment: CENTER-LEFT; " +
-                                    "-fx-padding: 8 16 8 16;");
-
+                                    "-fx-padding: 8 4 8 16;");
                             btn.setOnAction(e -> {
                                 selectedProjectId = projectId;
                                 selectedCategory = null;
@@ -112,17 +119,41 @@ public class MainController {
                                 loadTasksForProject(projectId);
                             });
 
-                            // Hover effect
-                            btn.setOnMouseEntered(e ->
-                                    btn.setStyle("-fx-background-color: #3d3d3d; -fx-text-fill: white; " +
-                                            "-fx-font-size: 13px; -fx-cursor: hand; -fx-alignment: CENTER-LEFT; " +
-                                            "-fx-padding: 8 16 8 16;"));
-                            btn.setOnMouseExited(e ->
-                                    btn.setStyle("-fx-background-color: transparent; -fx-text-fill: #cccccc; " +
-                                            "-fx-font-size: 13px; -fx-cursor: hand; -fx-alignment: CENTER-LEFT; " +
-                                            "-fx-padding: 8 16 8 16;"));
+                            // Botón tres puntos - oculto por defecto
+                            Button menuBtn = new Button("⋯");
+                            menuBtn.setStyle("-fx-background-color: transparent; -fx-text-fill: transparent; " +
+                                    "-fx-cursor: hand; -fx-font-size: 16px; -fx-padding: 4 8 4 4;");
+                            menuBtn.setOnAction(e -> {
+                                ContextMenu contextMenu = new ContextMenu();
 
-                            projectListContainer.getChildren().add(btn);
+                                MenuItem editItem = new MenuItem("✏ Editar");
+                                editItem.setOnAction(ev -> handleEditProject(projectId, projectName));
+
+                                MenuItem deleteItem = new MenuItem("🗑 Eliminar");
+                                deleteItem.setOnAction(ev -> handleDeleteProject(projectId, projectName));
+
+                                contextMenu.getItems().addAll(editItem, deleteItem);
+                                contextMenu.show(menuBtn, javafx.geometry.Side.BOTTOM, 0, 0);
+                            });
+
+                            // Hover sobre la fila - muestra el botón y resalta
+                            projectRow.setOnMouseEntered(e -> {
+                                menuBtn.setStyle("-fx-background-color: transparent; -fx-text-fill: #cccccc; " +
+                                        "-fx-cursor: hand; -fx-font-size: 16px; -fx-padding: 4 8 4 4;");
+                                btn.setStyle("-fx-background-color: #3d3d3d; -fx-text-fill: white; " +
+                                        "-fx-font-size: 13px; -fx-cursor: hand; -fx-alignment: CENTER-LEFT; " +
+                                        "-fx-padding: 8 4 8 16;");
+                            });
+                            projectRow.setOnMouseExited(e -> {
+                                menuBtn.setStyle("-fx-background-color: transparent; -fx-text-fill: transparent; " +
+                                        "-fx-cursor: hand; -fx-font-size: 16px; -fx-padding: 4 8 4 4;");
+                                btn.setStyle("-fx-background-color: transparent; -fx-text-fill: #cccccc; " +
+                                        "-fx-font-size: 13px; -fx-cursor: hand; -fx-alignment: CENTER-LEFT; " +
+                                        "-fx-padding: 8 4 8 16;");
+                            });
+
+                            projectRow.getChildren().addAll(btn, menuBtn);
+                            projectListContainer.getChildren().add(projectRow);
                         }
                     });
                 }
@@ -132,6 +163,66 @@ public class MainController {
             }
         }).start();
     }
+
+    private void renderHome(JsonNode home) {
+        taskContainer.getChildren().clear();
+        taskContainer.getChildren().add(emptyLabel);
+        emptyLabel.setVisible(false);
+
+        boolean hasContent = false;
+
+        // PROYECTOS
+        JsonNode projects = home.get("projects");
+        if (projects != null && projects.isArray() && !projects.isEmpty()) {
+            hasContent = true;
+            Label projectsLabel = new Label("📁 PROYECTOS");
+            projectsLabel.setStyle("-fx-font-size: 13px; -fx-font-weight: bold; " +
+                    "-fx-text-fill: #888888; -fx-padding: 8 0 8 0;");
+            taskContainer.getChildren().add(projectsLabel);
+
+            for (JsonNode project : projects) {
+                Label projectName = new Label("📁 " + project.get("name").asText());
+                projectName.setStyle("-fx-font-size: 14px; -fx-font-weight: bold; " +
+                        "-fx-text-fill: #2d2d2d; -fx-padding: 8 0 4 0;");
+                taskContainer.getChildren().add(projectName);
+
+                JsonNode tasks = project.get("tasks");
+                if (tasks != null && tasks.isArray() && !tasks.isEmpty()) {
+                    for (JsonNode task : tasks) {
+                        taskContainer.getChildren().add(createTaskCard(task));
+                    }
+                } else {
+                    Label noTasks = new Label("  Sin tareas");
+                    noTasks.setStyle("-fx-text-fill: #aaaaaa; -fx-font-size: 12px;");
+                    taskContainer.getChildren().add(noTasks);
+                }
+            }
+        }
+
+        // TAREAS SUELTAS POR CATEGORÍA
+        hasContent |= renderHomeCategorySection("👤 Personal", home.get("personalTasks"));
+        hasContent |= renderHomeCategorySection("📚 Estudios", home.get("estudiosTasks"));
+        hasContent |= renderHomeCategorySection("💼 Trabajo", home.get("trabajoTasks"));
+
+        if (!hasContent) {
+            emptyLabel.setText("No tienes tareas activas actualmente");
+            emptyLabel.setVisible(true);
+        }
+    }
+
+    private boolean renderHomeCategorySection(String title, JsonNode tasks) {
+    if (tasks == null || !tasks.isArray() || tasks.isEmpty()) return false;
+
+    Label categoryLabel = new Label(title);
+    categoryLabel.setStyle("-fx-font-size: 13px; -fx-font-weight: bold; " +
+            "-fx-text-fill: #888888; -fx-padding: 12 0 8 0;");
+    taskContainer.getChildren().add(categoryLabel);
+
+    for (JsonNode task : tasks) {
+        taskContainer.getChildren().add(createTaskCard(task));
+    }
+    return true;
+}
 
     /**
      * Renderiza las tareas en el panel derecho.
@@ -347,10 +438,64 @@ public class MainController {
         selectedCategory = null;
         projectTitleLabel.setText("Proyectos y tareas");
         newTaskButton.setDisable(false);
-        taskContainer.getChildren().clear();
-        taskContainer.getChildren().add(emptyLabel);
-        emptyLabel.setText("No tienes tareas activas actualmente");
-        emptyLabel.setVisible(true);
+        loadHome();
+
+    }
+
+    private void handleEditProject(Long projectId, String projectName) {
+        try {
+            FXMLLoader loader = new FXMLLoader(
+                    getClass().getResource("/com/taskmaster/taskmasterfrontend/edit-project-dialog.fxml")
+            );
+
+            VBox root = loader.load();
+            EditProjectController controller = loader.getController();
+            controller.initData(projectId, projectName);
+            controller.setOnProjectUpdated(this::loadProjects);
+
+            Stage dialog = new Stage();
+            dialog.setTitle("Editar tarea");
+            dialog.setScene(new Scene(root, 500, 420));
+            dialog.initModality(Modality.APPLICATION_MODAL);
+            dialog.showAndWait();
+
+        } catch (IOException e) {
+            showAlert("Error", "No se pudo abrir el diálogo");
+        }
+    }
+
+    private void handleDeleteProject(Long projectId, String projectName) {
+        Alert confirm = new Alert(Alert.AlertType.CONFIRMATION);
+        confirm.setTitle("Eliminar proyecto");
+        confirm.setHeaderText(null);
+        confirm.setContentText("¿Seguro que quieres eliminar \"" + projectName + "\"? " +
+                "El proyecto y todas sus tareas irán a la papelera.");
+
+        confirm.showAndWait().ifPresent(response -> {
+            if (response == ButtonType.OK) {
+                new Thread(() -> {
+                    try {
+                        HttpResponse<String> httpResponse = AppContext.getInstance()
+                                .getApiService()
+                                .delete("/api/projects/" + projectId);
+
+                        Platform.runLater(() -> {
+                            if (httpResponse.statusCode() == 200 || httpResponse.statusCode() == 204) {
+                                if (projectId.equals(selectedProjectId)) {
+                                    handleGoHome();
+                                }
+                                loadProjects();
+                            } else {
+                                showAlert("Error", "No se pudo eliminar el proyecto");
+                            }
+                        });
+                    } catch (Exception e) {
+                        Platform.runLater(() ->
+                                showAlert("Error", "Error de conexión con el servidor"));
+                    }
+                }).start();
+            }
+        });
     }
 
     private void handleEditTask(Long taskId, JsonNode task) {
@@ -413,6 +558,24 @@ public class MainController {
                 }).start();
             }
         });
+    }
+
+    private void loadHome() {
+        new Thread(() -> {
+            try {
+                HttpResponse<String> response = AppContext.getInstance()
+                        .getApiService()
+                        .get("/api/tasks/home");
+
+                if (response.statusCode() == 200) {
+                    JsonNode home = objectMapper.readTree(response.body());
+                    Platform.runLater(() -> renderHome(home));
+                }
+            } catch (Exception e) {
+                Platform.runLater(() ->
+                        showAlert("Error", "No se pudo cargar el home"));
+            }
+        }).start();
     }
 
     private void loadTasksByCategory(String category, String title) {
@@ -501,6 +664,8 @@ public class MainController {
             loadTasksForProject(selectedProjectId);
         } else if (selectedCategory != null) {
             loadTasksByCategory(selectedCategory, projectTitleLabel.getText());
+        } else {
+            loadHome();
         }
     }
 

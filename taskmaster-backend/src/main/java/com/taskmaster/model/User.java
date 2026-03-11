@@ -1,5 +1,6 @@
 package com.taskmaster.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
@@ -73,6 +74,7 @@ public class User {
      * cascade = ALL      → si borramos un usuario, se borran sus proyectos también
      * orphanRemoval      → si un proyecto se desvincula del usuario, se borra de la BD
      */
+    @JsonIgnore
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
     @ToString.Exclude
     @EqualsAndHashCode.Exclude
@@ -92,6 +94,7 @@ public class User {
      * Se crea automáticamente al registrar el usuario en UserService.
      * cascade = ALL → si se borra el usuario, se borra también su configuración
      */
+    @JsonIgnore
     @OneToOne(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
     @ToString.Exclude
     @EqualsAndHashCode.Exclude

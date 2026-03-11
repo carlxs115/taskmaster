@@ -70,11 +70,11 @@ public class ProjectService {
      * Actualiza el nombre y descripción de un proyecto.
      * Valida que el proyecto pertenece al usuario antes de modificarlo.
      */
-    public Project updateProject(Long projectId, String name, String description, Long userId) {
+    public Project updateProject(Long projectId, String name, String description, TaskCategory category, Long userId) {
         Project project = getProjectByIdAndUser(projectId, userId);
-
         project.setName(name);
         project.setDescription(description);
+        project.setCategory(category);
 
         return projectRepository.save(project);
     }

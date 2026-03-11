@@ -93,10 +93,12 @@ public class ProjectController {
             @PathVariable Long id,
             @RequestParam String name,
             @RequestParam(required = false) String description,
+            @RequestParam TaskCategory category,
             @AuthenticationPrincipal UserDetails userDetails) {
 
         Long userId = getUserId(userDetails);
-        return ResponseEntity.ok(projectService.updateProject(id, name, description, userId));
+        Project project = projectService.updateProject(id, name, description, category, userId);
+        return ResponseEntity.ok(project);
     }
 
     /**
