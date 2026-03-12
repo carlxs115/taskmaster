@@ -42,6 +42,8 @@ public class MainController {
     @FXML private Label emptyProjectsLabel;
     @FXML private ComboBox<String> projectStatusFilter;
     @FXML private ComboBox<String> projectPriorityFilter;
+    @FXML private VBox projectsPanel;
+    @FXML private VBox taskPanel;
 
     // ID del proyecto seleccionado actualmente
     private Long selectedProjectId;
@@ -541,15 +543,22 @@ public class MainController {
     private void handleGoHome() {
         selectedProjectId = null;
         selectedCategory = null;
-        projectTitleLabel.setText("Proyectos y tareas");
+        projectTitleLabel.setText("Tareas");
         newTaskButton.setDisable(false);
 
-        javafx.scene.layout.BorderPane root = (javafx.scene.layout.BorderPane) usernameLabel.getScene().getRoot();
+        javafx.scene.layout.BorderPane root =
+                (javafx.scene.layout.BorderPane) usernameLabel.getScene().getRoot();
         HBox centerHBox = (HBox) root.getCenter();
 
-        if (originalRightPanel != null && centerHBox.getChildren().get(1) != originalRightPanel) {
-            centerHBox.getChildren().set(1, originalRightPanel);
-        }
+        // Eliminamos la papelera si existe
+        centerHBox.getChildren().removeIf(n -> n.getUserData() != null &&
+                n.getUserData().equals("trash"));
+
+        // Restauramos los paneles
+        projectsPanel.setVisible(true);
+        projectsPanel.setManaged(true);
+        taskPanel.setVisible(true);
+        taskPanel.setManaged(true);
 
         loadHome();
     }
@@ -738,6 +747,18 @@ public class MainController {
     }
 
     private void loadTasksByCategory(String category, String title) {
+        // Eliminamos la papelera si está abierta
+        javafx.scene.layout.BorderPane root =
+                (javafx.scene.layout.BorderPane) usernameLabel.getScene().getRoot();
+        HBox centerHBox = (HBox) root.getCenter();
+        centerHBox.getChildren().removeIf(n -> n.getUserData() != null &&
+                n.getUserData().equals("trash"));
+
+        projectsPanel.setVisible(false);
+        projectsPanel.setManaged(false);
+        taskPanel.setVisible(true);
+        taskPanel.setManaged(true);
+
         selectedProjectId = null;
         selectedCategory = category;
         projectTitleLabel.setText(title);
@@ -762,6 +783,8 @@ public class MainController {
     }
 
     private void loadTasksForProject(Long projectId) {
+        projectsPanel.setVisible(true);
+        projectsPanel.setManaged(true);
         new Thread(() -> {
             try {
                 HttpResponse<String> response = AppContext.getInstance()
@@ -838,6 +861,40 @@ public class MainController {
     }
 
     @FXML
+    private void handleAllTasks() {
+        // Eliminamos la papelera si está abierta
+        javafx.scene.layout.BorderPane root =
+                (javafx.scene.layout.BorderPane) usernameLabel.getScene().getRoot();
+        HBox centerHBox = (HBox) root.getCenter();
+        centerHBox.getChildren().removeIf(n -> n.getUserData() != null &&
+                n.getUserData().equals("trash"));
+
+        selectedProjectId = null;
+        selectedCategory = null;
+        projectTitleLabel.setText("Todas las tareas");
+
+        projectsPanel.setVisible(false);
+        projectsPanel.setManaged(false);
+        taskPanel.setVisible(true);
+        taskPanel.setManaged(true);
+
+        new Thread(() -> {
+            try {
+                HttpResponse<String> response = AppContext.getInstance()
+                        .getApiService()
+                        .get("/api/tasks/personal");
+
+                if (response.statusCode() == 200) {
+                    JsonNode tasks = objectMapper.readTree(response.body());
+                    Platform.runLater(() -> renderTasks(tasks));
+                }
+            } catch (Exception e) {
+                Platform.runLater(() -> showAlert("Error", "No se pudieron cargar las tareas"));
+            }
+        }).start();
+    }
+
+    @FXML
     private void handleTrash() {
         try {
             FXMLLoader loader = new FXMLLoader(
@@ -855,10 +912,21 @@ public class MainController {
                 reloadTasks();
             });
 
+            // Ocultamos los paneles y añadimos la papelera temporalmente
+            projectsPanel.setVisible(false);
+            projectsPanel.setManaged(false);
+            taskPanel.setVisible(false);
+            taskPanel.setManaged(false);
+
             // Obtenemos el HBox central y reemplazamos solo el panel derecho (índice 1)
             javafx.scene.layout.BorderPane root = (javafx.scene.layout.BorderPane) usernameLabel.getScene().getRoot();
             HBox centerHBox = (HBox) root.getCenter();
-            centerHBox.getChildren().set(1, trashView);
+
+            // Eliminamos papelera anterior si existe
+            centerHBox.getChildren().removeIf(n -> n.getUserData() != null &&
+                    n.getUserData().equals("trash"));
+            trashView.setUserData("trash");
+            centerHBox.getChildren().add(trashView);
 
         } catch (IOException e) {
             showAlert("Error", "No se pudo abrir la papelera");
