@@ -1,8 +1,6 @@
 package com.taskmaster.service;
 
-import com.taskmaster.model.Project;
-import com.taskmaster.model.TaskCategory;
-import com.taskmaster.model.User;
+import com.taskmaster.model.*;
 import com.taskmaster.repository.ProjectRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -52,13 +50,17 @@ public class ProjectService {
     /**
      * Crea un nuevo proyecto para un usuario.
      */
-    public Project createProject(String name, String description, TaskCategory category, Long userId) {
+    public Project createProject(String name, String description,
+                                 TaskCategory category, TaskStatus status,
+                                 TaskPriority priority, Long userId) {
         User user = userService.findById(userId);
 
         Project project = Project.builder()
                 .name(name)
                 .description(description)
                 .category(category)
+                .status(status != null ? status : TaskStatus.TODO)
+                .priority(priority != null ? priority : TaskPriority.MEDIUM)
                 .user(user)
                 .deleted(false)
                 .build();
@@ -70,11 +72,15 @@ public class ProjectService {
      * Actualiza el nombre y descripción de un proyecto.
      * Valida que el proyecto pertenece al usuario antes de modificarlo.
      */
-    public Project updateProject(Long projectId, String name, String description, TaskCategory category, Long userId) {
+    public Project updateProject(Long projectId, String name, String description,
+                                 TaskCategory category, TaskStatus status,
+                                 TaskPriority priority, Long userId) {
         Project project = getProjectByIdAndUser(projectId, userId);
         project.setName(name);
         project.setDescription(description);
         project.setCategory(category);
+        project.setStatus(status);
+        project.setPriority(priority);
 
         return projectRepository.save(project);
     }

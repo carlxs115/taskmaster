@@ -2,6 +2,8 @@ package com.taskmaster.controller;
 
 import com.taskmaster.model.Project;
 import com.taskmaster.model.TaskCategory;
+import com.taskmaster.model.TaskPriority;
+import com.taskmaster.model.TaskStatus;
 import com.taskmaster.security.SecurityUtils;
 import com.taskmaster.service.ProjectService;
 import lombok.RequiredArgsConstructor;
@@ -77,10 +79,12 @@ public class ProjectController {
             @RequestParam String name,
             @RequestParam(required = false) String description,
             @RequestParam TaskCategory category,
+            @RequestParam(required = false) TaskStatus status,
+            @RequestParam(required = false) TaskPriority priority,
             @AuthenticationPrincipal UserDetails userDetails) {
 
         Long userId = getUserId(userDetails);
-        Project project = projectService.createProject(name, description, category, userId);
+        Project project = projectService.createProject(name, description, category, status, priority, userId);
         return ResponseEntity.status(HttpStatus.CREATED).body(project);
     }
 
@@ -94,10 +98,12 @@ public class ProjectController {
             @RequestParam String name,
             @RequestParam(required = false) String description,
             @RequestParam TaskCategory category,
+            @RequestParam(required = false) TaskStatus status,
+            @RequestParam(required = false) TaskPriority priority,
             @AuthenticationPrincipal UserDetails userDetails) {
 
         Long userId = getUserId(userDetails);
-        Project project = projectService.updateProject(id, name, description, category, userId);
+        Project project = projectService.updateProject(id, name, description, category, status, priority, userId);
         return ResponseEntity.ok(project);
     }
 

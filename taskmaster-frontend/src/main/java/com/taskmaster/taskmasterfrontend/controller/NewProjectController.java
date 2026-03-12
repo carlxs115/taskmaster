@@ -26,6 +26,8 @@ public class NewProjectController {
     @FXML private TextArea descriptionField;
     @FXML private Label errorLabel;
     @FXML private ComboBox<String> categoryCombo;
+    @FXML private ComboBox<String> statusCombo;
+    @FXML private ComboBox<String> priorityCombo;
 
     // Callback que se ejecuta cuando el proyecto se crea correctamente
     // Permite notificar al MainController sin acoplamiento directo
@@ -41,6 +43,16 @@ public class NewProjectController {
                 "PERSONAL", "ESTUDIOS", "TRABAJO"
         ));
         categoryCombo.setValue("PERSONAL");
+
+        statusCombo.setItems(FXCollections.observableArrayList(
+                "TODO", "IN_PROGRESS", "DONE", "CANCELLED"
+        ));
+        statusCombo.setValue("TODO");
+
+        priorityCombo.setItems(FXCollections.observableArrayList(
+                "LOW", "MEDIUM", "HIGH", "URGENT"
+        ));
+        priorityCombo.setValue("MEDIUM");
     }
 
     @FXML

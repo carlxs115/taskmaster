@@ -27,16 +27,32 @@
                   wrapText="true"/>
     </VBox>
 
-    <Label fx:id="errorLabel"
-           style="-fx-text-fill: #e74c3c; -fx-font-size: 12px;"
-           visible="false"/>
-
     <VBox spacing="6">
         <Label text="Categoría *" style="-fx-font-size: 13px; -fx-text-fill: #2d2d2d;"/>
         <ComboBox fx:id="categoryCombo"
                   maxWidth="Infinity"
                   style="-fx-pref-height: 38px;"/>
     </VBox>
+
+    <HBox spacing="16">
+        <VBox spacing="6" HBox.hgrow="ALWAYS">
+            <Label text="Estado" style="-fx-font-size: 13px; -fx-text-fill: #2d2d2d;"/>
+            <ComboBox fx:id="statusCombo"
+                      maxWidth="Infinity"
+                      style="-fx-pref-height: 38px;"/>
+        </VBox>
+
+        <VBox spacing="6" HBox.hgrow="ALWAYS">
+            <Label text="Prioridad" style="-fx-font-size: 13px; -fx-text-fill: #2d2d2d;"/>
+            <ComboBox fx:id="priorityCombo"
+                      maxWidth="Infinity"
+                      style="-fx-pref-height: 38px;"/>
+        </VBox>
+    </HBox>
+
+    <Label fx:id="errorLabel"
+           style="-fx-text-fill: #e74c3c; -fx-font-size: 12px;"
+           visible="false"/>
 
     <HBox spacing="10" alignment="CENTER_RIGHT">
         <Button text="Cancelar"

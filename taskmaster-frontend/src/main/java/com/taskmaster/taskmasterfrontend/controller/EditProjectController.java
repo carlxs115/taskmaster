@@ -17,6 +17,8 @@ public class EditProjectController {
     @FXML private TextField nameField;
     @FXML private TextArea descriptionField;
     @FXML private ComboBox<String> categoryCombo;
+    @FXML private ComboBox<String> statusCombo;
+    @FXML private ComboBox<String> priorityCombo;
     @FXML private Label errorLabel;
 
     private Long projectId;
@@ -31,6 +33,17 @@ public class EditProjectController {
         categoryCombo.setItems(FXCollections.observableArrayList(
                 "PERSONAL", "ESTUDIOS", "TRABAJO"
         ));
+        categoryCombo.setValue("PERSONAL");
+
+        statusCombo.setItems(FXCollections.observableArrayList(
+                "TODO", "IN_PROGRESS", "DONE", "CANCELLED"
+        ));
+        statusCombo.setValue("TODO");
+
+        priorityCombo.setItems(FXCollections.observableArrayList(
+                "LOW", "MEDIUM", "HIGH", "URGENT"
+        ));
+        priorityCombo.setValue("MEDIUM");
     }
 
     public void initData(Long projectId, String projectName) {

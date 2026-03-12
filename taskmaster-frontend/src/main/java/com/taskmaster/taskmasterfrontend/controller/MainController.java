@@ -38,6 +38,10 @@ public class MainController {
     @FXML private Button newTaskButton;
     @FXML private ComboBox<String> statusFilter;
     @FXML private ComboBox<String> priorityFilter;
+    @FXML private VBox projectCardsContainer;
+    @FXML private Label emptyProjectsLabel;
+    @FXML private ComboBox<String> projectStatusFilter;
+    @FXML private ComboBox<String> projectPriorityFilter;
 
     // ID del proyecto seleccionado actualmente
     private Long selectedProjectId;
@@ -64,7 +68,23 @@ public class MainController {
         statusFilter.setItems(FXCollections.observableArrayList(
                 "Todos", "TODO", "IN_PROGRESS", "DONE", "CANCELLED"
         ));
+        statusFilter.getSelectionModel().selectedItemProperty().addListener(
+                (obs, oldVal, newVal) -> {
+                    if (newVal != null) handleStatusFilter();
+                }
+        );
         priorityFilter.setItems(FXCollections.observableArrayList(
+                "Todas", "LOW", "MEDIUM", "HIGH", "URGENT"
+        ));
+        priorityFilter.getSelectionModel().selectedItemProperty().addListener(
+                (obs, oldVal, newVal) -> {
+                    if (newVal != null) handlePriorityFilter();
+                }
+        );
+        projectStatusFilter.setItems(FXCollections.observableArrayList(
+                "Todos", "TODO", "IN_PROGRESS", "DONE", "CANCELLED"
+        ));
+        projectPriorityFilter.setItems(FXCollections.observableArrayList(
                 "Todas", "LOW", "MEDIUM", "HIGH", "URGENT"
         ));
 
@@ -95,27 +115,32 @@ public class MainController {
 
                     List<String> names = new ArrayList<>();
                     List<Long> ids = new ArrayList<>();
+                    List<String> statuses = new ArrayList<>();
+                    List<String> priorities = new ArrayList<>();
 
                     for (JsonNode project : projects) {
                         names.add(project.get("name").asText());
                         ids.add(project.get("id").asLong());
+                        statuses.add(project.has("status") && !project.get("status").isNull()
+                                ? project.get("status").asText() : "TODO");
+                        priorities.add(project.has("priority") && !project.get("priority").isNull()
+                                ? project.get("priority").asText() : "MEDIUM");
                     }
 
                     Platform.runLater(() -> {
                         projectIds.clear();
                         projectIds.addAll(ids);
-                        projectListContainer.getChildren().clear();
 
+                        // Sidebar
+                        projectListContainer.getChildren().clear();
                         for (int i = 0; i < names.size(); i++) {
                             final Long projectId = ids.get(i);
                             final String projectName = names.get(i);
 
-                            // Contenedor de cada proyecto
                             HBox projectRow = new HBox();
                             projectRow.setAlignment(Pos.CENTER_LEFT);
                             projectRow.setSpacing(4);
 
-                            // Botón principal del proyecto
                             Button btn = new Button("📁 " + projectName);
                             btn.setMaxWidth(Double.MAX_VALUE);
                             HBox.setHgrow(btn, Priority.ALWAYS);
@@ -130,24 +155,19 @@ public class MainController {
                                 loadTasksForProject(projectId);
                             });
 
-                            // Botón tres puntos - oculto por defecto
                             Button menuBtn = new Button("⋯");
                             menuBtn.setStyle("-fx-background-color: transparent; -fx-text-fill: transparent; " +
                                     "-fx-cursor: hand; -fx-font-size: 16px; -fx-padding: 4 8 4 4;");
                             menuBtn.setOnAction(e -> {
                                 ContextMenu contextMenu = new ContextMenu();
-
                                 MenuItem editItem = new MenuItem("✏ Editar");
                                 editItem.setOnAction(ev -> handleEditProject(projectId, projectName));
-
                                 MenuItem deleteItem = new MenuItem("🗑 Eliminar");
                                 deleteItem.setOnAction(ev -> handleDeleteProject(projectId, projectName));
-
                                 contextMenu.getItems().addAll(editItem, deleteItem);
                                 contextMenu.show(menuBtn, javafx.geometry.Side.BOTTOM, 0, 0);
                             });
 
-                            // Hover sobre la fila - muestra el botón y resalta
                             projectRow.setOnMouseEntered(e -> {
                                 menuBtn.setStyle("-fx-background-color: transparent; -fx-text-fill: #cccccc; " +
                                         "-fx-cursor: hand; -fx-font-size: 16px; -fx-padding: 4 8 4 4;");
@@ -166,6 +186,9 @@ public class MainController {
                             projectRow.getChildren().addAll(btn, menuBtn);
                             projectListContainer.getChildren().add(projectRow);
                         }
+
+                        // Panel central de proyectos
+                        renderProjectCards(names, ids, statuses, priorities);
                     });
                 }
             } catch (Exception e) {
@@ -259,6 +282,70 @@ public class MainController {
         taskContainer.layout();
     }
 
+    private void renderProjectCards(List<String> names, List<Long> ids,
+                                    List<String> statuses, List<String> priorities) {
+        projectCardsContainer.getChildren().clear();
+        projectCardsContainer.getChildren().add(emptyProjectsLabel);
+
+        if (names.isEmpty()) {
+            emptyProjectsLabel.setVisible(true);
+            return;
+        }
+
+        emptyProjectsLabel.setVisible(false);
+
+        for (int i = 0; i < names.size(); i++) {
+            final Long projectId = ids.get(i);
+            final String projectName = names.get(i);
+            final String status = statuses.get(i);
+            final String priority = priorities.get(i);
+
+            HBox card = new HBox();
+            card.setSpacing(10);
+            card.setAlignment(Pos.CENTER_LEFT);
+            card.setStyle("-fx-background-color: white; -fx-padding: 12 16 12 16; " +
+                    "-fx-background-radius: 6px; -fx-border-color: #e0e0e0; " +
+                    "-fx-border-radius: 6px; -fx-cursor: hand;");
+            card.getProperties().put("status", status);
+            card.getProperties().put("priority", priority);
+
+            Label nameLabel = new Label("📁 " + projectName);
+            nameLabel.setStyle("-fx-font-size: 13px; -fx-text-fill: #2d2d2d;");
+            HBox.setHgrow(nameLabel, Priority.ALWAYS);
+
+            Label statusBadge = new Label(status);
+            statusBadge.setStyle("-fx-font-size: 11px; -fx-padding: 2 8 2 8; " +
+                    "-fx-background-radius: 10px; -fx-text-fill: white; " +
+                    "-fx-background-color: " + getStatusColor(status) + ";");
+
+            Label priorityBadge = new Label(priority);
+            priorityBadge.setStyle("-fx-font-size: 11px; -fx-padding: 2 8 2 8; " +
+                    "-fx-background-radius: 10px; -fx-text-fill: white; " +
+                    "-fx-background-color: " + getPriorityColor(priority) + ";");
+
+            card.setOnMouseClicked(e -> {
+                selectedProjectId = projectId;
+                selectedCategory = null;
+                projectTitleLabel.setText(projectName);
+                newTaskButton.setDisable(false);
+                loadTasksForProject(projectId);
+            });
+
+            card.getChildren().addAll(nameLabel, statusBadge, priorityBadge);
+            projectCardsContainer.getChildren().add(card);
+        }
+    }
+
+    private String getStatusColor(String status) {
+        return switch (status) {
+            case "TODO"        -> "#95a5a6";
+            case "IN_PROGRESS" -> "#3498db";
+            case "DONE"        -> "#2ecc71";
+            case "CANCELLED"   -> "#e74c3c";
+            default            -> "#95a5a6";
+        };
+    }
+
     /**
      * Crea una tarjeta visual para una tarea.
      */
@@ -274,6 +361,10 @@ public class MainController {
         String title = task.get("title").asText();
         String priority = task.get("priority").asText();
         Long taskId = task.get("id").asLong();
+
+        // Guardamos status y priority para filtrar en cliente
+        card.getProperties().put("status", status);
+        card.getProperties().put("priority", priority);
 
         // Checkbox de completado
         CheckBox checkBox = new CheckBox();
@@ -399,7 +490,7 @@ public class MainController {
 
             Stage dialog = new Stage();
             dialog.setTitle("Nuevo proyecto");
-            dialog.setScene(new Scene(root, 400, 380));
+            dialog.setScene(new Scene(root, 400, 480));
             dialog.initModality(Modality.APPLICATION_MODAL);
             dialog.showAndWait();
 
@@ -476,7 +567,7 @@ public class MainController {
 
             Stage dialog = new Stage();
             dialog.setTitle("Editar tarea");
-            dialog.setScene(new Scene(root, 500, 420));
+            dialog.setScene(new Scene(root, 500, 480));
             dialog.initModality(Modality.APPLICATION_MODAL);
             dialog.showAndWait();
 
@@ -586,6 +677,48 @@ public class MainController {
         });
     }
 
+    @FXML
+    private void handleProjectStatusFilter() {
+        String selected = projectStatusFilter.getValue();
+        if (selected == null || selected.equals("Todos")) {
+            loadProjects();
+            return;
+        }
+        filterProjectCards();
+    }
+
+    @FXML
+    private void handleProjectPriorityFilter() {
+        String selected = projectPriorityFilter.getValue();
+        if (selected == null || selected.equals("Todas")) {
+            loadProjects();
+            return;
+        }
+        filterProjectCards();
+    }
+
+    private void filterProjectCards() {
+        String status = projectStatusFilter.getValue();
+        String priority = projectPriorityFilter.getValue();
+
+        // Filtramos los proyectos ya cargados visualmente
+        projectCardsContainer.getChildren().forEach(node -> {
+            if (node instanceof HBox) {
+                HBox row = (HBox) node;
+                Object statusData = row.getProperties().get("status");
+                Object priorityData = row.getProperties().get("priority");
+
+                boolean statusMatch = status == null || status.equals("Todos") ||
+                        status.equals(statusData);
+                boolean priorityMatch = priority == null || priority.equals("Todas") ||
+                        priority.equals(priorityData);
+
+                row.setVisible(statusMatch && priorityMatch);
+                row.setManaged(statusMatch && priorityMatch);
+            }
+        });
+    }
+
     private void loadHome() {
         new Thread(() -> {
             try {
@@ -648,12 +781,60 @@ public class MainController {
 
     @FXML
     private void handleStatusFilter() {
-        // TODO: filtrar tareas por estado
+        String selected = statusFilter.getValue();
+        if (selected == null || selected.equals("Todos")) {
+            reloadTasks();
+            return;
+        }
+
+        if (selectedProjectId != null) {
+            new Thread(() -> {
+                try {
+                    HttpResponse<String> response = AppContext.getInstance()
+                            .getApiService()
+                            .get("/api/tasks/filter/status?projectId=" + selectedProjectId +
+                                    "&status=" + selected);
+
+                    if (response.statusCode() == 200) {
+                        JsonNode tasks = objectMapper.readTree(response.body());
+                        Platform.runLater(() -> renderTasks(tasks));
+                    }
+                } catch (Exception e) {
+                    Platform.runLater(() -> showAlert("Error", "No se pudieron filtrar las tareas"));
+                }
+            }).start();
+        } else {
+            filterTaskCardsByStatus(selected); // Filtro en cliente para home y categorías
+        }
     }
 
     @FXML
     private void handlePriorityFilter() {
-        // TODO: filtrar tareas por prioridad
+        String selected = priorityFilter.getValue();
+        if (selected == null || selected.equals("Todas")) {
+            reloadTasks();
+            return;
+        }
+
+        if (selectedProjectId != null) {
+            new Thread(() -> {
+                try {
+                    HttpResponse<String> response = AppContext.getInstance()
+                            .getApiService()
+                            .get("/api/tasks/filter/priority?projectId=" + selectedProjectId +
+                                    "&priority=" + selected);
+
+                    if (response.statusCode() == 200) {
+                        JsonNode tasks = objectMapper.readTree(response.body());
+                        Platform.runLater(() -> renderTasks(tasks));
+                    }
+                } catch (Exception e) {
+                    Platform.runLater(() -> showAlert("Error", "No se pudieron filtrar las tareas"));
+                }
+            }).start();
+        } else {
+            filterTaskCardsByPriority(selected); // Filtro en cliente para home y categorías
+        }
     }
 
     @FXML
@@ -718,6 +899,30 @@ public class MainController {
         } catch (IOException e) {
             showAlert("Error", "No se pudo cerrar la sesión");
         }
+    }
+
+    private void filterTaskCardsByStatus(String status) {
+        taskContainer.getChildren().forEach(node -> {
+            if (node instanceof HBox) {
+                HBox card = (HBox) node;
+                Object cardStatus = card.getProperties().get("status");
+                boolean match = status.equals(cardStatus);
+                card.setVisible(match);
+                card.setManaged(match);
+            }
+        });
+    }
+
+    private void filterTaskCardsByPriority(String priority) {
+        taskContainer.getChildren().forEach(node -> {
+            if (node instanceof HBox) {
+                HBox card = (HBox) node;
+                Object cardPriority = card.getProperties().get("priority");
+                boolean match = priority.equals(cardPriority);
+                card.setVisible(match);
+                card.setManaged(match);
+            }
+        });
     }
 
     private void reloadTasks() {

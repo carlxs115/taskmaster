@@ -40,6 +40,14 @@ public class Project {
     @Column(updatable = false)
     private LocalDateTime createdAt;
 
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private TaskStatus status;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private TaskPriority priority;
+
     /**
      * RELACIÓN CON USER (ManyToOne)
      *
