@@ -97,11 +97,11 @@ public class ProjectService {
      */
     public Project restoreProject(Long projectId, Long userId) {
         Project project = projectRepository.findById(projectId)
-                .filter(p -> p.getUser().equals(userId) && p.isDeleted())
+                .filter(p -> p.getUser().getId().equals(userId) && p.isDeleted())
                 .orElseThrow(() -> new RuntimeException("Proyecto no encontrado en la papelera"));
 
         project.setDeleted(false);
-        project.setCreatedAt(null);
+        project.setDeletedAt(null);
         return projectRepository.save(project);
     }
 

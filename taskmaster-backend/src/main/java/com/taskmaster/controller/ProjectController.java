@@ -129,6 +129,20 @@ public class ProjectController {
     }
 
     /**
+     * PUT /api/projects/{id}/permanent
+     * Elimina un proyecto de la papelera.
+     */
+    @DeleteMapping("/{id}/permanent")
+    public ResponseEntity<Void> permanentlyDeleteProject(
+            @PathVariable Long id,
+            @AuthenticationPrincipal UserDetails userDetails) {
+
+        Long userId = getUserId(userDetails);
+        projectService.deletePermanently(id);
+        return ResponseEntity.noContent().build();
+    }
+
+    /**
      * Obtiene el userId del usuario autenticado a partir de su username.
      *
      * NOTA: más adelante refactorizaremos esto a un método en un helper compartido entre controladores.

@@ -1,5 +1,6 @@
 package com.taskmaster.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -27,6 +28,7 @@ public class UserSettings {
      * @JoinColumn  → Crea la columna "user_id" en la tabla "user_settings"
      *                que apunta al usuario propietario
      */
+    @JsonIgnore
     @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false, unique = true)
     @ToString.Exclude

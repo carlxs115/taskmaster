@@ -247,6 +247,16 @@ public class TaskController {
         return ResponseEntity.noContent().build();
     }
 
+    @DeleteMapping("/{id}/permanent")
+    public ResponseEntity<Void> permanentlyDeleteTask(
+            @PathVariable Long id,
+            @AuthenticationPrincipal UserDetails userDetails) {
+
+        Long userId = securityUtils.getUserId(userDetails);
+        taskService.deletePermanently(id, userId);
+        return ResponseEntity.noContent().build();
+    }
+
     /**
      * PUT /api/tasks/{id}/restore
      * Restaura una tarea de la papelera.

@@ -7,6 +7,7 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -49,11 +50,16 @@ public class TaskService {
     }
 
     /**
-     * PAPELERA — devuelve todas las tareas eliminadas del usuario
+     * PAPELERA - devuelve todas las tareas eliminadas del usuario
      * independientemente del proyecto al que pertenezcan.
      */
     public List<Task> getDeletedTasksByUser(Long userId) {
-        return taskRepository.findByProjectUserIdAndDeletedTrue(userId);
+        List<Task> projectTasks = taskRepository.findByProjectUserIdAndDeletedTrue(userId);
+        List<Task> personalTasks = taskRepository.findByProjectIsNullAndDeletedTrue();
+
+        List<Task> all = new ArrayList<>(projectTasks);
+        all.addAll(personalTasks);
+        return all;
     }
 
     /**
@@ -207,7 +213,12 @@ public class TaskService {
      */
     public Task restoreTask(Long taskId, Long userId) {
         Task task = taskRepository.findById(taskId)
-                .filter(t -> t.getProject().getUser().getId().equals(userId) && t.isDeleted())
+                .filter(t -> {
+                    if (t.getProject() != null) {
+                        return t.getProject().getUser().getId().equals(userId) && t.isDeleted();
+                    }
+                    return t.isDeleted();
+                })
                 .orElseThrow(() -> new RuntimeException("Tarea no encontrada en la papelera"));
 
         task.setDeleted(false);
@@ -230,8 +241,16 @@ public class TaskService {
     /**
      * Busca una tarea por id.
      */
-    private Task findById(Long taskId) {
+    public Task findById(Long taskId) {
         return taskRepository.findById(taskId)
                 .orElseThrow(() -> new RuntimeException("Tarea no encontrada con id: " + taskId));
+    }
+
+    public void deletePermanently(Long taskId, Long userId) {
+        Task task = findById(taskId);
+        if (task.getProject() != null) {
+            projectService.getProjectByIdAndUser(task.getProject().getId(), userId);
+        }
+        taskRepository.delete(task);
     }
 }

@@ -50,6 +50,10 @@ public class MainController {
 
     private String selectedCategory;
 
+    private javafx.scene.Node originalRightPanel;
+
+    private TrashController trashController;
+
     @FXML
     public void initialize() {
         newTaskButton.setDisable(false);
@@ -67,6 +71,13 @@ public class MainController {
         loadProjects();
         newTaskButton.setDisable(false);
         loadHome();
+
+        Platform.runLater(() -> {
+            javafx.scene.layout.BorderPane root =
+                    (javafx.scene.layout.BorderPane) usernameLabel.getScene().getRoot();
+            HBox centerHBox = (HBox) root.getCenter();
+            originalRightPanel = centerHBox.getChildren().get(1);
+        });
     }
 
     /**
@@ -381,7 +392,10 @@ public class MainController {
             NewProjectController controller = loader.getController();
 
             // Cuando se cree el proyecto recargamos la lista
-            controller.setOnProjectCreated(this::loadProjects);
+            controller.setOnProjectCreated(() -> {
+                loadProjects();
+                reloadTasks();
+            });
 
             Stage dialog = new Stage();
             dialog.setTitle("Nuevo proyecto");
@@ -438,8 +452,15 @@ public class MainController {
         selectedCategory = null;
         projectTitleLabel.setText("Proyectos y tareas");
         newTaskButton.setDisable(false);
-        loadHome();
 
+        javafx.scene.layout.BorderPane root = (javafx.scene.layout.BorderPane) usernameLabel.getScene().getRoot();
+        HBox centerHBox = (HBox) root.getCenter();
+
+        if (originalRightPanel != null && centerHBox.getChildren().get(1) != originalRightPanel) {
+            centerHBox.getChildren().set(1, originalRightPanel);
+        }
+
+        loadHome();
     }
 
     private void handleEditProject(Long projectId, String projectName) {
@@ -485,6 +506,8 @@ public class MainController {
                                     handleGoHome();
                                 }
                                 loadProjects();
+                                reloadTasks();
+                                if (trashController != null) trashController.refresh();
                             } else {
                                 showAlert("Error", "No se pudo eliminar el proyecto");
                             }
@@ -546,7 +569,10 @@ public class MainController {
                                     loadTasksForProject(currentProjectId);
                                 } else if (currentCategory != null) {
                                     loadTasksByCategory(currentCategory,currentTitle);
+                                } else {
+                                    loadHome();
                                 }
+                                if (trashController != null) trashController.refresh();
                             } else {
                                 showAlert("Error", "No se pudo eliminar la tarea");
                             }
@@ -632,14 +658,49 @@ public class MainController {
 
     @FXML
     private void handleTrash() {
-        // TODO: abrir pantalla de papelera
-        showAlert("Próximamente", "Papelera - en desarrollo");
+        try {
+            FXMLLoader loader = new FXMLLoader(
+                    getClass().getResource("/com/taskmaster/taskmasterfrontend/trash-view.fxml")
+            );
+
+            VBox trashView = loader.load();
+            HBox.setHgrow(trashView, Priority.ALWAYS);
+            TrashController controller = loader.getController();
+            trashController = controller;
+
+            // Cuando se restaure algo recargamos el home y los proyectos
+            controller.setOnTrashChanged(() -> {
+                loadProjects();
+                reloadTasks();
+            });
+
+            // Obtenemos el HBox central y reemplazamos solo el panel derecho (índice 1)
+            javafx.scene.layout.BorderPane root = (javafx.scene.layout.BorderPane) usernameLabel.getScene().getRoot();
+            HBox centerHBox = (HBox) root.getCenter();
+            centerHBox.getChildren().set(1, trashView);
+
+        } catch (IOException e) {
+            showAlert("Error", "No se pudo abrir la papelera");
+        }
     }
 
     @FXML
     private void handleSettings() {
-        // TODO: abrir pantalla de ajustes
-        showAlert("Próximamente", "Ajustes - en desarrollo");
+        try {
+            FXMLLoader loader = new FXMLLoader(
+                    getClass().getResource("/com/taskmaster/taskmasterfrontend/settings-view.fxml")
+            );
+            VBox settingsView = loader.load();
+            HBox.setHgrow(settingsView, Priority.ALWAYS);
+
+            javafx.scene.layout.BorderPane root = (javafx.scene.layout.BorderPane) usernameLabel.getScene().getRoot();
+            HBox centerHBox = (HBox) root.getCenter();
+            centerHBox.getChildren().set(1, settingsView);
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            showAlert("Error", e.getMessage());
+        }
     }
 
     @FXML
