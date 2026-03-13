@@ -58,6 +58,19 @@ public class Task {
     private LocalDateTime createdAt;
 
     /**
+     * PROPIETARIO DE LA TAREA
+     *
+     * Siempre se rellena al crear la tarea, independientemente de si
+     * tiene proyecto o no. Es la única forma de saber a quién pertenece
+     * una tarea personal (project = null).
+     */
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id", nullable = false)
+    @ToString.Exclude
+    @EqualsAndHashCode.Exclude
+    private User user;
+
+    /**
      * RELACIÓN CON PROJECT (ManyToOne) - Opcional
      * Muchas tareas pertenecen a un proyecto.
      *
