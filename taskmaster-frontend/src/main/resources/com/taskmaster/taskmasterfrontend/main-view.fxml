@@ -2,190 +2,150 @@
 <?import javafx.geometry.Insets?>
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
-<?import javafx.scene.text.*?>
 <BorderPane xmlns:fx="http://javafx.com/fxml"
             fx:controller="com.taskmaster.taskmasterfrontend.controller.MainController"
-            style="-fx-background-color: #f5f5f5;">
+            style="-fx-background-color: #f0f0f5;">
 
-    <!-- ===== BARRA SUPERIOR ===== -->
+    <!-- ===== TOPBAR APP ===== -->
     <top>
-        <HBox style="-fx-background-color: #1e1e2e; -fx-padding: 12 20 12 20;"
-              alignment="CENTER_LEFT" spacing="10">
-            <Label text="TaskMaster"
-                   onMouseClicked="#handleGoHome"
-                   style="-fx-font-size: 18px; -fx-font-weight: bold; -fx-text-fill: white; -fx-cursor: hand;"/>
+        <HBox style="-fx-background-color: #13131f; -fx-padding: 13 20 13 20;
+                     -fx-border-color: #2a2a3e; -fx-border-width: 0 0 1 0;"
+              alignment="CENTER_LEFT" spacing="12">
+            <HBox spacing="0" onMouseClicked="#handleGoHome" style="-fx-cursor: hand;">
+                <Label text="Task"
+                       style="-fx-font-size: 17px; -fx-font-weight: bold; -fx-text-fill: white;"/>
+                <Label text="Master"
+                       style="-fx-font-size: 17px; -fx-font-weight: bold; -fx-text-fill: #a78bfa;"/>
+            </HBox>
             <Region HBox.hgrow="ALWAYS"/>
-            <Label fx:id="usernameLabel"
-                   style="-fx-text-fill: #a78bfa; -fx-font-size: 13px;"/>
-            <Button text="⚙"
-                    onAction="#handleSettings"
-                    style="-fx-background-color: transparent; -fx-text-fill: #cccccc;
-                           -fx-font-size: 16px; -fx-cursor: hand;"/>
-            <Button text="Cerrar sesión"
-                    onAction="#handleLogout"
-                    style="-fx-background-color: #e74c3c; -fx-text-fill: white;
-                           -fx-font-size: 12px; -fx-background-radius: 4px; -fx-cursor: hand;"/>
+            <!-- Avatar circular con iniciales + desplegable -->
+            <Button fx:id="userMenuButton"
+                    onAction="#handleUserMenu"
+                    style="-fx-background-color: #2a1f4e; -fx-text-fill: #a78bfa;
+                           -fx-font-size: 13px; -fx-font-weight: bold; -fx-cursor: hand;
+                           -fx-background-radius: 18px; -fx-min-width: 36px; -fx-min-height: 36px;
+                           -fx-max-width: 36px; -fx-max-height: 36px;
+                           -fx-border-color: #3d2f6e; -fx-border-radius: 18px; -fx-border-width: 1;"/>
         </HBox>
     </top>
 
     <!-- ===== CONTENIDO PRINCIPAL ===== -->
     <center>
         <HBox>
-            <!-- ===== SIDEBAR IZQUIERDO ===== -->
-            <VBox style="-fx-background-color: #1e1e2e; -fx-min-width: 220px; -fx-max-width: 220px;"
+            <!-- ===== SIDEBAR ===== -->
+            <VBox style="-fx-background-color: #13131f; -fx-min-width: 220px; -fx-max-width: 220px;
+                         -fx-border-color: #2a2a3e; -fx-border-width: 0 1 0 0;"
                   spacing="0">
                 <padding><Insets top="16" bottom="16"/></padding>
 
                 <Button text="🏠  Inicio"
                         onAction="#handleGoHome"
                         maxWidth="Infinity"
-                        style="-fx-background-color: rgba(167,139,250,0.15); -fx-text-fill: #a78bfa;
+                        style="-fx-background-color: #2a1f4e; -fx-text-fill: #a78bfa;
                                -fx-font-size: 13px; -fx-cursor: hand; -fx-alignment: CENTER-LEFT;
-                               -fx-padding: 8 16 8 16; -fx-border-color: transparent transparent transparent #a78bfa;
-                               -fx-border-width: 0 0 0 2;"/>
+                               -fx-padding: 8 16 8 18;"/>
 
-                <Separator style="-fx-background-color: rgba(255,255,255,0.08); -fx-padding: 4 0 0 0;"/>
+                <Separator style="-fx-background-color: #2a2a3e;"/>
 
                 <Label text="MIS TAREAS"
-                       style="-fx-text-fill: rgba(255,255,255,0.35); -fx-font-size: 10px;
+                       style="-fx-text-fill: #555570; -fx-font-size: 10px;
                               -fx-font-weight: bold; -fx-padding: 12 16 4 16;"/>
-
                 <Button text="📋  Todas las tareas"
                         onAction="#handleAllTasks"
                         maxWidth="Infinity"
-                        style="-fx-background-color: transparent; -fx-text-fill: rgba(255,255,255,0.6);
+                        style="-fx-background-color: transparent; -fx-text-fill: #9999bb;
                                -fx-font-size: 13px; -fx-cursor: hand; -fx-alignment: CENTER-LEFT;
                                -fx-padding: 7 16 7 16;"/>
                 <Button text="👤  Personal"
                         onAction="#handleCategoryPersonal"
                         maxWidth="Infinity"
-                        style="-fx-background-color: transparent; -fx-text-fill: rgba(255,255,255,0.6);
+                        style="-fx-background-color: transparent; -fx-text-fill: #9999bb;
                                -fx-font-size: 13px; -fx-cursor: hand; -fx-alignment: CENTER-LEFT;
                                -fx-padding: 7 16 7 16;"/>
                 <Button text="📚  Estudios"
                         onAction="#handleCategoryEstudios"
                         maxWidth="Infinity"
-                        style="-fx-background-color: transparent; -fx-text-fill: rgba(255,255,255,0.6);
+                        style="-fx-background-color: transparent; -fx-text-fill: #9999bb;
                                -fx-font-size: 13px; -fx-cursor: hand; -fx-alignment: CENTER-LEFT;
                                -fx-padding: 7 16 7 16;"/>
                 <Button text="💼  Trabajo"
                         onAction="#handleCategoryTrabajo"
                         maxWidth="Infinity"
-                        style="-fx-background-color: transparent; -fx-text-fill: rgba(255,255,255,0.6);
+                        style="-fx-background-color: transparent; -fx-text-fill: #9999bb;
                                -fx-font-size: 13px; -fx-cursor: hand; -fx-alignment: CENTER-LEFT;
                                -fx-padding: 7 16 7 16;"/>
 
-                <Separator style="-fx-background-color: rgba(255,255,255,0.08); -fx-padding: 4 0 0 0;"/>
+                <Separator style="-fx-background-color: #2a2a3e;"/>
 
                 <Label text="MIS PROYECTOS"
-                       style="-fx-text-fill: rgba(255,255,255,0.35); -fx-font-size: 10px;
+                       style="-fx-text-fill: #555570; -fx-font-size: 10px;
                               -fx-font-weight: bold; -fx-padding: 12 16 4 16;"/>
 
-                <ScrollPane VBox.vgrow="ALWAYS"
-                            fitToWidth="true"
-                            style="-fx-background-color: transparent; -fx-background: transparent;
+                <ScrollPane VBox.vgrow="ALWAYS" fitToWidth="true"
+                            style="-fx-background-color: #13131f; -fx-background: #13131f;
                                    -fx-border-color: transparent;">
                     <VBox fx:id="projectListContainer" spacing="0"
-                          style="-fx-background-color: transparent;"/>
+                          style="-fx-background-color: #13131f;"/>
                 </ScrollPane>
 
+                <Separator style="-fx-background-color: #2a2a3e;"/>
+                <Button text="⚙  Ajustes"
+                        onAction="#handleSettings"
+                        maxWidth="Infinity"
+                        style="-fx-background-color: transparent; -fx-text-fill: #9999bb;
+                               -fx-font-size: 13px; -fx-cursor: hand; -fx-alignment: CENTER-LEFT;
+                               -fx-padding: 8 16 8 16;"/>
                 <Button text="🗑  Papelera"
                         onAction="#handleTrash"
                         maxWidth="Infinity"
-                        style="-fx-background-color: transparent; -fx-text-fill: rgba(255,255,255,0.6);
+                        style="-fx-background-color: transparent; -fx-text-fill: #9999bb;
                                -fx-font-size: 13px; -fx-cursor: hand; -fx-alignment: CENTER-LEFT;
                                -fx-padding: 8 16 8 16;"/>
             </VBox>
 
-            <!-- ===== PANEL CENTRAL - PROYECTOS (se muestra al hacer clic en proyecto) ===== -->
-            <VBox fx:id="projectsPanel" HBox.hgrow="ALWAYS"
-                  style="-fx-background-color: #f0f0f5; -fx-border-color: #e0e0e0; -fx-border-width: 0 1 0 1;"
-                  spacing="0">
-                <HBox style="-fx-background-color: white; -fx-padding: 14 16 14 16;
+            <!-- ===== ÁREA PRINCIPAL ===== -->
+            <VBox fx:id="mainArea" HBox.hgrow="ALWAYS" spacing="0"
+                  style="-fx-background-color: #f0f0f5;">
+
+                <!-- TOPBAR DEL ÁREA: título + botón Crear -->
+                <HBox fx:id="areaTopBar"
+                      style="-fx-background-color: white; -fx-padding: 14 20 14 20;
                              -fx-border-color: #e8e8e8; -fx-border-width: 0 0 1 0;"
                       alignment="CENTER_LEFT" spacing="8">
-                    <Label text="Proyectos"
+                    <Label fx:id="areaTitle" text="Inicio"
                            style="-fx-font-size: 15px; -fx-font-weight: bold; -fx-text-fill: #1e1e2e;"/>
                     <Region HBox.hgrow="ALWAYS"/>
-                    <Button text="+ Nuevo proyecto"
-                            onAction="#handleNewProject"
+                    <Button fx:id="createButton" text="＋  Crear  ▾"
+                            onAction="#handleCreateMenu"
                             style="-fx-background-color: #7c3aed; -fx-text-fill: white;
-                                   -fx-font-size: 11px; -fx-background-radius: 6px; -fx-cursor: hand;
-                                   -fx-padding: 5 12 5 12;"/>
-                </HBox>
-                <HBox style="-fx-background-color: white; -fx-padding: 8 16 8 16;
-                             -fx-border-color: #e8e8e8; -fx-border-width: 0 0 1 0;"
-                      spacing="8">
-                    <ComboBox fx:id="projectStatusFilter"
-                              promptText="Estado"
-                              onAction="#handleProjectStatusFilter"
-                              style="-fx-font-size: 11px;" maxWidth="Infinity"
-                              HBox.hgrow="ALWAYS"/>
-                    <ComboBox fx:id="projectPriorityFilter"
-                              promptText="Prioridad"
-                              onAction="#handleProjectPriorityFilter"
-                              style="-fx-font-size: 11px;" maxWidth="Infinity"
-                              HBox.hgrow="ALWAYS"/>
-                </HBox>
-                <ScrollPane VBox.vgrow="ALWAYS" fitToWidth="true"
-                            style="-fx-background-color: transparent; -fx-border-color: transparent;">
-                    <VBox fx:id="projectCardsContainer" spacing="8">
-                        <padding><Insets top="12" right="12" bottom="12" left="12"/></padding>
-                        <Label fx:id="emptyProjectsLabel"
-                               text="No hay proyectos. ¡Crea uno!"
-                               style="-fx-text-fill: #aaaaaa; -fx-font-size: 13px;"/>
-                    </VBox>
-                </ScrollPane>
-            </VBox>
-
-            <!-- ===== PANEL DERECHO - TAREAS / HOME ===== -->
-            <VBox fx:id="taskPanel" HBox.hgrow="ALWAYS"
-                  style="-fx-background-color: #f0f0f5;" spacing="0">
-
-                <!-- Cabecera: título + botón nueva tarea -->
-                <HBox style="-fx-background-color: white; -fx-padding: 14 16 14 16;
-                             -fx-border-color: #e8e8e8; -fx-border-width: 0 0 1 0;"
-                      alignment="CENTER_LEFT" spacing="8">
-                    <Label fx:id="projectTitleLabel"
-                           text="Tareas"
-                           style="-fx-font-size: 15px; -fx-font-weight: bold; -fx-text-fill: #1e1e2e;"/>
-                    <Region HBox.hgrow="ALWAYS"/>
-                    <Button text="+ Nueva tarea"
-                            fx:id="newTaskButton"
-                            onAction="#handleNewTask"
-                            style="-fx-background-color: #7c3aed; -fx-text-fill: white;
-                                   -fx-font-size: 11px; -fx-background-radius: 6px;
-                                   -fx-cursor: hand; -fx-padding: 5 12 5 12;"/>
+                                   -fx-font-size: 12px; -fx-background-radius: 6px;
+                                   -fx-cursor: hand; -fx-padding: 6 14 6 14;"/>
                 </HBox>
 
-                <!-- Filtros: solo visibles cuando NO estamos en home -->
+                <!-- FILTROS (ocultos en home) -->
                 <HBox fx:id="taskFiltersBar"
-                      style="-fx-background-color: white; -fx-padding: 8 16 8 16;
+                      style="-fx-background-color: white; -fx-padding: 8 20 8 20;
                              -fx-border-color: #e8e8e8; -fx-border-width: 0 0 1 0;"
                       spacing="8" managed="false" visible="false">
-                    <ComboBox fx:id="statusFilter"
-                              promptText="Estado"
-                              style="-fx-font-size: 11px;"
-                              maxWidth="160"/>
-                    <ComboBox fx:id="priorityFilter"
-                              promptText="Prioridad"
-                              style="-fx-font-size: 11px;"
-                              maxWidth="160"/>
+                    <ComboBox fx:id="statusFilter" promptText="Estado"
+                              style="-fx-font-size: 11px;" maxWidth="160"/>
+                    <ComboBox fx:id="priorityFilter" promptText="Prioridad"
+                              style="-fx-font-size: 11px;" maxWidth="160"/>
                     <Region HBox.hgrow="ALWAYS"/>
                 </HBox>
 
-                <!-- Contenedor principal: home o lista de tareas -->
+                <!-- CONTENIDO PRINCIPAL -->
                 <ScrollPane VBox.vgrow="ALWAYS" fitToWidth="true"
                             style="-fx-background-color: transparent; -fx-border-color: transparent;">
                     <VBox fx:id="taskContainer" spacing="0">
                         <padding><Insets top="0" right="0" bottom="16" left="0"/></padding>
                         <Label fx:id="emptyLabel"
                                text="✨ No tienes tareas activas. ¡Crea una para empezar!"
-                               style="-fx-text-fill: #aaaaaa; -fx-font-size: 14px; -fx-padding: 24 20 0 20;"/>
+                               style="-fx-text-fill: #aaaaaa; -fx-font-size: 14px;
+                                      -fx-padding: 24 20 0 20;"/>
                     </VBox>
                 </ScrollPane>
             </VBox>
-
         </HBox>
     </center>
 </BorderPane>

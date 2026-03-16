@@ -1,9 +1,12 @@
 package com.taskmaster.controller;
 
+import com.taskmaster.dto.request.ChangePasswordRequest;
 import com.taskmaster.dto.request.LoginRequest;
 import com.taskmaster.dto.request.RegisterRequest;
+import com.taskmaster.dto.request.UpdateProfileRequest;
 import com.taskmaster.dto.response.UserResponse;
 import com.taskmaster.model.User;
+import com.taskmaster.security.SecurityUtils;
 import com.taskmaster.service.UserService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -13,10 +16,9 @@ import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.web.bind.annotation.*;
 
 /**
  * AUTHCONTROLLER
@@ -39,6 +41,7 @@ public class AuthController {
 
     private final UserService userService;
     private final AuthenticationManager authenticationManager;
+    private final SecurityUtils securityUtils;
 
     /**
      * REGISTRO - POST /api/auth/register
@@ -62,18 +65,7 @@ public class AuthController {
                 request.getPassword(),
                 request.getBirthDate()
         );
-
-        // Convertimos la entidad User al DTO de respuesta
-        // Nunca devolvemos la entidad directamente - podría exponer la contraseña
-        UserResponse response = UserResponse.builder()
-                .id(user.getId())
-                .username(user.getUsername())
-                .email(user.getEmail())
-                .birthDate(user.getBirthDate())
-                .createdAt(user.getCreatedAt())
-                .build();
-
-        return ResponseEntity.status(HttpStatus.CREATED).body(response);
+        return ResponseEntity.status(HttpStatus.CREATED).body(toResponse(user));
     }
 
     /**
@@ -86,7 +78,6 @@ public class AuthController {
     @PostMapping("/login")
     public ResponseEntity<?> login(@Valid @RequestBody LoginRequest request) {
         try {
-
             /**
              * authenticationManager.authenticate() hace todo el trabajo:
              *      1. Llama a UserDetailsServiceImpl.loadUserByUsername()
@@ -104,20 +95,78 @@ public class AuthController {
             // Cargamos el usuario completo para devolver sus datos
             User user = userService.findByUsername(request.getUsername());
 
-            UserResponse response = UserResponse.builder()
-                    .id(user.getId())
-                    .username(user.getUsername())
-                    .email(user.getEmail())
-                    .birthDate(user.getBirthDate())
-                    .createdAt(user.getCreatedAt())
-                    .build();
-
-            return ResponseEntity.ok(response);
+            return ResponseEntity.ok(toResponse(user));
 
         } catch (AuthenticationException e) {
             // Credenciales incorrectas = 401 Unauthorized
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body("Credenciales incorrectas");
         }
+    }
+
+    /**
+     * GET /api/auth/profile
+     * Devuelve los datos del usuario autenticado.
+     */
+    @GetMapping("/profile")
+    public ResponseEntity<UserResponse> getProfile(
+            @AuthenticationPrincipal UserDetails userDetails) {
+
+        Long userId = securityUtils.getUserId(userDetails);
+        User user = userService.findById(userId);
+
+        return ResponseEntity.ok(toResponse(user));
+    }
+
+    /**
+     * PUT /api/auth/profile
+     * Actualiza username, email y fecha de nacimiento.
+     */
+    @PutMapping("/profile")
+    public ResponseEntity<?> updateProfile(
+            @Valid @RequestBody UpdateProfileRequest request,
+            @AuthenticationPrincipal UserDetails userDetails) {
+
+        try {
+            Long userId = securityUtils.getUserId(userDetails);
+            User user = userService.updateProfile(
+                    userId,
+                    request.getUsername(),
+                    request.getEmail(),
+                    request.getBirthDate()
+            );
+
+            return ResponseEntity.ok(toResponse(user));
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
+    }
+
+    /**
+     * PATCH /api/auth/password
+     * Cambia la contraseña del usuario autenticado.
+     */
+    @PatchMapping("/password")
+    public ResponseEntity<?> changePassword(
+            @Valid @RequestBody ChangePasswordRequest request,
+            @AuthenticationPrincipal UserDetails userDetails) {
+
+        try {
+            Long userId = securityUtils.getUserId(userDetails);
+            userService.changePassword(userId, request.getCurrentPassword(), request.getNewPassword());
+            return ResponseEntity.ok().build();
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
+    }
+
+    private UserResponse toResponse(User user) {
+        return UserResponse.builder()
+                .id(user.getId())
+                .username(user.getUsername())
+                .email(user.getEmail())
+                .birthDate(user.getBirthDate())
+                .createdAt(user.getCreatedAt())
+                .build();
     }
 }

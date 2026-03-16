@@ -92,4 +92,39 @@ public class UserService {
         return userRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Usuario no encontrado con id: " + id));
     }
+
+    /**
+     * Actualiza username, email y fecha de nacimiento del usuario.
+     * Valida que el nuevo username/email no estén en uso por otro usuario.
+     */
+    public User updateProfile(Long userId, String username, String email, LocalDate birthDate) {
+        User user = findById(userId);
+
+        if (!user.getUsername().equals(username) && userRepository.existsByUsername(username)) {
+            throw new RuntimeException("El nombre de usuario ya está en uso");
+        }
+        if (!user.getEmail().equals(email) && userRepository.existsByEmail(email)) {
+            throw new RuntimeException("El email ya está en uso");
+        }
+
+        user.setUsername(username);
+        user.setEmail(email);
+        user.setBirthDate(birthDate);
+        return userRepository.save(user);
+    }
+
+    /**
+     * Cambia la contraseña del usuario.
+     * Valida que la contraseña actual sea correcta antes de cambiarla.
+     */
+    public void changePassword(Long userId, String currentPassword, String newPassword) {
+        User user = findById(userId);
+
+        if (!passwordEncoder.matches(currentPassword, user.getPassword())) {
+            throw new RuntimeException("La contraseña no es correcta");
+        }
+
+        user.setPassword(passwordEncoder.encode(newPassword));
+        userRepository.save(user);
+    }
 }

@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<VBox xmlns:fx="http://javafx.com/fxml"
+      fx:controller="com.taskmaster.taskmasterfrontend.controller.EditProfileController"
+      spacing="0"
+      style="-fx-background-color: #f0f0f5;">
+
+    <!-- Cabecera -->
+    <HBox style="-fx-background-color: white; -fx-padding: 16 20 16 20;
+                 -fx-border-color: #e8e8e8; -fx-border-width: 0 0 1 0;"
+          alignment="CENTER_LEFT">
+        <Label text="Editar perfil"
+               style="-fx-font-size: 16px; -fx-font-weight: bold; -fx-text-fill: #1e1e2e;"/>
+    </HBox>
+
+    <VBox spacing="16" style="-fx-padding: 24;">
+
+        <!-- Username -->
+        <VBox spacing="6">
+            <Label text="Nombre de usuario"
+                   style="-fx-font-size: 12px; -fx-font-weight: bold; -fx-text-fill: #555555;"/>
+            <TextField fx:id="usernameField"
+                       style="-fx-font-size: 13px; -fx-padding: 8 12 8 12;
+                              -fx-background-radius: 6px; -fx-border-color: #e8e8e8;
+                              -fx-border-radius: 6px; -fx-border-width: 1;"/>
+        </VBox>
+
+        <!-- Email -->
+        <VBox spacing="6">
+            <Label text="Email"
+                   style="-fx-font-size: 12px; -fx-font-weight: bold; -fx-text-fill: #555555;"/>
+            <TextField fx:id="emailField"
+                       style="-fx-font-size: 13px; -fx-padding: 8 12 8 12;
+                              -fx-background-radius: 6px; -fx-border-color: #e8e8e8;
+                              -fx-border-radius: 6px; -fx-border-width: 1;"/>
+        </VBox>
+
+        <!-- Fecha de nacimiento -->
+        <VBox spacing="6">
+            <Label text="Fecha de nacimiento"
+                   style="-fx-font-size: 12px; -fx-font-weight: bold; -fx-text-fill: #555555;"/>
+            <DatePicker fx:id="birthDatePicker"
+                        style="-fx-font-size: 13px; -fx-background-radius: 6px;"/>
+        </VBox>
+
+        <!-- Error -->
+        <Label fx:id="errorLabel"
+               style="-fx-text-fill: #e74c3c; -fx-font-size: 12px;"
+               visible="false" managed="false"/>
+
+        <!-- Botones -->
+        <HBox spacing="10" alignment="CENTER_RIGHT" style="-fx-padding: 8 0 0 0;">
+            <Button text="Cancelar"
+                    onAction="#handleCancel"
+                    style="-fx-background-color: #f0f0f5; -fx-text-fill: #555555;
+                           -fx-font-size: 13px; -fx-background-radius: 6px;
+                           -fx-cursor: hand; -fx-padding: 8 16 8 16;"/>
+            <Button text="Guardar cambios"
+                    onAction="#handleSave"
+                    style="-fx-background-color: #7c3aed; -fx-text-fill: white;
+                           -fx-font-size: 13px; -fx-background-radius: 6px;
+                           -fx-cursor: hand; -fx-padding: 8 16 8 16;"/>
+        </HBox>
+    </VBox>
+</VBox>
