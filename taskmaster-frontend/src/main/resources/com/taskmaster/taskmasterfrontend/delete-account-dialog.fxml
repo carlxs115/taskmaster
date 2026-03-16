@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<VBox xmlns:fx="http://javafx.com/fxml"
+      fx:controller="com.taskmaster.taskmasterfrontend.controller.DeleteAccountController"
+      spacing="0"
+      style="-fx-background-color: #f0f0f5;">
+
+    <!-- Cabecera -->
+    <HBox style="-fx-background-color: white; -fx-padding: 16 20 16 20;
+                 -fx-border-color: #e8e8e8; -fx-border-width: 0 0 1 0;"
+          alignment="CENTER_LEFT">
+        <Label text="Eliminar cuenta"
+               style="-fx-font-size: 16px; -fx-font-weight: bold; -fx-text-fill: #e74c3c;"/>
+    </HBox>
+
+    <VBox spacing="16" style="-fx-padding: 24;">
+
+        <!-- Aviso -->
+        <VBox spacing="8"
+              style="-fx-background-color: #fff5f5; -fx-padding: 14 16 14 16;
+                     -fx-background-radius: 8px; -fx-border-color: #fecaca;
+                     -fx-border-radius: 8px; -fx-border-width: 1;">
+            <Label text="⚠ Esta acción no se puede deshacer"
+                   style="-fx-font-size: 13px; -fx-font-weight: bold; -fx-text-fill: #e74c3c;"/>
+            <Label text="Se eliminarán permanentemente tu cuenta, todos tus proyectos y todas tus tareas."
+                   style="-fx-font-size: 12px; -fx-text-fill: #888888;"
+                   wrapText="true"/>
+        </VBox>
+
+        <!-- Confirmación con contraseña -->
+        <VBox spacing="6">
+            <Label text="Introduce tu contraseña para confirmar"
+                   style="-fx-font-size: 12px; -fx-font-weight: bold; -fx-text-fill: #555555;"/>
+            <PasswordField fx:id="passwordField"
+                           style="-fx-font-size: 13px; -fx-padding: 8 12 8 12;
+                                  -fx-background-radius: 6px; -fx-border-color: #e8e8e8;
+                                  -fx-border-radius: 6px; -fx-border-width: 1;"/>
+        </VBox>
+
+        <Label fx:id="errorLabel"
+               style="-fx-text-fill: #e74c3c; -fx-font-size: 12px;"
+               visible="false" managed="false"/>
+
+        <!-- Botones -->
+        <HBox spacing="10" alignment="CENTER_RIGHT" style="-fx-padding: 8 0 0 0;">
+            <Button text="Cancelar"
+                    onAction="#handleCancel"
+                    style="-fx-background-color: #f0f0f5; -fx-text-fill: #555555;
+                           -fx-font-size: 13px; -fx-background-radius: 6px;
+                           -fx-cursor: hand; -fx-padding: 8 16 8 16;"/>
+            <Button text="Eliminar mi cuenta"
+                    onAction="#handleDelete"
+                    style="-fx-background-color: #e74c3c; -fx-text-fill: white;
+                           -fx-font-size: 13px; -fx-background-radius: 6px;
+                           -fx-cursor: hand; -fx-padding: 8 16 8 16;"/>
+        </HBox>
+    </VBox>
+</VBox>

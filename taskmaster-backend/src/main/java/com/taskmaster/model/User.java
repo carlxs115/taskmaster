@@ -81,6 +81,16 @@ public class User {
     private List<Project> projects;
 
     /**
+     * Relación con tareas personales del usuario (sin proyecto).
+     * cascade ALL + orphanRemoval → al borrar el usuario se borran todas sus tareas.
+     */
+    @JsonIgnore
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+    @ToString.Exclude
+    @EqualsAndHashCode.Exclude
+    private List<Task> tasks;
+
+    /**
      * @PrePersist → Se ejecuta automáticamente justo antes de guardar en la BD por primera vez
      * Así no tenemos que asignar la fecha manualmente nunca.
      */

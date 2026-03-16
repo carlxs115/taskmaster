@@ -127,4 +127,19 @@ public class UserService {
         user.setPassword(passwordEncoder.encode(newPassword));
         userRepository.save(user);
     }
+
+    /**
+     * Elimina permanentemente la cuenta del usuario y todos sus datos.
+     * Gracias al cascade ALL en User, se borran en cascada:
+     * proyectos, tareas y settings.
+     */
+    public void deleteAccount(Long userId, String password) {
+        User user = findById(userId);
+
+        if (!passwordEncoder.matches(password, user.getPassword())) {
+            throw new RuntimeException("La contraseña no es correcta");
+        }
+
+        userRepository.delete(user);
+    }
 }

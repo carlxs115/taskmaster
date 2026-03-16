@@ -103,7 +103,7 @@ public class MainController {
 
         MenuItem deleteAccount = new MenuItem("🗑  Eliminar cuenta");
         deleteAccount.setStyle("-fx-font-size: 13px; -fx-text-fill: #e74c3c;");
-        deleteAccount.setOnAction(e -> showComingSoon("Eliminar cuenta"));
+        deleteAccount.setOnAction(e -> openDeleteAccount());
 
         SeparatorMenuItem sep3 = new SeparatorMenuItem();
 
@@ -154,12 +154,21 @@ public class MainController {
         }
     }
 
-    private void showComingSoon(String feature) {
-        Alert alert = new Alert(Alert.AlertType.INFORMATION);
-        alert.setTitle(feature);
-        alert.setHeaderText(null);
-        alert.setContentText("\"" + feature + "\" estará disponible próximamente.");
-        alert.showAndWait();
+    private void openDeleteAccount() {
+        try {
+            FXMLLoader loader = new FXMLLoader(
+                    getClass().getResource("/com/taskmaster/taskmasterfrontend/delete-account-dialog.fxml"));
+            VBox root = loader.load();
+            DeleteAccountController controller = loader.getController();
+            controller.setOnAccountDeleted(this::handleLogout);
+            Stage dialog = new Stage();
+            dialog.setTitle("Eliminar cuenta");
+            dialog.setScene(new Scene(root, 420, 300));
+            dialog.initModality(Modality.APPLICATION_MODAL);
+            dialog.showAndWait();
+        } catch (IOException e) {
+            showAlert("Error", "No se pudo abrir el diálogo");
+        }
     }
 
     // =========================================================================

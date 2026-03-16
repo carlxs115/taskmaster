@@ -160,6 +160,24 @@ public class AuthController {
         }
     }
 
+    /**
+     * DELETE /api/auth/account
+     * Elimina permanentemente la cuenta del usuario autenticado.
+     * Requiere confirmación con contraseña.
+     */
+    public ResponseEntity<?> deleteAccount(
+            @RequestParam String password,
+            @AuthenticationPrincipal UserDetails userDetails) {
+        try {
+            Long userId = securityUtils.getUserId(userDetails);
+            userService.deleteAccount(userId, password);
+
+            return ResponseEntity.noContent().build();
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
+    }
+
     private UserResponse toResponse(User user) {
         return UserResponse.builder()
                 .id(user.getId())
