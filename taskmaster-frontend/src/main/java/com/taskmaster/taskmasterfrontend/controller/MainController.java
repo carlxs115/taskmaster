@@ -164,7 +164,7 @@ public class MainController {
             controller.setOnAccountDeleted(this::handleLogout);
             Stage dialog = new Stage();
             dialog.setTitle("Eliminar cuenta");
-            dialog.setScene(new Scene(root, 420, 300));
+            dialog.setScene(new Scene(root, 340, 340));
             dialog.initModality(Modality.APPLICATION_MODAL);
             dialog.showAndWait();
         } catch (IOException e) {

@@ -165,6 +165,7 @@ public class AuthController {
      * Elimina permanentemente la cuenta del usuario autenticado.
      * Requiere confirmación con contraseña.
      */
+    @RequestMapping(value = "/account", method = RequestMethod.DELETE)
     public ResponseEntity<?> deleteAccount(
             @RequestParam String password,
             @AuthenticationPrincipal UserDetails userDetails) {
