@@ -73,6 +73,7 @@ public class LoginController {
                     AppContext.getInstance().getApiService().setCredentials(username, password);
                     AppContext.getInstance().setCurrentUserId(userId);
                     AppContext.getInstance().setCurrentUsername(returnedUsername);
+                    AppContext.getInstance().setCurrentPassword(password);
 
                     // Navegamos a la pantalla principal en el hilo de JavaFX
                     Platform.runLater(() -> navigateToMain());

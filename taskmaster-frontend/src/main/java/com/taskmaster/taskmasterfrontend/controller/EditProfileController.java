@@ -88,9 +88,8 @@ public class EditProfileController {
 
         new Thread(() -> {
             try {
-                String json = objectMapper.writeValueAsString(body);
                 HttpResponse<String> response = AppContext.getInstance()
-                        .getApiService().put("/api/auth/profile", json);
+                        .getApiService().put("/api/auth/profile", body);
 
                 Platform.runLater(() -> {
                     if (response.statusCode() == 200) {
@@ -99,6 +98,12 @@ public class EditProfileController {
                             JsonNode user = objectMapper.readTree(response.body());
                             String newUsername = user.get("username").asText();
                             AppContext.getInstance().setCurrentUsername(newUsername);
+
+                            // Actualizar credenciales con el nuevo username
+                            AppContext.getInstance().getApiService().setCredentials(
+                                    newUsername,
+                                    AppContext.getInstance().getCurrentPassword()
+                            );
                         } catch (Exception ignored) {}
 
                         if (onProfileUpdated != null) onProfileUpdated.run();

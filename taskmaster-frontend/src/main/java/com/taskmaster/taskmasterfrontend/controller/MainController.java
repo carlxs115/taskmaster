@@ -128,6 +128,7 @@ public class MainController {
                         ? username.substring(0, 2).toUpperCase()
                         : username.toUpperCase();
                 userMenuButton.setText(initials + "  " + username + "  ▾");
+                loadHome();
             });
             Stage dialog = new Stage();
             dialog.setTitle("Editar perfil");

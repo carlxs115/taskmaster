@@ -25,6 +25,7 @@ public class AppContext {
     // Datos del usuario autenticado tras el login
     private Long currentUserId;
     private String currentUsername;
+    private String currentPassword;
 
     /**
      * Constructor privado - nadie puede crear instancias desde fuera.
@@ -32,6 +33,10 @@ public class AppContext {
     public AppContext() {
         this.apiService = new ApiService();
     }
+
+    public String getCurrentPassword() { return currentPassword; }
+
+    public void setCurrentPassword(String currentPassword) { this.currentPassword = currentPassword; }
 
     /**
      * Devuelve la instancia única del AppContext.
@@ -71,5 +76,6 @@ public class AppContext {
         this.currentUserId = null;
         this.currentUsername = null;
         this.apiService.setCredentials(null, null);
+        this.currentPassword = null;
     }
 }
