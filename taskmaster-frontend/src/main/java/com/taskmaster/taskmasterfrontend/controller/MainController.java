@@ -37,6 +37,7 @@ public class MainController {
     @FXML private Label areaTitle;
     @FXML private Button createButton;
     @FXML private VBox  mainArea;
+    @FXML private TextField searchField;
 
     // ── Estado ────────────────────────────────────────────────────────────────
     private Long   selectedProjectId;
@@ -177,6 +178,14 @@ public class MainController {
     // =========================================================================
     @FXML
     private void handleCreateMenu() {
+
+        boolean isHome = "Inicio".equals(areaTitle.getText());
+
+        if (!isHome) {
+            handleNewTask();
+            return;
+        }
+
         ContextMenu menu = new ContextMenu();
         menu.setStyle("-fx-background-color: white; -fx-border-color: #e8e8e8; " +
                 "-fx-border-width: 1; -fx-background-radius: 8; -fx-border-radius: 8;");
@@ -837,8 +846,47 @@ public class MainController {
         return (HBox) root.getCenter();
     }
 
-    private void showFilters() { taskFiltersBar.setVisible(true);  taskFiltersBar.setManaged(true);  }
-    private void hideFilters() { taskFiltersBar.setVisible(false); taskFiltersBar.setManaged(false); }
+    private void showFilters() {
+        taskFiltersBar.setVisible(true);
+        taskFiltersBar.setManaged(true);
+        showSearch();
+        createButton.setText("＋  Nueva tarea");
+    }
+    private void hideFilters() {
+        taskFiltersBar.setVisible(false);
+        taskFiltersBar.setManaged(false);
+        hideSearch();
+        createButton.setText("＋  Crear  ▾");
+    }
+    private void showSearch() {
+        searchField.setVisible(true);
+        searchField.setManaged(true);
+        searchField.clear();
+    }
+    private void hideSearch() {
+        searchField.setVisible(false);
+        searchField.setManaged(false);
+        searchField.clear();
+    }
+
+    @FXML
+    private void handleSearch() {
+        String query = searchField.getText().trim().toLowerCase();
+        taskContainer.getChildren().forEach(node -> {
+            if (node instanceof VBox wrapper && !wrapper.getChildren().isEmpty()
+            && wrapper.getChildren().get(0) instanceof HBox card) {
+                boolean match = true;
+                if (!query.isEmpty()) {
+                    match = card.getChildren().stream()
+                            .filter(n -> n instanceof Label)
+                            .map(n -> ((Label) n).getText().toLowerCase())
+                            .anyMatch(t -> t.contains(query));
+                }
+                wrapper.setVisible(match);
+                wrapper.setManaged(match);
+            }
+        });
+    }
 
     // =========================================================================
     //  DIALOGS
@@ -850,6 +898,9 @@ public class MainController {
                     getClass().getResource("/com/taskmaster/taskmasterfrontend/new-project-dialog.fxml"));
             VBox root = loader.load();
             NewProjectController controller = loader.getController();
+
+
+
             controller.setOnProjectCreated(() -> { loadProjects(); reloadTasks(); });
             Stage dialog = new Stage();
             dialog.setTitle("Nuevo proyecto");
@@ -863,13 +914,32 @@ public class MainController {
 
     @FXML
     private void handleNewTask() {
+        final Long currentProjectId = selectedProjectId;
+        final String currentCategory = selectedCategory;
+        final String currentTitle = areaTitle.getText();
+
         try {
             FXMLLoader loader = new FXMLLoader(
                     getClass().getResource("/com/taskmaster/taskmasterfrontend/new-task-dialog.fxml"));
             VBox root = loader.load();
             NewTaskController controller = loader.getController();
             controller.initData(selectedProjectId);
-            controller.setOnTaskCreated(this::reloadTasks);
+
+            if (currentCategory != null) {
+                controller.setPreSelectedCategory(currentCategory);
+            }
+
+            controller.setOnTaskCreated(() -> {
+                if (currentProjectId != null) {
+                    loadTasksForProject(currentProjectId);
+                } else if (currentCategory != null) {
+                    loadTasksByCategory(currentCategory, currentTitle);
+                } else if (!"Inicio".equals(currentTitle)) {
+                    handleAllTasks();
+                } else {
+                    loadHome();
+                }
+            });
             Stage dialog = new Stage();
             dialog.setTitle("Nueva tarea");
             dialog.setScene(new Scene(root, 600, 420));

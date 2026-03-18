@@ -1,5 +1,9 @@
 package com.taskmaster.taskmasterfrontend.controller;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.taskmaster.taskmasterfrontend.util.AppContext;
+import javafx.application.Platform;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Scene;
@@ -7,9 +11,11 @@ import javafx.scene.control.DatePicker;
 import javafx.scene.control.Label;
 import javafx.scene.control.PasswordField;
 import javafx.scene.control.TextField;
+import javafx.scene.input.KeyCode;
 import javafx.stage.Stage;
 
 import java.io.IOException;
+import java.net.http.HttpResponse;
 import java.time.LocalDate;
 
 public class RegisterController {
@@ -19,6 +25,25 @@ public class RegisterController {
     @FXML private PasswordField passwordField;
     @FXML private DatePicker birthDatePicker;
     @FXML private Label errorLabel;
+
+    @FXML
+    private void initialize() {
+        usernameField.setOnKeyPressed(e -> {
+            if (e.getCode() == KeyCode.ENTER) {
+                handleRegister();
+            }
+        });
+        emailField.setOnKeyPressed(e -> {
+            if (e.getCode() == KeyCode.ENTER) {
+                handleRegister();
+            }
+        });
+        passwordField.setOnKeyPressed(e -> {
+            if (e.getCode() == KeyCode.ENTER) {
+                handleRegister();
+            }
+        });
+    }
 
     /**
      * Se ejecuta cuando el usuario pulsa "Crear cuenta".
@@ -46,8 +71,39 @@ public class RegisterController {
             return;
         }
 
-        // TODO: conectar con el backend
-        System.out.println("Registro: " + username + " / " + email + " / " + birthDate);
+        new Thread(() -> {
+            try {
+                var body = new java.util.HashMap<String, Object>();
+                body.put("username", username);
+                body.put("email", email);
+                body.put("password", password);
+                body.put("birthDate", birthDate.toString());
+
+                HttpResponse<String> response = AppContext.getInstance()
+                        .getApiService()
+                        .post("/api/auth/register", body);
+
+                Platform.runLater(() -> {
+                    if (response.statusCode() == 201) {
+                        handleGoToLogin();
+                    } else {
+                        try {
+                            ObjectMapper mapper = new ObjectMapper();
+                            JsonNode json = mapper.readTree(response.body());
+                            String msg = json.has("message")
+                                    ? json.get("message").asText()
+                                    : "Error al crear la cuenta";
+                            showError(msg);
+                        } catch (Exception ex) {
+                            showError("Error al crear la cuenta");
+                        }
+                    }
+                });
+            } catch (Exception e) {
+                Platform.runLater(() -> showError("Error de conexión con el servidor"));
+            }
+        }).start();
+
     }
 
     @FXML

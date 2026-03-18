@@ -88,6 +88,10 @@ public class NewTaskController {
         }
     }
 
+    public void setPreSelectedCategory(String category) {
+        Platform.runLater(() -> categoryCombo.setValue(category));
+    }
+
     /**
      * Carga los proyectos del usuario y los añade al combo.
      * La primera opción es siempre "Sin proyecto (tarea personal)".

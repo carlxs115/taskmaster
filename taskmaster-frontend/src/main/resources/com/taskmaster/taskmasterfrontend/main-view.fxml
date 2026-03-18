@@ -107,14 +107,22 @@
             <VBox fx:id="mainArea" HBox.hgrow="ALWAYS" spacing="0"
                   style="-fx-background-color: #f0f0f5;">
 
-                <!-- TOPBAR DEL ÁREA: título + botón Crear -->
+                <!-- TOPBAR DEL ÁREA: título + búsqueda + botón Crear -->
                 <HBox fx:id="areaTopBar"
                       style="-fx-background-color: white; -fx-padding: 14 20 14 20;
                              -fx-border-color: #e8e8e8; -fx-border-width: 0 0 1 0;"
-                      alignment="CENTER_LEFT" spacing="8">
+                      alignment="CENTER_LEFT" spacing="12">
                     <Label fx:id="areaTitle" text="Inicio"
                            style="-fx-font-size: 15px; -fx-font-weight: bold; -fx-text-fill: #1e1e2e;"/>
                     <Region HBox.hgrow="ALWAYS"/>
+                    <TextField fx:id="searchField"
+                               promptText="🔍  Buscar tareas..."
+                               onKeyReleased="#handleSearch"
+                               style="-fx-font-size: 12px; -fx-padding: 6 12 6 12;
+                                      -fx-background-radius: 20px; -fx-border-radius: 20px;
+                                      -fx-border-color: #e8e8e8; -fx-border-width: 1;
+                                      -fx-pref-width: 200px;"
+                               managed="false" visible="false"/>
                     <Button fx:id="createButton" text="＋  Crear  ▾"
                             onAction="#handleCreateMenu"
                             style="-fx-background-color: #7c3aed; -fx-text-fill: white;
