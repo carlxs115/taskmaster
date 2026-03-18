@@ -38,7 +38,7 @@
                   spacing="0">
                 <padding><Insets top="16" bottom="16"/></padding>
 
-                <Button text="🏠  Inicio"
+                <Button fx:id="btnHome" text="🏠  Inicio"
                         onAction="#handleGoHome"
                         maxWidth="Infinity"
                         style="-fx-background-color: #2a1f4e; -fx-text-fill: #a78bfa;
@@ -50,25 +50,25 @@
                 <Label text="MIS TAREAS"
                        style="-fx-text-fill: #555570; -fx-font-size: 10px;
                               -fx-font-weight: bold; -fx-padding: 12 16 4 16;"/>
-                <Button text="📋  Todas las tareas"
+                <Button fx:id="btnAllTasks" text="📋  Todas las tareas"
                         onAction="#handleAllTasks"
                         maxWidth="Infinity"
                         style="-fx-background-color: transparent; -fx-text-fill: #9999bb;
                                -fx-font-size: 13px; -fx-cursor: hand; -fx-alignment: CENTER-LEFT;
                                -fx-padding: 7 16 7 16;"/>
-                <Button text="👤  Personal"
+                <Button fx:id="btnPersonal" text="👤  Personal"
                         onAction="#handleCategoryPersonal"
                         maxWidth="Infinity"
                         style="-fx-background-color: transparent; -fx-text-fill: #9999bb;
                                -fx-font-size: 13px; -fx-cursor: hand; -fx-alignment: CENTER-LEFT;
                                -fx-padding: 7 16 7 16;"/>
-                <Button text="📚  Estudios"
+                <Button fx:id="btnEstudios" text="📚  Estudios"
                         onAction="#handleCategoryEstudios"
                         maxWidth="Infinity"
                         style="-fx-background-color: transparent; -fx-text-fill: #9999bb;
                                -fx-font-size: 13px; -fx-cursor: hand; -fx-alignment: CENTER-LEFT;
                                -fx-padding: 7 16 7 16;"/>
-                <Button text="💼  Trabajo"
+                <Button fx:id="btnTrabajo" text="💼  Trabajo"
                         onAction="#handleCategoryTrabajo"
                         maxWidth="Infinity"
                         style="-fx-background-color: transparent; -fx-text-fill: #9999bb;
@@ -89,13 +89,13 @@
                 </ScrollPane>
 
                 <Separator style="-fx-background-color: #2a2a3e;"/>
-                <Button text="⚙  Ajustes"
+                <Button fx:id="btnSettings" text="⚙  Ajustes"
                         onAction="#handleSettings"
                         maxWidth="Infinity"
                         style="-fx-background-color: transparent; -fx-text-fill: #9999bb;
                                -fx-font-size: 13px; -fx-cursor: hand; -fx-alignment: CENTER-LEFT;
                                -fx-padding: 8 16 8 16;"/>
-                <Button text="🗑  Papelera"
+                <Button fx:id="btnTrash" text="🗑  Papelera"
                         onAction="#handleTrash"
                         maxWidth="Infinity"
                         style="-fx-background-color: transparent; -fx-text-fill: #9999bb;

@@ -28,6 +28,13 @@ public class MainController {
 
     // ── FXML refs ─────────────────────────────────────────────────────────────
     @FXML private Button userMenuButton;
+    @FXML private Button btnHome;
+    @FXML private Button btnAllTasks;
+    @FXML private Button btnPersonal;
+    @FXML private Button btnEstudios;
+    @FXML private Button btnTrabajo;
+    @FXML private Button btnSettings;
+    @FXML private Button btnTrash;
     @FXML private VBox  projectListContainer;
     @FXML private VBox  taskContainer;
     @FXML private Label emptyLabel;
@@ -486,11 +493,16 @@ public class MainController {
             String category = task.has("category") ? task.get("category").asText() : "PERSONAL";
             Long   taskId   = task.get("id").asLong();
 
-            String dueLbl = ""; boolean isUrgentDate = false;
+            String dueLbl = ""; boolean isUrgentDate = false; boolean isOverdue = false;
             if (task.has("dueDate") && !task.get("dueDate").isNull()) {
                 try {
                     LocalDate due = LocalDate.parse(task.get("dueDate").asText().substring(0, 10));
-                    if (due.equals(today))                  { dueLbl = "Hoy";    isUrgentDate = true; }
+                    if (due.isBefore(today)) {
+                        dueLbl = "Vencida";
+                        isUrgentDate = true;
+                        isOverdue = true;
+                    }
+                    else if (due.equals(today))                  { dueLbl = "Hoy";    isUrgentDate = true; }
                     else if (due.equals(today.plusDays(1))) { dueLbl = "Mañana"; }
                     else dueLbl = due.format(DateTimeFormatter.ofPattern("d MMM", new Locale("es", "ES")));
                 } catch (Exception ignored) {}
@@ -514,31 +526,35 @@ public class MainController {
                 }
             }).start());
 
-            VBox body = new VBox(3);
-            HBox.setHgrow(body, Priority.ALWAYS);
             Label titleLabel = new Label(title);
             titleLabel.setStyle("-fx-font-size: 13px; -fx-text-fill: #1e1e2e;");
-            titleLabel.setMaxWidth(Double.MAX_VALUE);
-            HBox meta = new HBox(6);
-            meta.setAlignment(Pos.CENTER_LEFT);
+
+            HBox badges = new HBox(6);
+            badges.setAlignment(Pos.CENTER_LEFT);
+
             if (!dueLbl.isEmpty()) {
                 Label dueLabel = new Label(dueLbl);
-                dueLabel.setStyle("-fx-font-size: 11px; -fx-text-fill: " +
-                        (isUrgentDate ? "#dc2626" : "#888888") + ";");
-                meta.getChildren().add(dueLabel);
+                if (isOverdue) {
+                    dueLabel.setStyle("-fx-font-size: 10px; -fx-padding: 2 7 2 7; " +
+                            "-fx-background-radius: 10px; -fx-text-fill: #991b1b; " +
+                            "-fx-background-color: #fee2e2;");
+                } else {
+                    dueLabel.setStyle("-fx-font-size: 11px; -fx-text-fill: " +
+                            (isUrgentDate ? "#dc2626" : "#888888") + ";");
+                }
+                badges.getChildren().add(dueLabel);
             }
-            meta.getChildren().add(createBadge(category, getCategoryBadgeStyle(category)));
-            body.getChildren().addAll(titleLabel, meta);
+            badges.getChildren().add(createBadge(category, getCategoryBadgeStyle(category)));
 
-            if ("URGENT".equals(priority) || "HIGH".equals(priority)) {
-                Label priBadge = new Label(priority);
-                priBadge.setStyle("-fx-font-size: 10px; -fx-padding: 2 7 2 7; " +
-                        "-fx-background-radius: 10px; -fx-text-fill: white; " +
-                        "-fx-background-color: " + getPriorityColor(priority) + ";");
-                row.getChildren().addAll(check, body, priBadge);
-            } else {
-                row.getChildren().addAll(check, body);
-            }
+            Label priBadge = new Label(priority);
+            priBadge.setStyle("-fx-font-size: 10px; -fx-padding: 2 7 2 7; " +
+                    "-fx-background-radius: 10px; -fx-text-fill: white; " +
+                    "-fx-background-color: " + getPriorityColor(priority) + ";");
+            badges.getChildren().add(priBadge);
+
+            Region spacer = new Region();
+            HBox.setHgrow(spacer, Priority.ALWAYS);
+            row.getChildren().addAll(check, titleLabel, badges);
             panel.getChildren().add(row);
         }
         return panel;
@@ -628,7 +644,29 @@ public class MainController {
         deleteBtn.setStyle("-fx-background-color: transparent; -fx-cursor: hand; -fx-font-size: 14px;");
         deleteBtn.setOnAction(e -> handleDeleteTask(taskId));
 
-        card.getChildren().addAll(checkBox, titleLabel, priorityBadge, editBtn, deleteBtn);
+        boolean isOverdue = false;
+        if (task.has("dueDate") && !task.get("dueDate").isNull()
+                && !"DONE".equals(status) && !"CANCELLED".equals(status)) {
+            try {
+                LocalDate dueDate = LocalDate.parse(task.get("dueDate").asText().substring(0, 10));
+                isOverdue = dueDate.isBefore(LocalDate.now());
+            } catch (Exception ignored) {}
+        }
+
+        if (isOverdue) {
+            card.setStyle("-fx-background-color: white; -fx-padding: 12 16 12 14; " +
+                    "-fx-background-radius: 8px; -fx-border-color: #e8e8e8; " +
+                    "-fx-border-radius: 8px; -fx-border-width: 1; " +
+                    "-fx-border-color: #fecaca; " +
+                    "-fx-border-left-color: #e74c3c; -fx-border-width: 1 1 1 3;");
+            Label overdueLabel = new Label("Vencida");
+            overdueLabel.setStyle("-fx-font-size: 10px; -fx-padding: 2 7 2 7; " +
+                    "-fx-background-radius: 10px; -fx-text-fill: #991b1b; " +
+                    "-fx-background-color: #fee2e2;");
+            card.getChildren().addAll(checkBox, titleLabel, overdueLabel, priorityBadge, editBtn, deleteBtn);
+        } else {
+            card.getChildren().addAll(checkBox, titleLabel, priorityBadge, editBtn, deleteBtn);
+        }
         return card;
     }
 
@@ -649,6 +687,7 @@ public class MainController {
         removeOverlayPanels();
         showMainArea();
         hideFilters();
+        setSidebarActive(btnHome);
         loadHome();
     }
 
@@ -660,6 +699,7 @@ public class MainController {
         selectedCategory  = null;
         areaTitle.setText("Todas las tareas");
         showFilters();
+        setSidebarActive(btnAllTasks);
         new Thread(() -> {
             try {
                 HttpResponse<String> r = AppContext.getInstance()
@@ -674,9 +714,9 @@ public class MainController {
         }).start();
     }
 
-    @FXML private void handleCategoryPersonal() { loadTasksByCategory("PERSONAL", "👤 Personal"); }
-    @FXML private void handleCategoryEstudios() { loadTasksByCategory("ESTUDIOS", "📚 Estudios"); }
-    @FXML private void handleCategoryTrabajo()  { loadTasksByCategory("TRABAJO",  "💼 Trabajo");  }
+    @FXML private void handleCategoryPersonal() { loadTasksByCategory("PERSONAL", "👤 Personal"); setSidebarActive(btnPersonal); }
+    @FXML private void handleCategoryEstudios() { loadTasksByCategory("ESTUDIOS", "📚 Estudios"); setSidebarActive(btnEstudios); }
+    @FXML private void handleCategoryTrabajo()  { loadTasksByCategory("TRABAJO",  "💼 Trabajo");  setSidebarActive(btnTrabajo);  }
 
     private void loadTasksByCategory(String category, String title) {
         removeOverlayPanels();
@@ -794,6 +834,7 @@ public class MainController {
             TrashController controller = loader.getController();
             trashController = controller;
             controller.setOnTrashChanged(() -> { loadProjects(); reloadTasks(); });
+            setSidebarActive(btnTrash);
             swapMainAreaWith(trashView);
         } catch (IOException e) {
             showAlert("Error", "No se pudo abrir la papelera");
@@ -808,6 +849,7 @@ public class MainController {
             VBox settingsView = loader.load();
             HBox.setHgrow(settingsView, Priority.ALWAYS);
             settingsView.setUserData("settings");
+            setSidebarActive(btnSettings);
             swapMainAreaWith(settingsView);
         } catch (Exception e) {
             e.printStackTrace(); // ← añade esta línea
@@ -842,8 +884,18 @@ public class MainController {
 
     private HBox getCenterHBox() {
         javafx.scene.layout.BorderPane root =
-                (javafx.scene.layout.BorderPane) mainArea.getScene().getRoot();
+                (javafx.scene.layout.BorderPane) btnHome.getScene().getRoot();
         return (HBox) root.getCenter();
+    }
+
+    private static final String SIDEBAR_ACTIVE   = "-fx-background-color: #2a1f4e; -fx-text-fill: #a78bfa; -fx-font-size: 13px; -fx-cursor: hand; -fx-alignment: CENTER-LEFT; -fx-padding: 8 16 8 18;";
+    private static final String SIDEBAR_INACTIVE = "-fx-background-color: transparent; -fx-text-fill: #9999bb; -fx-font-size: 13px; -fx-cursor: hand; -fx-alignment: CENTER-LEFT; -fx-padding: 7 16 7 16;";
+
+    private void setSidebarActive(Button active) {
+        for (Button btn : new Button[]{btnHome, btnAllTasks, btnPersonal, btnEstudios, btnTrabajo, btnSettings, btnTrash}) {
+            btn.setStyle(SIDEBAR_INACTIVE);
+        }
+        active.setStyle(SIDEBAR_ACTIVE);
     }
 
     private void showFilters() {
@@ -1029,9 +1081,16 @@ public class MainController {
                                 .getApiService().delete("/api/tasks/" + taskId);
                         Platform.runLater(() -> {
                             if (resp.statusCode() == 200 || resp.statusCode() == 204) {
-                                if (currentProjectId != null) loadTasksForProject(currentProjectId);
-                                else if (currentCategory != null) loadTasksByCategory(currentCategory, currentTitle);
-                                else loadHome();
+                                if (currentProjectId != null) {
+                                    loadTasksForProject(currentProjectId);
+                                }
+                                else if (currentCategory != null) {
+                                    loadTasksByCategory(currentCategory, currentTitle);
+                                } else if (!"Inicio".equals(currentTitle)) {
+                                    handleAllTasks();
+                                } else {
+                                    loadHome();
+                                }
                                 if (trashController != null) trashController.refresh();
                             } else showAlert("Error", "No se pudo eliminar la tarea");
                         });
