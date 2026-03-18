@@ -7,15 +7,13 @@ import javafx.application.Platform;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Scene;
-import javafx.scene.control.Button;
-import javafx.scene.control.Label;
-import javafx.scene.control.PasswordField;
-import javafx.scene.control.TextField;
+import javafx.scene.control.*;
 import javafx.scene.input.KeyCode;
 import javafx.stage.Stage;
 
 import java.io.IOException;
 import java.net.http.HttpResponse;
+import java.time.LocalDate;
 
 /**
  * LOGINCONTROLLER
@@ -90,8 +88,20 @@ public class LoginController {
                     AppContext.getInstance().setCurrentUsername(returnedUsername);
                     AppContext.getInstance().setCurrentPassword(password);
 
+                    // Guardar birthDate y comprobar cumpleaños
+                    if (jsonNode.has("birthDate") && !jsonNode.get("birthDate").isNull()) {
+                        try {
+                            LocalDate birthDate = LocalDate.parse(
+                                    jsonNode.get("birthDate").asText().substring(0, 10));
+                            AppContext.getInstance().setCurrentBirthDate(birthDate);
+                        } catch (Exception ignored) {}
+                    }
+
                     // Navegamos a la pantalla principal en el hilo de JavaFX
-                    Platform.runLater(() -> navigateToMain());
+                    Platform.runLater(() -> {
+                        navigateToMain();
+                        checkBirthday();
+                    });
                 } else {
                     // Login fallido — mostramos error
                     Platform.runLater(() -> {
@@ -144,6 +154,28 @@ public class LoginController {
             stage.setScene(new Scene(loader.load(), 400, 600));
         } catch (IOException e) {
             showError("Error al cargar la pantalla de registro");
+        }
+    }
+
+    private void checkBirthday() {
+        LocalDate birthDate = AppContext.getInstance().getCurrentBirthDate();
+
+        if (birthDate == null) {
+            return;
+        }
+        LocalDate today = LocalDate.now();
+
+        if (birthDate.getMonthValue() == today.getMonthValue()
+                && birthDate.getDayOfMonth() == today.getDayOfMonth()) {
+            Alert alert = new Alert(Alert.AlertType.INFORMATION);
+            alert.setTitle("🎂 ¡Feliz cumpleaños!");
+            alert.setHeaderText("¡Feliz cumpleaños, " +
+                    AppContext.getInstance().getCurrentUsername() + "! 🎉");
+            alert.setContentText("El equipo de TaskMaster te desea un feliz cumpleaños. " +
+                    "¡Que tengas un día increíble!");
+            ButtonType gracias = new ButtonType("¡Gracias!");
+            alert.getButtonTypes().setAll(gracias);
+            alert.showAndWait();
         }
     }
 

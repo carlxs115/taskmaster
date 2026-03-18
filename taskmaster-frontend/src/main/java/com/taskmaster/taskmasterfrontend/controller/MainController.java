@@ -338,6 +338,23 @@ public class MainController {
         greetingBox.getChildren().add(greetingText);
         taskContainer.getChildren().add(greetingBox);
 
+        // Banner de cumpleaños
+        LocalDate birthDate = AppContext.getInstance().getCurrentBirthDate();
+        if (birthDate != null) {
+            if (birthDate.getMonthValue() == today.getMonthValue()
+                    && birthDate.getDayOfMonth() == today.getDayOfMonth()) {
+                HBox birthdayBanner = new HBox();
+                birthdayBanner.setStyle("-fx-background-color: #fef3c7; -fx-padding: 10 24 10 24; " +
+                        "-fx-border-color: #fcd34d; -fx-border-width: 0 0 1 0;");
+                birthdayBanner.setAlignment(Pos.CENTER_LEFT);
+                Label birthdayLabel = new Label("🎂  ¡Feliz cumpleaños, " +
+                        AppContext.getInstance().getCurrentUsername() + "! Que tengas un día genial 🎉");
+                birthdayLabel.setStyle("-fx-font-size: 13px; -fx-text-fill: #92400e;");
+                birthdayBanner.getChildren().add(birthdayLabel);
+                taskContainer.getChildren().add(birthdayBanner);
+            }
+        }
+
         // ── Stats ─────────────────────────────────────────────────────────────
         int[] stats = computeStats(home);
         HBox statsRow = new HBox(10);

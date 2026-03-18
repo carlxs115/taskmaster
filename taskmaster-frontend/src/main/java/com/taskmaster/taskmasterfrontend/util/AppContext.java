@@ -2,6 +2,8 @@ package com.taskmaster.taskmasterfrontend.util;
 
 import com.taskmaster.taskmasterfrontend.service.ApiService;
 
+import java.time.LocalDate;
+
 /**
  * APPCONTEXT
  *
@@ -27,6 +29,8 @@ public class AppContext {
     private String currentUsername;
     private String currentPassword;
 
+    private LocalDate currentBirthDate;
+
     /**
      * Constructor privado - nadie puede crear instancias desde fuera.
      */
@@ -37,6 +41,14 @@ public class AppContext {
     public String getCurrentPassword() { return currentPassword; }
 
     public void setCurrentPassword(String currentPassword) { this.currentPassword = currentPassword; }
+
+    public LocalDate getCurrentBirthDate() {
+        return currentBirthDate;
+    }
+
+    public void setCurrentBirthDate(LocalDate birthDate) {
+        this.currentBirthDate = birthDate;
+    }
 
     /**
      * Devuelve la instancia única del AppContext.
@@ -77,5 +89,6 @@ public class AppContext {
         this.currentUsername = null;
         this.apiService.setCredentials(null, null);
         this.currentPassword = null;
+        this.currentBirthDate = null;
     }
 }
