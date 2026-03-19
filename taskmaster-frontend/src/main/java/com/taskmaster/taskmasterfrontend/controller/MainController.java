@@ -661,6 +661,10 @@ public class MainController {
         deleteBtn.setStyle("-fx-background-color: transparent; -fx-cursor: hand; -fx-font-size: 14px;");
         deleteBtn.setOnAction(e -> handleDeleteTask(taskId));
 
+        Button detailBtn = new Button("👁");
+        detailBtn.setStyle("-fx-background-color: transparent; -fx-cursor: hand; -fx-font-size: 14px;");
+        detailBtn.setOnAction(e -> openTaskDetail(task));
+
         boolean isOverdue = false;
         if (task.has("dueDate") && !task.get("dueDate").isNull()
                 && !"DONE".equals(status) && !"CANCELLED".equals(status)) {
@@ -680,11 +684,29 @@ public class MainController {
             overdueLabel.setStyle("-fx-font-size: 10px; -fx-padding: 2 7 2 7; " +
                     "-fx-background-radius: 10px; -fx-text-fill: #991b1b; " +
                     "-fx-background-color: #fee2e2;");
-            card.getChildren().addAll(checkBox, titleLabel, overdueLabel, priorityBadge, editBtn, deleteBtn);
+            card.getChildren().addAll(checkBox, titleLabel, overdueLabel, priorityBadge, detailBtn, editBtn, deleteBtn);
         } else {
-            card.getChildren().addAll(checkBox, titleLabel, priorityBadge, editBtn, deleteBtn);
+            card.getChildren().addAll(checkBox, titleLabel, priorityBadge, detailBtn, editBtn, deleteBtn);
         }
         return card;
+    }
+
+    private void openTaskDetail(JsonNode task) {
+        try {
+            FXMLLoader loader = new FXMLLoader(
+                    getClass().getResource("/com/taskmaster/taskmasterfrontend/task-detail-view.fxml"));
+            VBox root = loader.load();
+            TaskDetailController controller = loader.getController();
+            controller.initData(task);
+            controller.setOnTaskChanged(this::reloadTasks);
+            Stage dialog = new Stage();
+            dialog.setTitle("Detalles de la tarea");
+            dialog.setScene(new Scene(root, 600, 550));
+            dialog.initModality(Modality.APPLICATION_MODAL);
+            dialog.showAndWait();
+        } catch (IOException e) {
+            showAlert("Error", "No se pudo abrir el detalle de la tarea");
+        }
     }
 
     private void updateTitleStyle(Label l, boolean done) {

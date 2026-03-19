@@ -39,6 +39,8 @@ public class NewTaskController {
     private Long preSelectedProjectId;
     private Runnable onTaskCreated;
 
+    private Long parentTaskId;
+
     private final List<Long> projectIds = new ArrayList<>();
 
     private final ObjectMapper objectMapper = new ObjectMapper();
@@ -90,6 +92,10 @@ public class NewTaskController {
 
     public void setPreSelectedCategory(String category) {
         Platform.runLater(() -> categoryCombo.setValue(category));
+    }
+
+    public void setParentTaskId(Long parentTaskId) {
+        this.parentTaskId = parentTaskId;
     }
 
     /**
@@ -171,6 +177,9 @@ public class NewTaskController {
                 }
                 if (projectId == null) {
                     body.put("category", categoryCombo.getValue());
+                }
+                if (parentTaskId != null) {
+                    body.put("parentTaskId", parentTaskId);
                 }
 
                 HttpResponse<String> response = AppContext.getInstance()

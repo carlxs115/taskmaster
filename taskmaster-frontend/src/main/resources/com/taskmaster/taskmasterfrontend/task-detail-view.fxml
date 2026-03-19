@@ -1,0 +1,103 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<VBox xmlns:fx="http://javafx.com/fxml"
+      fx:controller="com.taskmaster.taskmasterfrontend.controller.TaskDetailController"
+      spacing="0" style="-fx-background-color: #f0f0f5;">
+
+    <!-- Cabecera -->
+    <HBox style="-fx-background-color: white; -fx-padding: 14 20 14 20;
+                 -fx-border-color: #e8e8e8; -fx-border-width: 0 0 1 0;"
+          alignment="CENTER_LEFT" spacing="10">
+        <Label fx:id="taskIdLabel"
+               style="-fx-font-size: 11px; -fx-text-fill: #888888; -fx-padding: 2 8 2 8;
+                      -fx-background-color: #f0f0f5; -fx-background-radius: 4px;"/>
+        <Label fx:id="taskTitleLabel"
+               style="-fx-font-size: 16px; -fx-font-weight: bold; -fx-text-fill: #1e1e2e;"/>
+        <Region HBox.hgrow="ALWAYS"/>
+        <Button text="✏️  Editar"
+                fx:id="editButton"
+                onAction="#handleEdit"
+                style="-fx-background-color: #f0f0f5; -fx-text-fill: #555555;
+                       -fx-font-size: 12px; -fx-background-radius: 6px;
+                       -fx-cursor: hand; -fx-padding: 5 12 5 12;"/>
+        <Button text="Cerrar"
+                onAction="#handleClose"
+                style="-fx-background-color: transparent; -fx-text-fill: #888888;
+                       -fx-font-size: 12px; -fx-cursor: hand; -fx-padding: 5 12 5 12;"/>
+    </HBox>
+
+    <ScrollPane VBox.vgrow="ALWAYS" fitToWidth="true"
+                style="-fx-background-color: transparent; -fx-border-color: transparent;">
+        <VBox spacing="16" style="-fx-padding: 20;">
+
+            <!-- Badges -->
+            <HBox spacing="8" alignment="CENTER_LEFT">
+                <Label fx:id="statusBadge"
+                       style="-fx-font-size: 11px; -fx-padding: 3 10 3 10;
+                              -fx-background-radius: 10px; -fx-text-fill: white;"/>
+                <Label fx:id="priorityBadge"
+                       style="-fx-font-size: 11px; -fx-padding: 3 10 3 10;
+                              -fx-background-radius: 10px; -fx-text-fill: white;"/>
+                <Label fx:id="categoryBadge"
+                       style="-fx-font-size: 11px; -fx-padding: 3 10 3 10;
+                              -fx-background-radius: 10px;"/>
+                <Label fx:id="dueDateLabel"
+                       style="-fx-font-size: 11px; -fx-padding: 3 10 3 10;
+                              -fx-background-radius: 10px; -fx-text-fill: #666666;
+                              -fx-background-color: #f0f0f5;"/>
+            </HBox>
+
+            <!-- Descripción -->
+            <VBox spacing="6"
+                  style="-fx-background-color: white; -fx-padding: 14 16 14 16;
+                         -fx-background-radius: 8px; -fx-border-color: #e8e8e8;
+                         -fx-border-radius: 8px; -fx-border-width: 1;">
+                <Label text="Descripción"
+                       style="-fx-font-size: 11px; -fx-font-weight: bold; -fx-text-fill: #888888;"/>
+                <Label fx:id="descriptionLabel"
+                       style="-fx-font-size: 13px; -fx-text-fill: #1e1e2e;"
+                       wrapText="true"/>
+            </VBox>
+
+            <!-- Subtareas -->
+            <VBox spacing="0"
+                  style="-fx-background-color: white; -fx-padding: 14 16 14 16;
+                         -fx-background-radius: 8px; -fx-border-color: #e8e8e8;
+                         -fx-border-radius: 8px; -fx-border-width: 1;">
+
+                <HBox alignment="CENTER_LEFT" spacing="10" style="-fx-padding: 0 0 10 0;">
+                    <Label text="Subtareas"
+                           style="-fx-font-size: 13px; -fx-font-weight: bold; -fx-text-fill: #1e1e2e;"/>
+                    <Label fx:id="subtaskProgressLabel"
+                           style="-fx-font-size: 11px; -fx-text-fill: #888888;
+                                  -fx-padding: 2 8 2 8; -fx-background-color: #f0f0f5;
+                                  -fx-background-radius: 20px;"/>
+                    <Region HBox.hgrow="ALWAYS"/>
+                    <Button text="＋  Nueva subtarea"
+                            onAction="#handleNewSubtask"
+                            style="-fx-background-color: #7c3aed; -fx-text-fill: white;
+                                   -fx-font-size: 11px; -fx-background-radius: 6px;
+                                   -fx-cursor: hand; -fx-padding: 4 10 4 10;"/>
+                </HBox>
+
+                <!-- Barra de progreso -->
+                <StackPane fx:id="progressBarBg"
+                           style="-fx-background-color: #f0f0f5; -fx-background-radius: 3px;"
+                           minHeight="6" maxHeight="6"
+                           managed="false" visible="false">
+                    <StackPane fx:id="progressBarFill"
+                               style="-fx-background-color: #7c3aed; -fx-background-radius: 3px;"
+                               StackPane.alignment="CENTER_LEFT"/>
+                </StackPane>
+
+                <VBox fx:id="subtaskContainer" spacing="0" style="-fx-padding: 8 0 0 0;"/>
+
+                <Label fx:id="emptySubtasksLabel"
+                       text="Sin subtareas. ¡Añade una!"
+                       style="-fx-text-fill: #aaaaaa; -fx-font-size: 12px; -fx-padding: 8 0 0 0;"/>
+            </VBox>
+        </VBox>
+    </ScrollPane>
+</VBox>
