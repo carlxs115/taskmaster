@@ -56,9 +56,9 @@ public class NewTaskController {
     @FXML
     public void initialize() {
         priorityCombo.setItems(FXCollections.observableArrayList(
-                "LOW", "MEDIUM", "HIGH", "URGENT"
+                "BAJA", "MEDIA", "ALTA", "URGENTE"
         ));
-        priorityCombo.setValue("MEDIUM");
+        priorityCombo.setValue("MEDIA");
 
         categoryCombo.setItems(FXCollections.observableArrayList(
                 "PERSONAL", "ESTUDIOS", "TRABAJO"

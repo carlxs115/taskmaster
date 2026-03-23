@@ -45,8 +45,8 @@ public class NewSubtaskController {
     @FXML
     public void initialize() {
         priorityCombo.setItems(FXCollections.observableArrayList(
-                "LOW", "MEDIUM", "HIGH", "URGENT"));
-        priorityCombo.setValue("MEDIUM");
+                "BAJA", "MEDIA", "ALTA", "URGENTE"));
+        priorityCombo.setValue("MEDIA");
 
         titleField.setOnKeyPressed(e -> {
             if (e.getCode() == javafx.scene.input.KeyCode.ENTER) handleCreate();

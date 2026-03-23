@@ -1,0 +1,127 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<VBox xmlns:fx="http://javafx.com/fxml"
+      fx:controller="com.taskmaster.taskmasterfrontend.controller.ProjectDetailController"
+      spacing="0" style="-fx-background-color: #f0f0f5;">
+
+    <!-- Cabecera -->
+    <HBox style="-fx-background-color: white; -fx-padding: 14 20 14 20;
+                 -fx-border-color: #e8e8e8; -fx-border-width: 0 0 1 0;"
+          alignment="CENTER_LEFT" spacing="10">
+        <Label fx:id="projectIdLabel"
+               style="-fx-font-size: 11px; -fx-text-fill: #888888; -fx-padding: 2 8 2 8;
+                      -fx-background-color: #f0f0f5; -fx-background-radius: 4px;"/>
+        <Label fx:id="projectNameLabel"
+               style="-fx-font-size: 16px; -fx-font-weight: bold; -fx-text-fill: #1e1e2e;"/>
+        <Region HBox.hgrow="ALWAYS"/>
+        <Button text="Cerrar"
+                onAction="#handleClose"
+                style="-fx-background-color: transparent; -fx-text-fill: #888888;
+                       -fx-font-size: 12px; -fx-cursor: hand; -fx-padding: 5 12 5 12;"/>
+    </HBox>
+
+    <ScrollPane VBox.vgrow="ALWAYS" fitToWidth="true"
+                style="-fx-background-color: transparent; -fx-border-color: transparent;">
+        <VBox spacing="16" style="-fx-padding: 20;">
+
+            <!-- Badges estado/prioridad/categoría -->
+            <HBox spacing="8" alignment="CENTER_LEFT">
+                <Label fx:id="statusBadge"
+                       style="-fx-font-size: 11px; -fx-padding: 3 10 3 10;
+                              -fx-background-radius: 10px; -fx-text-fill: white;"/>
+                <Label fx:id="priorityBadge"
+                       style="-fx-font-size: 11px; -fx-padding: 3 10 3 10;
+                              -fx-background-radius: 10px; -fx-text-fill: white;"/>
+                <Label fx:id="categoryBadge"
+                       style="-fx-font-size: 11px; -fx-padding: 3 10 3 10;
+                              -fx-background-radius: 10px;"/>
+            </HBox>
+
+            <!-- Descripción -->
+            <VBox spacing="6"
+                  style="-fx-background-color: white; -fx-padding: 14 16 14 16;
+                         -fx-background-radius: 8px; -fx-border-color: #e8e8e8;
+                         -fx-border-radius: 8px; -fx-border-width: 1;">
+                <Label text="Descripción"
+                       style="-fx-font-size: 11px; -fx-font-weight: bold; -fx-text-fill: #888888;"/>
+                <Label fx:id="descriptionLabel"
+                       style="-fx-font-size: 13px; -fx-text-fill: #1e1e2e;"
+                       wrapText="true"/>
+            </VBox>
+
+            <!-- Estadísticas -->
+            <HBox spacing="10">
+                <VBox fx:id="statTotal" alignment="CENTER" spacing="4" HBox.hgrow="ALWAYS"
+                      style="-fx-background-color: white; -fx-padding: 12 8 12 8;
+                             -fx-background-radius: 8px; -fx-border-color: #e8e8e8;
+                             -fx-border-radius: 8px; -fx-border-width: 1;">
+                    <Label fx:id="statTotalNum"
+                           style="-fx-font-size: 22px; -fx-font-weight: bold; -fx-text-fill: #1e1e2e;"/>
+                    <Label text="Total" style="-fx-font-size: 11px; -fx-text-fill: #888888;"/>
+                </VBox>
+                <VBox alignment="CENTER" spacing="4" HBox.hgrow="ALWAYS"
+                      style="-fx-background-color: white; -fx-padding: 12 8 12 8;
+                             -fx-background-radius: 8px; -fx-border-color: #e8e8e8;
+                             -fx-border-radius: 8px; -fx-border-width: 1;">
+                    <Label fx:id="statPendingNum"
+                           style="-fx-font-size: 22px; -fx-font-weight: bold; -fx-text-fill: #3b82f6;"/>
+                    <Label text="Pendientes" style="-fx-font-size: 11px; -fx-text-fill: #888888;"/>
+                </VBox>
+                <VBox alignment="CENTER" spacing="4" HBox.hgrow="ALWAYS"
+                      style="-fx-background-color: white; -fx-padding: 12 8 12 8;
+                             -fx-background-radius: 8px; -fx-border-color: #e8e8e8;
+                             -fx-border-radius: 8px; -fx-border-width: 1;">
+                    <Label fx:id="statDoneNum"
+                           style="-fx-font-size: 22px; -fx-font-weight: bold; -fx-text-fill: #22c55e;"/>
+                    <Label text="Completadas" style="-fx-font-size: 11px; -fx-text-fill: #888888;"/>
+                </VBox>
+                <VBox alignment="CENTER" spacing="4" HBox.hgrow="ALWAYS"
+                      style="-fx-background-color: white; -fx-padding: 12 8 12 8;
+                             -fx-background-radius: 8px; -fx-border-color: #e8e8e8;
+                             -fx-border-radius: 8px; -fx-border-width: 1;">
+                    <Label fx:id="statOverdueNum"
+                           style="-fx-font-size: 22px; -fx-font-weight: bold; -fx-text-fill: #e74c3c;"/>
+                    <Label text="Vencidas" style="-fx-font-size: 11px; -fx-text-fill: #888888;"/>
+                </VBox>
+            </HBox>
+
+            <!-- Barra de progreso -->
+            <VBox spacing="6"
+                  style="-fx-background-color: white; -fx-padding: 14 16 14 16;
+                         -fx-background-radius: 8px; -fx-border-color: #e8e8e8;
+                         -fx-border-radius: 8px; -fx-border-width: 1;">
+                <HBox alignment="CENTER_LEFT">
+                    <Label text="Progreso"
+                           style="-fx-font-size: 11px; -fx-font-weight: bold; -fx-text-fill: #888888;"/>
+                    <Region HBox.hgrow="ALWAYS"/>
+                    <Label fx:id="progressLabel"
+                           style="-fx-font-size: 11px; -fx-text-fill: #888888;"/>
+                </HBox>
+                <StackPane fx:id="progressBarBg"
+                           style="-fx-background-color: #f0f0f5; -fx-background-radius: 4px;"
+                           minHeight="8" maxHeight="8">
+                    <StackPane fx:id="progressBarFill"
+                               style="-fx-background-color: #7c3aed; -fx-background-radius: 4px;"
+                               StackPane.alignment="CENTER_LEFT"/>
+                </StackPane>
+            </VBox>
+
+            <!-- Lista de tareas -->
+            <VBox spacing="0"
+                  style="-fx-background-color: white; -fx-padding: 14 16 14 16;
+                         -fx-background-radius: 8px; -fx-border-color: #e8e8e8;
+                         -fx-border-radius: 8px; -fx-border-width: 1;">
+                <Label text="Tareas"
+                       style="-fx-font-size: 13px; -fx-font-weight: bold;
+                              -fx-text-fill: #1e1e2e; -fx-padding: 0 0 10 0;"/>
+                <VBox fx:id="taskListContainer" spacing="0"/>
+                <Label fx:id="emptyTasksLabel"
+                       text="Este proyecto no tiene tareas."
+                       style="-fx-text-fill: #aaaaaa; -fx-font-size: 12px; -fx-padding: 8 0 0 0;"/>
+            </VBox>
+
+        </VBox>
+    </ScrollPane>
+</VBox>

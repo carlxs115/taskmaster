@@ -38,11 +38,14 @@ public class EditTaskController {
     @FXML
     public void initialize() {
         statusCombo.setItems(FXCollections.observableArrayList(
-                "TODO", "IN_PROGRESS", "DONE", "CANCELLED"
+                "PENDIENTE", "EN CURSO", "COMPLETADA", "CANCELADA"
         ));
+        statusCombo.setValue("PENDIENTE");
+
         priorityCombo.setItems(FXCollections.observableArrayList(
-                "LOW", "MEDIUM", "HIGH", "URGENT"
+                "BAJA", "MEDIA", "ALTA", "URGENTE"
         ));
+        priorityCombo.setValue("MEDIA");
     }
 
     /**
@@ -56,8 +59,8 @@ public class EditTaskController {
             descriptionField.setText(task.get("description").asText());
         }
 
-        statusCombo.setValue(task.get("status").asText());
-        priorityCombo.setValue(task.get("priority").asText());
+        statusCombo.setValue(translateStatus(task.get("status").asText()));
+        priorityCombo.setValue(translatePriority(task.get("priority").asText()));
 
         if (task.has("dueDate") && !task.get("dueDate").isNull()) {
             dueDatePicker.setValue(LocalDate.parse(task.get("dueDate").asText()));
@@ -77,8 +80,8 @@ public class EditTaskController {
                 Map<String, Object> body = new HashMap<>();
                 body.put("title", title);
                 body.put("description", descriptionField.getText().trim());
-                body.put("status", statusCombo.getValue());
-                body.put("priority", priorityCombo.getValue());
+                body.put("status",   reverseStatus(statusCombo.getValue()));
+                body.put("priority", reversePriority(priorityCombo.getValue()));
                 if (dueDatePicker.getValue() != null) {
                     body.put("dueDate", dueDatePicker.getValue().toString());
                 }
@@ -110,6 +113,46 @@ public class EditTaskController {
     private void closeDialog() {
         Stage stage = (Stage) titleField.getScene().getWindow();
         stage.close();
+    }
+
+    private String translateStatus(String s) {
+        return switch (s) {
+            case "TODO"        -> "PENDIENTE";
+            case "IN_PROGRESS" -> "EN CURSO";
+            case "DONE"        -> "COMPLETADA";
+            case "CANCELLED"   -> "CANCELADA";
+            default            -> s;
+        };
+    }
+
+    private String translatePriority(String p) {
+        return switch (p) {
+            case "LOW"    -> "BAJA";
+            case "MEDIUM" -> "MEDIA";
+            case "HIGH"   -> "ALTA";
+            case "URGENT" -> "URGENTE";
+            default       -> p;
+        };
+    }
+
+    private String reverseStatus(String s) {
+        return switch (s) {
+            case "PENDIENTE"   -> "TODO";
+            case "EN CURSO" -> "IN_PROGRESS";
+            case "COMPLETADA"  -> "DONE";
+            case "CANCELADA"   -> "CANCELLED";
+            default            -> s;
+        };
+    }
+
+    private String reversePriority(String p) {
+        return switch (p) {
+            case "BAJA"    -> "LOW";
+            case "MEDIA"   -> "MEDIUM";
+            case "ALTA"    -> "HIGH";
+            case "URGENTE" -> "URGENT";
+            default        -> p;
+        };
     }
 
     private void showError(String message) {

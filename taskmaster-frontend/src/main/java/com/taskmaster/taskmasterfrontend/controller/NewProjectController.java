@@ -45,14 +45,14 @@ public class NewProjectController {
         categoryCombo.setValue("PERSONAL");
 
         statusCombo.setItems(FXCollections.observableArrayList(
-                "TODO", "IN_PROGRESS", "DONE", "CANCELLED"
+                "PENDIENTE", "EN CURSO", "COMPLETADO", "CANCELADO"
         ));
-        statusCombo.setValue("TODO");
+        statusCombo.setValue("PENDIENTE");
 
         priorityCombo.setItems(FXCollections.observableArrayList(
-                "LOW", "MEDIUM", "HIGH", "URGENT"
+                "BAJA", "MEDIA", "ALTA", "URGENTE"
         ));
-        priorityCombo.setValue("MEDIUM");
+        priorityCombo.setValue("MEDIA");
     }
 
     @FXML

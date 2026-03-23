@@ -67,13 +67,13 @@ public class TaskDetailController {
         descriptionLabel.setText(desc.isEmpty() ? "Sin descripción" : desc);
 
         // Status badge
-        statusBadge.setText(status);
+        statusBadge.setText(translateStatus(status));
         statusBadge.setStyle("-fx-font-size: 11px; -fx-padding: 3 10 3 10; " +
                 "-fx-background-radius: 10px; -fx-text-fill: white; " +
                 "-fx-background-color: " + getStatusColor(status) + ";");
 
         // Priority badge
-        priorityBadge.setText(priority);
+        priorityBadge.setText(translatePriority(priority));
         priorityBadge.setStyle("-fx-font-size: 11px; -fx-padding: 3 10 3 10; " +
                 "-fx-background-radius: 10px; -fx-text-fill: white; " +
                 "-fx-background-color: " + getPriorityColor(priority) + ";");
@@ -340,6 +340,26 @@ public class TaskDetailController {
             case "ESTUDIOS" -> "-fx-background-color: #fef3c7; -fx-text-fill: #92400e;";
             case "TRABAJO"  -> "-fx-background-color: #dbeafe; -fx-text-fill: #1e40af;";
             default         -> "-fx-background-color: #f0f0f5; -fx-text-fill: #666666;";
+        };
+    }
+
+    private String translateStatus(String status) {
+        return switch (status) {
+            case "TODO"        -> "PENDIENTE";
+            case "IN_PROGRESS" -> "EN CURSO";
+            case "DONE"        -> "COMPLETADA";
+            case "CANCELLED"   -> "CANCELADA";
+            default            -> status;
+        };
+    }
+
+    private String translatePriority(String priority) {
+        return switch (priority) {
+            case "LOW"    -> "BAJA";
+            case "MEDIUM" -> "MEDIA";
+            case "HIGH"   -> "ALTA";
+            case "URGENT" -> "URGENTE";
+            default       -> priority;
         };
     }
 

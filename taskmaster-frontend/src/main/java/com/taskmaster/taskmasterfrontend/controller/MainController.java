@@ -221,11 +221,13 @@ public class MainController {
                     JsonNode projects = objectMapper.readTree(response.body());
                     List<String> names = new ArrayList<>();
                     List<Long>   ids   = new ArrayList<>();
+                    List<JsonNode> nodes    = new ArrayList<>();
                     for (JsonNode p : projects) {
                         names.add(p.get("name").asText());
                         ids.add(p.get("id").asLong());
+                        nodes.add(p);
                     }
-                    Platform.runLater(() -> renderSidebar(names, ids));
+                    Platform.runLater(() -> renderSidebar(names, ids, nodes));
                 }
             } catch (Exception e) {
                 Platform.runLater(() -> showAlert("Error", "No se pudieron cargar los proyectos"));
@@ -233,11 +235,12 @@ public class MainController {
         }).start();
     }
 
-    private void renderSidebar(List<String> names, List<Long> ids) {
+    private void renderSidebar(List<String> names, List<Long> ids, List<JsonNode> nodes) {
         projectListContainer.getChildren().clear();
         for (int i = 0; i < names.size(); i++) {
             final Long   pid  = ids.get(i);
             final String name = names.get(i);
+            final JsonNode pNode = nodes.get(i);
             String dotColor   = getCategoryColorForIndex(i);
 
             HBox row = new HBox(4);
@@ -264,11 +267,13 @@ public class MainController {
                     "-fx-cursor: hand; -fx-font-size: 16px; -fx-padding: 4 8 4 4;");
             menuBtn.setOnAction(e -> {
                 ContextMenu cm = new ContextMenu();
+                MenuItem detail = new MenuItem("👁 Ver detalles");
                 MenuItem edit   = new MenuItem("✏ Editar");
                 MenuItem delete = new MenuItem("🗑 Eliminar");
+                detail.setOnAction(ev -> openProjectDetail(pNode));
                 edit.setOnAction(ev   -> handleEditProject(pid, name));
                 delete.setOnAction(ev -> handleDeleteProject(pid, name));
-                cm.getItems().addAll(edit, delete);
+                cm.getItems().addAll(detail, edit, delete);
                 cm.show(menuBtn, javafx.geometry.Side.BOTTOM, 0, 0);
             });
 
@@ -403,7 +408,7 @@ public class MainController {
 
     private VBox buildProjectsColumn(JsonNode projects) {
         VBox panel = createPanel();
-        panel.getChildren().add(createPanelHeader("Proyectos activos",
+        panel.getChildren().add(createPanelHeader("Proyectos activos ",
                 projects != null ? projects.size() + " proyectos" : "0 proyectos"));
 
         if (projects == null || !projects.isArray() || projects.isEmpty()) {
@@ -428,15 +433,19 @@ public class MainController {
             if (idx++ > 0) panel.getChildren().add(new Separator());
 
             VBox item = new VBox(5);
+            item.setMaxWidth(Double.MAX_VALUE);
+            HBox.setHgrow(item, Priority.ALWAYS);
             item.setStyle("-fx-padding: 10 0 10 0;");
             HBox nameRow = new HBox();
+            nameRow.setMaxWidth(Double.MAX_VALUE);
             nameRow.setAlignment(Pos.CENTER_LEFT);
             Label nameLabel = new Label(pName);
             nameLabel.setStyle("-fx-font-size: 13px; -fx-text-fill: #1e1e2e;");
-            HBox.setHgrow(nameLabel, Priority.ALWAYS);
+            Region spacer = new Region();
+            HBox.setHgrow(spacer, Priority.ALWAYS);
             Label pctLabel = new Label(Math.round(pct) + "%");
             pctLabel.setStyle("-fx-font-size: 11px; -fx-text-fill: #888888;");
-            nameRow.getChildren().addAll(nameLabel, pctLabel);
+            nameRow.getChildren().addAll(nameLabel, spacer, pctLabel);
 
             StackPane barBg = new StackPane();
             barBg.setStyle("-fx-background-color: #f0f0f5; -fx-background-radius: 2px;");
@@ -451,15 +460,28 @@ public class MainController {
             barBg.widthProperty().addListener((obs, o, n) ->
                     barFill.setPrefWidth(n.doubleValue() * pctF / 100.0));
 
+            String pStatus   = project.has("status")   && !project.get("status").isNull()
+                    ? project.get("status").asText()   : "TODO";
+            String pPriority = project.has("priority") && !project.get("priority").isNull()
+                    ? project.get("priority").asText() : "MEDIUM";
+
             HBox metaRow = new HBox(6);
             metaRow.setAlignment(Pos.CENTER_LEFT);
             metaRow.getChildren().addAll(
+                    createBadge(translateStatus(pStatus),   "-fx-font-size: 10px; -fx-padding: 2 7 2 7; " +
+                            "-fx-background-radius: 10px; -fx-text-fill: white; " +
+                            "-fx-background-color: " + getStatusColor(pStatus) + ";"),
+                    createBadge(translatePriority(pPriority), "-fx-font-size: 10px; -fx-padding: 2 7 2 7; " +
+                            "-fx-background-radius: 10px; -fx-text-fill: white; " +
+                            "-fx-background-color: " + getPriorityColor(pPriority) + ";"),
                     createBadge(pCategory, getCategoryBadgeStyle(pCategory)),
                     createBadge(total + " tareas", "-fx-background-color: #f0f0f5; " +
                             "-fx-text-fill: #666666; -fx-background-radius: 10px; " +
                             "-fx-font-size: 10px; -fx-padding: 2 7 2 7;"));
 
             item.getChildren().addAll(nameRow, barBg, metaRow);
+            item.setStyle("-fx-padding: 10 0 10 0; -fx-cursor: hand;");
+            item.setOnMouseClicked(e -> openProjectDetail(project));
             panel.getChildren().add(item);
         }
         return panel;
@@ -491,7 +513,7 @@ public class MainController {
         List<JsonNode> upcoming = allTasks.subList(0, Math.min(6, allTasks.size()));
 
         VBox panel = createPanel();
-        panel.getChildren().add(createPanelHeader("Tareas próximas",
+        panel.getChildren().add(createPanelHeader("Tareas próximas ",
                 allTasks.size() + " pendiente" + (allTasks.size() != 1 ? "s" : "")));
 
         if (upcoming.isEmpty()) {
@@ -506,6 +528,7 @@ public class MainController {
         for (JsonNode task : upcoming) {
             if (idx++ > 0) panel.getChildren().add(new Separator());
             String title    = task.get("title").asText();
+            String status   = task.has("status")   ? task.get("status").asText()   : "TODO";
             String priority = task.has("priority") ? task.get("priority").asText() : "MEDIUM";
             String category = task.has("category") ? task.get("category").asText() : "PERSONAL";
             Long   taskId   = task.get("id").asLong();
@@ -561,13 +584,17 @@ public class MainController {
                 }
                 badges.getChildren().add(dueLabel);
             }
-            badges.getChildren().add(createBadge(category, getCategoryBadgeStyle(category)));
+            badges.getChildren().add(createBadge(translateStatus(status), "-fx-font-size: 10px; -fx-padding: 2 7 2 7; " +
+                    "-fx-background-radius: 10px; -fx-text-fill: white; " +
+                    "-fx-background-color: " + getStatusColor(status) + ";"));
 
-            Label priBadge = new Label(priority);
+            Label priBadge = new Label(translatePriority(priority));
             priBadge.setStyle("-fx-font-size: 10px; -fx-padding: 2 7 2 7; " +
                     "-fx-background-radius: 10px; -fx-text-fill: white; " +
                     "-fx-background-color: " + getPriorityColor(priority) + ";");
             badges.getChildren().add(priBadge);
+
+            badges.getChildren().add(createBadge(category, getCategoryBadgeStyle(category)));
 
             Region spacer = new Region();
             HBox.setHgrow(spacer, Priority.ALWAYS);
@@ -622,7 +649,7 @@ public class MainController {
         updateTitleStyle(titleLabel, "DONE".equals(status));
         HBox.setHgrow(titleLabel, Priority.ALWAYS);
 
-        Label priorityBadge = new Label(priority);
+        Label priorityBadge = new Label(translatePriority(priority));
         priorityBadge.setStyle("-fx-font-size: 11px; -fx-padding: 2 8 2 8; " +
                 "-fx-background-radius: 10px; -fx-text-fill: white; " +
                 "-fx-background-color: " + getPriorityColor(priority) + ";");
@@ -689,6 +716,23 @@ public class MainController {
             card.getChildren().addAll(checkBox, titleLabel, priorityBadge, detailBtn, editBtn, deleteBtn);
         }
         return card;
+    }
+
+    private void openProjectDetail(JsonNode project) {
+        try {
+            FXMLLoader loader = new FXMLLoader(
+                    getClass().getResource("/com/taskmaster/taskmasterfrontend/project-detail-view.fxml"));
+            VBox root = loader.load();
+            ProjectDetailController controller = loader.getController();
+            controller.initData(project);
+            Stage dialog = new Stage();
+            dialog.setTitle("Detalles del proyecto");
+            dialog.setScene(new Scene(root, 620, 600));
+            dialog.initModality(Modality.APPLICATION_MODAL);
+            dialog.showAndWait();
+        } catch (IOException e) {
+            showAlert("Error", "No se pudo abrir el detalle del proyecto");
+        }
     }
 
     private void openTaskDetail(JsonNode task) {
@@ -1263,6 +1307,27 @@ public class MainController {
             case "URGENT" -> "#e74c3c"; case "HIGH"   -> "#e67e22";
             case "MEDIUM" -> "#3498db"; case "LOW"    -> "#95a5a6";
             default -> "#95a5a6";
+        };
+    }
+
+    private String translateStatus(String status) {
+        return switch (status) {
+            case "TODO"        -> "PENDIENTE";
+            case "IN_PROGRESS" -> "EN CURSO";
+            case "DONE"        -> "COMPLETADA";
+            case "CANCELLED"   -> "CANCELADA";
+            default            -> status;
+        };
+    }
+
+
+    private String translatePriority(String priority) {
+        return switch (priority) {
+            case "LOW"    -> "BAJA";
+            case "MEDIUM" -> "MEDIA";
+            case "HIGH"   -> "ALTA";
+            case "URGENT" -> "URGENTE";
+            default       -> priority;
         };
     }
 
