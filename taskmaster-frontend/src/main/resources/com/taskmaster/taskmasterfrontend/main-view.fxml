@@ -23,9 +23,8 @@
                     onAction="#handleUserMenu"
                     style="-fx-background-color: #2a1f4e; -fx-text-fill: #a78bfa;
                            -fx-font-size: 13px; -fx-font-weight: bold; -fx-cursor: hand;
-                           -fx-background-radius: 18px; -fx-min-width: 36px; -fx-min-height: 36px;
-                           -fx-max-width: 36px; -fx-max-height: 36px;
-                           -fx-border-color: #3d2f6e; -fx-border-radius: 18px; -fx-border-width: 1;"/>
+                           -fx-background-radius: 20px; -fx-padding: 6 14 6 14;
+                           -fx-border-color: #3d2f6e; -fx-border-radius: 20px; -fx-border-width: 1;"/>
         </HBox>
     </top>
 

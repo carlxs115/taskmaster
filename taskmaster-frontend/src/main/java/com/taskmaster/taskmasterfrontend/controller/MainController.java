@@ -69,7 +69,7 @@ public class MainController {
         String initials = username.length() >= 2
                 ? username.substring(0, 2).toUpperCase()
                 : username.toUpperCase();
-        userMenuButton.setText(initials + "  " + username + "  ▾");
+        userMenuButton.setText(username + "  ▾");
 
         statusFilter.setItems(FXCollections.observableArrayList(
                 "Todos", "TODO", "IN_PROGRESS", "DONE", "CANCELLED"));
@@ -93,15 +93,11 @@ public class MainController {
         ContextMenu menu = new ContextMenu();
 
         // Cabecera no clickable con el nombre completo
-        MenuItem header = new MenuItem("👤  " + AppContext.getInstance().getCurrentUsername());
-        header.setStyle("-fx-font-size: 12px; -fx-text-fill: #888888;");
-        header.setDisable(true);
+        MenuItem viewProfile = new MenuItem("👤  Ver Perfil");
+        viewProfile.setStyle("-fx-font-size: 13px; -fx-font-weight: bold;");
+        viewProfile.setOnAction(e -> handleViewProfile());
 
         SeparatorMenuItem sep1 = new SeparatorMenuItem();
-
-        MenuItem editProfile = new MenuItem("✏️  Editar perfil");
-        editProfile.setStyle("-fx-font-size: 13px;");
-        editProfile.setOnAction(e -> openEditProfile());
 
         MenuItem changePassword = new MenuItem("🔒  Cambiar contraseña");
         changePassword.setStyle("-fx-font-size: 13px;");
@@ -119,32 +115,26 @@ public class MainController {
         logout.setStyle("-fx-font-size: 13px;");
         logout.setOnAction(e -> handleLogout());
 
-        menu.getItems().addAll(header, sep1, editProfile, changePassword, sep2, deleteAccount, sep3, logout);
+        menu.getItems().addAll(viewProfile, sep1, changePassword, sep2, deleteAccount, sep3, logout);
         menu.show(userMenuButton, javafx.geometry.Side.BOTTOM, 0, 4);
     }
 
-    private void openEditProfile() {
+    private void handleViewProfile() {
         try {
             FXMLLoader loader = new FXMLLoader(
-                    getClass().getResource("/com/taskmaster/taskmasterfrontend/edit-profile-dialog.fxml"));
-            VBox root = loader.load();
-            EditProfileController controller = loader.getController();
+                    getClass().getResource("/com/taskmaster/taskmasterfrontend/profile-view.fxml"));
+            VBox profileView = loader.load();
+            HBox.setHgrow(profileView, Priority.ALWAYS);
+            profileView.setUserData("profile");
+            ProfileController controller = loader.getController();
             controller.setOnProfileUpdated(() -> {
-                // Actualizamos las iniciales del botón con el nuevo username
                 String username = AppContext.getInstance().getCurrentUsername();
-                String initials = username.length() >= 2
-                        ? username.substring(0, 2).toUpperCase()
-                        : username.toUpperCase();
-                userMenuButton.setText(initials + "  " + username + "  ▾");
+                userMenuButton.setText(username + "  ▾");
                 loadHome();
             });
-            Stage dialog = new Stage();
-            dialog.setTitle("Editar perfil");
-            dialog.setScene(new Scene(root, 400, 340));
-            dialog.initModality(Modality.APPLICATION_MODAL);
-            dialog.showAndWait();
+            swapMainAreaWith(profileView);
         } catch (IOException e) {
-            showAlert("Error", "No se pudo abrir el diálogo");
+            showAlert("Error", "No se pudo abrir el perfil");
         }
     }
 
