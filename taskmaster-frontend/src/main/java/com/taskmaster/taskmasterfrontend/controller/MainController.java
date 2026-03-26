@@ -787,9 +787,24 @@ public class MainController {
         }).start();
     }
 
-    @FXML private void handleCategoryPersonal() { loadTasksByCategory("PERSONAL", "👤 Personal"); setSidebarActive(btnPersonal); }
-    @FXML private void handleCategoryEstudios() { loadTasksByCategory("ESTUDIOS", "📚 Estudios"); setSidebarActive(btnEstudios); }
-    @FXML private void handleCategoryTrabajo()  { loadTasksByCategory("TRABAJO",  "💼 Trabajo");  setSidebarActive(btnTrabajo);  }
+    @FXML private void handleCategoryPersonal() {
+        removeOverlayPanels();
+        showMainArea();
+        loadTasksByCategory("PERSONAL", "👤 Personal");
+        setSidebarActive(btnPersonal);
+    }
+    @FXML private void handleCategoryEstudios() {
+        removeOverlayPanels();
+        showMainArea();
+        loadTasksByCategory("ESTUDIOS", "📚 Estudios");
+        setSidebarActive(btnEstudios);
+    }
+    @FXML private void handleCategoryTrabajo()  {
+        removeOverlayPanels();
+        showMainArea();
+        loadTasksByCategory("TRABAJO",  "💼 Trabajo");
+        setSidebarActive(btnTrabajo);
+    }
 
     private void loadTasksByCategory(String category, String title) {
         removeOverlayPanels();
@@ -937,7 +952,7 @@ public class MainController {
         HBox centerHBox = getCenterHBox();
         centerHBox.getChildren().removeIf(n -> {
             Object ud = n.getUserData();
-            return "trash".equals(ud) || "settings".equals(ud);
+            return "trash".equals(ud) || "settings".equals(ud) || "profile".equals(ud);
         });
         centerHBox.getChildren().add(overlay);
     }
@@ -950,7 +965,7 @@ public class MainController {
     private void removeOverlayPanels() {
         getCenterHBox().getChildren().removeIf(n -> {
             Object ud = n.getUserData();
-            return "trash".equals(ud) || "settings".equals(ud);
+            return "trash".equals(ud) || "settings".equals(ud) || "profile".equals(ud);
         });
         showMainArea();
     }
