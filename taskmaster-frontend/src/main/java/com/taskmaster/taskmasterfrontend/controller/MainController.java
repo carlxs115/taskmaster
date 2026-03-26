@@ -72,12 +72,12 @@ public class MainController {
         userMenuButton.setText(username + "  ▾");
 
         statusFilter.setItems(FXCollections.observableArrayList(
-                "Todos", "TODO", "IN_PROGRESS", "DONE", "CANCELLED"));
+                "Todas", "Pendiente", "En progreso", "Completada", "Cancelada"));
         statusFilter.getSelectionModel().selectedItemProperty().addListener(
                 (obs, o, n) -> { if (n != null) handleStatusFilter(); });
 
         priorityFilter.setItems(FXCollections.observableArrayList(
-                "Todas", "LOW", "MEDIUM", "HIGH", "URGENT"));
+                "Todas", "Baja", "Media", "Alta", "Urgente"));
         priorityFilter.getSelectionModel().selectedItemProperty().addListener(
                 (obs, o, n) -> { if (n != null) handlePriorityFilter(); });
 
