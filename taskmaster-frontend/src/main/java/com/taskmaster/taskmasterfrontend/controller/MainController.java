@@ -9,6 +9,7 @@ import javafx.collections.FXCollections;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.geometry.Pos;
+import javafx.scene.Node;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.layout.*;
@@ -41,6 +42,7 @@ public class MainController {
     @FXML private HBox  taskFiltersBar;
     @FXML private ComboBox<String> statusFilter;
     @FXML private ComboBox<String> priorityFilter;
+    @FXML private ComboBox<String> sortFilter;
     @FXML private Label areaTitle;
     @FXML private Button createButton;
     @FXML private VBox  mainArea;
@@ -49,6 +51,7 @@ public class MainController {
     // ── Estado ────────────────────────────────────────────────────────────────
     private Long   selectedProjectId;
     private String selectedCategory;
+    private boolean viewingAllTasks = false;
     private TrashController trashController;
 
     private final ObjectMapper objectMapper = new ObjectMapper()
@@ -80,6 +83,12 @@ public class MainController {
                 "Todas", "Baja", "Media", "Alta", "Urgente"));
         priorityFilter.getSelectionModel().selectedItemProperty().addListener(
                 (obs, o, n) -> { if (n != null) handlePriorityFilter(); });
+
+        sortFilter.setItems(FXCollections.observableArrayList(
+                "Título A-Z", "Título Z-A", "ID ↑", "ID ↓"));
+        sortFilter.setPromptText("Ordenar por");
+        sortFilter.getSelectionModel().selectedItemProperty().addListener(
+                (obs, o, n) -> { if (n != null) handleSortFilter(); });
 
         loadProjects();
         loadHome();
@@ -631,6 +640,7 @@ public class MainController {
 
         card.getProperties().put("status",   status);
         card.getProperties().put("priority", priority);
+        card.getProperties().put("taskId", taskId);
 
         CheckBox checkBox = new CheckBox();
         checkBox.setSelected("DONE".equals(status));
@@ -639,10 +649,18 @@ public class MainController {
         updateTitleStyle(titleLabel, "DONE".equals(status));
         HBox.setHgrow(titleLabel, Priority.ALWAYS);
 
+        Label statusBadge = new Label(translateStatus(status));
+        statusBadge.setStyle("-fx-font-size: 11px; -fx-padding: 2 8 2 8; " +
+                "-fx-background-radius: 10px; -fx-text-fill: white; " +
+                "-fx-background-color: " + getStatusColor(status) + ";");
+
         Label priorityBadge = new Label(translatePriority(priority));
         priorityBadge.setStyle("-fx-font-size: 11px; -fx-padding: 2 8 2 8; " +
                 "-fx-background-radius: 10px; -fx-text-fill: white; " +
                 "-fx-background-color: " + getPriorityColor(priority) + ";");
+
+        Label idLabel = new Label("#" + taskId);
+        idLabel.setStyle("-fx-font-size: 10px; -fx-text-fill: #9999bb; -fx-padding: 0 4 0 0;");
 
         final boolean[] updating = {false};
         checkBox.selectedProperty().addListener((obs, was, is) -> {
@@ -691,6 +709,11 @@ public class MainController {
             } catch (Exception ignored) {}
         }
 
+        Region spacer = new Region();
+        HBox.setHgrow(spacer, Priority.ALWAYS);
+        HBox actionButtons = new HBox(4, detailBtn, editBtn, deleteBtn);
+        actionButtons.setAlignment(Pos.CENTER_RIGHT);
+
         if (isOverdue) {
             card.setStyle("-fx-background-color: white; -fx-padding: 12 16 12 14; " +
                     "-fx-background-radius: 8px; -fx-border-color: #e8e8e8; " +
@@ -701,9 +724,9 @@ public class MainController {
             overdueLabel.setStyle("-fx-font-size: 10px; -fx-padding: 2 7 2 7; " +
                     "-fx-background-radius: 10px; -fx-text-fill: #991b1b; " +
                     "-fx-background-color: #fee2e2;");
-            card.getChildren().addAll(checkBox, titleLabel, overdueLabel, priorityBadge, detailBtn, editBtn, deleteBtn);
+            card.getChildren().addAll(checkBox, idLabel, titleLabel, overdueLabel, statusBadge, priorityBadge, spacer, detailBtn, editBtn, deleteBtn);
         } else {
-            card.getChildren().addAll(checkBox, titleLabel, priorityBadge, detailBtn, editBtn, deleteBtn);
+            card.getChildren().addAll(checkBox, idLabel, titleLabel, statusBadge, priorityBadge, spacer, detailBtn, editBtn, deleteBtn);
         }
         return card;
     }
@@ -756,6 +779,7 @@ public class MainController {
     private void handleGoHome() {
         selectedProjectId = null;
         selectedCategory  = null;
+        viewingAllTasks = false;
         areaTitle.setText("Inicio");
         removeOverlayPanels();
         showMainArea();
@@ -770,6 +794,7 @@ public class MainController {
         showMainArea();
         selectedProjectId = null;
         selectedCategory  = null;
+        viewingAllTasks   = true;
         areaTitle.setText("Todas las tareas");
         showFilters();
         setSidebarActive(btnAllTasks);
@@ -788,18 +813,21 @@ public class MainController {
     }
 
     @FXML private void handleCategoryPersonal() {
+        viewingAllTasks = false;
         removeOverlayPanels();
         showMainArea();
         loadTasksByCategory("PERSONAL", "👤 Personal");
         setSidebarActive(btnPersonal);
     }
     @FXML private void handleCategoryEstudios() {
+        viewingAllTasks = false;
         removeOverlayPanels();
         showMainArea();
         loadTasksByCategory("ESTUDIOS", "📚 Estudios");
         setSidebarActive(btnEstudios);
     }
     @FXML private void handleCategoryTrabajo()  {
+        viewingAllTasks = false;
         removeOverlayPanels();
         showMainArea();
         loadTasksByCategory("TRABAJO",  "💼 Trabajo");
@@ -906,6 +934,55 @@ public class MainController {
                 wrapper.setVisible(match); wrapper.setManaged(match);
             }
         });
+    }
+
+    private void handleSortFilter() {
+        String sort = sortFilter.getValue();
+        if (sort == null || sort.equals("Ordenar por")) return;
+
+        List<Node> wrappers = new ArrayList<>(taskContainer.getChildren());
+        wrappers.sort((a, b) -> {
+            if (!(a instanceof VBox va) || !(b instanceof VBox vb)) return 0;
+            if (va.getChildren().isEmpty() || vb.getChildren().isEmpty()) return 0;
+            if (!(va.getChildren().get(0) instanceof HBox ca) ||
+                    !(vb.getChildren().get(0) instanceof HBox cb)) return 0;
+
+            switch (sort) {
+                case "Título A-Z" -> {
+                    String ta = getCardTitle(ca);
+                    String tb = getCardTitle(cb);
+                    return ta.compareToIgnoreCase(tb);
+                }
+                case "Título Z-A" -> {
+                    String ta = getCardTitle(ca);
+                    String tb = getCardTitle(cb);
+                    return tb.compareToIgnoreCase(ta);
+                }
+                case "ID ↑" -> {
+                    long ia = getCardId(ca), ib = getCardId(cb);
+                    return Long.compare(ia, ib);
+                }
+                case "ID ↓" -> {
+                    long ia = getCardId(ca), ib = getCardId(cb);
+                    return Long.compare(ib, ia);
+                }
+            }
+            return 0;
+        });
+        taskContainer.getChildren().setAll(wrappers);
+    }
+
+    private String getCardTitle(HBox card) {
+        // El título es el Label con HGrow=ALWAYS (segundo hijo tras el checkbox)
+        return card.getChildren().stream()
+                .filter(n -> n instanceof Label && HBox.getHgrow(n) == Priority.ALWAYS)
+                .map(n -> ((Label) n).getText())
+                .findFirst().orElse("");
+    }
+
+    private long getCardId(HBox card) {
+        Object id = card.getProperties().get("taskId");
+        return id instanceof Long l ? l : 0L;
     }
 
     // =========================================================================
@@ -1016,11 +1093,20 @@ public class MainController {
             if (node instanceof VBox wrapper && !wrapper.getChildren().isEmpty()
             && wrapper.getChildren().get(0) instanceof HBox card) {
                 boolean match = true;
+
                 if (!query.isEmpty()) {
-                    match = card.getChildren().stream()
-                            .filter(n -> n instanceof Label)
+
+                    // Buscar por ID numérico
+                    Object idProp = card.getProperties().get("taskId");
+                    boolean matchesId = idProp instanceof Long l &&
+                            String.valueOf(l).contains(query);
+
+                    // Buscar por título
+                    boolean matchesTitle = card.getChildren().stream()
+                            .filter(n -> n instanceof Label && HBox.getHgrow(n) == Priority.ALWAYS)
                             .map(n -> ((Label) n).getText().toLowerCase())
                             .anyMatch(t -> t.contains(query));
+                    match = matchesId || matchesTitle;
                 }
                 wrapper.setVisible(match);
                 wrapper.setManaged(match);
@@ -1210,6 +1296,7 @@ public class MainController {
     private void reloadTasks() {
         if (selectedProjectId != null) loadTasksForProject(selectedProjectId);
         else if (selectedCategory != null) loadTasksByCategory(selectedCategory, areaTitle.getText());
+        else if (viewingAllTasks) handleAllTasks();
         else loadHome();
     }
 

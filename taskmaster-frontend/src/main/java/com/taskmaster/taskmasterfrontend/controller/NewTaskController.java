@@ -149,7 +149,13 @@ public class NewTaskController {
     private void handleCreate() {
         String title = titleField.getText().trim();
         String description = descriptionField.getText().trim();
-        String priority = priorityCombo.getValue();
+        String priority = switch (priorityCombo.getValue()) {
+            case "BAJA"    -> "LOW";
+            case "MEDIA"   -> "MEDIUM";
+            case "ALTA"    -> "HIGH";
+            case "URGENTE" -> "URGENT";
+            default        -> "MEDIUM";
+        };
         LocalDate dueDate = dueDatePicker.getValue();
 
         if (title.isEmpty()) {
@@ -176,7 +182,12 @@ public class NewTaskController {
                     body.put("dueDate", dueDate.toString());
                 }
                 if (projectId == null) {
-                    body.put("category", categoryCombo.getValue());
+                    String category = switch (categoryCombo.getValue()) {
+                        case "ESTUDIOS" -> "ESTUDIOS";
+                        case "TRABAJO"  -> "TRABAJO";
+                        default         -> "PERSONAL";
+                    };
+                    body.put("category", category);
                 }
                 if (parentTaskId != null) {
                     body.put("parentTaskId", parentTaskId);

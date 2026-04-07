@@ -32,7 +32,7 @@ public class TaskService {
      * Tareas personales activas del usuario (sin proyecto).
      */
     public List<Task> getPersonalTasks(Long userId) {
-        return taskRepository.findByUserIdAndProjectIsNullAndDeletedFalse(userId);
+        return taskRepository.findByUserIdAndProjectIsNullAndParentTaskIsNullAndDeletedFalse(userId);
     }
 
     /**
@@ -81,7 +81,7 @@ public class TaskService {
      * Tareas activas de una categoría sin proyecto, filtradas por usuario.
      */
     public List<Task> getTasksByCategory(TaskCategory category, Long userId) {
-        return taskRepository.findByUserIdAndCategoryAndProjectIsNullAndDeletedFalse(userId, category);
+        return taskRepository.findByUserIdAndCategoryAndProjectIsNullAndParentTaskIsNullAndDeletedFalse(userId, category);
     }
 
     // ── Escritura ─────────────────────────────────────────────────────────────

@@ -42,6 +42,9 @@ public interface TaskRepository extends JpaRepository<Task, Long> {
     /** Reemplaza findByCategoryAndProjectIsNullAndDeletedFalse() — ahora filtra por usuario */
     List<Task> findByUserIdAndCategoryAndProjectIsNullAndDeletedFalse(Long userId, TaskCategory category);
 
+    List<Task> findByUserIdAndProjectIsNullAndParentTaskIsNullAndDeletedFalse(Long userId);
+
+    List<Task> findByUserIdAndCategoryAndProjectIsNullAndParentTaskIsNullAndDeletedFalse(Long userId, TaskCategory category);
 
     // ── Papelera ──────────────────────────────────────────────────────────────
 
@@ -66,4 +69,4 @@ public interface TaskRepository extends JpaRepository<Task, Long> {
     @Deprecated
     List<Task> findByCategoryAndProjectIsNullAndDeletedFalse(TaskCategory category);
 
-    List<Task> findByCategoryAndDeletedFalse(TaskCategory category);}
+}

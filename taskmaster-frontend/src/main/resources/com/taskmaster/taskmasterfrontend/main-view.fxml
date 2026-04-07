@@ -138,6 +138,8 @@
                               style="-fx-font-size: 11px;" maxWidth="160"/>
                     <ComboBox fx:id="priorityFilter" promptText="Prioridad"
                               style="-fx-font-size: 11px;" maxWidth="160"/>
+                    <ComboBox fx:id="sortFilter" promptText="Ordenar por"
+                              style="-fx-font-size: 11px;" maxWidth="140"/>
                     <Region HBox.hgrow="ALWAYS"/>
                 </HBox>
 

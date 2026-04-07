@@ -111,7 +111,7 @@ public class TaskDetailController {
             dueDateLabel.setVisible(false);
             dueDateLabel.setManaged(false);
         }
-
+        loadSubtasks(taskId);
     }
 
     // ── Subtareas ─────────────────────────────────────────────────────────────
@@ -187,7 +187,7 @@ public class TaskDetailController {
                 : "-fx-font-size: 13px; -fx-text-fill: #1e1e2e;");
         HBox.setHgrow(titleLabel, Priority.ALWAYS);
 
-        Label priBadge = new Label(priority);
+        Label priBadge = new Label(translatePriority(priority));
         priBadge.setStyle("-fx-font-size: 10px; -fx-padding: 2 7 2 7; " +
                 "-fx-background-radius: 10px; -fx-text-fill: white; " +
                 "-fx-background-color: " + getPriorityColor(priority) + ";");

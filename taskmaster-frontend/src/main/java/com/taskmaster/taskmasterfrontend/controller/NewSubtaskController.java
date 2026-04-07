@@ -66,7 +66,14 @@ public class NewSubtaskController {
         Map<String, Object> body = new HashMap<>();
         body.put("title",        title);
         body.put("description",  descriptionField.getText().trim());
-        body.put("priority",     priorityCombo.getValue());
+        String priority = switch (priorityCombo.getValue()) {
+            case "BAJA"    -> "LOW";
+            case "MEDIA"   -> "MEDIUM";
+            case "ALTA"    -> "HIGH";
+            case "URGENTE" -> "URGENT";
+            default        -> "MEDIUM";
+        };
+        body.put("priority", priority);
         body.put("parentTaskId", parentTaskId);
 
         if (projectId != null) {
