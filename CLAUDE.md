@@ -1,42 +1,95 @@
-# TaskMaster — Contexto del proyecto
+# CLAUDE.md
+
+This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
 ## Descripción
 App de escritorio: gestor de tareas (TFG DAM)
-- Backend: Java + Spring Boot 3.5.0 + JPA/Hibernate + H2 (dev) / PostgreSQL (prod)
-- Frontend: JavaFX 21.0.6 con FXML + JDK 25
-- Arquitectura: MVC frontend, capas backend (Controller/Service/Repository/Model)
+- Backend: Java 17 + Spring Boot 3.5.x + JPA/Hibernate + H2 (dev) / PostgreSQL (prod)
+- Frontend: JavaFX 21.0.6 + JDK 25 + FXML + Jackson para JSON
+- Arquitectura: MVC frontend desacoplado del backend via REST + Basic Auth
 
-## Estructura local
+## Comandos
+
+### Backend (taskmaster-backend/)
+```bash
+# Compilar
+./mvnw compile
+
+# Ejecutar (arranca en localhost:8080, H2 en memoria)
+./mvnw spring-boot:run
+
+# Tests
+./mvnw test
+
+# Test específico
+./mvnw test -Dtest=NombreTest
+
+# Empaquetar JAR
+./mvnw package -DskipTests
+```
+
+### Frontend (taskmaster-frontend/)
+```bash
+# Compilar
+./mvnw compile
+
+# Ejecutar app JavaFX (requiere backend corriendo)
+./mvnw javafx:run
+
+# Tests
+./mvnw test
+```
+
+> La consola H2 está disponible en http://localhost:8080/h2-console (JDBC URL: `jdbc:h2:mem:taskmasterdb`, usuario: `sa`, sin contraseña).
+
+## Arquitectura
+
+### Estructura de módulos
 ```
 taskmaster/
-├── taskmaster-backend/     ← Spring Boot
-└── taskmaster-frontend/    ← JavaFX
+├── taskmaster-backend/     ← Spring Boot (Java 17)
+│   └── src/main/java/com/taskmaster/
+│       ├── controller/     ← REST controllers
+│       ├── service/        ← Lógica de negocio
+│       ├── repository/     ← JPA repositories
+│       ├── model/          ← Entidades JPA + Enums
+│       ├── dto/            ← request/ y response/
+│       ├── security/       ← SecurityConfig, SecurityUtils, UserDetailsServiceImpl
+│       ├── exception/      ← GlobalExceptionHandler, ResourceNotFoundException
+│       └── TrashScheduler  ← @Scheduled para purga automática de papelera
+└── taskmaster-frontend/    ← JavaFX (JDK 25, module-info.java presente)
+    └── src/main/java/com/taskmaster/taskmasterfrontend/
+        ├── controller/     ← Un controller por FXML
+        ├── service/ApiService.java   ← Todas las llamadas HTTP al backend
+        ├── util/AppContext.java      ← Singleton: userId, username, ApiService
+        └── MainApp.java             ← Punto de entrada, gestiona escenas
 ```
 
-## Backend
+### Backend
 
-### Entidades principales
+**Entidades principales**
 - `User` — id, username, email, password (BCrypt), birthDate, createdAt, UserSettings
 - `Project` — id, name, description, category, status, priority, user (ManyToOne), soft delete
 - `Task` — id, title, description, status, priority, category, dueDate, user (ManyToOne), project (nullable), parentTask (self-ref), soft delete
 - `UserSettings` — trashRetentionDays (default 30)
 
-### Enums
+**Enums**
 - `TaskStatus`: TODO, IN_PROGRESS, DONE, CANCELLED
 - `TaskPriority`: LOW, MEDIUM, HIGH, URGENT
 - `TaskCategory`: PERSONAL, ESTUDIOS, TRABAJO
 
-### Reglas de negocio clave
+**Reglas de negocio clave**
 - No se puede marcar una tarea como DONE si tiene subtareas pendientes
 - Soft delete en cascada: al eliminar una tarea, sus subtareas también van a la papelera
-- Las tareas personales (project=null) se identifican por usuario via task.user
-- El scheduler purga automáticamente tareas/proyectos expirados según trashRetentionDays
+- Las tareas personales (project=null) se identifican por usuario via `task.user`
+- El scheduler purga automáticamente tareas/proyectos expirados según `trashRetentionDays`
+- `SecurityUtils.getCurrentUser()` extrae el usuario autenticado del contexto de Spring Security; todos los controllers lo usan para aislar datos por usuario
 
-### Seguridad
+**Seguridad**
 - Basic Auth (STATELESS), CSRF desactivado
-- /api/auth/** y /h2-console/** públicos, resto requiere autenticación
+- `/api/auth/**` y `/h2-console/**` públicos; el resto requiere autenticación
 
-### Endpoints principales
+**Endpoints principales**
 ```
 POST   /api/auth/register
 POST   /api/auth/login
@@ -46,7 +99,7 @@ POST   /api/projects
 PUT    /api/projects/{id}
 DELETE /api/projects/{id}
 
-GET    /api/tasks/home          ← devuelve proyectos+tareas+categorías para el home
+GET    /api/tasks/home          ← proyectos+tareas+categorías para el home (HomeResponse)
 GET    /api/tasks?projectId=
 GET    /api/tasks/personal
 GET    /api/tasks/category/{category}
@@ -54,71 +107,65 @@ GET    /api/tasks/trash
 POST   /api/tasks
 PATCH  /api/tasks/{id}/status
 
+GET    /api/user/profile
+PUT    /api/user/profile
+PUT    /api/user/password
+DELETE /api/user
+
 GET    /api/settings
 PATCH  /api/settings/trash-retention?days=
 ```
 
-## Frontend
+### Frontend
 
-### Flujo de navegación
-- `MainApp` arranca con `login-view.fxml` (400x500)
-- Login exitoso navega a `main-view.fxml` (900x600)
-- Layout: BorderPane con topbar oscuro + HBox central (sidebar 220px + projectsPanel + taskPanel)
+**Flujo de navegación**
+- `MainApp` arranca con `login-view.fxml` (400×500)
+- Login exitoso navega a `main-view.fxml` (900×600), controlado por `MainController`
+- `MainController` contiene la lógica de todos los paneles principales; los demás controllers son para diálogos o vistas secundarias
 
-### AppContext (singleton)
-- Guarda `currentUserId`, `currentUsername`, instancia de `ApiService`
-- `ApiService` usa HttpClient con Basic Auth en Base64
-
-### Paneles dinámicos
-El HBox central tiene 3 hijos fijos (sidebar, projectsPanel, taskPanel).
-Para papelera y ajustes se ocultan projectsPanel+taskPanel y se añade el nuevo panel con `userData="trash"` o `userData="settings"`.
+**Patrón de paneles dinámicos en main-view**
+El HBox central tiene 3 hijos fijos: sidebar (220px), projectsPanel, taskPanel.
+Para papelera y ajustes se ocultan projectsPanel+taskPanel y se inyecta el nuevo panel con `userData="trash"` o `userData="settings"`.
 Para volver al home se hace `removeIf` por userData y se restauran los paneles.
+Perfil y detalle de proyecto/tarea abren en una nueva ventana (`Stage`).
 
-### Home (renderHome)
-- Saludo + fecha en español
-- 4 stat cards: pendientes, en progreso, completadas, proyectos activos
-- Columna izquierda: proyectos con barra de progreso (DONE/total)
-- Columna derecha: tareas próximas ordenadas por dueDate, máx 6
+**ApiService**
+- Usa `java.net.http.HttpClient` (Java 11+, sin dependencias externas)
+- Jackson con `JavaTimeModule` para fechas (`LocalDate`, `LocalDateTime`)
+- `BASE_URL = "http://localhost:8080"` — hardcodeado, sin configuración externa
+- Credenciales guardadas en memoria tras login; se reenvían en cada petición como `Authorization: Basic <base64>`
 
-### Convenciones CSS en JavaFX
-- NO usar rgba() — JavaFX no lo soporta en estilos inline
-- Usar hex sólidos: #13131f (fondo oscuro), #2a2a3e (bordes), #9999bb (texto secundario), #a78bfa (acento morado)
-- Colores categoría: PERSONAL=#a78bfa, ESTUDIOS=#34d399, TRABAJO=#fb923c
-
-## Estado actual (último commit)
-- ✅ Backend completo con autenticación, CRUD proyectos/tareas, papelera, scheduler
-- ✅ Frontend: login, registro, home rediseñado, proyectos, tareas, papelera, ajustes
-- ✅ Task.user añadido para aislar tareas personales por usuario
-
-### Commits
-1. `init: estructura inicial Spring Boot`
-2. `feat: añadir entidades User, Project, Task y Tag`
-3. `feat: añadir repositorios User, Project, Task y Tag`
-4. `feat: añadir servicios User, Project y Task`
-5. `feat: añadir papelera, birthDate, UserSettings y servicios actualizados`
-6. `feat: añadir configuración de seguridad Spring Security`
-7. `feat: añadir controladores AuthController, ProjectController y TaskController`
-8. `feat: añadir manejo de excepciones global`
-9. `fix: corregir anotación @PostMapping en register y actualizar application.properties`
-10. `refactor: reorganizar estructura en taskmaster-backend y taskmaster-frontend`
-11. `feat: añadir pantallas de login y registro JavaFX`
-12. `feat: añadir ApiService y AppContext para conexión con backend`
-13. `feat: añadir pantalla principal con sidebar de proyectos y panel de tareas`
-14. `feat: añadir diálogo de nuevo proyecto y fix autenticación Basic Auth`
-15. `feat: añadir diálogo de nueva tarea y fix selección de proyectos`
-16. `feat: completar tareas con checkbox`
-17. `feat: añadir categorías Personal, Estudios y Trabajo a tareas y proyectos`
-18. `feat: mejorar sidebar con categorías, proyectos dinámicos y nuevo layout`
-19. `feat: añadir editar y eliminar tareas`
-20. `feat: añadir home con proyectos y tareas, editar/eliminar proyectos`
-21. `feat: añadir papelera, ajustes de periodo de papelera y vaciado automático`
-22. `feat: añadir panel de proyectos con estado/prioridad y filtros de tareas`
-23. `feat: rediseño panel principal con proyectos/tareas separados, filtros y mejoras en el sidebar`
-24. `feat: rediseño completo del home con stats, proyectos con progreso y tareas próximas`
-
+**Convenciones CSS en JavaFX**
+- NO usar `rgba()` — JavaFX no lo soporta en estilos inline
+- Usar hex sólidos: `#13131f` (fondo oscuro), `#2a2a3e` (bordes), `#9999bb` (texto secundario), `#a78bfa` (acento morado)
+- Colores por categoría: PERSONAL=`#a78bfa`, ESTUDIOS=`#34d399`, TRABAJO=`#fb923c`
+- Los estilos se aplican programáticamente en los controllers (no hay `.css` global de tema)
 
 ## Pendientes
-- [ ] Aplicar últimos cambios visuales del topbar y sidebar (hex en vez de rgba)
-- [ ] Tema claro/oscuro en ajustes
-- [ ] Función felicitación cumpleaños
-- [ ] Estadísticas básicas
+### Perfil
+- [ ] Icono/Foto
+- [ ] Estadísticas
+- [ ] Historial de actividad
+### Ajustes
+- [ ] Tema claro/oscuro
+- [ ] Exportar/Importar JSON y CSV
+- [ ] Ayuda (Documentación de la app)
+- [ ] Acerca de (Información de la app y autor)
+### Acceso y permisos en el dispositivo
+- [ ] Recordatorios activos en formato de notificación
+- [ ] Acceder y editar calendario
+### Filtros
+- [ ] Ordenar por fecha, prioridad
+- [ ] Agrupar por fecha, título (alfabéticamente), prioridad
+### Etiquetas (tipos de tareas)
+- [ ] Crear/Editar/Eliminar etiquetas para tareas
+### Tareas
+- [ ] Duplicar tarea
+- [ ] En detalles de la tarea mostrar etiquetas e historial de modificaciones
+- [ ] Tareas vencidas
+### Logs
+- [ ] Historial de modificaciones, fecha y hora en cada modificación, en: Ver perfil, Detalles de proyecto, Detalles de tarea, Detalles de subtarea
+### Opcional - Ideas a implementar en el futuro
+- [ ] Apartado de seguridad
+- [ ] Verificación de que el correo existe y conectar con aplicaciones de correo como Gmail y Outlook
+- [ ] Chatbot o IA
