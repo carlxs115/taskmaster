@@ -38,4 +38,6 @@ public interface ProjectRepository extends JpaRepository<Project, Long> {
      * Spring genera: SELECT COUNT(*) > 0 FROM projects WHERE id = ? AND user_id = ?
      */
     boolean existsByIdAndUserId(Long id, Long userId);
+
+    long countByUserIdAndDeletedFalse(Long userId);
 }

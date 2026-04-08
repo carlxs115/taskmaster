@@ -54,6 +54,11 @@ public interface TaskRepository extends JpaRepository<Task, Long> {
     /** Para el vaciado automático del scheduler */
     List<Task> findByDeletedTrueAndDeletedAtBefore(LocalDateTime cutoffDate);
 
+    // ── Stats de User ─────────────────────────────────────────────────────────
+
+    long countByUserIdAndDeletedFalse(Long userId);
+
+    long countByUserIdAndStatusAndDeletedFalse(Long userId, TaskStatus status);
 
     // ── Queries que ya no se usan (mantenidas por compatibilidad) ─────────────
 

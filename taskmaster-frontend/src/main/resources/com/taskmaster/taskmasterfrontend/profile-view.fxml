@@ -22,7 +22,7 @@
 
     <ScrollPane VBox.vgrow="ALWAYS" fitToWidth="true"
                 style="-fx-background-color: transparent; -fx-border-color: transparent;">
-        <VBox spacing="16" style="-fx-padding: 24; -fx-max-width: 600px;">
+        <VBox spacing="16" style="-fx-padding: 24;">
 
             <!-- Avatar + nombre -->
             <HBox spacing="16" alignment="CENTER_LEFT"
@@ -37,20 +37,45 @@
                               -fx-background-radius: 32px; -fx-alignment: CENTER;
                               -fx-border-color: #3d2f6e; -fx-border-radius: 32px;
                               -fx-border-width: 2;"/>
-                <VBox spacing="4">
+                <VBox spacing="4" alignment="CENTER_LEFT" VBox.vgrow="ALWAYS">
                     <Label fx:id="usernameLabel"
                            style="-fx-font-size: 20px; -fx-font-weight: bold; -fx-text-fill: #1e1e2e;"/>
-                    <Label fx:id="memberSinceLabel"
-                           style="-fx-font-size: 12px; -fx-text-fill: #888888;"/>
                 </VBox>
             </HBox>
+
+            <!-- Estadísticas -->
+            <VBox spacing="10"
+                  style="-fx-background-color: white; -fx-padding: 16 20 16 20;
+                         -fx-background-radius: 10px; -fx-border-color: #e8e8e8;
+                         -fx-border-radius: 10px; -fx-border-width: 1;">
+                <Label text="Estadísticas"
+                       style="-fx-font-size: 13px; -fx-font-weight: bold; -fx-text-fill: #1e1e2e;"/>
+                <HBox fx:id="statsRow" spacing="8"/>
+
+                <!-- Barra de progreso global -->
+                <VBox spacing="6" style="-fx-padding: 8 0 0 0;">
+                    <HBox alignment="CENTER_LEFT">
+                        <Label text="Tasa de completado"
+                               style="-fx-font-size: 11px; -fx-text-fill: #888888;"/>
+                        <Region HBox.hgrow="ALWAYS"/>
+                        <Label fx:id="completionRateLabel"
+                               style="-fx-font-size: 11px; -fx-font-weight: bold; -fx-text-fill: #22c55e;"/>
+                    </HBox>
+                    <!-- Barra -->
+                    <StackPane style="-fx-background-color: #f0f0f5; -fx-background-radius: 4px;
+                                      -fx-min-height: 8px; -fx-max-height: 8px;">
+                        <StackPane fx:id="completionBarFill"
+                                   style="-fx-background-color: #22c55e; -fx-background-radius: 4px;"
+                                   StackPane.alignment="CENTER_LEFT"/>
+                    </StackPane>
+                </VBox>
+            </VBox>
 
             <!-- Datos del perfil -->
             <VBox spacing="0"
                   style="-fx-background-color: white; -fx-padding: 0;
                          -fx-background-radius: 10px; -fx-border-color: #e8e8e8;
                          -fx-border-radius: 10px; -fx-border-width: 1;">
-
                 <HBox style="-fx-padding: 14 20 14 20; -fx-border-color: transparent transparent #f0f0f0 transparent;
                              -fx-border-width: 0 0 1 0;" alignment="CENTER_LEFT" spacing="16">
                     <Label text="Usuario"
@@ -58,7 +83,6 @@
                     <Label fx:id="usernameValueLabel"
                            style="-fx-font-size: 13px; -fx-text-fill: #1e1e2e;"/>
                 </HBox>
-
                 <HBox style="-fx-padding: 14 20 14 20; -fx-border-color: transparent transparent #f0f0f0 transparent;
                              -fx-border-width: 0 0 1 0;" alignment="CENTER_LEFT" spacing="16">
                     <Label text="Email"
@@ -66,7 +90,6 @@
                     <Label fx:id="emailLabel"
                            style="-fx-font-size: 13px; -fx-text-fill: #1e1e2e;"/>
                 </HBox>
-
                 <HBox style="-fx-padding: 14 20 14 20; -fx-border-color: transparent transparent #f0f0f0 transparent;
                              -fx-border-width: 0 0 1 0;" alignment="CENTER_LEFT" spacing="16">
                     <Label text="Fecha de nacimiento"
@@ -74,7 +97,6 @@
                     <Label fx:id="birthDateLabel"
                            style="-fx-font-size: 13px; -fx-text-fill: #1e1e2e;"/>
                 </HBox>
-
                 <HBox style="-fx-padding: 14 20 14 20;" alignment="CENTER_LEFT" spacing="16">
                     <Label text="Miembro desde"
                            style="-fx-font-size: 12px; -fx-text-fill: #888888; -fx-min-width: 140px;"/>

@@ -135,6 +135,7 @@ public class MainController {
     }
 
     private void handleViewProfile() {
+        clearSidebarSelection();
         try {
             FXMLLoader loader = new FXMLLoader(
                     getClass().getResource("/com/taskmaster/taskmasterfrontend/profile-view.fxml"));
@@ -1237,25 +1238,8 @@ public class MainController {
     private static final String SIDEBAR_INACTIVE = "-fx-background-color: transparent; -fx-text-fill: #9999bb; -fx-font-size: 13px; -fx-cursor: hand; -fx-alignment: CENTER-LEFT; -fx-padding: 7 16 7 16;";
 
     private void setSidebarActive(Button active) {
-        for (Button btn : new Button[]{btnHome, btnAllTasks, btnPersonal, btnEstudios, btnTrabajo, btnSettings, btnTrash}) {
-            btn.setStyle(SIDEBAR_INACTIVE);
-        }
+        clearSidebarSelection();
         active.setStyle(SIDEBAR_ACTIVE);
-
-        for (Node node : projectListContainer.getChildren()) {
-            if (node instanceof HBox row) {
-                if (row.getChildren().size() >= 2 && row.getChildren().get(1) instanceof Button btn) {
-                    btn.setStyle("-fx-background-color: transparent; -fx-text-fill: #9999bb; " +
-                            "-fx-font-size: 13px; -fx-cursor: hand; -fx-alignment: CENTER-LEFT; " +
-                            "-fx-padding: 7 4 7 6;");
-                }
-                if (row.getChildren().size() >= 3 && row.getChildren().get(2) instanceof Button dots) {
-                    dots.setStyle("-fx-background-color: transparent; -fx-text-fill: transparent; " +
-                            "-fx-font-size: 10px; -fx-font-weight: bold; -fx-cursor: hand; " +
-                            "-fx-padding: 2 6 2 6; -fx-background-radius: 6px;");
-                }
-            }
-        }
     }
 
     private void setSidebarProjectActive(Long projectId) {
@@ -1608,6 +1592,25 @@ public class MainController {
                 "-fx-background-color: #f0f0f5; -fx-background-radius: 20px;");
         header.getChildren().addAll(titleLabel, countLabel);
         return header;
+    }
+
+    private void clearSidebarSelection() {
+        for (Button btn : new Button[]{btnHome, btnAllTasks, btnPersonal,
+                btnEstudios, btnTrabajo, btnSettings, btnTrash}) {
+            btn.setStyle(SIDEBAR_INACTIVE);
+        }
+        for (Node node : projectListContainer.getChildren()) {
+            if (node instanceof HBox row) {
+                if (row.getChildren().size() >= 2 && row.getChildren().get(1) instanceof Button b)
+                    b.setStyle("-fx-background-color: transparent; -fx-text-fill: #9999bb; " +
+                            "-fx-font-size: 13px; -fx-cursor: hand; -fx-alignment: CENTER-LEFT; " +
+                            "-fx-padding: 7 4 7 6;");
+                if (row.getChildren().size() >= 3 && row.getChildren().get(2) instanceof Button dots)
+                    dots.setStyle("-fx-background-color: transparent; -fx-text-fill: transparent; " +
+                            "-fx-font-size: 10px; -fx-font-weight: bold; -fx-cursor: hand; " +
+                            "-fx-padding: 2 6 2 6; -fx-background-radius: 6px;");
+            }
+        }
     }
 
     private Label createBadge(String text, String style) {

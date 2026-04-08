@@ -1,7 +1,11 @@
 package com.taskmaster.service;
 
+import com.taskmaster.dto.response.UserStatsResponse;
+import com.taskmaster.model.TaskStatus;
 import com.taskmaster.model.User;
 import com.taskmaster.model.UserSettings;
+import com.taskmaster.repository.ProjectRepository;
+import com.taskmaster.repository.TaskRepository;
 import com.taskmaster.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -31,6 +35,8 @@ public class UserService {
 
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
+    private final TaskRepository taskRepository;
+    private final ProjectRepository projectRepository;
 
     /**
      * Registra un nuevo usuario.
@@ -111,6 +117,26 @@ public class UserService {
         user.setEmail(email);
         user.setBirthDate(birthDate);
         return userRepository.save(user);
+    }
+
+    public UserStatsResponse getStats(Long userId) {
+        long total      = taskRepository.countByUserIdAndDeletedFalse(userId);
+        long completed  = taskRepository.countByUserIdAndStatusAndDeletedFalse(userId, TaskStatus.DONE);
+        long pending    = taskRepository.countByUserIdAndStatusAndDeletedFalse(userId, TaskStatus.TODO);
+        long inProgress = taskRepository.countByUserIdAndStatusAndDeletedFalse(userId, TaskStatus.IN_PROGRESS);
+        long cancelled  = taskRepository.countByUserIdAndStatusAndDeletedFalse(userId, TaskStatus.CANCELLED);
+        long projects   = projectRepository.countByUserIdAndDeletedFalse(userId);
+        int  rate       = total > 0 ? (int) (completed * 100 / total) : 0;
+
+        return UserStatsResponse.builder()
+                .totalTasks(total)
+                .completedTasks(completed)
+                .pendingTasks(pending)
+                .inProgressTasks(inProgress)
+                .cancelledTasks(cancelled)
+                .totalProjects(projects)
+                .completionRate(rate)
+                .build();
     }
 
     /**
