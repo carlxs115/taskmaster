@@ -132,15 +132,42 @@
                 <!-- FILTROS (ocultos en home) -->
                 <HBox fx:id="taskFiltersBar"
                       style="-fx-background-color: white; -fx-padding: 8 20 8 20;
-                             -fx-border-color: #e8e8e8; -fx-border-width: 0 0 1 0;"
-                      spacing="8" managed="false" visible="false">
+             -fx-border-color: #e8e8e8; -fx-border-width: 0 0 1 0;"
+                      spacing="8" alignment="CENTER_LEFT" managed="false" visible="false">
+
+                    <!-- FILTRAR -->
+                    <Label text="Filtrar:"
+                           style="-fx-font-size: 11px; -fx-text-fill: #888888; -fx-font-weight: bold;"/>
                     <ComboBox fx:id="statusFilter" promptText="Estado"
-                              style="-fx-font-size: 11px;" maxWidth="160"/>
+                              style="-fx-font-size: 11px;" prefWidth="130"/>
                     <ComboBox fx:id="priorityFilter" promptText="Prioridad"
-                              style="-fx-font-size: 11px;" maxWidth="160"/>
-                    <ComboBox fx:id="sortFilter" promptText="Ordenar por"
-                              style="-fx-font-size: 11px;" maxWidth="140"/>
+                              style="-fx-font-size: 11px;" prefWidth="130"/>
+
+                    <!-- Separador visual -->
+                    <Separator orientation="VERTICAL"
+                               style="-fx-padding: 0 4 0 4;"/>
+
+                    <!-- ORDENAR -->
+                    <Label text="Ordenar:"
+                           style="-fx-font-size: 11px; -fx-text-fill: #888888; -fx-font-weight: bold;"/>
+                    <ComboBox fx:id="sortFilter" promptText="Criterio"
+                              style="-fx-font-size: 11px;" prefWidth="140"/>
+                    <Button fx:id="sortDirectionBtn" text="↑"
+                            onAction="#handleSortDirection"
+                            style="-fx-background-color: #f0f0f5; -fx-text-fill: #555570;
+                   -fx-font-size: 13px; -fx-cursor: hand; -fx-background-radius: 6px;
+                   -fx-border-color: #e8e8e8; -fx-border-radius: 6px;
+                   -fx-border-width: 1; -fx-padding: 3 10 3 10;"/>
+
                     <Region HBox.hgrow="ALWAYS"/>
+
+                    <!-- Botón limpiar filtros -->
+                    <Button text="✕ Limpiar"
+                            onAction="#handleClearFilters"
+                            style="-fx-background-color: transparent; -fx-text-fill: #aaaaaa;
+                   -fx-font-size: 11px; -fx-cursor: hand; -fx-padding: 3 8 3 8;
+                   -fx-border-color: #e8e8e8; -fx-border-radius: 6px; -fx-border-width: 1;
+                   -fx-background-radius: 6px;"/>
                 </HBox>
 
                 <!-- CONTENIDO PRINCIPAL -->

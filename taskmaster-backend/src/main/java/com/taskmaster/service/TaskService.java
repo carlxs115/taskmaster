@@ -124,7 +124,7 @@ public class TaskService {
     /**
      * Actualiza los campos editables de una tarea.
      */
-    public Task updateTask(Long taskId, String title, String description,
+    public Task updateTask(Long taskId, String title, String description, TaskStatus status,
                            TaskPriority priority, LocalDate dueDate, Long userId) {
         Task task = findById(taskId);
         if (task.getProject() != null) {
@@ -132,6 +132,7 @@ public class TaskService {
         }
         task.setTitle(title);
         task.setDescription(description);
+        task.setStatus(status);
         task.setPriority(priority);
         task.setDueDate(dueDate);
         return taskRepository.save(task);

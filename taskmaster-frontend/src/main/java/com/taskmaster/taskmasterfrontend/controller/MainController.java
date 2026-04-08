@@ -43,10 +43,15 @@ public class MainController {
     @FXML private ComboBox<String> statusFilter;
     @FXML private ComboBox<String> priorityFilter;
     @FXML private ComboBox<String> sortFilter;
+    @FXML private Button sortDirectionBtn;
     @FXML private Label areaTitle;
     @FXML private Button createButton;
     @FXML private VBox  mainArea;
     @FXML private TextField searchField;
+
+    // ── Filtros y orden ───────────────────────────────────────────────────────
+    private List<JsonNode> currentTasks = new ArrayList<>();
+    private boolean sortAscending = true;
 
     // ── Estado ────────────────────────────────────────────────────────────────
     private Long   selectedProjectId;
@@ -76,20 +81,21 @@ public class MainController {
 
         statusFilter.setItems(FXCollections.observableArrayList(
                 "Todas", "Pendiente", "En progreso", "Completada", "Cancelada"));
+        statusFilter.setPromptText("Estado");
         statusFilter.getSelectionModel().selectedItemProperty().addListener(
-                (obs, o, n) -> { if (n != null) handleStatusFilter(); });
+                (obs, o, n) -> applyFiltersAndSort());
 
         priorityFilter.setItems(FXCollections.observableArrayList(
                 "Todas", "Baja", "Media", "Alta", "Urgente"));
+        priorityFilter.setPromptText("Prioridad");
         priorityFilter.getSelectionModel().selectedItemProperty().addListener(
-                (obs, o, n) -> { if (n != null) handlePriorityFilter(); });
+                (obs, o, n) -> applyFiltersAndSort());
 
         sortFilter.setItems(FXCollections.observableArrayList(
-                "Título A-Z", "Título Z-A", "ID ↑", "ID ↓"));
-        sortFilter.setPromptText("Ordenar por");
+                "Título", "ID", "Fecha límite", "Prioridad"));
+        sortFilter.setPromptText("Criterio");
         sortFilter.getSelectionModel().selectedItemProperty().addListener(
-                (obs, o, n) -> { if (n != null) handleSortFilter(); });
-
+                (obs, o, n) -> applyFiltersAndSort());
         loadProjects();
         loadHome();
     }
@@ -617,6 +623,7 @@ public class MainController {
         }
         emptyLabel.setVisible(false);
         emptyLabel.setManaged(false);
+
         // Padding lateral para la lista
         for (JsonNode task : tasks) {
             HBox card = createTaskCard(task);
@@ -624,6 +631,106 @@ public class MainController {
             wrapper.setStyle("-fx-padding: 0 20 0 20;");
             taskContainer.getChildren().add(wrapper);
         }
+
+        // Guardar datos originales para filtros/orden
+        currentTasks.clear();
+        if (tasks.isArray()) {
+            for (JsonNode t : tasks) currentTasks.add(t);
+        }
+        applyFiltersAndSort(); // renderizar con filtros/orden actuales
+    }
+
+    private void applyFiltersAndSort() {
+        String statusVal   = statusFilter.getValue();
+        String priorityVal = priorityFilter.getValue();
+        String sortCrit    = sortFilter.getValue();
+
+        // 1. Filtrar desde los datos originales
+        List<JsonNode> result = currentTasks.stream()
+                .filter(t -> {
+                    if (statusVal == null || statusVal.equals("Todas")) return true;
+                    return matchesStatusLabel(t.get("status").asText(), statusVal);
+                })
+                .filter(t -> {
+                    if (priorityVal == null || priorityVal.equals("Todas")) return true;
+                    return matchesPriorityLabel(t.get("priority").asText(), priorityVal);
+                })
+                .collect(java.util.stream.Collectors.toList());
+
+        // 2. Ordenar
+        if (sortCrit != null) {
+            result.sort((a, b) -> {
+                int cmp = switch (sortCrit) {
+                    case "Título" ->
+                            a.get("title").asText().compareToIgnoreCase(b.get("title").asText());
+                    case "ID" ->
+                            Long.compare(a.get("id").asLong(), b.get("id").asLong());
+                    case "Fecha límite" -> {
+                        boolean aH = a.has("dueDate") && !a.get("dueDate").isNull();
+                        boolean bH = b.has("dueDate") && !b.get("dueDate").isNull();
+                        if (!aH && !bH) yield 0;
+                        if (!aH)        yield 1;   // sin fecha → al final
+                        if (!bH)        yield -1;
+                        yield a.get("dueDate").asText().compareTo(b.get("dueDate").asText());
+                    }
+                    case "Prioridad" ->
+                            Integer.compare(
+                                    priorityOrder(a.has("priority") ? a.get("priority").asText() : "MEDIUM"),
+                                    priorityOrder(b.has("priority") ? b.get("priority").asText() : "MEDIUM")
+                            );
+                    default -> 0;
+                };
+                return sortAscending ? cmp : -cmp;
+            });
+        }
+
+        // 3. Renderizar
+        taskContainer.getChildren().clear();
+        taskContainer.getChildren().add(emptyLabel);
+        if (result.isEmpty()) {
+            emptyLabel.setText("No hay tareas que coincidan con los filtros");
+            emptyLabel.setVisible(true);
+            emptyLabel.setManaged(true);
+            return;
+        }
+        emptyLabel.setVisible(false);
+        emptyLabel.setManaged(false);
+        for (JsonNode task : result) {
+            HBox card = createTaskCard(task);
+            VBox wrapper = new VBox(card);
+            wrapper.setStyle("-fx-padding: 0 20 0 20;");
+            taskContainer.getChildren().add(wrapper);
+        }
+    }
+
+    private boolean matchesStatusLabel(String enumVal, String label) {
+        return switch (enumVal) {
+            case "TODO"        -> label.equals("Pendiente");
+            case "IN_PROGRESS" -> label.equals("En progreso");
+            case "DONE"        -> label.equals("Completada");
+            case "CANCELLED"   -> label.equals("Cancelada");
+            default            -> false;
+        };
+    }
+
+    private boolean matchesPriorityLabel(String enumVal, String label) {
+        return switch (enumVal) {
+            case "LOW"    -> label.equals("Baja");
+            case "MEDIUM" -> label.equals("Media");
+            case "HIGH"   -> label.equals("Alta");
+            case "URGENT" -> label.equals("Urgente");
+            default       -> false;
+        };
+    }
+
+    @FXML
+    private void handleClearFilters() {
+        resetComboBox(statusFilter,   "Estado");
+        resetComboBox(priorityFilter, "Prioridad");
+        resetComboBox(sortFilter,     "Criterio");
+        sortAscending = true;
+        sortDirectionBtn.setText("↑");
+        applyFiltersAndSort();
     }
 
     private HBox createTaskCard(JsonNode task) {
@@ -672,9 +779,7 @@ public class MainController {
                             .patch("/api/tasks/" + taskId + "/status?status=" + newStatus, null);
                     Platform.runLater(() -> {
                         if (resp.statusCode() == 200) {
-                            updating[0] = true;
-                            updateTitleStyle(titleLabel, is);
-                            updating[0] = false;
+                            reloadTasks();
                         } else {
                             updating[0] = true;
                             checkBox.setSelected(was);
@@ -972,6 +1077,44 @@ public class MainController {
         taskContainer.getChildren().setAll(wrappers);
     }
 
+    @FXML
+    private void handleSortDirection() {
+        sortAscending = !sortAscending;
+        // Actualizar texto del botón (necesitas el @FXML ref)
+        sortDirectionBtn.setText(sortAscending ? "↑" : "↓");
+        applyFiltersAndSort();
+    }
+
+    /** Orden numérico: URGENT=0 (más urgente primero en asc) */
+    private int priorityOrder(String p) {
+        return switch (p) {
+            case "URGENT" -> 0;
+            case "HIGH"   -> 1;
+            case "MEDIUM" -> 2;
+            case "LOW"    -> 3;
+            default       -> 2;
+        };
+    }
+
+    private void renderFilteredTasks(List<JsonNode> tasks) {
+        taskContainer.getChildren().clear();
+        taskContainer.getChildren().add(emptyLabel);
+        if (tasks.isEmpty()) {
+            emptyLabel.setText("No hay tareas que coincidan con los filtros");
+            emptyLabel.setVisible(true);
+            emptyLabel.setManaged(true);
+            return;
+        }
+        emptyLabel.setVisible(false);
+        emptyLabel.setManaged(false);
+        for (JsonNode task : tasks) {
+            HBox card = createTaskCard(task);
+            VBox wrapper = new VBox(card);
+            wrapper.setStyle("-fx-padding: 0 20 0 20;");
+            taskContainer.getChildren().add(wrapper);
+        }
+    }
+
     private String getCardTitle(HBox card) {
         // El título es el Label con HGrow=ALWAYS (segundo hijo tras el checkbox)
         return card.getChildren().stream()
@@ -1064,10 +1207,32 @@ public class MainController {
     }
 
     private void showFilters() {
+        resetComboBox(statusFilter,   "Estado");
+        resetComboBox(priorityFilter, "Prioridad");
+        resetComboBox(sortFilter,     "Criterio");
+        sortAscending = true;
+        sortDirectionBtn.setText("↑");
         taskFiltersBar.setVisible(true);
         taskFiltersBar.setManaged(true);
         showSearch();
         createButton.setText("＋  Nueva tarea");
+    }
+    private void resetComboBox(ComboBox<String> combo, String promptText) {
+        String currentValue = combo.getValue();
+        combo.setValue(null);
+        combo.setButtonCell(new ListCell<>() {
+            @Override
+            protected void updateItem(String item, boolean empty) {
+                super.updateItem(item, empty);
+                if (item == null || empty) {
+                    setText(promptText);
+                    setStyle("-fx-text-fill: #aaaaaa;");
+                } else {
+                    setText(item);
+                    setStyle("-fx-text-fill: #1e1e2e;");
+                }
+            }
+        });
     }
     private void hideFilters() {
         taskFiltersBar.setVisible(false);

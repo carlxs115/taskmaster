@@ -146,7 +146,7 @@ public class TaskController {
             @AuthenticationPrincipal UserDetails userDetails) {
         Long userId = securityUtils.getUserId(userDetails);
         Task task = taskService.updateTask(id, request.getTitle(), request.getDescription(),
-                request.getPriority(), request.getDueDate(), userId);
+                request.getStatus(), request.getPriority(), request.getDueDate(), userId);
         return ResponseEntity.ok(toResponse(task));
     }
 
