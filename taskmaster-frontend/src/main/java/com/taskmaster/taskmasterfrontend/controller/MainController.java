@@ -249,6 +249,7 @@ public class MainController {
             String dotColor   = getCategoryColorForIndex(i);
 
             HBox row = new HBox(4);
+            row.setUserData(pid);
             row.setAlignment(Pos.CENTER_LEFT);
 
             Label dot = new Label("●");
@@ -264,17 +265,22 @@ public class MainController {
                 selectedProjectId = pid;
                 selectedCategory  = null;
                 areaTitle.setText(name);
+                setSidebarProjectActive(pid);
                 loadTasksForProject(pid);
             });
 
-            Button menuBtn = new Button("⋯");
+            Button menuBtn = new Button("•••");
             menuBtn.setStyle("-fx-background-color: transparent; -fx-text-fill: transparent; " +
-                    "-fx-cursor: hand; -fx-font-size: 16px; -fx-padding: 4 8 4 4;");
+                    "-fx-font-size: 10px; -fx-font-weight: bold; -fx-cursor: hand; " +
+                    "-fx-padding: 2 6 2 6; -fx-background-radius: 6px;");
             menuBtn.setOnAction(e -> {
                 ContextMenu cm = new ContextMenu();
                 MenuItem detail = new MenuItem("👁 Ver detalles");
                 MenuItem edit   = new MenuItem("✏ Editar");
                 MenuItem delete = new MenuItem("🗑 Eliminar");
+                detail.setStyle("-fx-font-size: 13px; -fx-padding: 6 16 6 16;");
+                edit.setStyle("-fx-font-size: 13px; -fx-padding: 6 16 6 16;");
+                delete.setStyle("-fx-font-size: 13px; -fx-padding: 6 16 6 16;");
                 detail.setOnAction(ev -> openProjectDetail(pNode));
                 edit.setOnAction(ev   -> handleEditProject(pid, name));
                 delete.setOnAction(ev -> handleDeleteProject(pid, name));
@@ -287,14 +293,25 @@ public class MainController {
                         "-fx-font-size: 13px; -fx-cursor: hand; -fx-alignment: CENTER-LEFT; " +
                         "-fx-padding: 7 4 7 6;");
                 menuBtn.setStyle("-fx-background-color: transparent; -fx-text-fill: #9999bb; " +
-                        "-fx-cursor: hand; -fx-font-size: 16px; -fx-padding: 4 8 4 4;");
+                        "-fx-font-size: 10px; -fx-font-weight: bold; -fx-cursor: hand; " +
+                        "-fx-padding: 2 6 2 6; -fx-background-radius: 6px;");
             });
             row.setOnMouseExited(e -> {
-                btn.setStyle("-fx-background-color: transparent; -fx-text-fill: #9999bb; " +
-                        "-fx-font-size: 13px; -fx-cursor: hand; -fx-alignment: CENTER-LEFT; " +
-                        "-fx-padding: 7 4 7 6;");
-                menuBtn.setStyle("-fx-background-color: transparent; -fx-text-fill: transparent; " +
-                        "-fx-cursor: hand; -fx-font-size: 16px; -fx-padding: 4 8 4 4;");
+                if (pid.equals(selectedProjectId)) {
+                    btn.setStyle("-fx-background-color: #2a1f4e; -fx-text-fill: #a78bfa; " +
+                            "-fx-font-size: 13px; -fx-cursor: hand; -fx-alignment: CENTER-LEFT; " +
+                            "-fx-padding: 7 4 7 6;");
+                    menuBtn.setStyle("-fx-background-color: transparent; -fx-text-fill: #9999bb; " +
+                            "-fx-font-size: 10px; -fx-font-weight: bold; -fx-cursor: hand; " +
+                            "-fx-padding: 2 6 2 6; -fx-background-radius: 6px;");
+                } else {
+                    btn.setStyle("-fx-background-color: transparent; -fx-text-fill: #9999bb; " +
+                            "-fx-font-size: 13px; -fx-cursor: hand; -fx-alignment: CENTER-LEFT; " +
+                            "-fx-padding: 7 4 7 6;");
+                    menuBtn.setStyle("-fx-background-color: transparent; -fx-text-fill: transparent; " +
+                            "-fx-font-size: 10px; -fx-font-weight: bold; -fx-cursor: hand; " +
+                            "-fx-padding: 2 6 2 6; -fx-background-radius: 6px;");
+                }
             });
 
             row.getChildren().addAll(dot, btn, menuBtn);
@@ -793,17 +810,39 @@ public class MainController {
             }).start();
         });
 
-        Button editBtn = new Button("✏️");
-        editBtn.setStyle("-fx-background-color: transparent; -fx-cursor: hand; -fx-font-size: 14px;");
-        editBtn.setOnAction(e -> handleEditTask(taskId, task));
+        Button menuBtn = new Button("•••");
+        menuBtn.setStyle("-fx-background-color: transparent; -fx-text-fill: #666688; " +
+                "-fx-font-size: 16px; -fx-font-weight: bold; -fx-cursor: hand; " +
+                "-fx-padding: 2 8 2 8; -fx-background-radius: 6px;");
+        menuBtn.setOnMouseEntered(e -> menuBtn.setStyle(
+                "-fx-background-color: #f0f0f5; -fx-text-fill: #1e1e2e; " +
+                        "-fx-font-size: 16px; -fx-font-weight: bold; -fx-cursor: hand; " +
+                        "-fx-padding: 2 8 2 8; -fx-background-radius: 6px;"));
+        menuBtn.setOnMouseExited(e -> menuBtn.setStyle(
+                "-fx-background-color: transparent; -fx-text-fill: #666688; " +
+                        "-fx-font-size: 16px; -fx-font-weight: bold; -fx-cursor: hand; " +
+                        "-fx-padding: 2 8 2 8; -fx-background-radius: 6px;"));
 
-        Button deleteBtn = new Button("🗑");
-        deleteBtn.setStyle("-fx-background-color: transparent; -fx-cursor: hand; -fx-font-size: 14px;");
-        deleteBtn.setOnAction(e -> handleDeleteTask(taskId));
+        menuBtn.setOnAction(e -> {
+            ContextMenu menu = new ContextMenu();
+            menu.setStyle("-fx-background-color: white; -fx-border-color: #e8e8e8; " +
+                    "-fx-border-width: 1; -fx-background-radius: 8; -fx-border-radius: 8;");
 
-        Button detailBtn = new Button("👁");
-        detailBtn.setStyle("-fx-background-color: transparent; -fx-cursor: hand; -fx-font-size: 14px;");
-        detailBtn.setOnAction(e -> openTaskDetail(task));
+            MenuItem detail = new MenuItem("👁  Ver detalles");
+            detail.setStyle("-fx-font-size: 13px; -fx-padding: 2 10 2 10;");
+            detail.setOnAction(ev -> openTaskDetail(task));
+
+            MenuItem edit = new MenuItem("✏️  Editar");
+            edit.setStyle("-fx-font-size: 13px; -fx-padding: 2 10 2 10;");
+            edit.setOnAction(ev -> handleEditTask(taskId, task));
+
+            MenuItem delete = new MenuItem("🗑  Eliminar");
+            delete.setStyle("-fx-font-size: 13px; -fx-padding: 2 10 2 10; -fx-text-fill: #e74c3c;");
+            delete.setOnAction(ev -> handleDeleteTask(taskId));
+
+            menu.getItems().addAll(detail, edit, delete);
+            menu.show(menuBtn, javafx.geometry.Side.BOTTOM, 0, 0);
+        });
 
         boolean isOverdue = false;
         if (task.has("dueDate") && !task.get("dueDate").isNull()
@@ -816,8 +855,6 @@ public class MainController {
 
         Region spacer = new Region();
         HBox.setHgrow(spacer, Priority.ALWAYS);
-        HBox actionButtons = new HBox(4, detailBtn, editBtn, deleteBtn);
-        actionButtons.setAlignment(Pos.CENTER_RIGHT);
 
         if (isOverdue) {
             card.setStyle("-fx-background-color: white; -fx-padding: 12 16 12 14; " +
@@ -829,9 +866,9 @@ public class MainController {
             overdueLabel.setStyle("-fx-font-size: 10px; -fx-padding: 2 7 2 7; " +
                     "-fx-background-radius: 10px; -fx-text-fill: #991b1b; " +
                     "-fx-background-color: #fee2e2;");
-            card.getChildren().addAll(checkBox, idLabel, titleLabel, overdueLabel, statusBadge, priorityBadge, spacer, detailBtn, editBtn, deleteBtn);
+            card.getChildren().addAll(checkBox, idLabel, titleLabel, overdueLabel, statusBadge, priorityBadge, spacer, menuBtn);
         } else {
-            card.getChildren().addAll(checkBox, idLabel, titleLabel, statusBadge, priorityBadge, spacer, detailBtn, editBtn, deleteBtn);
+            card.getChildren().addAll(checkBox, idLabel, titleLabel, statusBadge, priorityBadge, spacer, menuBtn);
         }
         return card;
     }
@@ -1204,6 +1241,59 @@ public class MainController {
             btn.setStyle(SIDEBAR_INACTIVE);
         }
         active.setStyle(SIDEBAR_ACTIVE);
+
+        for (Node node : projectListContainer.getChildren()) {
+            if (node instanceof HBox row) {
+                if (row.getChildren().size() >= 2 && row.getChildren().get(1) instanceof Button btn) {
+                    btn.setStyle("-fx-background-color: transparent; -fx-text-fill: #9999bb; " +
+                            "-fx-font-size: 13px; -fx-cursor: hand; -fx-alignment: CENTER-LEFT; " +
+                            "-fx-padding: 7 4 7 6;");
+                }
+                if (row.getChildren().size() >= 3 && row.getChildren().get(2) instanceof Button dots) {
+                    dots.setStyle("-fx-background-color: transparent; -fx-text-fill: transparent; " +
+                            "-fx-font-size: 10px; -fx-font-weight: bold; -fx-cursor: hand; " +
+                            "-fx-padding: 2 6 2 6; -fx-background-radius: 6px;");
+                }
+            }
+        }
+    }
+
+    private void setSidebarProjectActive(Long projectId) {
+        // Desactivar todos los botones fijos del sidebar
+        for (Button btn : new Button[]{btnHome, btnAllTasks, btnPersonal,
+                btnEstudios, btnTrabajo, btnSettings, btnTrash}) {
+            btn.setStyle(SIDEBAR_INACTIVE);
+        }
+        // Recorrer las filas del projectListContainer
+        for (Node node : projectListContainer.getChildren()) {
+            if (node instanceof HBox row) {
+                // El botón del proyecto es el segundo hijo (índice 1)
+                if (row.getChildren().size() >= 2 && row.getChildren().get(1) instanceof Button btn) {
+                    Object tag = row.getUserData();
+                    if (tag instanceof Long pid && pid.equals(projectId)) {
+                        btn.setStyle("-fx-background-color: #2a1f4e; -fx-text-fill: #a78bfa; " +
+                                "-fx-font-size: 13px; -fx-cursor: hand; -fx-alignment: CENTER-LEFT; " +
+                                "-fx-padding: 7 4 7 6;");
+
+                        if (row.getChildren().size() >= 3 && row.getChildren().get(2) instanceof Button dots) {
+                            dots.setStyle("-fx-background-color: transparent; -fx-text-fill: #9999bb; " +
+                                    "-fx-font-size: 10px; -fx-font-weight: bold; -fx-cursor: hand; " +
+                                    "-fx-padding: 2 6 2 6; -fx-background-radius: 6px;");
+                        }
+                    } else {
+                        btn.setStyle("-fx-background-color: transparent; -fx-text-fill: #9999bb; " +
+                                "-fx-font-size: 13px; -fx-cursor: hand; -fx-alignment: CENTER-LEFT; " +
+                                "-fx-padding: 7 4 7 6;");
+
+                        if (row.getChildren().size() >= 3 && row.getChildren().get(2) instanceof Button dots) {
+                            dots.setStyle("-fx-background-color: transparent; -fx-text-fill: transparent; " +
+                                    "-fx-font-size: 10px; -fx-font-weight: bold; -fx-cursor: hand; " +
+                                    "-fx-padding: 2 6 2 6; -fx-background-radius: 6px;");
+                        }
+                    }
+                }
+            }
+        }
     }
 
     private void showFilters() {
