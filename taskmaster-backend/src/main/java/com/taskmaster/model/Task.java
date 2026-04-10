@@ -1,5 +1,8 @@
 package com.taskmaster.model;
 
+import com.taskmaster.model.enums.TaskCategory;
+import com.taskmaster.model.enums.TaskPriority;
+import com.taskmaster.model.enums.TaskStatus;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
 import lombok.*;
@@ -140,22 +143,6 @@ public class Task {
     private List<Tag> tags;
 
     /**
-     * @PrePersist → Se ejecuta automáticamente justo antes de guardar en la BD por primera vez
-     * Así no tenemos que asignar la fecha manualmente nunca
-     * Y si no se especifican los valores Estado u Prioridad se inicializan como:
-     *      - Estado = Pendiente
-     *      - Prioridad = Media
-     */
-    @PrePersist
-    protected void onCreate(){
-        this.createdAt = LocalDateTime.now();
-
-        // Valores por defecto si no se especifican
-        if (this.status == null) this.status = TaskStatus.TODO;
-        if (this.priority == null) this.priority = TaskPriority.MEDIUM;
-    }
-
-    /**
      * SOFT DELETE — Papelera de reciclaje
      *
      * Mismo mecanismo que en Project.
@@ -176,4 +163,20 @@ public class Task {
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private TaskCategory category;
+
+    /**
+     * @PrePersist → Se ejecuta automáticamente justo antes de guardar en la BD por primera vez
+     * Así no tenemos que asignar la fecha manualmente nunca
+     * Y si no se especifican los valores Estado u Prioridad se inicializan como:
+     *      - Estado = Pendiente
+     *      - Prioridad = Media
+     */
+    @PrePersist
+    protected void onCreate(){
+        this.createdAt = LocalDateTime.now();
+
+        // Valores por defecto si no se especifican
+        if (this.status == null) this.status = TaskStatus.TODO;
+        if (this.priority == null) this.priority = TaskPriority.MEDIUM;
+    }
 }

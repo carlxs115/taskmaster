@@ -1,6 +1,10 @@
 package com.taskmaster.service;
 
 import com.taskmaster.model.*;
+import com.taskmaster.model.enums.ActionType;
+import com.taskmaster.model.enums.TaskCategory;
+import com.taskmaster.model.enums.TaskPriority;
+import com.taskmaster.model.enums.TaskStatus;
 import com.taskmaster.repository.ProjectRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -21,6 +25,7 @@ public class ProjectService {
 
     private final ProjectRepository projectRepository;
     private final UserService userService;
+    private final ActivityLogService activityLogService;
 
     /**
      * Devuelve todos los proyectos de un usuario (no eliminados).
@@ -65,7 +70,15 @@ public class ProjectService {
                 .deleted(false)
                 .build();
 
-        return projectRepository.save(project);
+        Project saved = projectRepository.save(project);
+        activityLogService.log(
+                userId,
+                ActionType.PROJECT_CREATED,
+                "PROJECT",
+                saved.getId(),
+                saved.getName()
+        );
+        return saved;
     }
 
     /**
@@ -76,13 +89,44 @@ public class ProjectService {
                                  TaskCategory category, TaskStatus status,
                                  TaskPriority priority, Long userId) {
         Project project = getProjectByIdAndUser(projectId, userId);
+
+        TaskStatus oldStatus = project.getStatus();
+
         project.setName(name);
         project.setDescription(description);
         project.setCategory(category);
         project.setStatus(status);
         project.setPriority(priority);
 
-        return projectRepository.save(project);
+        // Capturar si el status cambió para usar el tipo correcto
+        boolean statusChanged = !project.getStatus().equals(status);
+        project.setName(name);
+        project.setDescription(description);
+        project.setCategory(category);
+        project.setStatus(status);
+        project.setPriority(priority);
+        Project saved = projectRepository.save(project);
+
+        if (statusChanged) {
+            activityLogService.log(
+                    userId,
+                    ActionType.PROJECT_STATUS_CHANGED,
+                    "PROJECT",
+                    saved.getId(),
+                    saved.getName(),
+                    project.getStatus().name(),
+                    status.name()
+            );
+        } else {
+            activityLogService.log(
+                    userId,
+                    ActionType.PROJECT_EDITED,
+                    "PROJECT",
+                    saved.getId(),
+                    saved.getName()
+            );
+        }
+        return saved;
     }
 
     /**
@@ -96,6 +140,13 @@ public class ProjectService {
         project.setDeleted(true);
         project.setDeletedAt(LocalDateTime.now());
         projectRepository.save(project);
+        activityLogService.log(
+                userId,
+                ActionType.PROJECT_DELETED,
+                "PROJECT",
+                projectId,
+                project.getName()
+        );
     }
 
     /**
@@ -108,7 +159,16 @@ public class ProjectService {
 
         project.setDeleted(false);
         project.setDeletedAt(null);
-        return projectRepository.save(project);
+
+        Project saved = projectRepository.save(project);
+        activityLogService.log(
+                project.getUser().getId(),
+                ActionType.PROJECT_RESTORED,
+                "PROJECT",
+                saved.getId(),
+                saved.getName()
+        );
+        return saved;
     }
 
     /**
@@ -116,8 +176,18 @@ public class ProjectService {
      * Se llama desde el vaciado automático de la papelera o si el
      * usuario decide vaciarla manualmente.
      */
-    public void deletePermanently(Long projectId) {
+    public void deletePermanently(Long projectId, Long userId) {
+        Project project = projectRepository.findById(projectId)
+                .orElseThrow(() -> new RuntimeException("Proyecto no encontrado"));
+        String name = project.getName();
         projectRepository.deleteById(projectId);
+        activityLogService.log(
+                userId,
+                ActionType.PROJECT_PERMANENTLY_DELETED,
+                "PROJECT",
+                projectId,
+                name
+        );
     }
 
     /**

@@ -6,7 +6,9 @@ import com.taskmaster.dto.request.RegisterRequest;
 import com.taskmaster.dto.request.UpdateProfileRequest;
 import com.taskmaster.dto.response.UserResponse;
 import com.taskmaster.model.User;
+import com.taskmaster.model.enums.ActionType;
 import com.taskmaster.security.SecurityUtils;
+import com.taskmaster.service.ActivityLogService;
 import com.taskmaster.service.UserService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -42,6 +44,7 @@ public class AuthController {
     private final UserService userService;
     private final AuthenticationManager authenticationManager;
     private final SecurityUtils securityUtils;
+    private final ActivityLogService activityLogService;
 
     /**
      * REGISTRO - POST /api/auth/register
@@ -94,7 +97,7 @@ public class AuthController {
 
             // Cargamos el usuario completo para devolver sus datos
             User user = userService.findByUsername(request.getUsername());
-
+            activityLogService.log(user.getId(), ActionType.LOGIN);
             return ResponseEntity.ok(toResponse(user));
 
         } catch (AuthenticationException e) {
@@ -102,6 +105,13 @@ public class AuthController {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body("Credenciales incorrectas");
         }
+    }
+
+    @PostMapping("/logout")
+    public ResponseEntity<Void> logout(@AuthenticationPrincipal UserDetails userDetails) {
+        Long userId = securityUtils.getUserId(userDetails);
+        activityLogService.log(userId, ActionType.LOGOUT);
+        return ResponseEntity.ok().build();
     }
 
     /**

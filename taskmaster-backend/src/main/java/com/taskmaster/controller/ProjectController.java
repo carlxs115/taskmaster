@@ -1,9 +1,9 @@
 package com.taskmaster.controller;
 
 import com.taskmaster.model.Project;
-import com.taskmaster.model.TaskCategory;
-import com.taskmaster.model.TaskPriority;
-import com.taskmaster.model.TaskStatus;
+import com.taskmaster.model.enums.TaskCategory;
+import com.taskmaster.model.enums.TaskPriority;
+import com.taskmaster.model.enums.TaskStatus;
 import com.taskmaster.security.SecurityUtils;
 import com.taskmaster.service.ProjectService;
 import lombok.RequiredArgsConstructor;
@@ -144,7 +144,7 @@ public class ProjectController {
             @AuthenticationPrincipal UserDetails userDetails) {
 
         Long userId = getUserId(userDetails);
-        projectService.deletePermanently(id);
+        projectService.deletePermanently(id, userId);
         return ResponseEntity.noContent().build();
     }
 

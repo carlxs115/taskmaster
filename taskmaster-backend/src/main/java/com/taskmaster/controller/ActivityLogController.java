@@ -1,0 +1,64 @@
+package com.taskmaster.controller;
+
+import com.taskmaster.security.SecurityUtils;
+import org.springframework.security.core.userdetails.UserDetails;
+import com.taskmaster.dto.ActivityLogDTO;
+import com.taskmaster.model.ActivityLog;
+import com.taskmaster.model.User;
+import com.taskmaster.service.ActivityLogService;
+import lombok.RequiredArgsConstructor;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
+import java.util.List;
+
+@RestController
+@RequestMapping("/api")
+@RequiredArgsConstructor
+public class ActivityLogController {
+
+    private final ActivityLogService activityLogService;
+    private final SecurityUtils securityUtils;
+
+    @GetMapping("/activity-log")
+    public ResponseEntity<List<ActivityLogDTO>> getActivityLog(
+            @AuthenticationPrincipal UserDetails userDetails) {
+        Long userId = securityUtils.getUserId(userDetails);
+        List<ActivityLogDTO> log = activityLogService
+                .getActivityHistory(userId)
+                .stream()
+                .map(this::toDTO)
+                .toList();
+
+        return ResponseEntity.ok(log);
+    }
+
+    @GetMapping("/access-log")
+    public ResponseEntity<List<ActivityLogDTO>> getAccessLog(
+            @AuthenticationPrincipal UserDetails userDetails) {
+        Long userId = securityUtils.getUserId(userDetails);
+        List<ActivityLogDTO> log = activityLogService
+                .getAccessHistory(userId)
+                .stream()
+                .map(this::toDTO)
+                .toList();
+
+        return ResponseEntity.ok(log);
+    }
+
+    private ActivityLogDTO toDTO(ActivityLog log) {
+        return ActivityLogDTO.builder()
+                .id(log.getId())
+                .actionType(log.getActionType())
+                .entityType(log.getEntityType())
+                .entityId(log.getEntityId())
+                .entityName(log.getEntityName())
+                .oldValue(log.getOldValue())
+                .newValue(log.getNewValue())
+                .createdAt(log.getCreatedAt())
+                .build();
+    }
+}

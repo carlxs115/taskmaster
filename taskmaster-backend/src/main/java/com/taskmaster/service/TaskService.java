@@ -1,6 +1,10 @@
 package com.taskmaster.service;
 
 import com.taskmaster.model.*;
+import com.taskmaster.model.enums.ActionType;
+import com.taskmaster.model.enums.TaskCategory;
+import com.taskmaster.model.enums.TaskPriority;
+import com.taskmaster.model.enums.TaskStatus;
 import com.taskmaster.repository.TaskRepository;
 import com.taskmaster.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -25,6 +29,7 @@ public class TaskService {
     private final TaskRepository taskRepository;
     private final ProjectService projectService;
     private final UserRepository userRepository;
+    private final ActivityLogService activityLogService;
 
     // ── Lectura ───────────────────────────────────────────────────────────────
 
@@ -118,7 +123,18 @@ public class TaskService {
             builder.parentTask(parentTask);
         }
 
-        return taskRepository.save(builder.build());
+        Task saved = taskRepository.save(builder.build());
+
+        // determinar si es tarea o subtarea
+        boolean isSubtask = parentTaskId != null;
+        activityLogService.log(
+                userId,
+                isSubtask ? ActionType.SUBTASK_CREATED : ActionType.TASK_CREATED,
+                isSubtask ? "SUBTASK" : "TASK",
+                saved.getId(),
+                saved.getTitle()
+        );
+        return saved;
     }
 
     /**
@@ -135,7 +151,16 @@ public class TaskService {
         task.setStatus(status);
         task.setPriority(priority);
         task.setDueDate(dueDate);
-        return taskRepository.save(task);
+
+        Task saved = taskRepository.save(task);
+        activityLogService.log(
+                userId,
+                task.getParentTask() != null ? ActionType.SUBTASK_EDITED : ActionType.TASK_EDITED,
+                task.getParentTask() != null ? "SUBTASK" : "TASK",
+                saved.getId(),
+                saved.getTitle()
+        );
+        return saved;
     }
 
     /**
@@ -155,7 +180,20 @@ public class TaskService {
             }
         }
         task.setStatus(newStatus);
-        return taskRepository.save(task);
+
+        TaskStatus oldStatus = task.getStatus(); // capturar ANTES de setear
+        task.setStatus(newStatus);
+        Task saved = taskRepository.save(task);
+        activityLogService.log(
+                userId,
+                ActionType.TASK_STATUS_CHANGED,
+                "TASK",
+                saved.getId(),
+                saved.getTitle(),
+                oldStatus.name(),
+                newStatus.name()
+        );
+        return saved;
     }
 
     /**
@@ -167,6 +205,13 @@ public class TaskService {
             projectService.getProjectByIdAndUser(task.getProject().getId(), userId);
         }
         softDeleteRecursive(task);
+        activityLogService.log(
+                task.getUser().getId(),
+                task.getParentTask() != null ? ActionType.SUBTASK_DELETED : ActionType.TASK_DELETED,
+                task.getParentTask() != null ? "SUBTASK" : "TASK",
+                task.getId(),
+                task.getTitle()
+        );
     }
 
     private void softDeleteRecursive(Task task) {
@@ -186,7 +231,16 @@ public class TaskService {
                 .orElseThrow(() -> new RuntimeException("Tarea no encontrada en la papelera"));
         task.setDeleted(false);
         task.setDeletedAt(null);
-        return taskRepository.save(task);
+
+        Task saved = taskRepository.save(task);
+        activityLogService.log(
+                userId,
+                ActionType.TASK_RESTORED,
+                "TASK",
+                saved.getId(),
+                saved.getTitle()
+        );
+        return saved;
     }
 
     /**
@@ -208,6 +262,14 @@ public class TaskService {
         if (task.getProject() != null) {
             projectService.getProjectByIdAndUser(task.getProject().getId(), userId);
         }
+        String title = task.getTitle(); // capturar antes de borrar
         taskRepository.delete(task);
+        activityLogService.log(
+                userId,
+                ActionType.TASK_PERMANENTLY_DELETED,
+                "TASK",
+                taskId,
+                title
+        );
     }
 }

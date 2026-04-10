@@ -1,0 +1,20 @@
+package com.taskmaster.repository;
+
+import com.taskmaster.model.ActivityLog;
+import com.taskmaster.model.enums.ActionType;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.stereotype.Repository;
+
+import java.time.LocalDateTime;
+import java.util.List;
+
+@Repository
+public interface ActivityLogRepository extends JpaRepository<ActivityLog, Long> {
+
+    List<ActivityLog> findByUserIdOrderByCreatedAtDesc(Long userId);
+
+    List<ActivityLog> findByUserIdAndActionTypeInOrderByCreatedAtDesc(
+            Long userId, List<ActionType> actionTypes);
+
+    void deleteByCreatedAtBefore(LocalDateTime cutoff);
+}

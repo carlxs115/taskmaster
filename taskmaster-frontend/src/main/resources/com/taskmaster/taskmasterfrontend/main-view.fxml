@@ -94,6 +94,12 @@
                         style="-fx-background-color: transparent; -fx-text-fill: #9999bb;
                                -fx-font-size: 13px; -fx-cursor: hand; -fx-alignment: CENTER-LEFT;
                                -fx-padding: 8 16 8 16;"/>
+                <Button fx:id="btnSecurity" text="🔒  Seguridad"
+                        onAction="#handleSecurity"
+                        maxWidth="Infinity"
+                        style="-fx-background-color: transparent; -fx-text-fill: #9999bb;
+               -fx-font-size: 13px; -fx-cursor: hand; -fx-alignment: CENTER-LEFT;
+               -fx-padding: 8 16 8 16;"/>
                 <Button fx:id="btnTrash" text="🗑  Papelera"
                         onAction="#handleTrash"
                         maxWidth="Infinity"

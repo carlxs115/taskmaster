@@ -91,15 +91,6 @@ public class User {
     private List<Task> tasks;
 
     /**
-     * @PrePersist → Se ejecuta automáticamente justo antes de guardar en la BD por primera vez
-     * Así no tenemos que asignar la fecha manualmente nunca.
-     */
-    @PrePersist
-    protected void onCreate(){
-        this.createdAt = LocalDateTime.now();
-    }
-
-    /**
      * Configuración del usuario.
      * Se crea automáticamente al registrar el usuario en UserService.
      * cascade = ALL → si se borra el usuario, se borra también su configuración
@@ -109,4 +100,13 @@ public class User {
     @ToString.Exclude
     @EqualsAndHashCode.Exclude
     private UserSettings settings;
+
+    /**
+     * @PrePersist → Se ejecuta automáticamente justo antes de guardar en la BD por primera vez
+     * Así no tenemos que asignar la fecha manualmente nunca.
+     */
+    @PrePersist
+    protected void onCreate(){
+        this.createdAt = LocalDateTime.now();
+    }
 }

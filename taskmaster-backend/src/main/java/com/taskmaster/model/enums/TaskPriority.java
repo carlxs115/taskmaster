@@ -1,4 +1,4 @@
-package com.taskmaster.model;
+package com.taskmaster.model.enums;
 
 public enum TaskPriority {
     LOW,        // Baja

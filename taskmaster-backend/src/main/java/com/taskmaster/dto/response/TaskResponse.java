@@ -1,8 +1,8 @@
 package com.taskmaster.dto.response;
 
-import com.taskmaster.model.TaskCategory;
-import com.taskmaster.model.TaskPriority;
-import com.taskmaster.model.TaskStatus;
+import com.taskmaster.model.enums.TaskCategory;
+import com.taskmaster.model.enums.TaskPriority;
+import com.taskmaster.model.enums.TaskStatus;
 import lombok.Builder;
 import lombok.Data;
 

@@ -1,6 +1,9 @@
 package com.taskmaster.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.taskmaster.model.enums.TaskCategory;
+import com.taskmaster.model.enums.TaskPriority;
+import com.taskmaster.model.enums.TaskStatus;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
 import lombok.*;

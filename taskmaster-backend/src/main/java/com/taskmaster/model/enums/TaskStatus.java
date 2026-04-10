@@ -1,4 +1,4 @@
-package com.taskmaster.model;
+package com.taskmaster.model.enums;
 
 public enum TaskStatus {
     TODO,           // Pendiente

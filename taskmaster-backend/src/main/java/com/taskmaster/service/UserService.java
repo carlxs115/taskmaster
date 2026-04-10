@@ -1,7 +1,7 @@
 package com.taskmaster.service;
 
 import com.taskmaster.dto.response.UserStatsResponse;
-import com.taskmaster.model.TaskStatus;
+import com.taskmaster.model.enums.TaskStatus;
 import com.taskmaster.model.User;
 import com.taskmaster.model.UserSettings;
 import com.taskmaster.repository.ProjectRepository;

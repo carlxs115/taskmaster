@@ -48,6 +48,7 @@ public class MainController {
     @FXML private Button createButton;
     @FXML private VBox  mainArea;
     @FXML private TextField searchField;
+    @FXML private Button btnSecurity;
 
     // ── Filtros y orden ───────────────────────────────────────────────────────
     private List<JsonNode> currentTasks = new ArrayList<>();
@@ -112,25 +113,13 @@ public class MainController {
         viewProfile.setStyle("-fx-font-size: 13px; -fx-font-weight: bold;");
         viewProfile.setOnAction(e -> handleViewProfile());
 
-        SeparatorMenuItem sep1 = new SeparatorMenuItem();
-
-        MenuItem changePassword = new MenuItem("🔒  Cambiar contraseña");
-        changePassword.setStyle("-fx-font-size: 13px;");
-        changePassword.setOnAction(e -> openChangePassword());
-
-        SeparatorMenuItem sep2 = new SeparatorMenuItem();
-
-        MenuItem deleteAccount = new MenuItem("🗑  Eliminar cuenta");
-        deleteAccount.setStyle("-fx-font-size: 13px; -fx-text-fill: #e74c3c;");
-        deleteAccount.setOnAction(e -> openDeleteAccount());
-
-        SeparatorMenuItem sep3 = new SeparatorMenuItem();
+        SeparatorMenuItem sep = new SeparatorMenuItem();
 
         MenuItem logout = new MenuItem("↩  Cerrar sesión");
         logout.setStyle("-fx-font-size: 13px;");
         logout.setOnAction(e -> handleLogout());
 
-        menu.getItems().addAll(viewProfile, sep1, changePassword, sep2, deleteAccount, sep3, logout);
+        menu.getItems().addAll(viewProfile, sep, logout);
         menu.show(userMenuButton, javafx.geometry.Side.BOTTOM, 0, 4);
     }
 
@@ -1167,8 +1156,46 @@ public class MainController {
     }
 
     // =========================================================================
-    //  OVERLAYS — papelera y ajustes
+    //  OVERLAYS — ajustes, seguridad y papelera
     // =========================================================================
+    @FXML
+    private void handleSettings() {
+        try {
+            FXMLLoader loader = new FXMLLoader(
+                    getClass().getResource("/com/taskmaster/taskmasterfrontend/settings-view.fxml"));
+            VBox settingsView = loader.load();
+            HBox.setHgrow(settingsView, Priority.ALWAYS);
+            settingsView.setUserData("settings");
+            setSidebarActive(btnSettings);
+            swapMainAreaWith(settingsView);
+        } catch (Exception e) {
+            e.printStackTrace(); // ← añade esta línea
+            showAlert("Error", "No se pudo abrir los ajustes: " + e.getMessage());
+        }
+    }
+
+    @FXML
+    private void handleSecurity() {
+        removeOverlayPanels();
+        showMainArea();
+        setSidebarActive(btnSecurity);
+        areaTitle.setText("Seguridad");
+        searchField.setVisible(false);
+        searchField.setManaged(false);
+        createButton.setVisible(false);
+        createButton.setManaged(false);
+        taskFiltersBar.setVisible(false);
+        taskFiltersBar.setManaged(false);
+        try {
+            FXMLLoader loader = new FXMLLoader(
+                    getClass().getResource("/com/taskmaster/taskmasterfrontend/security-view.fxml"));
+            VBox view = loader.load();
+            taskContainer.getChildren().setAll(view);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
     @FXML
     private void handleTrash() {
         try {
@@ -1184,22 +1211,6 @@ public class MainController {
             swapMainAreaWith(trashView);
         } catch (IOException e) {
             showAlert("Error", "No se pudo abrir la papelera");
-        }
-    }
-
-    @FXML
-    private void handleSettings() {
-        try {
-            FXMLLoader loader = new FXMLLoader(
-                    getClass().getResource("/com/taskmaster/taskmasterfrontend/settings-view.fxml"));
-            VBox settingsView = loader.load();
-            HBox.setHgrow(settingsView, Priority.ALWAYS);
-            settingsView.setUserData("settings");
-            setSidebarActive(btnSettings);
-            swapMainAreaWith(settingsView);
-        } catch (Exception e) {
-            e.printStackTrace(); // ← añade esta línea
-            showAlert("Error", "No se pudo abrir los ajustes: " + e.getMessage());
         }
     }
 
@@ -1245,7 +1256,7 @@ public class MainController {
     private void setSidebarProjectActive(Long projectId) {
         // Desactivar todos los botones fijos del sidebar
         for (Button btn : new Button[]{btnHome, btnAllTasks, btnPersonal,
-                btnEstudios, btnTrabajo, btnSettings, btnTrash}) {
+                btnEstudios, btnTrabajo, btnSettings, btnSecurity, btnTrash}) {
             btn.setStyle(SIDEBAR_INACTIVE);
         }
         // Recorrer las filas del projectListContainer
@@ -1517,6 +1528,11 @@ public class MainController {
 
     @FXML
     private void handleLogout() {
+        try {
+            // Llamada síncrona para asegurar que el log se registra antes de limpiar credenciales
+            AppContext.getInstance().getApiService().postWithAuth("/api/auth/logout", "");
+        } catch (Exception ignored) {}
+
         AppContext.getInstance().logout();
         try {
             FXMLLoader loader = new FXMLLoader(
@@ -1596,7 +1612,7 @@ public class MainController {
 
     private void clearSidebarSelection() {
         for (Button btn : new Button[]{btnHome, btnAllTasks, btnPersonal,
-                btnEstudios, btnTrabajo, btnSettings, btnTrash}) {
+                btnEstudios, btnTrabajo, btnSettings, btnSecurity, btnTrash}) {
             btn.setStyle(SIDEBAR_INACTIVE);
         }
         for (Node node : projectListContainer.getChildren()) {

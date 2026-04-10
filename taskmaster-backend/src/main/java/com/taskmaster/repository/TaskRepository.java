@@ -1,12 +1,10 @@
 package com.taskmaster.repository;
 
 import com.taskmaster.model.Task;
-import com.taskmaster.model.TaskCategory;
-import com.taskmaster.model.TaskPriority;
-import com.taskmaster.model.TaskStatus;
+import com.taskmaster.model.enums.TaskCategory;
+import com.taskmaster.model.enums.TaskPriority;
+import com.taskmaster.model.enums.TaskStatus;
 import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.Query;
-import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.time.LocalDateTime;
