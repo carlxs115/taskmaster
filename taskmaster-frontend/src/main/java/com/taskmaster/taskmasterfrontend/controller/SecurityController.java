@@ -127,6 +127,7 @@ public class SecurityController {
             try {
                 String body = objectMapper.writeValueAsString(
                         Map.of("currentPassword", current, "newPassword", newPass));
+                System.out.println(">>> body enviado: " + body);
                 // PATCH /api/auth/password (no PUT, no /api/users/password)
                 HttpResponse<String> response = AppContext.getInstance()
                         .getApiService().patch("/api/auth/password", body);

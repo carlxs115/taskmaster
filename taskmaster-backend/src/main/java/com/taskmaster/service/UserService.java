@@ -1,6 +1,7 @@
 package com.taskmaster.service;
 
 import com.taskmaster.dto.response.UserStatsResponse;
+import com.taskmaster.model.enums.ActionType;
 import com.taskmaster.model.enums.TaskStatus;
 import com.taskmaster.model.User;
 import com.taskmaster.model.UserSettings;
@@ -37,6 +38,7 @@ public class UserService {
     private final PasswordEncoder passwordEncoder;
     private final TaskRepository taskRepository;
     private final ProjectRepository projectRepository;
+    private final ActivityLogService activityLogService;
 
     /**
      * Registra un nuevo usuario.
@@ -116,7 +118,10 @@ public class UserService {
         user.setUsername(username);
         user.setEmail(email);
         user.setBirthDate(birthDate);
-        return userRepository.save(user);
+
+        User saved = userRepository.save(user);
+        activityLogService.log(userId, ActionType.PROFILE_UPDATED);
+        return saved;
     }
 
     public UserStatsResponse getStats(Long userId) {
@@ -145,13 +150,14 @@ public class UserService {
      */
     public void changePassword(Long userId, String currentPassword, String newPassword) {
         User user = findById(userId);
-
+        System.out.println(">>> currentPassword recibido: " + currentPassword);
+        System.out.println(">>> matches: " + passwordEncoder.matches(currentPassword, user.getPassword()));
         if (!passwordEncoder.matches(currentPassword, user.getPassword())) {
             throw new RuntimeException("La contraseña no es correcta");
         }
-
         user.setPassword(passwordEncoder.encode(newPassword));
         userRepository.save(user);
+        activityLogService.log(userId, ActionType.PASSWORD_CHANGED);
     }
 
     /**

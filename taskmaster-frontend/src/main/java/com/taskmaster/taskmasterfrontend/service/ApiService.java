@@ -154,8 +154,14 @@ public class ApiService {
      * Realiza una petición PATCH con autenticación.
      */
     public HttpResponse<String> patch(String endpoint, Object body) throws Exception {
-        String json = body != null ? objectMapper.writeValueAsString(body) : "";
-
+        String json;
+        if (body == null) {
+            json = "";
+        } else if (body instanceof String s) {
+            json = s; // ya es JSON, no serializar de nuevo
+        } else {
+            json = objectMapper.writeValueAsString(body);
+        }
         HttpRequest request = HttpRequest.newBuilder()
                 .uri(URI.create(BASE_URL + endpoint))
                 .header("Content-Type", "application/json")

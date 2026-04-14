@@ -105,6 +105,21 @@
                 </HBox>
             </VBox>
 
+            <!-- Historial de actividad -->
+            <VBox spacing="0"
+                  style="-fx-background-color: white; -fx-background-radius: 10px;
+             -fx-border-color: #e8e8e8; -fx-border-radius: 10px; -fx-border-width: 1;">
+                <HBox style="-fx-padding: 14 20 14 20; -fx-border-color: transparent transparent #f0f0f0 transparent;
+                 -fx-border-width: 0 0 1 0;" alignment="CENTER_LEFT">
+                    <Label text="Actividad reciente"
+                           style="-fx-font-size: 13px; -fx-font-weight: bold; -fx-text-fill: #1e1e2e;"/>
+                </HBox>
+                <VBox fx:id="activityLogContainer" spacing="0">
+                    <Label fx:id="activityLogEmpty" text="No hay actividad registrada."
+                           style="-fx-text-fill: #aaaaaa; -fx-font-size: 12px; -fx-padding: 14 20 14 20;"/>
+                </VBox>
+            </VBox>
+
         </VBox>
     </ScrollPane>
 </VBox>

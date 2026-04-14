@@ -69,6 +69,25 @@ public class EditProjectController {
                         if (project.has("category") && !project.get("category").isNull()) {
                             categoryCombo.setValue(project.get("category").asText());
                         }
+
+                        if (project.has("status") && !project.get("status").isNull()) {
+                            String status = project.get("status").asText();
+                            statusCombo.setValue(switch (status) {
+                                case "IN_PROGRESS" -> "EN CURSO";
+                                case "DONE"        -> "COMPLETADO";
+                                case "CANCELLED"   -> "CANCELADO";
+                                default            -> "PENDIENTE";
+                            });
+                        }
+                        if (project.has("priority") && !project.get("priority").isNull()) {
+                            String priority = project.get("priority").asText();
+                            priorityCombo.setValue(switch (priority) {
+                                case "LOW"    -> "BAJA";
+                                case "HIGH"   -> "ALTA";
+                                case "URGENT" -> "URGENTE";
+                                default       -> "MEDIA";
+                            });
+                        }
                     });
                 }
             } catch (Exception e) {
@@ -97,7 +116,9 @@ public class EditProjectController {
                         "?name=" + java.net.URLEncoder.encode(name, "UTF-8") +
                         "&description=" + java.net.URLEncoder.encode(
                         descriptionField.getText().trim(), "UTF-8") +
-                        "&category=" + categoryCombo.getValue();
+                        "&category=" + categoryCombo.getValue() +
+                        "&status=" + mapStatus(statusCombo.getValue()) +
+                        "&priority=" + mapPriority(priorityCombo.getValue());
 
                 HttpResponse<String> response = AppContext.getInstance()
                         .getApiService()
@@ -126,6 +147,24 @@ public class EditProjectController {
     private void closeDialog() {
         Stage stage = (Stage) nameField.getScene().getWindow();
         stage.close();
+    }
+
+    private String mapStatus(String label) {
+        return switch (label) {
+            case "EN CURSO"    -> "IN_PROGRESS";
+            case "COMPLETADO"  -> "DONE";
+            case "CANCELADO"   -> "CANCELLED";
+            default            -> "TODO";
+        };
+    }
+
+    private String mapPriority(String label) {
+        return switch (label) {
+            case "BAJA"   -> "LOW";
+            case "ALTA"   -> "HIGH";
+            case "URGENTE"-> "URGENT";
+            default       -> "MEDIUM";
+        };
     }
 
     private void showError(String message) {

@@ -89,7 +89,6 @@ public class ProjectService {
                                  TaskCategory category, TaskStatus status,
                                  TaskPriority priority, Long userId) {
         Project project = getProjectByIdAndUser(projectId, userId);
-
         TaskStatus oldStatus = project.getStatus();
 
         project.setName(name);
@@ -98,33 +97,15 @@ public class ProjectService {
         project.setStatus(status);
         project.setPriority(priority);
 
-        // Capturar si el status cambió para usar el tipo correcto
-        boolean statusChanged = !project.getStatus().equals(status);
-        project.setName(name);
-        project.setDescription(description);
-        project.setCategory(category);
-        project.setStatus(status);
-        project.setPriority(priority);
         Project saved = projectRepository.save(project);
 
-        if (statusChanged) {
-            activityLogService.log(
-                    userId,
-                    ActionType.PROJECT_STATUS_CHANGED,
-                    "PROJECT",
-                    saved.getId(),
-                    saved.getName(),
-                    project.getStatus().name(),
-                    status.name()
-            );
+        if (oldStatus != null && status != null && !oldStatus.equals(status)) {
+            activityLogService.log(userId, ActionType.PROJECT_STATUS_CHANGED,
+                    "PROJECT", saved.getId(), saved.getName(),
+                    oldStatus.name(), status.name());
         } else {
-            activityLogService.log(
-                    userId,
-                    ActionType.PROJECT_EDITED,
-                    "PROJECT",
-                    saved.getId(),
-                    saved.getName()
-            );
+            activityLogService.log(userId, ActionType.PROJECT_EDITED,
+                    "PROJECT", saved.getId(), saved.getName());
         }
         return saved;
     }
