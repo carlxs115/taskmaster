@@ -124,4 +124,6 @@
 
         </VBox>
     </ScrollPane>
+    <Separator/>
+    <fx:include fx:id="activityLogSection" source="activity-log-section.fxml"/>
 </VBox>

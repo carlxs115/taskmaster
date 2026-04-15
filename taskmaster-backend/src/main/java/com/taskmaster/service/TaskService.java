@@ -146,20 +146,38 @@ public class TaskService {
         if (task.getProject() != null) {
             projectService.getProjectByIdAndUser(task.getProject().getId(), userId);
         }
+
+        String oldTitle = task.getTitle();
+        TaskStatus oldStatus   = task.getStatus();
+        TaskPriority oldPriority = task.getPriority();
+        LocalDate oldDueDate = task.getDueDate();
+
         task.setTitle(title);
         task.setDescription(description);
         task.setStatus(status);
         task.setPriority(priority);
         task.setDueDate(dueDate);
-
         Task saved = taskRepository.save(task);
-        activityLogService.log(
-                userId,
-                task.getParentTask() != null ? ActionType.SUBTASK_EDITED : ActionType.TASK_EDITED,
-                task.getParentTask() != null ? "SUBTASK" : "TASK",
-                saved.getId(),
-                saved.getTitle()
-        );
+
+        ActionType actionType = task.getParentTask() != null ? ActionType.SUBTASK_EDITED : ActionType.TASK_EDITED;
+        String entityType = task.getParentTask() != null ? "SUBTASK" : "TASK";
+
+        // Registrar solo el primer cambio relevante detectado
+        if (!oldTitle.equals(title)) {
+            activityLogService.log(userId, actionType, entityType, saved.getId(), saved.getTitle(), oldTitle, title);
+        } else if (oldStatus != status) {
+            activityLogService.log(userId, actionType, entityType, saved.getId(), saved.getTitle(), oldStatus.name(), status.name());
+        } else if (oldPriority != priority) {
+            activityLogService.log(userId, actionType, entityType, saved.getId(), saved.getTitle(), oldPriority.name(), priority.name());
+        } else if (!java.util.Objects.equals(oldDueDate, dueDate)) {
+            String oldStr = oldDueDate != null ? oldDueDate.format(java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy")) : "Sin fecha";
+            String newStr = dueDate    != null ? dueDate.format(java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy"))    : "Sin fecha";
+            activityLogService.log(userId, actionType, entityType, saved.getId(), saved.getTitle(), oldStr, newStr);
+        } else {
+            // Cambió descripción, fecha u otro campo sin valor old/new relevante
+            activityLogService.log(userId, actionType, entityType, saved.getId(), saved.getTitle());
+        }
+
         return saved;
     }
 
@@ -172,6 +190,7 @@ public class TaskService {
         if (task.getProject() != null) {
             projectService.getProjectByIdAndUser(task.getProject().getId(), userId);
         }
+
         if (newStatus == TaskStatus.DONE) {
             boolean hasPending = taskRepository
                     .existsByParentTaskIdAndStatusNotAndDeletedFalse(taskId, TaskStatus.DONE);
@@ -179,11 +198,10 @@ public class TaskService {
                 throw new RuntimeException("No puedes completar esta tarea porque tiene subtareas pendientes");
             }
         }
-        task.setStatus(newStatus);
-
-        TaskStatus oldStatus = task.getStatus(); // capturar ANTES de setear
+        TaskStatus oldStatus = task.getStatus();
         task.setStatus(newStatus);
         Task saved = taskRepository.save(task);
+
         activityLogService.log(
                 userId,
                 ActionType.TASK_STATUS_CHANGED,

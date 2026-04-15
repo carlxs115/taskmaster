@@ -9,7 +9,7 @@
       spacing="16"
       style="-fx-background-color: white; -fx-padding: 24;">
 
-    <Label text="Editar tarea"
+    <Label fx:id="dialogTitleLabel" text="Editar tarea"
            style="-fx-font-size: 18px; -fx-font-weight: bold; -fx-text-fill: #2d2d2d;"/>
 
     <VBox spacing="6">

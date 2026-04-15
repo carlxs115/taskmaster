@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.geometry.Insets?>
+
+<VBox xmlns:fx="http://javafx.com/fxml"
+      fx:controller="com.taskmaster.taskmasterfrontend.controller.ActivityLogSectionController"
+      spacing="8" styleClass="activity-log-section">
+
+    <padding><Insets top="16" bottom="8" left="0" right="0"/></padding>
+
+    <Label text="Historial de actividad" styleClass="section-title"
+            maxWidth="Infinity" alignment="CENTER"/>
+
+    <TableView fx:id="activityTable" prefHeight="200" maxHeight="200">
+        <columns>
+            <TableColumn fx:id="colDate"   text="Fecha"   prefWidth="130"/>
+            <TableColumn fx:id="colAction" text="Acción"  prefWidth="170"/>
+            <TableColumn fx:id="colEntity" text="Entidad" prefWidth="90"/>
+            <TableColumn fx:id="colDetail" text="Detalle" prefWidth="350"/>
+        </columns>
+        <placeholder><Label text="Sin actividad registrada"/></placeholder>
+    </TableView>
+</VBox>

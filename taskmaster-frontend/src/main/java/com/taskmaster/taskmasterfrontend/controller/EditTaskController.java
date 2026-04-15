@@ -27,12 +27,17 @@ public class EditTaskController {
     @FXML private ComboBox<String> priorityCombo;
     @FXML private DatePicker dueDatePicker;
     @FXML private Label errorLabel;
+    @FXML private Label dialogTitleLabel;
 
     private Long taskId;
     private Runnable onTaskUpdated;
 
     public void setOnTaskUpdated(Runnable callback) {
         this.onTaskUpdated = callback;
+    }
+
+    public void setDialogTitle(String title) {
+        dialogTitleLabel.setText(title);
     }
 
     @FXML
@@ -54,17 +59,20 @@ public class EditTaskController {
     public void initData(JsonNode task) {
         this.taskId = task.get("id").asLong();
         titleField.setText(task.get("title").asText());
-
         if (task.has("description") && !task.get("description").isNull()) {
             descriptionField.setText(task.get("description").asText());
         }
-
         statusCombo.setValue(translateStatus(task.get("status").asText()));
         priorityCombo.setValue(translatePriority(task.get("priority").asText()));
-
         if (task.has("dueDate") && !task.get("dueDate").isNull()) {
             dueDatePicker.setValue(LocalDate.parse(task.get("dueDate").asText()));
         }
+
+        Platform.runLater(() -> {
+            titleField.deselect();
+            titleField.positionCaret(0);
+            titleField.getParent().requestFocus();
+        });
     }
 
     @FXML

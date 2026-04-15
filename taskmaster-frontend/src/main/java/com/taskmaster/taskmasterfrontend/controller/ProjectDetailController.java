@@ -36,6 +36,7 @@ public class ProjectDetailController {
     @FXML private StackPane progressBarFill;
     @FXML private VBox taskListContainer;
     @FXML private Label emptyTasksLabel;
+    @FXML private ActivityLogSectionController activityLogSectionController;
 
     private JsonNode projectData;
     private final ObjectMapper objectMapper = new ObjectMapper()
@@ -44,6 +45,8 @@ public class ProjectDetailController {
     public void initData(JsonNode project) {
         this.projectData = project;
         loadProjectDetail();
+        Long projectId = project.path("id").asLong();
+        activityLogSectionController.loadForEntity("PROJECT", projectId);
     }
 
     private void loadProjectDetail() {

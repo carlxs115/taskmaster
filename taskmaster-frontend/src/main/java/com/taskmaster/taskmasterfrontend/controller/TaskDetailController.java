@@ -37,6 +37,7 @@ public class TaskDetailController {
     @FXML private VBox subtaskContainer;
     @FXML private StackPane progressBarBg;
     @FXML private StackPane progressBarFill;
+    @FXML private ActivityLogSectionController activityLogSectionController;
 
     private JsonNode taskData;
     private Runnable onTaskChanged;
@@ -50,6 +51,15 @@ public class TaskDetailController {
     public void initData(JsonNode task) {
         this.taskData = task;
         loadTaskDetail();
+        Long taskId = task.path("id").asLong();
+        activityLogSectionController.loadForEntity("TASK", taskId, "SUBTASK");
+    }
+
+    public void initDataAsSubtask(JsonNode subtask) {
+        this.taskData = subtask;
+        loadTaskDetail();
+        Long subtaskId = subtask.path("id").asLong();
+        activityLogSectionController.loadForEntity("SUBTASK", subtaskId);
     }
 
     // ── Carga principal ───────────────────────────────────────────────────────
@@ -192,6 +202,14 @@ public class TaskDetailController {
                 "-fx-background-radius: 10px; -fx-text-fill: white; " +
                 "-fx-background-color: " + getPriorityColor(priority) + ";");
 
+        Button detailBtn = new Button("👁");
+        detailBtn.setStyle("-fx-background-color: transparent; -fx-cursor: hand; -fx-font-size: 13px;");
+        detailBtn.setOnAction(e -> openSubtaskDetail(stId));
+
+        Button editBtn = new Button("✏️");
+        editBtn.setStyle("-fx-background-color: transparent; -fx-cursor: hand; -fx-font-size: 13px;");
+        editBtn.setOnAction(e -> openEditSubtask(stId, parentTaskId));
+
         Button deleteBtn = new Button("🗑");
         deleteBtn.setStyle("-fx-background-color: transparent; -fx-cursor: hand; -fx-font-size: 13px;");
         deleteBtn.setOnAction(e -> deleteSubtask(stId, parentTaskId));
@@ -225,8 +243,72 @@ public class TaskDetailController {
                 }
             }).start();
         });
-        row.getChildren().addAll(check, titleLabel, priBadge, deleteBtn);
+        row.getChildren().addAll(check, titleLabel, priBadge, detailBtn, editBtn, deleteBtn);
         return row;
+    }
+
+    private void openSubtaskDetail(Long subtaskId) {
+        try {
+            HttpResponse<String> resp = AppContext.getInstance().getApiService()
+                    .get("/api/tasks/" + subtaskId);
+            if (resp.statusCode() != 200) return;
+
+            JsonNode subtask = new ObjectMapper()
+                    .registerModule(new JavaTimeModule())
+                    .readTree(resp.body());
+
+            FXMLLoader loader = new FXMLLoader(
+                    getClass().getResource("/com/taskmaster/taskmasterfrontend/task-detail-view.fxml"));
+            VBox root = loader.load();
+            TaskDetailController controller = loader.getController();
+            controller.initDataAsSubtask(subtask);
+
+            Stage dialog = new Stage();
+            dialog.setTitle("Detalle de subtarea");
+            dialog.setScene(new Scene(root, 780, 620));
+            dialog.initModality(Modality.APPLICATION_MODAL);
+            dialog.showAndWait();
+
+            Long parentTaskId = taskData.get("id").asLong();
+            loadSubtasks(parentTaskId);
+        } catch (Exception e) {
+            showAlert("Error", "No se pudo abrir el detalle de la subtarea");
+        }
+    }
+
+    private void openEditSubtask(Long subtaskId, Long parentTaskId) {
+        try {
+            // Primero cargar datos
+            HttpResponse<String> resp = AppContext.getInstance().getApiService()
+                    .get("/api/tasks/" + subtaskId);
+            if (resp.statusCode() != 200) return;
+
+            JsonNode subtask = new com.fasterxml.jackson.databind.ObjectMapper()
+                    .registerModule(new com.fasterxml.jackson.datatype.jsr310.JavaTimeModule())
+                    .readTree(resp.body());
+
+            // Luego cargar el FXML
+            FXMLLoader loader = new FXMLLoader(
+                    getClass().getResource("/com/taskmaster/taskmasterfrontend/edit-task-dialog.fxml"));
+            javafx.scene.layout.VBox root = loader.load();
+
+            EditTaskController controller = loader.getController();
+            controller.initData(subtask);
+            controller.setDialogTitle("Editar subtarea");
+            controller.setOnTaskUpdated(() -> loadSubtasks(parentTaskId));
+
+            Stage dialog = new Stage();
+            dialog.setTitle("Editar subtarea"); // título correcto
+            dialog.setScene(new javafx.scene.Scene(root));
+            dialog.initModality(javafx.stage.Modality.APPLICATION_MODAL);
+            dialog.showAndWait();
+
+            // Recargar historial tras editar
+            Long parentTaskId2 = taskData.get("id").asLong();
+            activityLogSectionController.loadForEntity("TASK", parentTaskId2, "SUBTASK");
+        } catch (Exception e) {
+            showAlert("Error", "No se pudo abrir el editor de subtarea");
+        }
     }
 
     private void deleteSubtask(Long subtaskId, Long parentTaskId) {

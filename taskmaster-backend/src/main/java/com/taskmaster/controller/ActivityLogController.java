@@ -4,13 +4,13 @@ import com.taskmaster.security.SecurityUtils;
 import org.springframework.security.core.userdetails.UserDetails;
 import com.taskmaster.dto.ActivityLogDTO;
 import com.taskmaster.model.ActivityLog;
-import com.taskmaster.model.User;
 import com.taskmaster.service.ActivityLogService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
@@ -46,6 +46,20 @@ public class ActivityLogController {
                 .map(this::toDTO)
                 .toList();
 
+        return ResponseEntity.ok(log);
+    }
+
+    @GetMapping("/activity-log/entity")
+    public ResponseEntity<List<ActivityLogDTO>> getEntityActivityLog(
+            @AuthenticationPrincipal UserDetails userDetails,
+            @RequestParam String entityType,
+            @RequestParam Long entityId) {
+        Long userId = securityUtils.getUserId(userDetails);
+        List<ActivityLogDTO> log = activityLogService
+                .getEntityHistory(userId, entityType, entityId)
+                .stream()
+                .map(this::toDTO)
+                .toList();
         return ResponseEntity.ok(log);
     }
 

@@ -73,6 +73,15 @@ public class TaskController {
 
     // ── Lectura ───────────────────────────────────────────────────────────────
 
+    @GetMapping("/{id}")
+    public ResponseEntity<TaskResponse> getTaskById(
+            @PathVariable Long id,
+            @AuthenticationPrincipal UserDetails userDetails) {
+        Long userId = securityUtils.getUserId(userDetails);
+        Task task = taskService.findById(id);
+        return ResponseEntity.ok(toResponse(task));
+    }
+
     @GetMapping
     public ResponseEntity<List<TaskResponse>> getTasksByProject(
             @RequestParam Long projectId,

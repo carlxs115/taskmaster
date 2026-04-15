@@ -78,6 +78,11 @@ public class ActivityLogService {
         );
     }
 
+    public List<ActivityLog> getEntityHistory(Long userId, String entityType, Long entityId) {
+        return activityLogRepository
+                .findByUserIdAndEntityTypeAndEntityIdOrderByCreatedAtDesc(userId, entityType, entityId);
+    }
+
     // Limpieza automática: corre cada día a las 3:00 AM
     @Scheduled(cron = "0 0 3 * * *")
     @Transactional

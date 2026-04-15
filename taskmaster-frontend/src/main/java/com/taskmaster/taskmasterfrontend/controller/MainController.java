@@ -81,7 +81,7 @@ public class MainController {
         userMenuButton.setText(username + "  ▾");
 
         statusFilter.setItems(FXCollections.observableArrayList(
-                "Todas", "Pendiente", "En progreso", "Completada", "Cancelada"));
+                "Todas", "Pendiente", "En curso", "Completada", "Cancelada"));
         statusFilter.setPromptText("Estado");
         statusFilter.getSelectionModel().selectedItemProperty().addListener(
                 (obs, o, n) -> applyFiltersAndSort());
@@ -378,7 +378,7 @@ public class MainController {
         statsRow.setStyle("-fx-padding: 16 20 8 20;");
         statsRow.getChildren().addAll(
                 createStatCard(String.valueOf(stats[0]), "Pendientes",       "#3b82f6"),
-                createStatCard(String.valueOf(stats[1]), "En progreso",      "#f59e0b"),
+                createStatCard(String.valueOf(stats[1]), "En curso",      "#f59e0b"),
                 createStatCard(String.valueOf(stats[2]), "Completadas",      "#22c55e"),
                 createStatCard(String.valueOf(stats[3]), "Proyectos activos","#e11d48")
         );
@@ -713,7 +713,7 @@ public class MainController {
     private boolean matchesStatusLabel(String enumVal, String label) {
         return switch (enumVal) {
             case "TODO"        -> label.equals("Pendiente");
-            case "IN_PROGRESS" -> label.equals("En progreso");
+            case "IN_PROGRESS" -> label.equals("En curso");
             case "DONE"        -> label.equals("Completada");
             case "CANCELLED"   -> label.equals("Cancelada");
             default            -> false;
@@ -890,7 +890,7 @@ public class MainController {
             controller.setOnTaskChanged(this::reloadTasks);
             Stage dialog = new Stage();
             dialog.setTitle("Detalles de la tarea");
-            dialog.setScene(new Scene(root, 600, 550));
+            dialog.setScene(new Scene(root, 740, 620));
             dialog.initModality(Modality.APPLICATION_MODAL);
             dialog.showAndWait();
         } catch (IOException e) {

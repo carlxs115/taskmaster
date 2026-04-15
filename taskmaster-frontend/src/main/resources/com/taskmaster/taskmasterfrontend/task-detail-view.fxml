@@ -95,9 +95,11 @@
                 <VBox fx:id="subtaskContainer" spacing="0" style="-fx-padding: 8 0 0 0;"/>
 
                 <Label fx:id="emptySubtasksLabel"
-                       text="Sin subtareas. ¡Añade una!"
+                       text="Sin subtareas actualmente."
                        style="-fx-text-fill: #aaaaaa; -fx-font-size: 12px; -fx-padding: 8 0 0 0;"/>
             </VBox>
         </VBox>
     </ScrollPane>
+    <Separator/>
+    <fx:include fx:id="activityLogSection" source="activity-log-section.fxml"/>
 </VBox>
