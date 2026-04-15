@@ -872,7 +872,7 @@ public class MainController {
             controller.initData(project);
             Stage dialog = new Stage();
             dialog.setTitle("Detalles del proyecto");
-            dialog.setScene(new Scene(root, 620, 600));
+            dialog.setScene(new Scene(root, 742, 820));
             dialog.initModality(Modality.APPLICATION_MODAL);
             dialog.showAndWait();
         } catch (IOException e) {

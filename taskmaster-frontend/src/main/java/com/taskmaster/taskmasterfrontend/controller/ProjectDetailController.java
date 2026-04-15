@@ -6,14 +6,15 @@ import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.taskmaster.taskmasterfrontend.util.AppContext;
 import javafx.application.Platform;
 import javafx.fxml.FXML;
+import javafx.fxml.FXMLLoader;
 import javafx.geometry.Pos;
-import javafx.scene.control.Alert;
-import javafx.scene.control.Label;
-import javafx.scene.control.Separator;
+import javafx.scene.Scene;
+import javafx.scene.control.*;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
+import javafx.stage.Modality;
 import javafx.stage.Stage;
 
 import java.net.http.HttpResponse;
@@ -46,7 +47,7 @@ public class ProjectDetailController {
         this.projectData = project;
         loadProjectDetail();
         Long projectId = project.path("id").asLong();
-        activityLogSectionController.loadForEntity("PROJECT", projectId);
+        activityLogSectionController.loadForEntity("PROJECT", projectId, "TASK");
     }
 
     private void loadProjectDetail() {
@@ -204,7 +205,109 @@ public class ProjectDetailController {
         }
         row.getChildren().add(priBadge);
 
+        Long taskId = task.path("id").asLong();
+
+        Button menuBtn = new Button("•••");
+        menuBtn.setStyle("-fx-background-color: transparent; -fx-text-fill: #666688; " +
+                "-fx-font-size: 16px; -fx-font-weight: bold; -fx-cursor: hand; " +
+                "-fx-padding: 2 8 2 8; -fx-background-radius: 6px;");
+        menuBtn.setOnMouseEntered(e -> menuBtn.setStyle(
+                "-fx-background-color: #f0f0f5; -fx-text-fill: #1e1e2e; " +
+                        "-fx-font-size: 16px; -fx-font-weight: bold; -fx-cursor: hand; " +
+                        "-fx-padding: 2 8 2 8; -fx-background-radius: 6px;"));
+        menuBtn.setOnMouseExited(e -> menuBtn.setStyle(
+                "-fx-background-color: transparent; -fx-text-fill: #666688; " +
+                        "-fx-font-size: 16px; -fx-font-weight: bold; -fx-cursor: hand; " +
+                        "-fx-padding: 2 8 2 8; -fx-background-radius: 6px;"));
+        menuBtn.setOnAction(e -> {
+            ContextMenu menu = new ContextMenu();
+            menu.setStyle("-fx-background-color: white; -fx-border-color: #e8e8e8; " +
+                    "-fx-border-width: 1; -fx-background-radius: 8; -fx-border-radius: 8;");
+            MenuItem detail = new MenuItem("👁  Ver detalles");
+            detail.setStyle("-fx-font-size: 13px; -fx-padding: 2 10 2 10;");
+            detail.setOnAction(ev -> openTaskDetail(task, taskId));
+            MenuItem edit = new MenuItem("✏️  Editar");
+            edit.setStyle("-fx-font-size: 13px; -fx-padding: 2 10 2 10;");
+            edit.setOnAction(ev -> openEditTask(task, taskId));
+            MenuItem delete = new MenuItem("🗑  Eliminar");
+            delete.setStyle("-fx-font-size: 13px; -fx-padding: 2 10 2 10; -fx-text-fill: #e74c3c;");
+            delete.setOnAction(ev -> deleteTask(taskId));
+            menu.getItems().addAll(detail, edit, delete);
+            menu.show(menuBtn, javafx.geometry.Side.BOTTOM, 0, 0);
+        });
+
+        row.getChildren().add(menuBtn);
+
         return row;
+    }
+
+    private void openTaskDetail(JsonNode task, Long taskId) {
+        try {
+            javafx.fxml.FXMLLoader loader = new javafx.fxml.FXMLLoader(
+                    getClass().getResource("/com/taskmaster/taskmasterfrontend/task-detail-view.fxml"));
+            VBox root = loader.load();
+            TaskDetailController controller = loader.getController();
+            controller.initData(task);
+
+            javafx.stage.Stage dialog = new javafx.stage.Stage();
+            dialog.setTitle("Detalles de la tarea");
+            dialog.setScene(new javafx.scene.Scene(root, 780, 620));
+            dialog.initModality(javafx.stage.Modality.APPLICATION_MODAL);
+            dialog.showAndWait();
+
+            // Recargar historial y tareas tras cerrar
+            Long projectId = projectData.path("id").asLong();
+            activityLogSectionController.loadForEntity("PROJECT", projectId, "TASK");
+            loadTasks(projectId);
+        } catch (Exception e) {
+            showAlert("Error", "No se pudo abrir el detalle de la tarea");
+        }
+    }
+
+    private void openEditTask(JsonNode task, Long taskId) {
+        try {
+            FXMLLoader loader = new FXMLLoader(
+                    getClass().getResource("/com/taskmaster/taskmasterfrontend/edit-task-dialog.fxml"));
+            VBox root = loader.load();
+            EditTaskController controller = loader.getController();
+            controller.initData(task);
+            controller.setOnTaskUpdated(() -> {
+                Long projectId = projectData.path("id").asLong();
+                loadTasks(projectId);
+                activityLogSectionController.loadForEntity("PROJECT", projectId, "TASK");
+            });
+            Stage dialog = new Stage();
+            dialog.setTitle("Editar tarea");
+            dialog.setScene(new Scene(root, 500, 420));
+            dialog.initModality(Modality.APPLICATION_MODAL);
+            dialog.showAndWait();
+        } catch (Exception e) {
+            showAlert("Error", "No se pudo abrir el editor de tarea");
+        }
+    }
+
+    private void deleteTask(Long taskId) {
+        Alert confirm = new Alert(Alert.AlertType.CONFIRMATION);
+        confirm.setTitle("Eliminar tarea");
+        confirm.setHeaderText(null);
+        confirm.setContentText("¿Seguro que quieres eliminar esta tarea?");
+        confirm.showAndWait().ifPresent(r -> {
+            if (r == ButtonType.OK) {
+                new Thread(() -> {
+                    try {
+                        AppContext.getInstance().getApiService()
+                                .delete("/api/tasks/" + taskId);
+                        Platform.runLater(() -> {
+                            Long projectId = projectData.path("id").asLong();
+                            loadTasks(projectId);
+                            activityLogSectionController.loadForEntity("PROJECT", projectId, "TASK");
+                        });
+                    } catch (Exception e) {
+                        Platform.runLater(() -> showAlert("Error", "No se pudo eliminar la tarea"));
+                    }
+                }).start();
+            }
+        });
     }
 
     @FXML

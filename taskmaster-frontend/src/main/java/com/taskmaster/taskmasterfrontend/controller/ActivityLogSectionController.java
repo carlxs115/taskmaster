@@ -67,14 +67,11 @@ public class ActivityLogSectionController {
             var apiService = AppContext.getInstance().getApiService();
             List<ActivityRow> rows = new ArrayList<>();
 
-            // Cargar logs del tipo principal (TASK o PROJECT)
             rows.addAll(fetchRows(apiService, entityType, entityId));
 
-            // Si se pide incluir subtareas, obtener sus IDs y cargar sus logs
             if (extraTypes.length > 0 && "SUBTASK".equals(extraTypes[0])) {
-                System.out.println("Buscando subtareas de entityId=" + entityId);
+                // Llamado desde TaskDetailController — cargar logs de subtareas de la tarea
                 HttpResponse<String> subtasksResp = apiService.get("/api/tasks/" + entityId + "/subtasks");
-                System.out.println("Subtareas status=" + subtasksResp.statusCode() + " body=" + subtasksResp.body());
                 if (subtasksResp != null && subtasksResp.statusCode() == 200) {
                     JsonNode subtasks = new com.fasterxml.jackson.databind.ObjectMapper()
                             .registerModule(new com.fasterxml.jackson.datatype.jsr310.JavaTimeModule())
@@ -86,9 +83,34 @@ public class ActivityLogSectionController {
                         }
                     }
                 }
+            } else if (extraTypes.length > 0 && "TASK".equals(extraTypes[0])) {
+                // Llamado desde ProjectDetailController — cargar logs de tareas y sus subtareas
+                HttpResponse<String> tasksResp = apiService.get("/api/tasks?projectId=" + entityId);
+                if (tasksResp != null && tasksResp.statusCode() == 200) {
+                    JsonNode tasks = new com.fasterxml.jackson.databind.ObjectMapper()
+                            .registerModule(new com.fasterxml.jackson.datatype.jsr310.JavaTimeModule())
+                            .readTree(tasksResp.body());
+                    if (tasks.isArray()) {
+                        for (JsonNode task : tasks) {
+                            Long taskId = task.path("id").asLong();
+                            rows.addAll(fetchRows(apiService, "TASK", taskId));
+                            HttpResponse<String> subtasksResp = apiService.get("/api/tasks/" + taskId + "/subtasks");
+                            if (subtasksResp != null && subtasksResp.statusCode() == 200) {
+                                JsonNode subtasks = new com.fasterxml.jackson.databind.ObjectMapper()
+                                        .registerModule(new com.fasterxml.jackson.datatype.jsr310.JavaTimeModule())
+                                        .readTree(subtasksResp.body());
+                                if (subtasks.isArray()) {
+                                    for (JsonNode sub : subtasks) {
+                                        Long subId = sub.path("id").asLong();
+                                        rows.addAll(fetchRows(apiService, "SUBTASK", subId));
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
             }
 
-            // Ordenar por fecha descendente
             rows.sort((a, b) -> b.rawDate().compareTo(a.rawDate()));
             activityTable.setItems(FXCollections.observableArrayList(rows));
         } catch (Exception e) {
@@ -110,11 +132,6 @@ public class ActivityLogSectionController {
         HttpResponse<String> httpResponse = apiService.get(
                 "/api/activity-log/entity?entityType=" + entityType + "&entityId=" + entityId);
 
-        // DEBUG
-        System.out.println("FETCH: entityType=" + entityType + " entityId=" + entityId +
-                " status=" + (httpResponse != null ? httpResponse.statusCode() : "null") +
-                " body=" + (httpResponse != null ? httpResponse.body() : "null"));
-
         List<ActivityRow> rows = new ArrayList<>();
         if (httpResponse == null || httpResponse.statusCode() != 200) return rows;
 
@@ -133,7 +150,9 @@ public class ActivityLogSectionController {
 
                 String dateStr     = formatDate(rawDate);
                 String actionLabel = ACTION_LABELS.getOrDefault(actionType, actionType);
-                String entityLabel = ENTITY_LABELS.getOrDefault(entType, entType);
+                String entityId2   = node.path("entityId").asText("");
+                String entityLabel = (!entityId2.isBlank() ? "#" + entityId2 + " " : "")
+                        + ENTITY_LABELS.getOrDefault(entType, entType);
                 String detail      = buildDetail(actionType, oldVal, newVal, entityName);
 
                 rows.add(new ActivityRow(dateStr, actionLabel, entityLabel, detail, rawDate));

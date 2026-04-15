@@ -202,17 +202,34 @@ public class TaskDetailController {
                 "-fx-background-radius: 10px; -fx-text-fill: white; " +
                 "-fx-background-color: " + getPriorityColor(priority) + ";");
 
-        Button detailBtn = new Button("👁");
-        detailBtn.setStyle("-fx-background-color: transparent; -fx-cursor: hand; -fx-font-size: 13px;");
-        detailBtn.setOnAction(e -> openSubtaskDetail(stId));
-
-        Button editBtn = new Button("✏️");
-        editBtn.setStyle("-fx-background-color: transparent; -fx-cursor: hand; -fx-font-size: 13px;");
-        editBtn.setOnAction(e -> openEditSubtask(stId, parentTaskId));
-
-        Button deleteBtn = new Button("🗑");
-        deleteBtn.setStyle("-fx-background-color: transparent; -fx-cursor: hand; -fx-font-size: 13px;");
-        deleteBtn.setOnAction(e -> deleteSubtask(stId, parentTaskId));
+        Button menuBtn = new Button("•••");
+        menuBtn.setStyle("-fx-background-color: transparent; -fx-text-fill: #666688; " +
+                "-fx-font-size: 16px; -fx-font-weight: bold; -fx-cursor: hand; " +
+                "-fx-padding: 2 8 2 8; -fx-background-radius: 6px;");
+        menuBtn.setOnMouseEntered(e -> menuBtn.setStyle(
+                "-fx-background-color: #f0f0f5; -fx-text-fill: #1e1e2e; " +
+                        "-fx-font-size: 16px; -fx-font-weight: bold; -fx-cursor: hand; " +
+                        "-fx-padding: 2 8 2 8; -fx-background-radius: 6px;"));
+        menuBtn.setOnMouseExited(e -> menuBtn.setStyle(
+                "-fx-background-color: transparent; -fx-text-fill: #666688; " +
+                        "-fx-font-size: 16px; -fx-font-weight: bold; -fx-cursor: hand; " +
+                        "-fx-padding: 2 8 2 8; -fx-background-radius: 6px;"));
+        menuBtn.setOnAction(e -> {
+            ContextMenu menu = new ContextMenu();
+            menu.setStyle("-fx-background-color: white; -fx-border-color: #e8e8e8; " +
+                    "-fx-border-width: 1; -fx-background-radius: 8; -fx-border-radius: 8;");
+            MenuItem detail = new MenuItem("👁  Ver detalles");
+            detail.setStyle("-fx-font-size: 13px; -fx-padding: 2 10 2 10;");
+            detail.setOnAction(ev -> openSubtaskDetail(stId));
+            MenuItem edit = new MenuItem("✏️  Editar");
+            edit.setStyle("-fx-font-size: 13px; -fx-padding: 2 10 2 10;");
+            edit.setOnAction(ev -> openEditSubtask(stId, parentTaskId));
+            MenuItem delete = new MenuItem("🗑  Eliminar");
+            delete.setStyle("-fx-font-size: 13px; -fx-padding: 2 10 2 10; -fx-text-fill: #e74c3c;");
+            delete.setOnAction(ev -> deleteSubtask(stId, parentTaskId));
+            menu.getItems().addAll(detail, edit, delete);
+            menu.show(menuBtn, javafx.geometry.Side.BOTTOM, 0, 0);
+        });
 
         final boolean[] updating = {false};
         check.selectedProperty().addListener((obs, was, is) -> {
@@ -243,7 +260,7 @@ public class TaskDetailController {
                 }
             }).start();
         });
-        row.getChildren().addAll(check, titleLabel, priBadge, detailBtn, editBtn, deleteBtn);
+        row.getChildren().addAll(check, titleLabel, priBadge, menuBtn);
         return row;
     }
 
@@ -305,6 +322,7 @@ public class TaskDetailController {
 
             // Recargar historial tras editar
             Long parentTaskId2 = taskData.get("id").asLong();
+            loadSubtasks(parentTaskId2);
             activityLogSectionController.loadForEntity("TASK", parentTaskId2, "SUBTASK");
         } catch (Exception e) {
             showAlert("Error", "No se pudo abrir el editor de subtarea");
