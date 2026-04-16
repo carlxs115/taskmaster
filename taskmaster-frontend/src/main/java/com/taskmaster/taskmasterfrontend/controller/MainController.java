@@ -1691,16 +1691,21 @@ public class MainController {
 
     private String getStatusColor(String s) {
         return switch (s) {
-            case "TODO" -> "#95a5a6"; case "IN_PROGRESS" -> "#3498db";
-            case "DONE" -> "#2ecc71"; case "CANCELLED"   -> "#e74c3c";
+            case "TODO" -> "#95a5a6";
+            case "IN_PROGRESS" -> "#3498db";
+            case "DONE" -> "#2ecc71";
+            case "SUBMITTED" -> "#8e44ad";
+            case "CANCELLED"   -> "#e74c3c";
             default -> "#95a5a6";
         };
     }
 
     private String getPriorityColor(String p) {
         return switch (p) {
-            case "URGENT" -> "#e74c3c"; case "HIGH"   -> "#e67e22";
-            case "MEDIUM" -> "#3498db"; case "LOW"    -> "#95a5a6";
+            case "URGENT" -> "#e74c3c";
+            case "HIGH"   -> "#e67e22";
+            case "MEDIUM" -> "#3498db";
+            case "LOW"    -> "#95a5a6";
             default -> "#95a5a6";
         };
     }
@@ -1710,6 +1715,7 @@ public class MainController {
             case "TODO"        -> "PENDIENTE";
             case "IN_PROGRESS" -> "EN CURSO";
             case "DONE"        -> "COMPLETADA";
+            case "SUBMITTED" -> "ENTREGADA";
             case "CANCELLED"   -> "CANCELADA";
             default            -> status;
         };

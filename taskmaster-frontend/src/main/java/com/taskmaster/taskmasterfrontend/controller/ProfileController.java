@@ -362,6 +362,7 @@ public class ProfileController {
             case "TODO"        -> "Pendiente";
             case "IN_PROGRESS" -> "En progreso";
             case "DONE"        -> "Completada";
+            case "SUBMITTED" -> "Entregada";
             case "CANCELLED"   -> "Cancelada";
             default            -> status;
         };

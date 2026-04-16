@@ -627,6 +627,7 @@ public class TaskDetailController {
             case "TODO"        -> "#95a5a6";
             case "IN_PROGRESS" -> "#3498db";
             case "DONE"        -> "#2ecc71";
+            case "SUBMITTED" -> "#8e44ad";
             case "CANCELLED"   -> "#e74c3c";
             default            -> "#95a5a6";
         };
@@ -656,6 +657,7 @@ public class TaskDetailController {
             case "TODO"        -> "PENDIENTE";
             case "IN_PROGRESS" -> "EN CURSO";
             case "DONE"        -> "COMPLETADA";
+            case "SUBMITTED" -> "ENTREGADA";
             case "CANCELLED"   -> "CANCELADA";
             default            -> status;
         };

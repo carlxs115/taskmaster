@@ -43,7 +43,7 @@ public class EditTaskController {
     @FXML
     public void initialize() {
         statusCombo.setItems(FXCollections.observableArrayList(
-                "PENDIENTE", "EN CURSO", "COMPLETADA", "CANCELADA"
+                "PENDIENTE", "EN CURSO", "COMPLETADA", "ENTREGADA", "CANCELADA"
         ));
         statusCombo.setValue("PENDIENTE");
 
@@ -132,6 +132,7 @@ public class EditTaskController {
             case "TODO"        -> "PENDIENTE";
             case "IN_PROGRESS" -> "EN CURSO";
             case "DONE"        -> "COMPLETADA";
+            case "SUBMITTED" -> "ENTREGADA";
             case "CANCELLED"   -> "CANCELADA";
             default            -> s;
         };
@@ -152,6 +153,7 @@ public class EditTaskController {
             case "PENDIENTE"   -> "TODO";
             case "EN CURSO" -> "IN_PROGRESS";
             case "COMPLETADA"  -> "DONE";
+            case "ENTREGADA" -> "SUBMITTED";
             case "CANCELADA"   -> "CANCELLED";
             default            -> s;
         };
