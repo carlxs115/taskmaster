@@ -10,10 +10,7 @@ import javafx.fxml.FXMLLoader;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
-import javafx.scene.layout.HBox;
-import javafx.scene.layout.Priority;
-import javafx.scene.layout.StackPane;
-import javafx.scene.layout.VBox;
+import javafx.scene.layout.*;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
 
@@ -38,6 +35,10 @@ public class TaskDetailController {
     @FXML private StackPane progressBarBg;
     @FXML private StackPane progressBarFill;
     @FXML private ActivityLogSectionController activityLogSectionController;
+    @FXML private Label totalHoursLabel;
+    @FXML private VBox workLogContainer;
+    @FXML private Label emptyWorkLogLabel;
+    @FXML private VBox subtasksSection;
 
     private JsonNode taskData;
     private Runnable onTaskChanged;
@@ -60,6 +61,8 @@ public class TaskDetailController {
         loadTaskDetail();
         Long subtaskId = subtask.path("id").asLong();
         activityLogSectionController.loadForEntity("SUBTASK", subtaskId);
+        subtasksSection.setVisible(false);
+        subtasksSection.setManaged(false);
     }
 
     // ── Carga principal ───────────────────────────────────────────────────────
@@ -122,6 +125,8 @@ public class TaskDetailController {
             dueDateLabel.setManaged(false);
         }
         loadSubtasks(taskId);
+        loadTotalHours(taskId);
+        loadWorkLogs(taskId);
     }
 
     // ── Subtareas ─────────────────────────────────────────────────────────────
@@ -282,7 +287,7 @@ public class TaskDetailController {
 
             Stage dialog = new Stage();
             dialog.setTitle("Detalle de subtarea");
-            dialog.setScene(new Scene(root, 780, 620));
+            dialog.setScene(new Scene(root, 750, 680));
             dialog.initModality(Modality.APPLICATION_MODAL);
             dialog.showAndWait();
 
@@ -352,6 +357,198 @@ public class TaskDetailController {
         });
     }
 
+    // ── WorkLog ───────────────────────────────────────────────────────────────
+
+    private void loadWorkLogs(Long taskId) {
+        new Thread(() -> {
+            try {
+                HttpResponse<String> response = AppContext.getInstance()
+                        .getApiService().get("/api/worklogs/task/" + taskId);
+                if (response.statusCode() == 200) {
+                    JsonNode logs = objectMapper.readTree(response.body());
+                    Platform.runLater(() -> renderWorkLogs(logs));
+                }
+            } catch (Exception e) {
+                Platform.runLater(() -> showAlert("Error", "No se pudieron cargar los registros de tiempo"));
+            }
+        }).start();
+    }
+
+    private void renderWorkLogs(JsonNode logs) {
+        workLogContainer.getChildren().clear();
+        if (!logs.isArray() || logs.isEmpty()) {
+            emptyWorkLogLabel.setVisible(true);
+            emptyWorkLogLabel.setManaged(true);
+            return;
+        }
+        emptyWorkLogLabel.setVisible(false);
+        emptyWorkLogLabel.setManaged(false);
+
+        for (JsonNode log : logs) {
+            Long   logId        = log.path("id").asLong();
+            String date         = log.path("date").asText().substring(0, 10);
+            String activityType = translateActivityType(log.path("activityType").asText());
+            String hours        = log.path("hours").asText();
+            String note         = log.path("note").isNull() ? "" : log.path("note").asText();
+
+            HBox row = new HBox(10);
+            row.setAlignment(javafx.geometry.Pos.CENTER_LEFT);
+            row.setStyle("-fx-padding: 7 0 7 0; -fx-border-color: transparent transparent #f0f0f0 transparent; " +
+                    "-fx-border-width: 0 0 1 0;");
+
+            Label dateLbl = new Label(date);
+            dateLbl.setStyle("-fx-font-size: 11px; -fx-text-fill: #888888; -fx-min-width: 85px;");
+
+            Label typeLbl = new Label(activityType);
+            typeLbl.setStyle("-fx-font-size: 11px; -fx-padding: 2 8 2 8; " +
+                    "-fx-background-radius: 10px; -fx-background-color: #ede9fe; -fx-text-fill: #5b21b6;");
+
+            Label hoursLbl = new Label(hours + "h");
+            hoursLbl.setStyle("-fx-font-size: 12px; -fx-font-weight: bold; -fx-text-fill: #1e1e2e; " +
+                    "-fx-min-width: 40px; -fx-alignment: CENTER_RIGHT;");
+
+            Label noteLbl = new Label(note);
+            noteLbl.setStyle("-fx-font-size: 12px; -fx-text-fill: #555555;");
+            noteLbl.setWrapText(true);
+
+            Button menuBtn = new Button("•••");
+            menuBtn.setStyle("-fx-background-color: transparent; -fx-text-fill: #666688; " +
+                    "-fx-font-size: 14px; -fx-font-weight: bold; -fx-cursor: hand; " +
+                    "-fx-padding: 2 8 2 8; -fx-background-radius: 6px;");
+            menuBtn.setOnMouseEntered(e -> menuBtn.setStyle(
+                    "-fx-background-color: #f0f0f5; -fx-text-fill: #1e1e2e; " +
+                            "-fx-font-size: 14px; -fx-font-weight: bold; -fx-cursor: hand; " +
+                            "-fx-padding: 2 8 2 8; -fx-background-radius: 6px;"));
+            menuBtn.setOnMouseExited(e -> menuBtn.setStyle(
+                    "-fx-background-color: transparent; -fx-text-fill: #666688; " +
+                            "-fx-font-size: 14px; -fx-font-weight: bold; -fx-cursor: hand; " +
+                            "-fx-padding: 2 8 2 8; -fx-background-radius: 6px;"));
+
+            Long taskId = taskData.get("id").asLong();
+
+            menuBtn.setOnAction(e -> {
+                ContextMenu menu = new ContextMenu();
+                menu.setStyle("-fx-background-color: white; -fx-border-color: #e8e8e8; " +
+                        "-fx-border-width: 1; -fx-background-radius: 8; -fx-border-radius: 8;");
+
+                MenuItem editItem = new MenuItem("✏️  Editar");
+                editItem.setStyle("-fx-font-size: 13px; -fx-padding: 2 10 2 10;");
+                editItem.setOnAction(ev -> openEditWorkLog(logId, log, taskId));
+
+                MenuItem deleteItem = new MenuItem("🗑  Eliminar");
+                deleteItem.setStyle("-fx-font-size: 13px; -fx-padding: 2 10 2 10; -fx-text-fill: #e74c3c;");
+                deleteItem.setOnAction(ev -> deleteWorkLog(logId, taskId));
+
+                menu.getItems().addAll(editItem, deleteItem);
+                menu.show(menuBtn, javafx.geometry.Side.BOTTOM, 0, 0);
+            });
+
+            Region spacer = new Region();
+            HBox.setHgrow(spacer, javafx.scene.layout.Priority.ALWAYS);
+            row.getChildren().addAll(dateLbl, hoursLbl, typeLbl, noteLbl, spacer, menuBtn);
+            workLogContainer.getChildren().add(row);
+        }
+    }
+
+    private void openEditWorkLog(Long logId, JsonNode log, Long taskId) {
+        try {
+            FXMLLoader loader = new FXMLLoader(
+                    getClass().getResource("/com/taskmaster/taskmasterfrontend/add-worklog-dialog.fxml"));
+            VBox root = loader.load();
+            AddWorkLogController controller = loader.getController();
+            controller.setTaskId(taskId);
+            controller.initData(logId, log);
+            controller.setOnWorkLogAdded(() -> {
+                loadWorkLogs(taskId);
+                loadTotalHours(taskId);
+            });
+            Stage dialog = new Stage();
+            dialog.setTitle("Editar registro de tiempo");
+            dialog.setScene(new Scene(root, 460, 380));
+            dialog.initModality(Modality.APPLICATION_MODAL);
+            dialog.showAndWait();
+        } catch (IOException e) {
+            showAlert("Error", "No se pudo abrir el editor de registro");
+        }
+    }
+
+    private void deleteWorkLog(Long logId, Long taskId) {
+        Alert confirm = new Alert(Alert.AlertType.CONFIRMATION);
+        confirm.setTitle("Eliminar registro");
+        confirm.setHeaderText(null);
+        confirm.setContentText("¿Seguro que quieres eliminar este registro?");
+        confirm.showAndWait().ifPresent(r -> {
+            if (r == ButtonType.OK) {
+                new Thread(() -> {
+                    try {
+                        AppContext.getInstance().getApiService()
+                                .delete("/api/worklogs/" + logId);
+                        Platform.runLater(() -> {
+                            loadWorkLogs(taskId);
+                            loadTotalHours(taskId);
+                        });
+                    } catch (Exception e) {
+                        Platform.runLater(() -> showAlert("Error", "No se pudo eliminar el registro"));
+                    }
+                }).start();
+            }
+        });
+    }
+
+    private void loadTotalHours(Long taskId) {
+        new Thread(() -> {
+            try {
+                HttpResponse<String> response = AppContext.getInstance()
+                        .getApiService().get("/api/worklogs/task/" + taskId + "/total");
+                if (response.statusCode() == 200) {
+                    String total = response.body();
+                    Platform.runLater(() ->
+                            totalHoursLabel.setText(total + "h totales"));
+                }
+            } catch (Exception e) {
+                // silencioso, no es crítico
+            }
+        }).start();
+    }
+
+    @FXML
+    private void handleAddWorkLog() {
+        try {
+            FXMLLoader loader = new FXMLLoader(
+                    getClass().getResource("/com/taskmaster/taskmasterfrontend/add-worklog-dialog.fxml"));
+            VBox root = loader.load();
+            AddWorkLogController controller = loader.getController();
+            Long taskId = taskData.get("id").asLong();
+            controller.setTaskId(taskId);
+            controller.setOnWorkLogAdded(() -> {
+                loadWorkLogs(taskId);
+                loadTotalHours(taskId);
+            });
+            Stage dialog = new Stage();
+            dialog.setTitle("Añadir registro de tiempo");
+            dialog.setScene(new Scene(root, 550, 380));
+            dialog.initModality(Modality.APPLICATION_MODAL);
+            dialog.showAndWait();
+        } catch (IOException e) {
+            showAlert("Error", "No se pudo abrir el diálogo");
+        }
+    }
+
+    private String translateActivityType(String type) {
+        return switch (type) {
+            case "ANALYSIS"      -> "Análisis";
+            case "DESIGN"        -> "Diseño";
+            case "DEVELOPMENT"   -> "Desarrollo";
+            case "TEST"          -> "Test";
+            case "INSTALLATION"  -> "Instalación";
+            case "DOCUMENTATION" -> "Documentación";
+            case "MEETING"       -> "Reunión";
+            case "SUPPORT"       -> "Soporte";
+            case "MANAGEMENT"    -> "Gestión";
+            default              -> type;
+        };
+    }
+
     // ── Acciones ──────────────────────────────────────────────────────────────
     @FXML
     private void handleNewSubtask() {
@@ -373,7 +570,7 @@ public class TaskDetailController {
             });
             Stage dialog = new Stage();
             dialog.setTitle("Nueva subtarea");
-            dialog.setScene(new Scene(root, 450, 320));
+            dialog.setScene(new Scene(root, 460, 320));
             dialog.initModality(Modality.APPLICATION_MODAL);
             dialog.showAndWait();
         } catch (IOException e) {

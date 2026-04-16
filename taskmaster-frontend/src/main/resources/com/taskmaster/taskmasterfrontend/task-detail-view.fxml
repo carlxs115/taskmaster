@@ -31,58 +31,52 @@
     <ScrollPane VBox.vgrow="ALWAYS" fitToWidth="true"
                 style="-fx-background-color: transparent; -fx-border-color: transparent;">
         <VBox spacing="16" style="-fx-padding: 20;">
-
             <!-- Badges -->
             <HBox spacing="8" alignment="CENTER_LEFT">
                 <Label fx:id="statusBadge"
                        style="-fx-font-size: 11px; -fx-padding: 3 10 3 10;
-                              -fx-background-radius: 10px; -fx-text-fill: white;"/>
+                          -fx-background-radius: 10px; -fx-text-fill: white;"/>
                 <Label fx:id="priorityBadge"
                        style="-fx-font-size: 11px; -fx-padding: 3 10 3 10;
-                              -fx-background-radius: 10px; -fx-text-fill: white;"/>
+                          -fx-background-radius: 10px; -fx-text-fill: white;"/>
                 <Label fx:id="categoryBadge"
                        style="-fx-font-size: 11px; -fx-padding: 3 10 3 10;
-                              -fx-background-radius: 10px;"/>
+                          -fx-background-radius: 10px;"/>
                 <Label fx:id="dueDateLabel"
                        style="-fx-font-size: 11px; -fx-padding: 3 10 3 10;
-                              -fx-background-radius: 10px; -fx-text-fill: #666666;
-                              -fx-background-color: #f0f0f5;"/>
+                          -fx-background-radius: 10px; -fx-text-fill: #666666;
+                          -fx-background-color: #f0f0f5;"/>
             </HBox>
-
             <!-- Descripción -->
             <VBox spacing="6"
                   style="-fx-background-color: white; -fx-padding: 14 16 14 16;
-                         -fx-background-radius: 8px; -fx-border-color: #e8e8e8;
-                         -fx-border-radius: 8px; -fx-border-width: 1;">
+                     -fx-background-radius: 8px; -fx-border-color: #e8e8e8;
+                     -fx-border-radius: 8px; -fx-border-width: 1;">
                 <Label text="Descripción"
                        style="-fx-font-size: 11px; -fx-font-weight: bold; -fx-text-fill: #888888;"/>
                 <Label fx:id="descriptionLabel"
                        style="-fx-font-size: 13px; -fx-text-fill: #1e1e2e;"
                        wrapText="true"/>
             </VBox>
-
             <!-- Subtareas -->
-            <VBox spacing="0"
+            <VBox fx:id="subtasksSection" spacing="0"
                   style="-fx-background-color: white; -fx-padding: 14 16 14 16;
-                         -fx-background-radius: 8px; -fx-border-color: #e8e8e8;
-                         -fx-border-radius: 8px; -fx-border-width: 1;">
-
+             -fx-background-radius: 8px; -fx-border-color: #e8e8e8;
+             -fx-border-radius: 8px; -fx-border-width: 1;">
                 <HBox alignment="CENTER_LEFT" spacing="10" style="-fx-padding: 0 0 10 0;">
                     <Label text="Subtareas"
                            style="-fx-font-size: 13px; -fx-font-weight: bold; -fx-text-fill: #1e1e2e;"/>
                     <Label fx:id="subtaskProgressLabel"
                            style="-fx-font-size: 11px; -fx-text-fill: #888888;
-                                  -fx-padding: 2 8 2 8; -fx-background-color: #f0f0f5;
-                                  -fx-background-radius: 20px;"/>
+                              -fx-padding: 2 8 2 8; -fx-background-color: #f0f0f5;
+                              -fx-background-radius: 20px;"/>
                     <Region HBox.hgrow="ALWAYS"/>
                     <Button text="＋  Nueva subtarea"
                             onAction="#handleNewSubtask"
                             style="-fx-background-color: #7c3aed; -fx-text-fill: white;
-                                   -fx-font-size: 11px; -fx-background-radius: 6px;
-                                   -fx-cursor: hand; -fx-padding: 4 10 4 10;"/>
+                               -fx-font-size: 11px; -fx-background-radius: 6px;
+                               -fx-cursor: hand; -fx-padding: 4 10 4 10;"/>
                 </HBox>
-
-                <!-- Barra de progreso -->
                 <StackPane fx:id="progressBarBg"
                            style="-fx-background-color: #f0f0f5; -fx-background-radius: 3px;"
                            minHeight="6" maxHeight="6"
@@ -91,15 +85,39 @@
                                style="-fx-background-color: #7c3aed; -fx-background-radius: 3px;"
                                StackPane.alignment="CENTER_LEFT"/>
                 </StackPane>
-
                 <VBox fx:id="subtaskContainer" spacing="0" style="-fx-padding: 8 0 0 0;"/>
-
                 <Label fx:id="emptySubtasksLabel"
                        text="Sin subtareas actualmente."
                        style="-fx-text-fill: #aaaaaa; -fx-font-size: 12px; -fx-padding: 8 0 0 0;"/>
             </VBox>
+            <!-- Registro de tiempo -->
+            <VBox spacing="0"
+                  style="-fx-background-color: white; -fx-padding: 14 16 14 16;
+                     -fx-background-radius: 8px; -fx-border-color: #e8e8e8;
+                     -fx-border-radius: 8px; -fx-border-width: 1;">
+                <HBox alignment="CENTER_LEFT" spacing="10" style="-fx-padding: 0 0 10 0;">
+                    <Label text="Registro de tiempo"
+                           style="-fx-font-size: 13px; -fx-font-weight: bold; -fx-text-fill: #1e1e2e;"/>
+                    <Label fx:id="totalHoursLabel"
+                           style="-fx-font-size: 11px; -fx-text-fill: #888888;
+                              -fx-padding: 2 8 2 8; -fx-background-color: #f0f0f5;
+                              -fx-background-radius: 20px;"/>
+                    <Region HBox.hgrow="ALWAYS"/>
+                    <Button text="＋  Añadir registro"
+                            onAction="#handleAddWorkLog"
+                            style="-fx-background-color: #7c3aed; -fx-text-fill: white;
+                               -fx-font-size: 11px; -fx-background-radius: 6px;
+                               -fx-cursor: hand; -fx-padding: 4 10 4 10;"/>
+                </HBox>
+                <VBox fx:id="workLogContainer" spacing="0"/>
+                <Label fx:id="emptyWorkLogLabel"
+                       text="Sin registros de tiempo."
+                       style="-fx-text-fill: #aaaaaa; -fx-font-size: 12px; -fx-padding: 4 0 0 0;"/>
+            </VBox>
+
+            <!-- Historial de actividad -->
+            <fx:include fx:id="activityLogSection" source="activity-log-section.fxml"/>
+
         </VBox>
     </ScrollPane>
-    <Separator/>
-    <fx:include fx:id="activityLogSection" source="activity-log-section.fxml"/>
 </VBox>

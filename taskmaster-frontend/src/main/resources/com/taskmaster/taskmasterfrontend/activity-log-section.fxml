@@ -12,12 +12,12 @@
     <Label text="Historial de actividad" styleClass="section-title"
             maxWidth="Infinity" alignment="CENTER"/>
 
-    <TableView fx:id="activityTable" prefHeight="200" maxHeight="200">
+    <TableView fx:id="activityTable" prefHeight="200" maxHeight="200" >
         <columns>
             <TableColumn fx:id="colDate"   text="Fecha"   prefWidth="130"/>
             <TableColumn fx:id="colAction" text="Acción"  prefWidth="170"/>
             <TableColumn fx:id="colEntity" text="Entidad" prefWidth="90"/>
-            <TableColumn fx:id="colDetail" text="Detalle" prefWidth="350"/>
+            <TableColumn fx:id="colDetail" text="Detalle" prefWidth="370"/>
         </columns>
         <placeholder><Label text="Sin actividad registrada"/></placeholder>
     </TableView>

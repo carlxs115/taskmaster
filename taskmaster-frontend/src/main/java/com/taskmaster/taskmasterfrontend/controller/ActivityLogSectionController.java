@@ -56,6 +56,7 @@ public class ActivityLogSectionController {
 
     @FXML
     public void initialize() {
+        activityTable.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
         colDate.setCellValueFactory(c -> new SimpleStringProperty(c.getValue().date()));
         colAction.setCellValueFactory(c -> new SimpleStringProperty(c.getValue().action()));
         colEntity.setCellValueFactory(c -> new SimpleStringProperty(c.getValue().entity()));

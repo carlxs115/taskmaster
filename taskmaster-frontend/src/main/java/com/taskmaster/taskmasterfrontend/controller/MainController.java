@@ -872,7 +872,7 @@ public class MainController {
             controller.initData(project);
             Stage dialog = new Stage();
             dialog.setTitle("Detalles del proyecto");
-            dialog.setScene(new Scene(root, 742, 820));
+            dialog.setScene(new Scene(root, 760, 820));
             dialog.initModality(Modality.APPLICATION_MODAL);
             dialog.showAndWait();
         } catch (IOException e) {
@@ -890,7 +890,7 @@ public class MainController {
             controller.setOnTaskChanged(this::reloadTasks);
             Stage dialog = new Stage();
             dialog.setTitle("Detalles de la tarea");
-            dialog.setScene(new Scene(root, 740, 620));
+            dialog.setScene(new Scene(root, 760, 820));
             dialog.initModality(Modality.APPLICATION_MODAL);
             dialog.showAndWait();
         } catch (IOException e) {

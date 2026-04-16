@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<VBox xmlns:fx="http://javafx.com/fxml"
+      fx:controller="com.taskmaster.taskmasterfrontend.controller.AddWorkLogController"
+      spacing="16"
+      style="-fx-background-color: white; -fx-padding: 24;">
+
+    <Label text="Añadir registro de tiempo"
+           style="-fx-font-size: 18px; -fx-font-weight: bold; -fx-text-fill: #1e1e2e;"/>
+
+    <HBox spacing="12">
+        <VBox spacing="6" HBox.hgrow="ALWAYS">
+            <Label text="Fecha *" style="-fx-font-size: 13px; -fx-text-fill: #555555;"/>
+            <DatePicker fx:id="datePicker"
+                        maxWidth="Infinity"
+                        style="-fx-pref-height: 38px;"/>
+        </VBox>
+        <VBox spacing="6" HBox.hgrow="ALWAYS">
+            <Label text="Horas invertidas *" style="-fx-font-size: 13px; -fx-text-fill: #555555;"/>
+            <TextField fx:id="hoursField"
+                       promptText="ej. 1.5"
+                       style="-fx-pref-height: 38px;"/>
+        </VBox>
+    </HBox>
+
+    <VBox spacing="6">
+        <Label text="Tipo de actividad *" style="-fx-font-size: 13px; -fx-text-fill: #555555;"/>
+        <ComboBox fx:id="activityTypeCombo"
+                  maxWidth="Infinity"
+                  style="-fx-pref-height: 38px;"/>
+    </VBox>
+
+    <VBox spacing="6">
+        <Label text="Nota" style="-fx-font-size: 13px; -fx-text-fill: #555555;"/>
+        <TextArea fx:id="noteField"
+                  promptText="Descripción opcional del trabajo realizado..."
+                  style="-fx-pref-height: 120px;"
+                  wrapText="true"/>
+    </VBox>
+
+    <Label fx:id="errorLabel"
+           style="-fx-text-fill: #e74c3c; -fx-font-size: 12px;"
+           visible="false" managed="false"/>
+
+    <HBox spacing="10" alignment="CENTER_RIGHT">
+        <Button text="Cancelar"
+                onAction="#handleCancel"
+                style="-fx-background-color: #f0f0f5; -fx-text-fill: #555555;
+                       -fx-background-radius: 6px; -fx-cursor: hand;
+                       -fx-padding: 8 16 8 16;"/>
+        <Button text="Guardar registro"
+                onAction="#handleSave"
+                style="-fx-background-color: #7c3aed; -fx-text-fill: white;
+                       -fx-background-radius: 6px; -fx-cursor: hand;
+                       -fx-padding: 8 16 8 16;"/>
+    </HBox>
+</VBox>
