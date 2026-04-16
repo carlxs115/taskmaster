@@ -10,10 +10,7 @@ import javafx.fxml.FXMLLoader;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
-import javafx.scene.layout.HBox;
-import javafx.scene.layout.Priority;
-import javafx.scene.layout.StackPane;
-import javafx.scene.layout.VBox;
+import javafx.scene.layout.*;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
 
@@ -39,7 +36,9 @@ public class ProjectDetailController {
     @FXML private Label emptyTasksLabel;
     @FXML private ActivityLogSectionController activityLogSectionController;
 
+    private Runnable onClose;
     private JsonNode projectData;
+    private java.util.function.Consumer<JsonNode> onOpenTaskDetail;
     private final ObjectMapper objectMapper = new ObjectMapper()
             .registerModule(new JavaTimeModule());
 
@@ -48,6 +47,14 @@ public class ProjectDetailController {
         loadProjectDetail();
         Long projectId = project.path("id").asLong();
         activityLogSectionController.loadForEntity("PROJECT", projectId, "TASK");
+    }
+
+    public void setOnClose(Runnable callback) {
+        this.onClose = callback;
+    }
+
+    public void setOnOpenTaskDetail(java.util.function.Consumer<JsonNode> callback) {
+        this.onOpenTaskDetail = callback;
     }
 
     private void loadProjectDetail() {
@@ -178,7 +185,6 @@ public class ProjectDetailController {
         titleLabel.setStyle(isDone
                 ? "-fx-font-size: 13px; -fx-text-fill: #aaaaaa; -fx-strikethrough: true;"
                 : "-fx-font-size: 13px; -fx-text-fill: #1e1e2e;");
-        HBox.setHgrow(titleLabel, Priority.ALWAYS);
 
         // Badge fecha vencida
         boolean isOverdue = false;
@@ -236,26 +242,27 @@ public class ProjectDetailController {
             menu.show(menuBtn, javafx.geometry.Side.BOTTOM, 0, 0);
         });
 
+        Region spacer = new Region();
+        HBox.setHgrow(spacer, Priority.ALWAYS);
+        row.getChildren().add(spacer);
         row.getChildren().add(menuBtn);
 
         return row;
     }
 
     private void openTaskDetail(JsonNode task, Long taskId) {
+        if (onOpenTaskDetail != null) {
+            onOpenTaskDetail.accept(task);
+            return;
+        }
+        // fallback
         try {
-            javafx.fxml.FXMLLoader loader = new javafx.fxml.FXMLLoader(
+            FXMLLoader loader = new FXMLLoader(
                     getClass().getResource("/com/taskmaster/taskmasterfrontend/task-detail-view.fxml"));
             VBox root = loader.load();
             TaskDetailController controller = loader.getController();
             controller.initData(task);
-
-            javafx.stage.Stage dialog = new javafx.stage.Stage();
-            dialog.setTitle("Detalles de la tarea");
-            dialog.setScene(new javafx.scene.Scene(root, 780, 620));
-            dialog.initModality(javafx.stage.Modality.APPLICATION_MODAL);
-            dialog.showAndWait();
-
-            // Recargar historial y tareas tras cerrar
+            showAsDialog(root, "Detalles de la tarea");
             Long projectId = projectData.path("id").asLong();
             activityLogSectionController.loadForEntity("PROJECT", projectId, "TASK");
             loadTasks(projectId);
@@ -276,11 +283,7 @@ public class ProjectDetailController {
                 loadTasks(projectId);
                 activityLogSectionController.loadForEntity("PROJECT", projectId, "TASK");
             });
-            Stage dialog = new Stage();
-            dialog.setTitle("Editar tarea");
-            dialog.setScene(new Scene(root, 500, 420));
-            dialog.initModality(Modality.APPLICATION_MODAL);
-            dialog.showAndWait();
+            showAsDialog(root, "Editar tarea");
         } catch (Exception e) {
             showAlert("Error", "No se pudo abrir el editor de tarea");
         }
@@ -312,7 +315,20 @@ public class ProjectDetailController {
 
     @FXML
     private void handleClose() {
-        ((Stage) projectNameLabel.getScene().getWindow()).close();
+        if (onClose != null) {
+            onClose.run();
+        } else {
+            ((Stage) projectNameLabel.getScene().getWindow()).close();
+        }
+    }
+
+    private void showAsDialog(VBox root, String title) {
+        Stage dialog = new Stage();
+        dialog.setTitle(title);
+        dialog.initModality(Modality.APPLICATION_MODAL);
+        dialog.initOwner(projectNameLabel.getScene().getWindow());
+        dialog.setScene(new Scene(root));
+        dialog.showAndWait();
     }
 
     // ── Colores ───────────────────────────────────────────────────────────────

@@ -8,7 +8,6 @@ import javafx.collections.FXCollections;
 import javafx.fxml.FXML;
 import javafx.scene.control.*;
 import javafx.scene.layout.VBox;
-import javafx.stage.Stage;
 
 import java.net.http.HttpResponse;
 import java.time.LocalDate;
@@ -218,8 +217,7 @@ public class NewTaskController {
     }
 
     private void closeDialog() {
-        Stage stage = (Stage) titleField.getScene().getWindow();
-        stage.close();
+        titleField.getScene().getWindow().hide();
     }
 
     private void showError(String message) {

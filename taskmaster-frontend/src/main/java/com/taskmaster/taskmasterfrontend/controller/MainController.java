@@ -50,6 +50,8 @@ public class MainController {
     @FXML private TextField searchField;
     @FXML private Button btnSecurity;
 
+    private final java.util.Deque<Runnable> navigationStack = new java.util.ArrayDeque<>();
+
     // ── Filtros y orden ───────────────────────────────────────────────────────
     private List<JsonNode> currentTasks = new ArrayList<>();
     private boolean sortAscending = true;
@@ -868,13 +870,19 @@ public class MainController {
             FXMLLoader loader = new FXMLLoader(
                     getClass().getResource("/com/taskmaster/taskmasterfrontend/project-detail-view.fxml"));
             VBox root = loader.load();
+            root.setUserData("detail");
+            HBox.setHgrow(root, Priority.ALWAYS);
+            root.setMaxWidth(Double.MAX_VALUE);
+            root.setMaxHeight(Double.MAX_VALUE);
             ProjectDetailController controller = loader.getController();
             controller.initData(project);
-            Stage dialog = new Stage();
-            dialog.setTitle("Detalles del proyecto");
-            dialog.setScene(new Scene(root, 760, 820));
-            dialog.initModality(Modality.APPLICATION_MODAL);
-            dialog.showAndWait();
+            controller.setOnClose(this::navigateBack);
+            controller.setOnOpenTaskDetail(task -> {
+                navigationStack.push(() -> openProjectDetail(project));
+                openTaskDetail(task);
+            });
+            navigationStack.clear();
+            swapMainAreaWith(root);
         } catch (IOException e) {
             showAlert("Error", "No se pudo abrir el detalle del proyecto");
         }
@@ -885,16 +893,39 @@ public class MainController {
             FXMLLoader loader = new FXMLLoader(
                     getClass().getResource("/com/taskmaster/taskmasterfrontend/task-detail-view.fxml"));
             VBox root = loader.load();
+            root.setUserData("detail");
+            HBox.setHgrow(root, Priority.ALWAYS);
+            root.setMaxWidth(Double.MAX_VALUE);
+            root.setMaxHeight(Double.MAX_VALUE);
             TaskDetailController controller = loader.getController();
             controller.initData(task);
-            controller.setOnTaskChanged(this::reloadTasks);
-            Stage dialog = new Stage();
-            dialog.setTitle("Detalles de la tarea");
-            dialog.setScene(new Scene(root, 760, 820));
-            dialog.initModality(Modality.APPLICATION_MODAL);
-            dialog.showAndWait();
+            controller.setOnTaskChanged(() -> {});
+            controller.setOnClose(this::navigateBack);
+            controller.setOnOpenSubtaskDetail(subtask -> {
+                navigationStack.push(() -> openTaskDetail(task));
+                openSubtaskDetail(subtask);
+            });
+            swapMainAreaWith(root);
         } catch (IOException e) {
             showAlert("Error", "No se pudo abrir el detalle de la tarea");
+        }
+    }
+
+    private void openSubtaskDetail(JsonNode subtask) {
+        try {
+            FXMLLoader loader = new FXMLLoader(
+                    getClass().getResource("/com/taskmaster/taskmasterfrontend/task-detail-view.fxml"));
+            VBox root = loader.load();
+            root.setUserData("detail");
+            HBox.setHgrow(root, Priority.ALWAYS);
+            root.setMaxWidth(Double.MAX_VALUE);
+            root.setMaxHeight(Double.MAX_VALUE);
+            TaskDetailController controller = loader.getController();
+            controller.initDataAsSubtask(subtask);
+            controller.setOnClose(this::navigateBack);
+            swapMainAreaWith(root);
+        } catch (IOException e) {
+            showAlert("Error", "No se pudo abrir el detalle de la subtarea");
         }
     }
 
@@ -1221,7 +1252,8 @@ public class MainController {
         HBox centerHBox = getCenterHBox();
         centerHBox.getChildren().removeIf(n -> {
             Object ud = n.getUserData();
-            return "trash".equals(ud) || "settings".equals(ud) || "profile".equals(ud);
+            return "trash".equals(ud) || "settings".equals(ud)
+                    || "profile".equals(ud) || "detail".equals(ud);
         });
         centerHBox.getChildren().add(overlay);
     }
@@ -1234,7 +1266,7 @@ public class MainController {
     private void removeOverlayPanels() {
         getCenterHBox().getChildren().removeIf(n -> {
             Object ud = n.getUserData();
-            return "trash".equals(ud) || "settings".equals(ud) || "profile".equals(ud);
+            return "trash".equals(ud) || "settings".equals(ud) || "profile".equals(ud) || "detail".equals(ud);
         });
         showMainArea();
     }
@@ -1378,11 +1410,7 @@ public class MainController {
 
 
             controller.setOnProjectCreated(() -> { loadProjects(); reloadTasks(); });
-            Stage dialog = new Stage();
-            dialog.setTitle("Nuevo proyecto");
-            dialog.setScene(new Scene(root, 400, 480));
-            dialog.initModality(Modality.APPLICATION_MODAL);
-            dialog.showAndWait();
+            showAsDialog(root, "Nuevo proyecto");
         } catch (IOException e) {
             showAlert("Error", "No se pudo abrir el diálogo");
         }
@@ -1416,11 +1444,7 @@ public class MainController {
                     loadHome();
                 }
             });
-            Stage dialog = new Stage();
-            dialog.setTitle("Nueva tarea");
-            dialog.setScene(new Scene(root, 600, 420));
-            dialog.initModality(Modality.APPLICATION_MODAL);
-            dialog.showAndWait();
+            showAsDialog(root, "Nueva tarea");
         } catch (IOException e) {
             showAlert("Error", "No se pudo abrir el diálogo");
         }
@@ -1434,11 +1458,7 @@ public class MainController {
             EditProjectController controller = loader.getController();
             controller.initData(projectId, projectName);
             controller.setOnProjectUpdated(this::loadProjects);
-            Stage dialog = new Stage();
-            dialog.setTitle("Editar proyecto");
-            dialog.setScene(new Scene(root, 500, 480));
-            dialog.initModality(Modality.APPLICATION_MODAL);
-            dialog.showAndWait();
+            showAsDialog(root, "Editar proyecto");
         } catch (IOException e) {
             showAlert("Error", "No se pudo abrir el diálogo");
         }
@@ -1481,8 +1501,9 @@ public class MainController {
             controller.setOnTaskUpdated(this::reloadTasks);
             Stage dialog = new Stage();
             dialog.setTitle("Editar tarea");
-            dialog.setScene(new Scene(root, 500, 420));
             dialog.initModality(Modality.APPLICATION_MODAL);
+            dialog.initOwner(btnHome.getScene().getWindow());
+            dialog.setScene(new Scene(root));
             dialog.showAndWait();
         } catch (IOException e) {
             showAlert("Error", "No se pudo abrir el diálogo");
@@ -1629,6 +1650,14 @@ public class MainController {
         }
     }
 
+    private void navigateBack() {
+        if (!navigationStack.isEmpty()) {
+            navigationStack.pop().run();
+        } else {
+            removeOverlayPanels();
+        }
+    }
+
     private Label createBadge(String text, String style) {
         Label badge = new Label(text); badge.setStyle(style); return badge;
     }
@@ -1701,5 +1730,14 @@ public class MainController {
         Alert alert = new Alert(Alert.AlertType.INFORMATION);
         alert.setTitle(title); alert.setHeaderText(null);
         alert.setContentText(message); alert.showAndWait();
+    }
+
+    private void showAsDialog(VBox root, String title) {
+        Stage dialog = new Stage();
+        dialog.setTitle(title);
+        dialog.initModality(Modality.APPLICATION_MODAL);
+        dialog.initOwner(btnHome.getScene().getWindow());
+        dialog.setScene(new Scene(root));
+        dialog.showAndWait();
     }
 }

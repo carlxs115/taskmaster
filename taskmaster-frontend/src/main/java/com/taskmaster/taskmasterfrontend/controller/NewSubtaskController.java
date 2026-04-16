@@ -9,7 +9,6 @@ import javafx.scene.control.ComboBox;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextArea;
 import javafx.scene.control.TextField;
-import javafx.stage.Stage;
 
 import java.net.http.HttpResponse;
 import java.util.HashMap;
@@ -117,6 +116,6 @@ public class NewSubtaskController {
     }
 
     private void closeDialog() {
-        ((Stage) titleField.getScene().getWindow()).close();
+        titleField.getScene().getWindow().hide();
     }
 }

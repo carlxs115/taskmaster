@@ -6,7 +6,6 @@ import javafx.application.Platform;
 import javafx.collections.FXCollections;
 import javafx.fxml.FXML;
 import javafx.scene.control.*;
-import javafx.stage.Stage;
 
 import java.net.http.HttpResponse;
 import java.time.LocalDate;
@@ -29,6 +28,7 @@ public class EditTaskController {
     @FXML private Label errorLabel;
     @FXML private Label dialogTitleLabel;
 
+    private Runnable onCancel;
     private Long taskId;
     private Runnable onTaskUpdated;
 
@@ -75,6 +75,10 @@ public class EditTaskController {
         });
     }
 
+    public void setOnCancel(Runnable callback) {
+        this.onCancel = callback;
+    }
+
     @FXML
     private void handleSave() {
         String title = titleField.getText().trim();
@@ -115,12 +119,12 @@ public class EditTaskController {
 
     @FXML
     private void handleCancel() {
-        closeDialog();
+        if (onCancel != null) onCancel.run();
+        else closeDialog();
     }
 
     private void closeDialog() {
-        Stage stage = (Stage) titleField.getScene().getWindow();
-        stage.close();
+        titleField.getScene().getWindow().hide();
     }
 
     private String translateStatus(String s) {

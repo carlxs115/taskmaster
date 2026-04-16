@@ -8,7 +8,6 @@ import javafx.scene.control.ComboBox;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextArea;
 import javafx.scene.control.TextField;
-import javafx.stage.Stage;
 
 import java.net.http.HttpResponse;
 
@@ -88,6 +87,8 @@ public class EditProjectController {
                                 default       -> "MEDIA";
                             });
                         }
+                        nameField.deselect();
+                        nameField.getParent().requestFocus();
                     });
                 }
             } catch (Exception e) {
@@ -145,8 +146,7 @@ public class EditProjectController {
     }
 
     private void closeDialog() {
-        Stage stage = (Stage) nameField.getScene().getWindow();
-        stage.close();
+        nameField.getScene().getWindow().hide();
     }
 
     private String mapStatus(String label) {

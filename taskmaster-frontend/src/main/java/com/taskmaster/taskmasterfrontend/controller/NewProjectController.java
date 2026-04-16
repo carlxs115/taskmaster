@@ -7,7 +7,6 @@ import javafx.scene.control.ComboBox;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextArea;
 import javafx.scene.control.TextField;
-import javafx.stage.Stage;
 
 import java.net.http.HttpResponse;
 import java.util.HashMap;
@@ -99,8 +98,7 @@ public class NewProjectController {
     }
 
     private void closeDialog() {
-        Stage stage = (Stage) nameField.getScene().getWindow();
-        stage.close();
+        nameField.getScene().getWindow().hide();
     }
 
     private void showError(String message) {

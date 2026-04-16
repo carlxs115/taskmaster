@@ -40,8 +40,11 @@ public class TaskDetailController {
     @FXML private Label emptyWorkLogLabel;
     @FXML private VBox subtasksSection;
 
+    private boolean isSubtask = false;
+    private Runnable onClose;
     private JsonNode taskData;
     private Runnable onTaskChanged;
+    private java.util.function.Consumer<JsonNode> onOpenSubtaskDetail;
     private final ObjectMapper objectMapper = new ObjectMapper()
             .registerModule(new JavaTimeModule());
 
@@ -58,11 +61,20 @@ public class TaskDetailController {
 
     public void initDataAsSubtask(JsonNode subtask) {
         this.taskData = subtask;
+        this.isSubtask = true;
         loadTaskDetail();
         Long subtaskId = subtask.path("id").asLong();
         activityLogSectionController.loadForEntity("SUBTASK", subtaskId);
         subtasksSection.setVisible(false);
         subtasksSection.setManaged(false);
+    }
+
+    public void setOnClose(Runnable callback) {
+        this.onClose = callback;
+    }
+
+    public void setOnOpenSubtaskDetail(java.util.function.Consumer<JsonNode> callback) {
+        this.onOpenSubtaskDetail = callback;
     }
 
     // ── Carga principal ───────────────────────────────────────────────────────
@@ -265,7 +277,9 @@ public class TaskDetailController {
                 }
             }).start();
         });
-        row.getChildren().addAll(check, titleLabel, priBadge, menuBtn);
+        Region spacer = new Region();
+        HBox.setHgrow(spacer, Priority.ALWAYS);
+        row.getChildren().addAll(check, titleLabel, priBadge, spacer, menuBtn);
         return row;
     }
 
@@ -274,23 +288,25 @@ public class TaskDetailController {
             HttpResponse<String> resp = AppContext.getInstance().getApiService()
                     .get("/api/tasks/" + subtaskId);
             if (resp.statusCode() != 200) return;
-
             JsonNode subtask = new ObjectMapper()
                     .registerModule(new JavaTimeModule())
                     .readTree(resp.body());
-
+            if (onOpenSubtaskDetail != null) {
+                onOpenSubtaskDetail.accept(subtask);
+                return;
+            }
+            // fallback
             FXMLLoader loader = new FXMLLoader(
                     getClass().getResource("/com/taskmaster/taskmasterfrontend/task-detail-view.fxml"));
             VBox root = loader.load();
             TaskDetailController controller = loader.getController();
             controller.initDataAsSubtask(subtask);
-
             Stage dialog = new Stage();
             dialog.setTitle("Detalle de subtarea");
-            dialog.setScene(new Scene(root, 750, 680));
             dialog.initModality(Modality.APPLICATION_MODAL);
+            dialog.initOwner(taskTitleLabel.getScene().getWindow());
+            dialog.setScene(new Scene(root));
             dialog.showAndWait();
-
             Long parentTaskId = taskData.get("id").asLong();
             loadSubtasks(parentTaskId);
         } catch (Exception e) {
@@ -319,11 +335,7 @@ public class TaskDetailController {
             controller.setDialogTitle("Editar subtarea");
             controller.setOnTaskUpdated(() -> loadSubtasks(parentTaskId));
 
-            Stage dialog = new Stage();
-            dialog.setTitle("Editar subtarea"); // título correcto
-            dialog.setScene(new javafx.scene.Scene(root));
-            dialog.initModality(javafx.stage.Modality.APPLICATION_MODAL);
-            dialog.showAndWait();
+            showAsDialog(root, "Editar subtarea");
 
             // Recargar historial tras editar
             Long parentTaskId2 = taskData.get("id").asLong();
@@ -462,11 +474,7 @@ public class TaskDetailController {
                 loadWorkLogs(taskId);
                 loadTotalHours(taskId);
             });
-            Stage dialog = new Stage();
-            dialog.setTitle("Editar registro de tiempo");
-            dialog.setScene(new Scene(root, 460, 380));
-            dialog.initModality(Modality.APPLICATION_MODAL);
-            dialog.showAndWait();
+            showAsDialog(root, "Editar registro de tiempo");
         } catch (IOException e) {
             showAlert("Error", "No se pudo abrir el editor de registro");
         }
@@ -524,11 +532,7 @@ public class TaskDetailController {
                 loadWorkLogs(taskId);
                 loadTotalHours(taskId);
             });
-            Stage dialog = new Stage();
-            dialog.setTitle("Añadir registro de tiempo");
-            dialog.setScene(new Scene(root, 550, 380));
-            dialog.initModality(Modality.APPLICATION_MODAL);
-            dialog.showAndWait();
+            showAsDialog(root, "Añadir registro de tiempo");
         } catch (IOException e) {
             showAlert("Error", "No se pudo abrir el diálogo");
         }
@@ -568,11 +572,7 @@ public class TaskDetailController {
                 loadSubtasks(parentId);
                 if (onTaskChanged != null) onTaskChanged.run();
             });
-            Stage dialog = new Stage();
-            dialog.setTitle("Nueva subtarea");
-            dialog.setScene(new Scene(root, 460, 320));
-            dialog.initModality(Modality.APPLICATION_MODAL);
-            dialog.showAndWait();
+            showAsDialog(root, "Nueva subtarea");
         } catch (IOException e) {
             showAlert("Error", "No se pudo abrir el diálogo");
         }
@@ -586,15 +586,14 @@ public class TaskDetailController {
             VBox root = loader.load();
             EditTaskController controller = loader.getController();
             controller.initData(taskData);
+            if (isSubtask) {
+                controller.setDialogTitle("Editar subtarea");
+            }
             controller.setOnTaskUpdated(() -> {
                 if (onTaskChanged != null) onTaskChanged.run();
                 closeDialog();
             });
-            Stage dialog = new Stage();
-            dialog.setTitle("Editar tarea");
-            dialog.setScene(new Scene(root, 500, 420));
-            dialog.initModality(Modality.APPLICATION_MODAL);
-            dialog.showAndWait();
+            showAsDialog(root, isSubtask ? "Editar subtarea" : "Editar tarea");
         } catch (IOException e) {
             showAlert("Error", "No se pudo abrir el diálogo");
         }
@@ -606,9 +605,21 @@ public class TaskDetailController {
     }
 
     private void closeDialog() {
-        ((Stage) taskTitleLabel.getScene().getWindow()).close();
+        if (onClose != null) {
+            onClose.run();
+        } else {
+            ((Stage) taskTitleLabel.getScene().getWindow()).close();
+        }
     }
 
+    private void showAsDialog(VBox root, String title) {
+        Stage dialog = new Stage();
+        dialog.setTitle(title);
+        dialog.initModality(Modality.APPLICATION_MODAL);
+        dialog.initOwner(taskTitleLabel.getScene().getWindow());
+        dialog.setScene(new Scene(root));
+        dialog.showAndWait();
+    }
 
     // ── Colores ───────────────────────────────────────────────────────────────
     private String getStatusColor(String s) {
