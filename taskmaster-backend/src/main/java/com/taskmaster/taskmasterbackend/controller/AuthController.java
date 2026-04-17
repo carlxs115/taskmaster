@@ -196,6 +196,7 @@ public class AuthController {
                 .email(user.getEmail())
                 .birthDate(user.getBirthDate())
                 .createdAt(user.getCreatedAt())
+                .hasAvatar(user.getAvatarPath() != null)
                 .build();
     }
 }

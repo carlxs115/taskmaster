@@ -31,6 +31,8 @@ public class AppContext {
 
     private LocalDate currentBirthDate;
 
+    private boolean hasAvatar;
+
     /**
      * Constructor privado - nadie puede crear instancias desde fuera.
      */
@@ -68,18 +70,19 @@ public class AppContext {
     public Long getCurrentUserId() {
         return currentUserId;
     }
-
-    public String getCurrentUsername() {
-        return currentUsername;
-    }
-
     public void setCurrentUserId(Long currentUserId) {
         this.currentUserId = currentUserId;
     }
 
+    public String getCurrentUsername() {
+        return currentUsername;
+    }
     public void setCurrentUsername(String currentUsername) {
         this.currentUsername = currentUsername;
     }
+
+    public boolean hasAvatar() { return hasAvatar; }
+    public void setHasAvatar(boolean hasAvatar) { this.hasAvatar = hasAvatar; }
 
     /**
      * Limpia los datos del usuario al cerrar sesión.
@@ -90,5 +93,6 @@ public class AppContext {
         this.apiService.setCredentials(null, null);
         this.currentPassword = null;
         this.currentBirthDate = null;
+        this.hasAvatar = false;
     }
 }

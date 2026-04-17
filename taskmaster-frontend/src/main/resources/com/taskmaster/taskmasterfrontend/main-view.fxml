@@ -18,13 +18,15 @@
                        style="-fx-font-size: 17px; -fx-font-weight: bold; -fx-text-fill: #a78bfa;"/>
             </HBox>
             <Region HBox.hgrow="ALWAYS"/>
-            <!-- Avatar circular con iniciales + desplegable -->
-            <Button fx:id="userMenuButton"
-                    onAction="#handleUserMenu"
-                    style="-fx-background-color: #2a1f4e; -fx-text-fill: #a78bfa;
-                           -fx-font-size: 13px; -fx-font-weight: bold; -fx-cursor: hand;
-                           -fx-background-radius: 20px; -fx-padding: 6 14 6 14;
-                           -fx-border-color: #3d2f6e; -fx-border-radius: 20px; -fx-border-width: 1;"/>
+            <!-- Avatar + nombre + desplegable -->
+            <HBox alignment="CENTER" spacing="8" onMouseClicked="#handleUserMenu"
+                  style="-fx-cursor: hand; -fx-background-color: #2a1f4e; -fx-background-radius: 20px;
+             -fx-border-color: #3d2f6e; -fx-border-radius: 20px; -fx-border-width: 1;
+             -fx-padding: 4 12 4 4;">
+                <StackPane fx:id="sidebarAvatarContainer"/>
+                <Label fx:id="userMenuButton"
+                       style="-fx-text-fill: #a78bfa; -fx-font-size: 13px; -fx-font-weight: bold;"/>
+            </HBox>
         </HBox>
     </top>
 

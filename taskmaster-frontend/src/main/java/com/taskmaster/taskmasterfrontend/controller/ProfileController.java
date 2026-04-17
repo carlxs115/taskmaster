@@ -4,21 +4,28 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.taskmaster.taskmasterfrontend.util.AppContext;
+import com.taskmaster.taskmasterfrontend.util.AvatarView;
 import javafx.application.Platform;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.geometry.Pos;
+import javafx.scene.Cursor;
 import javafx.scene.Scene;
 import javafx.scene.control.Alert;
+import javafx.scene.control.ButtonType;
 import javafx.scene.control.Label;
 import javafx.scene.control.Separator;
+import javafx.scene.image.Image;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
+import javafx.stage.FileChooser;
 
+import java.io.File;
+import java.io.FileInputStream;
 import java.net.http.HttpResponse;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -28,7 +35,6 @@ import java.util.Locale;
 
 public class ProfileController {
 
-    @FXML private Label avatarLabel;
     @FXML private Label usernameLabel;
     @FXML private Label usernameValueLabel;
     @FXML private Label emailLabel;
@@ -39,6 +45,8 @@ public class ProfileController {
     @FXML private StackPane completionBarFill;
     @FXML private VBox activityLogContainer;
     @FXML private Label activityLogEmpty;
+    @FXML private StackPane avatarContainer;
+    private AvatarView avatarView;
 
     private Runnable onProfileUpdated;
 
@@ -51,9 +59,164 @@ public class ProfileController {
 
     @FXML
     public void initialize() {
+        setupAvatar();
         loadProfile();
         loadStats();
         loadActivityLog();
+    }
+
+    /**
+     * Configura el avatar: lo crea, lo carga y le añade un icono de cámara
+     * superpuesto que al pulsarlo abre un menú con "Cambiar foto" / "Eliminar foto".
+     */
+    private void setupAvatar() {
+        avatarView = new AvatarView(80);
+        avatarView.loadForCurrentUser();
+
+        // Icono de cámara sobre el avatar (esquina inferior derecha)
+        Label cameraIcon = new Label("📷");
+        cameraIcon.setStyle("-fx-background-color: #7c3aed; -fx-text-fill: white; " +
+                "-fx-font-size: 12px; -fx-min-width: 26px; -fx-min-height: 26px; " +
+                "-fx-max-width: 26px; -fx-max-height: 26px; -fx-alignment: CENTER; " +
+                "-fx-background-radius: 13px; -fx-border-color: white; " +
+                "-fx-border-width: 2; -fx-border-radius: 13px; -fx-cursor: hand;");
+        StackPane.setAlignment(cameraIcon, Pos.BOTTOM_RIGHT);
+        cameraIcon.setOnMouseClicked(e -> showAvatarMenu(cameraIcon));
+
+        avatarContainer.getChildren().setAll(avatarView, cameraIcon);
+        avatarContainer.setCursor(Cursor.DEFAULT);
+    }
+
+    /** Menú contextual con opciones de cambiar o eliminar la foto. */
+    private void showAvatarMenu(javafx.scene.Node anchor) {
+        javafx.scene.control.ContextMenu menu = new javafx.scene.control.ContextMenu();
+        menu.setStyle("-fx-background-color: white; -fx-border-color: #e8e8e8; " +
+                "-fx-border-width: 1; -fx-background-radius: 8; -fx-border-radius: 8;");
+
+        javafx.scene.control.MenuItem change = new javafx.scene.control.MenuItem("📷  Cambiar foto");
+        change.setStyle("-fx-font-size: 13px; -fx-padding: 6 16 6 16;");
+        change.setOnAction(e -> handleChangePhoto());
+        menu.getItems().add(change);
+
+        // "Eliminar foto" solo si el usuario tiene foto actualmente
+        if (AppContext.getInstance().hasAvatar()) {
+            javafx.scene.control.MenuItem remove = new javafx.scene.control.MenuItem("🗑  Eliminar foto");
+            remove.setStyle("-fx-font-size: 13px; -fx-padding: 6 16 6 16; -fx-text-fill: #e74c3c;");
+            remove.setOnAction(e -> handleRemovePhoto());
+            menu.getItems().add(remove);
+        }
+
+        menu.show(anchor, javafx.geometry.Side.BOTTOM, 0, 4);
+    }
+
+    /** Abre el FileChooser, luego el diálogo de recorte, y sube el resultado. */
+    private void handleChangePhoto() {
+        FileChooser fileChooser = new FileChooser();
+        fileChooser.setTitle("Selecciona tu foto de perfil");
+        fileChooser.getExtensionFilters().add(
+                new FileChooser.ExtensionFilter("Imágenes", "*.png", "*.jpg", "*.jpeg"));
+
+        File selected = fileChooser.showOpenDialog(avatarContainer.getScene().getWindow());
+        if (selected == null) return;
+
+        // Validación de tamaño local (2 MB) antes de abrir el diálogo
+        if (selected.length() > 2 * 1024 * 1024) {
+            showAlert("Archivo demasiado grande",
+                    "La imagen no puede superar los 2 MB. Elige una más pequeña.");
+            return;
+        }
+
+        try (FileInputStream fis = new FileInputStream(selected)) {
+            Image image = new Image(fis);
+            if (image.isError()) {
+                showAlert("Error", "No se pudo leer la imagen seleccionada.");
+                return;
+            }
+            openCropDialog(image);
+        } catch (Exception e) {
+            showAlert("Error", "No se pudo abrir la imagen: " + e.getMessage());
+        }
+    }
+
+    /** Abre el diálogo modal de recorte y, si el usuario confirma, sube la imagen. */
+    private void openCropDialog(Image image) {
+        try {
+            FXMLLoader loader = new FXMLLoader(
+                    getClass().getResource("/com/taskmaster/taskmasterfrontend/avatar-crop-dialog.fxml"));
+            VBox root = loader.load();
+
+            AvatarCropController cropController = loader.getController();
+            cropController.setImage(image);
+
+            Stage dialog = new Stage();
+            dialog.setTitle("Recortar foto de perfil");
+            dialog.initModality(Modality.APPLICATION_MODAL);
+            dialog.initOwner(avatarContainer.getScene().getWindow());
+            dialog.setScene(new Scene(root));
+            dialog.setResizable(false);
+            dialog.showAndWait();
+
+            byte[] croppedPng = cropController.getCroppedImageBytes();
+            if (croppedPng != null) {
+                uploadAvatar(croppedPng);
+            }
+        } catch (Exception e) {
+            showAlert("Error", "No se pudo abrir el diálogo de recorte: " + e.getMessage());
+        }
+    }
+
+    /** Sube los bytes del avatar recortado al backend. */
+    private void uploadAvatar(byte[] pngBytes) {
+        new Thread(() -> {
+            try {
+                HttpResponse<String> response = AppContext.getInstance().getApiService()
+                        .postMultipart("/api/users/me/avatar", "file",
+                                "avatar.png", "image/png", pngBytes);
+
+                Platform.runLater(() -> {
+                    if (response.statusCode() == 200) {
+                        AppContext.getInstance().setHasAvatar(true);
+                        avatarView.refresh();
+                        loadActivityLog();
+                        if (onProfileUpdated != null) onProfileUpdated.run();
+                    } else {
+                        showAlert("Error", "No se pudo subir la foto (código " + response.statusCode() + ")");
+                    }
+                });
+            } catch (Exception e) {
+                Platform.runLater(() -> showAlert("Error", "Error de conexión: " + e.getMessage()));
+            }
+        }).start();
+    }
+
+    /** Llama al backend para eliminar el avatar y refresca la UI. */
+    private void handleRemovePhoto() {
+        Alert confirm = new Alert(Alert.AlertType.CONFIRMATION);
+        confirm.setTitle("Eliminar foto");
+        confirm.setHeaderText(null);
+        confirm.setContentText("¿Seguro que quieres eliminar tu foto de perfil?");
+        confirm.showAndWait().ifPresent(r -> {
+            if (r == ButtonType.OK) {
+                new Thread(() -> {
+                    try {
+                        HttpResponse<String> response = AppContext.getInstance().getApiService()
+                                .delete("/api/users/me/avatar");
+                        Platform.runLater(() -> {
+                            if (response.statusCode() == 204 || response.statusCode() == 200) {
+                                AppContext.getInstance().setHasAvatar(false);
+                                avatarView.refresh();
+                                loadActivityLog();
+                                if (onProfileUpdated != null) onProfileUpdated.run();
+                            } else {
+                                showAlert("Error", "No se pudo eliminar la foto");
+                            }
+                        });
+                    } catch (Exception e) {
+                        Platform.runLater(() -> showAlert("Error", "Error de conexión"));
+                    }
+                }).start();
+            }
+        });
     }
 
     private void loadProfile() {
@@ -107,15 +270,6 @@ public class ProfileController {
     private void renderProfile(JsonNode user) {
         String username = user.get("username").asText();
         String email = user.get("email").asText();
-
-        // Avatar con iniciales
-        String initials = username.length() >= 2
-                ? username.substring(0, 2).toUpperCase()
-                : username.toUpperCase();
-        avatarLabel.setText(initials);
-        usernameLabel.setText(username);
-        usernameValueLabel.setText(username);
-        emailLabel.setText(email);
 
         // Fecha de nacimiento
         if (user.has("birthDate") && !user.get("birthDate").isNull()) {

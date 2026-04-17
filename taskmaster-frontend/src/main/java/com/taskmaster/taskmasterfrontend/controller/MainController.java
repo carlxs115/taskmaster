@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.taskmaster.taskmasterfrontend.util.AppContext;
+import com.taskmaster.taskmasterfrontend.util.AvatarView;
 import javafx.application.Platform;
 import javafx.collections.FXCollections;
 import javafx.fxml.FXML;
@@ -28,7 +29,7 @@ import java.util.Locale;
 public class MainController {
 
     // ── FXML refs ─────────────────────────────────────────────────────────────
-    @FXML private Button userMenuButton;
+    @FXML private Label userMenuButton;
     @FXML private Button btnHome;
     @FXML private Button btnAllTasks;
     @FXML private Button btnPersonal;
@@ -49,6 +50,8 @@ public class MainController {
     @FXML private VBox  mainArea;
     @FXML private TextField searchField;
     @FXML private Button btnSecurity;
+    @FXML private StackPane sidebarAvatarContainer;
+    private AvatarView sidebarAvatar;
 
     private final java.util.Deque<Runnable> navigationStack = new java.util.ArrayDeque<>();
 
@@ -75,6 +78,10 @@ public class MainController {
     // =========================================================================
     @FXML
     public void initialize() {
+        sidebarAvatar = new AvatarView(32);
+        sidebarAvatarContainer.getChildren().setAll(sidebarAvatar);
+        sidebarAvatar.loadForCurrentUser();
+
         String username = AppContext.getInstance().getCurrentUsername();
 
         String initials = username.length() >= 2
@@ -137,6 +144,7 @@ public class MainController {
             controller.setOnProfileUpdated(() -> {
                 String username = AppContext.getInstance().getCurrentUsername();
                 userMenuButton.setText(username + "  ▾");
+                if (sidebarAvatar != null) sidebarAvatar.refresh();
                 loadHome();
             });
             swapMainAreaWith(profileView);

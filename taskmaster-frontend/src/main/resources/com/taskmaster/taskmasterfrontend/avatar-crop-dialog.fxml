@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.image.*?>
+<?import javafx.scene.layout.*?>
+<VBox xmlns:fx="http://javafx.com/fxml"
+      fx:controller="com.taskmaster.taskmasterfrontend.controller.AvatarCropController"
+      spacing="16" style="-fx-background-color: white; -fx-padding: 20;">
+
+    <Label text="Ajusta tu foto de perfil"
+           style="-fx-font-size: 15px; -fx-font-weight: bold; -fx-text-fill: #1e1e2e;"/>
+
+    <Label text="Arrastra la imagen para reposicionarla y usa el slider para hacer zoom."
+           style="-fx-font-size: 12px; -fx-text-fill: #888888;"
+           wrapText="true"/>
+
+    <!-- Área de recorte circular (256x256 fijo) -->
+    <StackPane fx:id="cropContainer"
+               style="-fx-background-color: #f0f0f5; -fx-border-color: #3d2f6e;
+                      -fx-border-width: 2; -fx-border-radius: 128;
+                      -fx-background-radius: 128;"
+               minWidth="256" minHeight="256"
+               maxWidth="256" maxHeight="256"
+               StackPane.alignment="CENTER">
+        <ImageView fx:id="imageView" preserveRatio="true"/>
+    </StackPane>
+
+    <!-- Slider de zoom -->
+    <HBox spacing="10" alignment="CENTER_LEFT">
+        <Label text="🔍" style="-fx-font-size: 14px;"/>
+        <Slider fx:id="zoomSlider" min="1.0" max="3.0" value="1.0"
+                HBox.hgrow="ALWAYS"/>
+    </HBox>
+
+    <!-- Botones -->
+    <HBox spacing="10" alignment="CENTER_RIGHT">
+        <Button fx:id="cancelButton" text="Cancelar"
+                onAction="#handleCancel"
+                style="-fx-background-color: #f0f0f5; -fx-text-fill: #555570;
+                       -fx-font-size: 12px; -fx-background-radius: 6px;
+                       -fx-cursor: hand; -fx-padding: 8 16 8 16;"/>
+        <Button fx:id="saveButton" text="Guardar"
+                onAction="#handleSave"
+                style="-fx-background-color: #7c3aed; -fx-text-fill: white;
+                       -fx-font-size: 12px; -fx-background-radius: 6px;
+                       -fx-cursor: hand; -fx-padding: 8 16 8 16;"/>
+    </HBox>
+</VBox>

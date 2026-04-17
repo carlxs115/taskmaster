@@ -88,6 +88,10 @@ public class LoginController {
                     AppContext.getInstance().setCurrentUsername(returnedUsername);
                     AppContext.getInstance().setCurrentPassword(password);
 
+                    // Guardar si el usuario tiene avatar (para decidir si pedimos la imagen después)
+                    AppContext.getInstance().setHasAvatar(
+                            jsonNode.has("hasAvatar") && jsonNode.get("hasAvatar").asBoolean(false));
+
                     // Guardar birthDate y comprobar cumpleaños
                     if (jsonNode.has("birthDate") && !jsonNode.get("birthDate").isNull()) {
                         try {

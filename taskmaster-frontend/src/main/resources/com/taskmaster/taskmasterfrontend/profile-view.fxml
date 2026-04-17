@@ -29,14 +29,7 @@
                   style="-fx-background-color: white; -fx-padding: 20;
                          -fx-background-radius: 10px; -fx-border-color: #e8e8e8;
                          -fx-border-radius: 10px; -fx-border-width: 1;">
-                <Label fx:id="avatarLabel"
-                       style="-fx-background-color: #2a1f4e; -fx-text-fill: #a78bfa;
-                              -fx-font-size: 22px; -fx-font-weight: bold;
-                              -fx-min-width: 64px; -fx-min-height: 64px;
-                              -fx-max-width: 64px; -fx-max-height: 64px;
-                              -fx-background-radius: 32px; -fx-alignment: CENTER;
-                              -fx-border-color: #3d2f6e; -fx-border-radius: 32px;
-                              -fx-border-width: 2;"/>
+                <StackPane fx:id="avatarContainer"/>
                 <VBox spacing="4" alignment="CENTER_LEFT" VBox.vgrow="ALWAYS">
                     <Label fx:id="usernameLabel"
                            style="-fx-font-size: 20px; -fx-font-weight: bold; -fx-text-fill: #1e1e2e;"/>

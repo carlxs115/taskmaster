@@ -184,6 +184,60 @@ public class ApiService {
     }
 
     /**
+     * Realiza una petición GET que devuelve bytes (para imágenes u otros binarios).
+     * Devuelve null si el servidor responde 404 (útil para avatares inexistentes).
+     */
+    public byte[] getBytes(String endpoint) throws Exception {
+        HttpRequest request = HttpRequest.newBuilder()
+                .uri(URI.create(BASE_URL + endpoint))
+                .header("Authorization", getAuthHeader())
+                .GET()
+                .build();
+        HttpResponse<byte[]> response = httpClient.send(request, HttpResponse.BodyHandlers.ofByteArray());
+        if (response.statusCode() == 404) return null;
+        if (response.statusCode() != 200) {
+            throw new RuntimeException("Error HTTP " + response.statusCode() + " en " + endpoint);
+        }
+        return response.body();
+    }
+
+    /**
+     * Sube un fichero como multipart/form-data con autenticación.
+     * Construye el cuerpo multipart manualmente (HttpClient no tiene soporte nativo).
+     *
+     * @param endpoint    ruta del endpoint
+     * @param fieldName   nombre del campo (ej: "file")
+     * @param filename    nombre del fichero que se anunciará al servidor
+     * @param contentType tipo MIME ("image/png" o "image/jpeg")
+     * @param fileBytes   contenido binario del fichero
+     */
+    public HttpResponse<String> postMultipart(String endpoint, String fieldName,
+                                              String filename, String contentType,
+                                              byte[] fileBytes) throws Exception {
+        String boundary = "----TaskMasterBoundary" + System.currentTimeMillis();
+        String CRLF = "\r\n";
+
+        // Construcción manual del cuerpo multipart
+        java.io.ByteArrayOutputStream baos = new java.io.ByteArrayOutputStream();
+        String preamble = "--" + boundary + CRLF
+                + "Content-Disposition: form-data; name=\"" + fieldName + "\"; filename=\"" + filename + "\"" + CRLF
+                + "Content-Type: " + contentType + CRLF + CRLF;
+        String epilogue = CRLF + "--" + boundary + "--" + CRLF;
+
+        baos.write(preamble.getBytes());
+        baos.write(fileBytes);
+        baos.write(epilogue.getBytes());
+
+        HttpRequest request = HttpRequest.newBuilder()
+                .uri(URI.create(BASE_URL + endpoint))
+                .header("Content-Type", "multipart/form-data; boundary=" + boundary)
+                .header("Authorization", getAuthHeader())
+                .POST(HttpRequest.BodyPublishers.ofByteArray(baos.toByteArray()))
+                .build();
+        return httpClient.send(request, HttpResponse.BodyHandlers.ofString());
+    }
+
+    /**
      * Deserializa el JSON de una respuesta a un objeto Java.
      *
      * @param response respuesta HTTP
