@@ -69,6 +69,15 @@ public class User {
     private LocalDateTime createdAt;
 
     /**
+     * Ruta relativa al fichero de imagen de perfil dentro del directorio de avatares.
+     * Ejemplo: "a1b2c3d4-e5f6-7890-abcd-ef1234567890.png"
+     * Si es null, el usuario no tiene foto de perfil y se mostrarán sus iniciales.
+     * El fichero físico vive en la carpeta configurada en taskmaster.storage.avatars-dir.
+     */
+    @Column(length = 255)
+    private String avatarPath;
+
+    /**
      * Relación con proyectos: un usuario tiene muchos proyectos.
      * mappedBy = "user" → le dice a JPA que la relación ya está definida en la entidad Project con el campo "user"
      * cascade = ALL      → si borramos un usuario, se borran sus proyectos también

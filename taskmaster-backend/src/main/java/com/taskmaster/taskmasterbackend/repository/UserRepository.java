@@ -2,8 +2,10 @@ package com.taskmaster.taskmasterbackend.repository;
 
 import com.taskmaster.taskmasterbackend.model.User;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
+import java.util.List;
 import java.util.Optional;
 
 /**
@@ -45,4 +47,11 @@ public interface UserRepository extends JpaRepository<User, Long> {
      * Útil para comprobar si un email ya está registrado
      */
     boolean existsByEmail(String email);
+
+    /**
+     * Devuelve todos los avatarPath no nulos registrados en BD.
+     * Lo usa AvatarStorageService para detectar ficheros huérfanos al arrancar.
+     */
+    @Query("SELECT u.avatarPath FROM User u WHERE u.avatarPath IS NOT NULL")
+    List<String> findAllAvatarPaths();
 }
