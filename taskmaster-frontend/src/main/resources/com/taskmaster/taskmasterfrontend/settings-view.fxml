@@ -56,6 +56,33 @@
                    visible="false"/>
         </VBox>
 
+        <!-- Idioma -->
+        <VBox spacing="12" style="-fx-background-color: white; -fx-padding: 20;
+                           -fx-background-radius: 8px; -fx-border-color: #e0e0e0;
+                           -fx-border-radius: 8px;">
+            <Label text="🌍 Idioma de la aplicación"
+                   style="-fx-font-size: 15px; -fx-font-weight: bold; -fx-text-fill: #2d2d2d;"/>
+            <Label text="Selecciona el idioma en el que quieres usar TaskMaster:"
+                   style="-fx-font-size: 13px; -fx-text-fill: #666666;"/>
+            <HBox spacing="12" alignment="CENTER_LEFT">
+                <RadioButton fx:id="langEs" text="🇪🇸  Español">
+                    <toggleGroup>
+                        <ToggleGroup fx:id="languageGroup"/>
+                    </toggleGroup>
+                </RadioButton>
+                <RadioButton fx:id="langEn" text="🇬🇧  English"
+                             toggleGroup="$languageGroup"/>
+            </HBox>
+            <Button text="Aplicar idioma"
+                    onAction="#handleSaveLanguage"
+                    style="-fx-background-color: #3498db; -fx-text-fill: white;
+                   -fx-background-radius: 4px; -fx-cursor: hand;
+                   -fx-font-size: 13px;"/>
+            <Label fx:id="languageStatusLabel"
+                   style="-fx-font-size: 12px; -fx-text-fill: #2ecc71;"
+                   visible="false"/>
+        </VBox>
+
     </VBox>
 
 </VBox>

@@ -3,12 +3,15 @@ package com.taskmaster.taskmasterfrontend.controller;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.taskmaster.taskmasterfrontend.util.AppContext;
+import com.taskmaster.taskmasterfrontend.util.LanguageManager;
 import javafx.application.Platform;
 import javafx.fxml.FXML;
 import javafx.scene.control.Label;
 import javafx.scene.control.RadioButton;
 
 import java.net.http.HttpResponse;
+import java.util.Locale;
+import java.util.ResourceBundle;
 
 /**
  * SETTINGSCONTROLLER
@@ -21,12 +24,22 @@ public class SettingsController {
     @FXML private RadioButton days15;
     @FXML private RadioButton days30;
     @FXML private Label retentionStatusLabel;
+    @FXML private RadioButton langEs;
+    @FXML private RadioButton langEn;
+    @FXML private Label languageStatusLabel;
 
     private final ObjectMapper objectMapper = new ObjectMapper();
 
     @FXML
     public void initialize() {
         loadSettings();
+
+        // Seleccionar idioma actual
+        if (LanguageManager.getInstance().isSpanish()) {
+            langEs.setSelected(true);
+        } else {
+            langEn.setSelected(true);
+        }
     }
 
     private void loadSettings() {
@@ -80,5 +93,21 @@ public class SettingsController {
                 });
             }
         }).start();
+    }
+
+    @FXML
+    private void handleSaveLanguage() {
+        Locale locale = langEs.isSelected() ? new Locale("es") : Locale.ENGLISH;
+        LanguageManager.getInstance().setLocale(locale);
+        languageStatusLabel.setText(LanguageManager.getInstance().get("settings.saved"));
+        languageStatusLabel.setStyle("-fx-font-size: 12px; -fx-text-fill: #2ecc71;");
+        languageStatusLabel.setVisible(true);
+        // Recargar la pantalla de ajustes para que se vea traducida al instante
+        applyLanguageToSettings();
+    }
+
+    private void applyLanguageToSettings() {
+        ResourceBundle b = LanguageManager.getInstance().getBundle();
+        // Los textos fijos del settings se actualizan aquí cuando hagamos el refactor completo
     }
 }
