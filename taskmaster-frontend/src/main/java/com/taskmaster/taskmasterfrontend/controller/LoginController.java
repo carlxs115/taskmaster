@@ -3,6 +3,7 @@ package com.taskmaster.taskmasterfrontend.controller;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.taskmaster.taskmasterfrontend.util.AppContext;
+import com.taskmaster.taskmasterfrontend.util.LanguageManager;
 import javafx.application.Platform;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
@@ -30,6 +31,7 @@ public class LoginController {
 
     @FXML
     private void initialize() {
+        applyLanguage();
         usernameField.setOnKeyPressed(e -> {
             if (e.getCode() == KeyCode.ENTER) {
                 handleLogin();
@@ -42,6 +44,12 @@ public class LoginController {
         });
     }
 
+    private void applyLanguage() {
+        LanguageManager lm = LanguageManager.getInstance();
+        // Los textos fijos del FXML se actualizan aquí en runtime
+        // cuando el usuario cambie idioma desde ajustes
+    }
+
     /**
      * Se ejecuta cuando el usuario pulsa "Iniciar sesión".
      * Por ahora validamos que los campos no estén vacíos.
@@ -49,11 +57,12 @@ public class LoginController {
      */
     @FXML
     private void handleLogin(){
+        LanguageManager lm = LanguageManager.getInstance();
         String username = usernameField.getText().trim();
         String password = passwordField.getText().trim();
 
         if (username.isEmpty() || password.isEmpty()) {
-            showError("Rellena todos los campos");
+            showError(lm.get("error.fields.required"));
             return;
         }
 
@@ -109,18 +118,17 @@ public class LoginController {
                 } else {
                     // Login fallido — mostramos error
                     Platform.runLater(() -> {
-                        showError("Usuario o contraseña incorrectos");
+                        showError(lm.get("login.error.credentials"));
                         loginButton.setDisable(false);
                     });
                 }
             } catch (Exception e) {
                 Platform.runLater(() -> {
-                    showError("Error de conexión con el servidor");
+                    showError(lm.get("error.connection"));
                     loginButton.setDisable(false);
                 });
             }
         }).start();
-
         System.out.println("Login: " + username);
     }
 

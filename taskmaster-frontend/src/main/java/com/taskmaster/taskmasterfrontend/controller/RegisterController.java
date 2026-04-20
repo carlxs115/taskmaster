@@ -3,6 +3,7 @@ package com.taskmaster.taskmasterfrontend.controller;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.taskmaster.taskmasterfrontend.util.AppContext;
+import com.taskmaster.taskmasterfrontend.util.LanguageManager;
 import javafx.application.Platform;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
@@ -50,6 +51,7 @@ public class RegisterController {
      */
     @FXML
     private void handleRegister() {
+        LanguageManager lm = LanguageManager.getInstance();
         String username = usernameField.getText().trim();
         String email = emailField.getText().trim();
         String password = passwordField.getText().trim();
@@ -57,17 +59,17 @@ public class RegisterController {
 
         // Validaciones básicas
         if (username.isEmpty() || email.isEmpty() || password.isEmpty()) {
-            showError("Rellena todos los campos");
+            showError(lm.get("error.fields.required"));
             return;
         }
 
         if (birthDate == null) {
-            showError("Selecciona tu fecha de nacimiento");
+            showError(lm.get("register.error.birthdate"));
             return;
         }
 
         if (birthDate.isAfter(LocalDate.now().minusYears(12))) {
-            showError("Debes tener al menos 12 años para registrarte");
+            showError(lm.get("register.error.age"));
             return;
         }
 
@@ -92,15 +94,15 @@ public class RegisterController {
                             JsonNode json = mapper.readTree(response.body());
                             String msg = json.has("message")
                                     ? json.get("message").asText()
-                                    : "Error al crear la cuenta";
+                                    : lm.get("register.error.generic");
                             showError(msg);
                         } catch (Exception ex) {
-                            showError("Error al crear la cuenta");
+                            showError(lm.get("register.error.generic"));
                         }
                     }
                 });
             } catch (Exception e) {
-                Platform.runLater(() -> showError("Error de conexión con el servidor"));
+                Platform.runLater(() -> showError(lm.get("error.connection")));
             }
         }).start();
 

@@ -67,6 +67,7 @@ public class SettingsController {
 
     @FXML
     private void handleSaveRetention () {
+        LanguageManager lm = LanguageManager.getInstance();
         int days = days7.isSelected() ? 7 : days15.isSelected() ? 15 : 30;
 
         new Thread(() -> {
@@ -77,17 +78,17 @@ public class SettingsController {
 
                 Platform.runLater(() -> {
                     if (response.statusCode() == 200) {
-                        retentionStatusLabel.setText("✓ Guardado correctamente");
+                        retentionStatusLabel.setText(lm.get("settings.saved"));
                         retentionStatusLabel.setVisible(true);
                     } else {
-                        retentionStatusLabel.setText("✗ Error al guardar");
+                        retentionStatusLabel.setText(lm.get("settings.error"));
                         retentionStatusLabel.setStyle("-fx-text-fill: #e74c3c;");
                         retentionStatusLabel.setVisible(true);
                     }
                 });
             } catch (Exception e) {
                 Platform.runLater(() -> {
-                    retentionStatusLabel.setText("✗ Error de conexión");
+                    retentionStatusLabel.setText(lm.get("settings.connection.error"));
                     retentionStatusLabel.setStyle("-fx-text-fill: #e74c3c;");
                     retentionStatusLabel.setVisible(true);
                 });
@@ -97,13 +98,13 @@ public class SettingsController {
 
     @FXML
     private void handleSaveLanguage() {
+        LanguageManager lm = LanguageManager.getInstance();
         Locale locale = langEs.isSelected() ? new Locale("es") : Locale.ENGLISH;
-        LanguageManager.getInstance().setLocale(locale);
-        languageStatusLabel.setText(LanguageManager.getInstance().get("settings.saved"));
-        languageStatusLabel.setStyle("-fx-font-size: 12px; -fx-text-fill: #2ecc71;");
+        lm.setLocale(locale);
+        lm.saveLocalePreference(locale);
+        languageStatusLabel.setText(lm.get("settings.language.restart"));
+        languageStatusLabel.setStyle("-fx-font-size: 12px; -fx-text-fill: #f59e0b;");
         languageStatusLabel.setVisible(true);
-        // Recargar la pantalla de ajustes para que se vea traducida al instante
-        applyLanguageToSettings();
     }
 
     private void applyLanguageToSettings() {
