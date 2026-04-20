@@ -14,7 +14,7 @@
                  -fx-border-color: #e0e0e0; -fx-border-width: 0 0 1 0;"
           alignment="CENTER_LEFT" spacing="12">
 
-        <Label text="🗑 Papelera"
+        <Label text="%trash.title"
                style="-fx-font-size: 18px; -fx-font-weight: bold; -fx-text-fill: #2d2d2d;"/>
 
         <Region HBox.hgrow="ALWAYS"/>
@@ -28,7 +28,7 @@
              style="-fx-background-color: #f5f5f5;">
 
         <!-- Pestaña Tareas -->
-        <Tab text="Tareas" closable="false">
+        <Tab text="%trash.tab.tasks" closable="false">
             <ScrollPane fitToWidth="true"
                         style="-fx-background-color: transparent; -fx-border-color: transparent;">
                 <VBox fx:id="trashTaskContainer" spacing="8">
@@ -36,14 +36,14 @@
                         <Insets top="16" right="20" bottom="16" left="20"/>
                     </padding>
                     <Label fx:id="emptyTasksLabel"
-                           text="La papelera de tareas está vacía"
+                           text="%trash.tasks.empty"
                            style="-fx-text-fill: #aaaaaa; -fx-font-size: 14px;"/>
                 </VBox>
             </ScrollPane>
         </Tab>
 
         <!-- Pestaña Proyectos -->
-        <Tab text="Proyectos" closable="false">
+        <Tab text="%trash.tab.projects" closable="false">
             <ScrollPane fitToWidth="true"
                         style="-fx-background-color: transparent; -fx-border-color: transparent;">
                 <VBox fx:id="trashProjectContainer" spacing="8">
@@ -51,7 +51,7 @@
                         <Insets top="16" right="20" bottom="16" left="20"/>
                     </padding>
                     <Label fx:id="emptyProjectsLabel"
-                           text="La papelera de proyectos está vacía"
+                           text="%trash.projects.empty"
                            style="-fx-text-fill: #aaaaaa; -fx-font-size: 14px;"/>
                 </VBox>
             </ScrollPane>

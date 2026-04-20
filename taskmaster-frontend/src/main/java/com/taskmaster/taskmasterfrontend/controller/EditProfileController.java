@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.taskmaster.taskmasterfrontend.util.AppContext;
+import com.taskmaster.taskmasterfrontend.util.LanguageManager;
 import javafx.application.Platform;
 import javafx.fxml.FXML;
 import javafx.scene.control.DatePicker;
@@ -26,6 +27,7 @@ public class EditProfileController {
     private Runnable onProfileUpdated;
     private final ObjectMapper objectMapper = new ObjectMapper()
             .registerModule(new JavaTimeModule());
+    private final LanguageManager lm = LanguageManager.getInstance();
 
     public void setOnProfileUpdated(Runnable callback) {
         this.onProfileUpdated = callback;
@@ -56,7 +58,7 @@ public class EditProfileController {
                     });
                 }
             } catch (Exception e) {
-                Platform.runLater(() -> showError("No se pudieron cargar los datos del perfil"));
+                Platform.runLater(() -> showError(lm.get("edit.profile.error.load")));
             }
         }).start();
     }
@@ -68,13 +70,13 @@ public class EditProfileController {
         LocalDate birthDate = birthDatePicker.getValue();
 
         if (username.isEmpty() || email.isEmpty() || birthDate == null) {
-            showError("Todos los campos son obligatorios");
+            showError(lm.get("edit.profile.error.fields"));
             return;
         }
 
         // Validación edad mínima 12 años
         if (birthDate.isAfter(LocalDate.now().minusYears(12))) {
-            showError("Debes tener al menos 12 años");
+            showError(lm.get("edit.profile.error.age"));
             return;
         }
 
@@ -111,14 +113,14 @@ public class EditProfileController {
                     } else {
                         try {
                             String msg = response.body();
-                            showError(msg.isEmpty() ? "Error al guardar los cambios" : msg);
+                            showError(msg.isEmpty() ? lm.get("edit.profile.error.save") : msg);
                         } catch (Exception ignored) {
-                            showError("Error al guardar los cambios");
+                            showError(lm.get("edit.profile.error.save"));
                         }
                     }
                 });
             } catch (Exception e) {
-                Platform.runLater(() -> showError("Error de conexión con el servidor"));
+                Platform.runLater(() -> showError(lm.get("error.connection")));
             }
         }).start();
     }

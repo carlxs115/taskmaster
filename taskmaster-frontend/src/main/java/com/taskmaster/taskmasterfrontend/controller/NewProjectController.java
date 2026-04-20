@@ -1,6 +1,7 @@
 package com.taskmaster.taskmasterfrontend.controller;
 
 import com.taskmaster.taskmasterfrontend.util.AppContext;
+import com.taskmaster.taskmasterfrontend.util.LanguageManager;
 import javafx.collections.FXCollections;
 import javafx.fxml.FXML;
 import javafx.scene.control.ComboBox;
@@ -32,6 +33,8 @@ public class NewProjectController {
     // Permite notificar al MainController sin acoplamiento directo
     private Runnable onProjectCreated;
 
+    private final LanguageManager lm = LanguageManager.getInstance();
+
     public void setOnProjectCreated(Runnable callback) {
         this.onProjectCreated = callback;
     }
@@ -39,19 +42,18 @@ public class NewProjectController {
     @FXML
     private void initialize() {
         categoryCombo.setItems(FXCollections.observableArrayList(
-                "PERSONAL", "ESTUDIOS", "TRABAJO"
-        ));
-        categoryCombo.setValue("PERSONAL");
+                lm.get("category.PERSONAL"), lm.get("category.ESTUDIOS"), lm.get("category.TRABAJO")));
+        categoryCombo.setValue(lm.get("category.PERSONAL"));
 
         statusCombo.setItems(FXCollections.observableArrayList(
-                "PENDIENTE", "EN CURSO", "COMPLETADO", "CANCELADO"
-        ));
-        statusCombo.setValue("PENDIENTE");
+                lm.get("status.pending.label"), lm.get("status.inprogress.label"),
+                lm.get("status.done.label"), lm.get("status.cancelled.label")));
+        statusCombo.setValue(lm.get("status.pending.label"));
 
         priorityCombo.setItems(FXCollections.observableArrayList(
-                "BAJA", "MEDIA", "ALTA", "URGENTE"
-        ));
-        priorityCombo.setValue("MEDIA");
+                lm.get("priority.low.label"), lm.get("priority.medium.label"),
+                lm.get("priority.high.label"), lm.get("priority.urgent.label")));
+        priorityCombo.setValue(lm.get("priority.medium.label"));
     }
 
     @FXML
@@ -60,8 +62,7 @@ public class NewProjectController {
         String description = descriptionField.getText().trim();
 
         if (name.isEmpty()) {
-            showError("El nombre del proyecto es obligatorio");
-            return;
+            showError(lm.get("new.project.error.name")); return;
         }
 
         new Thread(() -> {
@@ -83,11 +84,11 @@ public class NewProjectController {
                         if (onProjectCreated != null) onProjectCreated.run();
                         closeDialog();
                     } else {
-                        showError("Error al crear el proyecto");
+                        showError(lm.get("new.project.error.create"));
                     }
                 });
             } catch (Exception e) {
-                javafx.application.Platform.runLater(() -> showError("Error de conexión con el servidor"));
+                javafx.application.Platform.runLater(() -> showError(lm.get("error.connection")));
             }
         }).start();
     }

@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.taskmaster.taskmasterfrontend.util.AppContext;
+import com.taskmaster.taskmasterfrontend.util.LanguageManager;
 import javafx.application.Platform;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
@@ -47,6 +48,7 @@ public class TaskDetailController {
     private java.util.function.Consumer<JsonNode> onOpenSubtaskDetail;
     private final ObjectMapper objectMapper = new ObjectMapper()
             .registerModule(new JavaTimeModule());
+    private final LanguageManager lm = LanguageManager.getInstance();
 
     public void setOnTaskChanged(Runnable callback) {
         this.onTaskChanged = callback;
@@ -89,7 +91,7 @@ public class TaskDetailController {
 
         taskIdLabel.setText("#" + taskId);
         taskTitleLabel.setText(title);
-        descriptionLabel.setText(desc.isEmpty() ? "Sin descripción" : desc);
+        descriptionLabel.setText(desc.isEmpty() ? lm.get("task.detail.no.description") : desc);
 
         // Status badge
         statusBadge.setText(translateStatus(status));
@@ -152,7 +154,7 @@ public class TaskDetailController {
                     Platform.runLater(() -> renderSubtasks(subtasks, taskId));
                 }
             } catch (Exception e) {
-                Platform.runLater(() -> showAlert("Error", "No se pudieron cargar las subtareas"));
+                Platform.runLater(() -> showAlert(lm.get("error.title"), lm.get("task.detail.subtask.error.load")));
             }
         }).start();
     }
@@ -178,7 +180,8 @@ public class TaskDetailController {
         for (JsonNode st : subtasks) {
             if ("DONE".equals(st.has("status") ? st.get("status").asText() : "")) done++;
         }
-        subtaskProgressLabel.setText(done + "/" + total + " completadas");
+        subtaskProgressLabel.setText(
+                java.text.MessageFormat.format(lm.get("task.detail.subtasks.progress"), done, total));
 
         // Barra de progreso
         progressBarBg.setVisible(true);
@@ -235,13 +238,13 @@ public class TaskDetailController {
             ContextMenu menu = new ContextMenu();
             menu.setStyle("-fx-background-color: white; -fx-border-color: #e8e8e8; " +
                     "-fx-border-width: 1; -fx-background-radius: 8; -fx-border-radius: 8;");
-            MenuItem detail = new MenuItem("👁  Ver detalles");
+            MenuItem detail = new MenuItem(lm.get("task.detail.menu.detail"));
             detail.setStyle("-fx-font-size: 13px; -fx-padding: 2 10 2 10;");
             detail.setOnAction(ev -> openSubtaskDetail(stId));
-            MenuItem edit = new MenuItem("✏️  Editar");
+            MenuItem edit   = new MenuItem(lm.get("task.detail.menu.edit"));
             edit.setStyle("-fx-font-size: 13px; -fx-padding: 2 10 2 10;");
             edit.setOnAction(ev -> openEditSubtask(stId, parentTaskId));
-            MenuItem delete = new MenuItem("🗑  Eliminar");
+            MenuItem delete = new MenuItem(lm.get("task.detail.menu.delete"));
             delete.setStyle("-fx-font-size: 13px; -fx-padding: 2 10 2 10; -fx-text-fill: #e74c3c;");
             delete.setOnAction(ev -> deleteSubtask(stId, parentTaskId));
             menu.getItems().addAll(detail, edit, delete);
@@ -297,12 +300,14 @@ public class TaskDetailController {
             }
             // fallback
             FXMLLoader loader = new FXMLLoader(
-                    getClass().getResource("/com/taskmaster/taskmasterfrontend/task-detail-view.fxml"));
+                    getClass().getResource("/com/taskmaster/taskmasterfrontend/task-detail-view.fxml"),
+                    LanguageManager.getInstance().getBundle()
+            );
             VBox root = loader.load();
             TaskDetailController controller = loader.getController();
             controller.initDataAsSubtask(subtask);
             Stage dialog = new Stage();
-            dialog.setTitle("Detalle de subtarea");
+            dialog.setTitle(lm.get("task.detail.subtask.detail"));
             dialog.initModality(Modality.APPLICATION_MODAL);
             dialog.initOwner(taskTitleLabel.getScene().getWindow());
             dialog.setScene(new Scene(root));
@@ -310,7 +315,7 @@ public class TaskDetailController {
             Long parentTaskId = taskData.get("id").asLong();
             loadSubtasks(parentTaskId);
         } catch (Exception e) {
-            showAlert("Error", "No se pudo abrir el detalle de la subtarea");
+            showAlert(lm.get("error.title"), lm.get("task.detail.subtask.error.open"));
         }
     }
 
@@ -327,30 +332,32 @@ public class TaskDetailController {
 
             // Luego cargar el FXML
             FXMLLoader loader = new FXMLLoader(
-                    getClass().getResource("/com/taskmaster/taskmasterfrontend/edit-task-dialog.fxml"));
+                    getClass().getResource("/com/taskmaster/taskmasterfrontend/edit-task-dialog.fxml"),
+                    LanguageManager.getInstance().getBundle()
+            );
             javafx.scene.layout.VBox root = loader.load();
 
             EditTaskController controller = loader.getController();
             controller.initData(subtask);
-            controller.setDialogTitle("Editar subtarea");
+            controller.setDialogTitle(lm.get("task.detail.subtask.edit"));
             controller.setOnTaskUpdated(() -> loadSubtasks(parentTaskId));
 
-            showAsDialog(root, "Editar subtarea");
+            showAsDialog(root, lm.get("task.detail.subtask.edit"));
 
             // Recargar historial tras editar
             Long parentTaskId2 = taskData.get("id").asLong();
             loadSubtasks(parentTaskId2);
             activityLogSectionController.loadForEntity("TASK", parentTaskId2, "SUBTASK");
         } catch (Exception e) {
-            showAlert("Error", "No se pudo abrir el editor de subtarea");
+            showAlert(lm.get("error.title"), lm.get("task.detail.subtask.error.edit"));
         }
     }
 
     private void deleteSubtask(Long subtaskId, Long parentTaskId) {
         Alert confirm = new Alert(Alert.AlertType.CONFIRMATION);
-        confirm.setTitle("Eliminar subtarea");
+        confirm.setTitle(lm.get("task.detail.subtask.delete.title"));
         confirm.setHeaderText(null);
-        confirm.setContentText("¿Seguro que quieres eliminar esta subtarea?");
+        confirm.setContentText(lm.get("task.detail.subtask.delete.content"));
         confirm.showAndWait().ifPresent(r -> {
             if (r == ButtonType.OK) {
                 new Thread(() -> {
@@ -362,7 +369,7 @@ public class TaskDetailController {
                             if (onTaskChanged != null) onTaskChanged.run();
                         });
                     } catch (Exception e) {
-                        Platform.runLater(() -> showAlert("Error", "No se pudo eliminar la subtarea"));
+                        Platform.runLater(() -> showAlert(lm.get("error.title"), lm.get("task.detail.subtask.error.delete")));
                     }
                 }).start();
             }
@@ -381,7 +388,7 @@ public class TaskDetailController {
                     Platform.runLater(() -> renderWorkLogs(logs));
                 }
             } catch (Exception e) {
-                Platform.runLater(() -> showAlert("Error", "No se pudieron cargar los registros de tiempo"));
+                Platform.runLater(() -> showAlert(lm.get("error.title"), lm.get("task.detail.worklog.error.load")));
             }
         }).start();
     }
@@ -443,11 +450,11 @@ public class TaskDetailController {
                 menu.setStyle("-fx-background-color: white; -fx-border-color: #e8e8e8; " +
                         "-fx-border-width: 1; -fx-background-radius: 8; -fx-border-radius: 8;");
 
-                MenuItem editItem = new MenuItem("✏️  Editar");
+                MenuItem editItem   = new MenuItem(lm.get("task.detail.menu.edit"));
                 editItem.setStyle("-fx-font-size: 13px; -fx-padding: 2 10 2 10;");
                 editItem.setOnAction(ev -> openEditWorkLog(logId, log, taskId));
 
-                MenuItem deleteItem = new MenuItem("🗑  Eliminar");
+                MenuItem deleteItem = new MenuItem(lm.get("task.detail.menu.delete"));
                 deleteItem.setStyle("-fx-font-size: 13px; -fx-padding: 2 10 2 10; -fx-text-fill: #e74c3c;");
                 deleteItem.setOnAction(ev -> deleteWorkLog(logId, taskId));
 
@@ -465,7 +472,9 @@ public class TaskDetailController {
     private void openEditWorkLog(Long logId, JsonNode log, Long taskId) {
         try {
             FXMLLoader loader = new FXMLLoader(
-                    getClass().getResource("/com/taskmaster/taskmasterfrontend/add-worklog-dialog.fxml"));
+                    getClass().getResource("/com/taskmaster/taskmasterfrontend/add-worklog-dialog.fxml"),
+                    LanguageManager.getInstance().getBundle()
+            );
             VBox root = loader.load();
             AddWorkLogController controller = loader.getController();
             controller.setTaskId(taskId);
@@ -474,17 +483,17 @@ public class TaskDetailController {
                 loadWorkLogs(taskId);
                 loadTotalHours(taskId);
             });
-            showAsDialog(root, "Editar registro de tiempo");
+            showAsDialog(root, lm.get("task.detail.worklog.edit"));
         } catch (IOException e) {
-            showAlert("Error", "No se pudo abrir el editor de registro");
+            showAlert(lm.get("error.title"), lm.get("task.detail.worklog.error.open"));
         }
     }
 
     private void deleteWorkLog(Long logId, Long taskId) {
         Alert confirm = new Alert(Alert.AlertType.CONFIRMATION);
-        confirm.setTitle("Eliminar registro");
+        confirm.setTitle(lm.get("task.detail.worklog.delete.title"));
         confirm.setHeaderText(null);
-        confirm.setContentText("¿Seguro que quieres eliminar este registro?");
+        confirm.setContentText(lm.get("task.detail.worklog.delete.content"));
         confirm.showAndWait().ifPresent(r -> {
             if (r == ButtonType.OK) {
                 new Thread(() -> {
@@ -496,7 +505,7 @@ public class TaskDetailController {
                             loadTotalHours(taskId);
                         });
                     } catch (Exception e) {
-                        Platform.runLater(() -> showAlert("Error", "No se pudo eliminar el registro"));
+                        Platform.runLater(() -> showAlert(lm.get("error.title"), lm.get("task.detail.worklog.error.delete")));
                     }
                 }).start();
             }
@@ -511,7 +520,7 @@ public class TaskDetailController {
                 if (response.statusCode() == 200) {
                     String total = response.body();
                     Platform.runLater(() ->
-                            totalHoursLabel.setText(total + "h totales"));
+                            totalHoursLabel.setText(java.text.MessageFormat.format(lm.get("task.detail.worklog.total"), total)));
                 }
             } catch (Exception e) {
                 // silencioso, no es crítico
@@ -523,7 +532,9 @@ public class TaskDetailController {
     private void handleAddWorkLog() {
         try {
             FXMLLoader loader = new FXMLLoader(
-                    getClass().getResource("/com/taskmaster/taskmasterfrontend/add-worklog-dialog.fxml"));
+                    getClass().getResource("/com/taskmaster/taskmasterfrontend/add-worklog-dialog.fxml"),
+                    LanguageManager.getInstance().getBundle()
+            );
             VBox root = loader.load();
             AddWorkLogController controller = loader.getController();
             Long taskId = taskData.get("id").asLong();
@@ -532,25 +543,16 @@ public class TaskDetailController {
                 loadWorkLogs(taskId);
                 loadTotalHours(taskId);
             });
-            showAsDialog(root, "Añadir registro de tiempo");
+            showAsDialog(root, lm.get("task.detail.worklog.add.title"));
         } catch (IOException e) {
-            showAlert("Error", "No se pudo abrir el diálogo");
+            showAlert(lm.get("error.title"), lm.get("error.open.dialog"));
         }
     }
 
     private String translateActivityType(String type) {
-        return switch (type) {
-            case "ANALYSIS"      -> "Análisis";
-            case "DESIGN"        -> "Diseño";
-            case "DEVELOPMENT"   -> "Desarrollo";
-            case "TEST"          -> "Test";
-            case "INSTALLATION"  -> "Instalación";
-            case "DOCUMENTATION" -> "Documentación";
-            case "MEETING"       -> "Reunión";
-            case "SUPPORT"       -> "Soporte";
-            case "MANAGEMENT"    -> "Gestión";
-            default              -> type;
-        };
+        String key = "activity." + type;
+        String val = lm.get(key);
+        return val.startsWith("?") ? type : val;
     }
 
     // ── Acciones ──────────────────────────────────────────────────────────────
@@ -558,7 +560,9 @@ public class TaskDetailController {
     private void handleNewSubtask() {
         try {
             FXMLLoader loader = new FXMLLoader(
-                    getClass().getResource("/com/taskmaster/taskmasterfrontend/new-subtask-dialog.fxml"));
+                    getClass().getResource("/com/taskmaster/taskmasterfrontend/new-subtask-dialog.fxml"),
+                    LanguageManager.getInstance().getBundle()
+            );
             VBox root = loader.load();
             NewSubtaskController controller = loader.getController();
 
@@ -572,9 +576,9 @@ public class TaskDetailController {
                 loadSubtasks(parentId);
                 if (onTaskChanged != null) onTaskChanged.run();
             });
-            showAsDialog(root, "Nueva subtarea");
+            showAsDialog(root, lm.get("task.detail.subtask.edit"));
         } catch (IOException e) {
-            showAlert("Error", "No se pudo abrir el diálogo");
+            showAlert(lm.get("error.title"), lm.get("error.open.dialog"));
         }
     }
 
@@ -582,20 +586,20 @@ public class TaskDetailController {
     private void handleEdit() {
         try {
             FXMLLoader loader = new FXMLLoader(
-                    getClass().getResource("/com/taskmaster/taskmasterfrontend/edit-task-dialog.fxml"));
+                    getClass().getResource("/com/taskmaster/taskmasterfrontend/edit-task-dialog.fxml"),
+                    LanguageManager.getInstance().getBundle()
+            );
             VBox root = loader.load();
             EditTaskController controller = loader.getController();
             controller.initData(taskData);
-            if (isSubtask) {
-                controller.setDialogTitle("Editar subtarea");
-            }
+            controller.setDialogTitle(isSubtask ? lm.get("task.detail.subtask.edit") : lm.get("task.detail.edit"));
             controller.setOnTaskUpdated(() -> {
                 if (onTaskChanged != null) onTaskChanged.run();
                 closeDialog();
             });
-            showAsDialog(root, isSubtask ? "Editar subtarea" : "Editar tarea");
+            showAsDialog(root, isSubtask ? lm.get("task.detail.subtask.edit") : lm.get("task.detail.edit"));
         } catch (IOException e) {
-            showAlert("Error", "No se pudo abrir el diálogo");
+            showAlert(lm.get("error.title"), lm.get("error.open.dialog"));
         }
     }
 
@@ -654,21 +658,21 @@ public class TaskDetailController {
 
     private String translateStatus(String status) {
         return switch (status) {
-            case "TODO"        -> "PENDIENTE";
-            case "IN_PROGRESS" -> "EN CURSO";
-            case "DONE"        -> "COMPLETADA";
-            case "SUBMITTED" -> "ENTREGADA";
-            case "CANCELLED"   -> "CANCELADA";
+            case "TODO"        -> lm.get("status.TODO");
+            case "IN_PROGRESS" -> lm.get("status.IN_PROGRESS");
+            case "DONE"        -> lm.get("status.DONE");
+            case "SUBMITTED"   -> lm.get("status.SUBMITTED");
+            case "CANCELLED"   -> lm.get("status.CANCELLED");
             default            -> status;
         };
     }
 
     private String translatePriority(String priority) {
         return switch (priority) {
-            case "LOW"    -> "BAJA";
-            case "MEDIUM" -> "MEDIA";
-            case "HIGH"   -> "ALTA";
-            case "URGENT" -> "URGENTE";
+            case "LOW"    -> lm.get("priority.LOW");
+            case "MEDIUM" -> lm.get("priority.MEDIUM");
+            case "HIGH"   -> lm.get("priority.HIGH");
+            case "URGENT" -> lm.get("priority.URGENT");
             default       -> priority;
         };
     }

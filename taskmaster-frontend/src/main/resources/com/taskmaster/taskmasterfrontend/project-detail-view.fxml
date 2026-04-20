@@ -16,7 +16,7 @@
         <Label fx:id="projectNameLabel"
                style="-fx-font-size: 16px; -fx-font-weight: bold; -fx-text-fill: #1e1e2e;"/>
         <Region HBox.hgrow="ALWAYS"/>
-        <Button text="Cerrar"
+        <Button text="%project.detail.close"
                 onAction="#handleClose"
                 style="-fx-background-color: transparent; -fx-text-fill: #888888;
                        -fx-font-size: 12px; -fx-cursor: hand; -fx-padding: 5 12 5 12;"/>
@@ -44,7 +44,7 @@
                   style="-fx-background-color: white; -fx-padding: 14 16 14 16;
                          -fx-background-radius: 8px; -fx-border-color: #e8e8e8;
                          -fx-border-radius: 8px; -fx-border-width: 1;">
-                <Label text="Descripción"
+                <Label text="%project.detail.description"
                        style="-fx-font-size: 11px; -fx-font-weight: bold; -fx-text-fill: #888888;"/>
                 <Label fx:id="descriptionLabel"
                        style="-fx-font-size: 13px; -fx-text-fill: #1e1e2e;"
@@ -59,7 +59,7 @@
                              -fx-border-radius: 8px; -fx-border-width: 1;">
                     <Label fx:id="statTotalNum"
                            style="-fx-font-size: 22px; -fx-font-weight: bold; -fx-text-fill: #1e1e2e;"/>
-                    <Label text="Total" style="-fx-font-size: 11px; -fx-text-fill: #888888;"/>
+                    <Label text="%project.detail.stat.total" style="-fx-font-size: 11px; -fx-text-fill: #888888;"/>
                 </VBox>
                 <VBox alignment="CENTER" spacing="4" HBox.hgrow="ALWAYS"
                       style="-fx-background-color: white; -fx-padding: 12 8 12 8;
@@ -67,7 +67,7 @@
                              -fx-border-radius: 8px; -fx-border-width: 1;">
                     <Label fx:id="statPendingNum"
                            style="-fx-font-size: 22px; -fx-font-weight: bold; -fx-text-fill: #3b82f6;"/>
-                    <Label text="Pendientes" style="-fx-font-size: 11px; -fx-text-fill: #888888;"/>
+                    <Label text="%project.detail.stat.pending" style="-fx-font-size: 11px; -fx-text-fill: #888888;"/>
                 </VBox>
                 <VBox alignment="CENTER" spacing="4" HBox.hgrow="ALWAYS"
                       style="-fx-background-color: white; -fx-padding: 12 8 12 8;
@@ -75,7 +75,7 @@
                              -fx-border-radius: 8px; -fx-border-width: 1;">
                     <Label fx:id="statDoneNum"
                            style="-fx-font-size: 22px; -fx-font-weight: bold; -fx-text-fill: #22c55e;"/>
-                    <Label text="Completadas" style="-fx-font-size: 11px; -fx-text-fill: #888888;"/>
+                    <Label text="%project.detail.stat.done" style="-fx-font-size: 11px; -fx-text-fill: #888888;"/>
                 </VBox>
                 <VBox alignment="CENTER" spacing="4" HBox.hgrow="ALWAYS"
                       style="-fx-background-color: white; -fx-padding: 12 8 12 8;
@@ -83,7 +83,7 @@
                              -fx-border-radius: 8px; -fx-border-width: 1;">
                     <Label fx:id="statOverdueNum"
                            style="-fx-font-size: 22px; -fx-font-weight: bold; -fx-text-fill: #e74c3c;"/>
-                    <Label text="Vencidas" style="-fx-font-size: 11px; -fx-text-fill: #888888;"/>
+                    <Label text="%project.detail.stat.overdue" style="-fx-font-size: 11px; -fx-text-fill: #888888;"/>
                 </VBox>
             </HBox>
 
@@ -93,7 +93,7 @@
                          -fx-background-radius: 8px; -fx-border-color: #e8e8e8;
                          -fx-border-radius: 8px; -fx-border-width: 1;">
                 <HBox alignment="CENTER_LEFT">
-                    <Label text="Progreso"
+                    <Label text="%project.detail.progress"
                            style="-fx-font-size: 11px; -fx-font-weight: bold; -fx-text-fill: #888888;"/>
                     <Region HBox.hgrow="ALWAYS"/>
                     <Label fx:id="progressLabel"
@@ -113,12 +113,12 @@
                   style="-fx-background-color: white; -fx-padding: 14 16 14 16;
                          -fx-background-radius: 8px; -fx-border-color: #e8e8e8;
                          -fx-border-radius: 8px; -fx-border-width: 1;">
-                <Label text="Tareas"
+                <Label text="%project.detail.tasks"
                        style="-fx-font-size: 13px; -fx-font-weight: bold;
                               -fx-text-fill: #1e1e2e; -fx-padding: 0 0 10 0;"/>
                 <VBox fx:id="taskListContainer" spacing="0"/>
                 <Label fx:id="emptyTasksLabel"
-                       text="Este proyecto no tiene tareas."
+                       text="%project.detail.tasks.empty"
                        style="-fx-text-fill: #aaaaaa; -fx-font-size: 12px; -fx-padding: 8 0 0 0;"/>
             </VBox>
 

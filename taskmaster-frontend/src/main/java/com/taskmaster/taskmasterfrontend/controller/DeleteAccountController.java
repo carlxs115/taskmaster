@@ -1,6 +1,7 @@
 package com.taskmaster.taskmasterfrontend.controller;
 
 import com.taskmaster.taskmasterfrontend.util.AppContext;
+import com.taskmaster.taskmasterfrontend.util.LanguageManager;
 import javafx.application.Platform;
 import javafx.fxml.FXML;
 import javafx.scene.control.Label;
@@ -15,6 +16,7 @@ public class DeleteAccountController {
     @FXML private Label errorLabel;
 
     private Runnable onAccountDeleted;
+    private final LanguageManager lm = LanguageManager.getInstance();
 
     public void setOnAccountDeleted(Runnable callback) {
         this.onAccountDeleted = callback;
@@ -25,7 +27,7 @@ public class DeleteAccountController {
         String password = passwordField.getText();
 
         if (password.isEmpty()) {
-            showError("Introduce tu contraseña para confirmar");
+            showError(lm.get("security.delete.empty"));
             return;
         }
 
@@ -44,11 +46,11 @@ public class DeleteAccountController {
                     } else {
                         String msg = response.body();
                         showError(msg != null && !msg.isEmpty()
-                                ? msg : "Error al eliminar la cuenta");
+                                ? msg : lm.get("security.delete.error"));
                     }
                 });
             } catch (Exception e) {
-                Platform.runLater(() -> showError("Error de conexión con el servidor"));
+                Platform.runLater(() -> showError(lm.get("error.connection")));
             }
         }).start();
     }

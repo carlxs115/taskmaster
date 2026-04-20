@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.taskmaster.taskmasterfrontend.util.AppContext;
+import com.taskmaster.taskmasterfrontend.util.LanguageManager;
 import javafx.application.Platform;
 import javafx.fxml.FXML;
 import javafx.geometry.Pos;
@@ -30,6 +31,8 @@ public class TrashController {
     private final ObjectMapper objectMapper = new ObjectMapper()
             .registerModule(new JavaTimeModule());
 
+    private final LanguageManager lm = LanguageManager.getInstance();
+
     public void setOnTrashChanged(Runnable callback) {
         this.onTrashChanged = callback;
     }
@@ -52,7 +55,7 @@ public class TrashController {
                     JsonNode settings = objectMapper.readTree(response.body());
                     int days = settings.get("trashRetentionDays").asInt();
                     Platform.runLater(() ->
-                            retentionLabel.setText("Los elementos se eliminan automáticamente tras " + days + " días"));
+                            retentionLabel.setText(java.text.MessageFormat.format(lm.get("trash.retention"), days)));
                 }
             } catch (Exception e) {
 
@@ -67,9 +70,6 @@ public class TrashController {
                         .getApiService()
                         .get("/api/tasks/trash");
 
-                System.out.println("DEBUG trash status: " + response.statusCode());
-                System.out.println("DEBUG trash body: " + response.body());
-
                 if (response.statusCode() == 200) {
                     JsonNode tasks = objectMapper.readTree(response.body());
                     Platform.runLater(() -> renderTrashTasks(tasks));
@@ -77,7 +77,7 @@ public class TrashController {
 
             } catch (Exception e) {
                 Platform.runLater(() ->
-                        showAlert("Error", "No se pudieron cargar las tareas eliminadas"));
+                        showAlert(lm.get("error.title"), lm.get("trash.error.load.tasks")));
             }
         }).start();
     }
@@ -96,7 +96,7 @@ public class TrashController {
 
             } catch (Exception e) {
                 Platform.runLater(() ->
-                        showAlert("Error", "No se pudieron cargar los proyectos eliminados"));
+                        showAlert(lm.get("error.title"), lm.get("trash.error.load.projects")));
             }
         }).start();
     }
@@ -152,12 +152,12 @@ public class TrashController {
                 "-fx-background-radius: 10px; -fx-text-fill: white; " +
                 "-fx-background-color: #aaaaaa;");
 
-        Button restoreBtn = new Button("↩ Restaurar");
+        Button restoreBtn = new Button(lm.get("trash.restore"));
         restoreBtn.setStyle("-fx-background-color: #2ecc71; -fx-text-fill: white; " +
                 "-fx-background-radius: 4px; -fx-cursor: hand; -fx-font-size: 12px;");
         restoreBtn.setOnAction(e -> restoreTask(taskId));
 
-        Button deleteBtn = new Button("🗑 Eliminar");
+        Button deleteBtn = new Button(lm.get("trash.delete"));
         deleteBtn.setStyle("-fx-background-color: #e74c3c; -fx-text-fill: white; " +
                 "-fx-background-radius: 4px; -fx-cursor: hand; -fx-font-size: 12px;");
         deleteBtn.setOnAction(e -> permanentlyDeleteTask(taskId));
@@ -187,12 +187,12 @@ public class TrashController {
                 "-fx-background-radius: 10px; -fx-text-fill: white; " +
                 "-fx-background-color: #aaaaaa;");
 
-        Button restoreBtn = new Button("↩ Restaurar");
+        Button restoreBtn = new Button(lm.get("trash.restore"));
         restoreBtn.setStyle("-fx-background-color: #2ecc71; -fx-text-fill: white; " +
                 "-fx-background-radius: 4px; -fx-cursor: hand; -fx-font-size: 12px;");
         restoreBtn.setOnAction(e -> restoreProject(projectId));
 
-        Button deleteBtn = new Button("🗑 Eliminar");
+        Button deleteBtn = new Button(lm.get("trash.delete"));
         deleteBtn.setStyle("-fx-background-color: #e74c3c; -fx-text-fill: white; " +
                 "-fx-background-radius: 4px; -fx-cursor: hand; -fx-font-size: 12px;");
         deleteBtn.setOnAction(e -> permanentlyDeleteProject(projectId));
@@ -213,20 +213,20 @@ public class TrashController {
                         loadTrashTasks();
                         if (onTrashChanged != null) onTrashChanged.run();
                     } else {
-                        showAlert("Error", "No se pudo restaurar la tarea");
+                        showAlert(lm.get("error.title"), lm.get("trash.error.restore.task"));
                     }
                 });
             } catch (Exception e) {
-                Platform.runLater(() -> showAlert("Error", "Error de conexión"));
+                Platform.runLater(() -> showAlert(lm.get("error.title"), lm.get("error.connection")));
             }
         }).start();
     }
 
     private void permanentlyDeleteTask(Long taskId) {
         Alert confirm = new Alert(Alert.AlertType.CONFIRMATION);
-        confirm.setTitle("Eliminar definitivamente");
+        confirm.setTitle(lm.get("trash.delete.confirm.title"));
         confirm.setHeaderText(null);
-        confirm.setContentText("¿Seguro? Esta acción no se puede deshacer.");
+        confirm.setContentText(lm.get("trash.delete.confirm.content"));
 
         confirm.showAndWait().ifPresent(response -> {
             if (response == ButtonType.OK) {
@@ -240,11 +240,11 @@ public class TrashController {
                             if (httpResponse.statusCode() == 200 || httpResponse.statusCode() == 204) {
                                 loadTrashTasks();
                             } else {
-                                showAlert("Error", "No se pudo eliminar la tarea");
+                                showAlert(lm.get("error.title"), lm.get("trash.error.delete.task"));
                             }
                         });
                     } catch (Exception e) {
-                        Platform.runLater(() -> showAlert("Error", "Error de conexión"));
+                        Platform.runLater(() -> showAlert(lm.get("error.title"), lm.get("settings.connection.error")));
                     }
                 }).start();
             }
@@ -263,20 +263,20 @@ public class TrashController {
                         loadTrashProjects();
                         if (onTrashChanged != null) onTrashChanged.run();
                     } else {
-                        showAlert("Error", "No se pudo restaurar el proyecto");
+                        showAlert(lm.get("error.title"), lm.get("trash.error.restore.project"));
                     }
                 });
             } catch (Exception e) {
-                Platform.runLater(() -> showAlert("Error", "Error de conexión"));
+                Platform.runLater(() -> showAlert(lm.get("error.title"), lm.get("error.connection")));
             }
         }).start();
     }
 
     private void permanentlyDeleteProject(Long projectId) {
         Alert confirm = new Alert(Alert.AlertType.CONFIRMATION);
-        confirm.setTitle("Eliminar definitivamente");
+        confirm.setTitle(lm.get("trash.delete.confirm.title"));
         confirm.setHeaderText(null);
-        confirm.setContentText("¿Seguro? Esta acción no se puede deshacer.");
+        confirm.setContentText(lm.get("trash.delete.confirm.content"));
 
         confirm.showAndWait().ifPresent(response -> {
             if (response == ButtonType.OK) {
@@ -290,11 +290,11 @@ public class TrashController {
                             if (httpResponse.statusCode() == 200 || httpResponse.statusCode() == 204) {
                                 loadTrashProjects();
                             } else {
-                                showAlert("Error", "No se pudo eliminar el proyecto");
+                                showAlert(lm.get("error.title"), lm.get("trash.error.delete.project"));
                             }
                         });
                     } catch (Exception e) {
-                        Platform.runLater(() -> showAlert("Error", "Error de conexión"));
+                        Platform.runLater(() -> showAlert(lm.get("error.title"), lm.get("settings.connection.error")));
                     }
                 }).start();
             }

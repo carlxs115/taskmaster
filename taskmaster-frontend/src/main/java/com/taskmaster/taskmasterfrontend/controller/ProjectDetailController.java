@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.taskmaster.taskmasterfrontend.util.AppContext;
+import com.taskmaster.taskmasterfrontend.util.LanguageManager;
 import javafx.application.Platform;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
@@ -41,6 +42,7 @@ public class ProjectDetailController {
     private java.util.function.Consumer<JsonNode> onOpenTaskDetail;
     private final ObjectMapper objectMapper = new ObjectMapper()
             .registerModule(new JavaTimeModule());
+    private final LanguageManager lm = LanguageManager.getInstance();
 
     public void initData(JsonNode project) {
         this.projectData = project;
@@ -71,7 +73,7 @@ public class ProjectDetailController {
 
         projectIdLabel.setText("#" + id);
         projectNameLabel.setText(name);
-        descriptionLabel.setText(desc.isEmpty() ? "Sin descripción" : desc);
+        descriptionLabel.setText(desc.isEmpty() ? lm.get("project.detail.no.description") : desc);
 
         statusBadge.setText(translateStatus(status));
         statusBadge.setStyle("-fx-font-size: 11px; -fx-padding: 3 10 3 10; " +
@@ -229,13 +231,13 @@ public class ProjectDetailController {
             ContextMenu menu = new ContextMenu();
             menu.setStyle("-fx-background-color: white; -fx-border-color: #e8e8e8; " +
                     "-fx-border-width: 1; -fx-background-radius: 8; -fx-border-radius: 8;");
-            MenuItem detail = new MenuItem("👁  Ver detalles");
+            MenuItem detail = new MenuItem(lm.get("project.detail.menu.detail"));
             detail.setStyle("-fx-font-size: 13px; -fx-padding: 2 10 2 10;");
             detail.setOnAction(ev -> openTaskDetail(task, taskId));
-            MenuItem edit = new MenuItem("✏️  Editar");
+            MenuItem edit = new MenuItem(lm.get("project.detail.menu.edit"));
             edit.setStyle("-fx-font-size: 13px; -fx-padding: 2 10 2 10;");
             edit.setOnAction(ev -> openEditTask(task, taskId));
-            MenuItem delete = new MenuItem("🗑  Eliminar");
+            MenuItem delete = new MenuItem(lm.get("project.detail.menu.delete"));
             delete.setStyle("-fx-font-size: 13px; -fx-padding: 2 10 2 10; -fx-text-fill: #e74c3c;");
             delete.setOnAction(ev -> deleteTask(taskId));
             menu.getItems().addAll(detail, edit, delete);
@@ -262,7 +264,7 @@ public class ProjectDetailController {
             VBox root = loader.load();
             TaskDetailController controller = loader.getController();
             controller.initData(task);
-            showAsDialog(root, "Detalles de la tarea");
+            showAsDialog(root, lm.get("project.detail.task.detail"));
             Long projectId = projectData.path("id").asLong();
             activityLogSectionController.loadForEntity("PROJECT", projectId, "TASK");
             loadTasks(projectId);
@@ -283,17 +285,17 @@ public class ProjectDetailController {
                 loadTasks(projectId);
                 activityLogSectionController.loadForEntity("PROJECT", projectId, "TASK");
             });
-            showAsDialog(root, "Editar tarea");
+            showAsDialog(root, lm.get("project.detail.task.edit"));
         } catch (Exception e) {
-            showAlert("Error", "No se pudo abrir el editor de tarea");
+            showAlert(lm.get("error.title"), lm.get("project.detail.task.editor.error"));
         }
     }
 
     private void deleteTask(Long taskId) {
         Alert confirm = new Alert(Alert.AlertType.CONFIRMATION);
-        confirm.setTitle("Eliminar tarea");
+        confirm.setTitle(lm.get("project.detail.delete.title"));
         confirm.setHeaderText(null);
-        confirm.setContentText("¿Seguro que quieres eliminar esta tarea?");
+        confirm.setContentText(lm.get("project.detail.delete.content"));
         confirm.showAndWait().ifPresent(r -> {
             if (r == ButtonType.OK) {
                 new Thread(() -> {
@@ -306,7 +308,7 @@ public class ProjectDetailController {
                             activityLogSectionController.loadForEntity("PROJECT", projectId, "TASK");
                         });
                     } catch (Exception e) {
-                        Platform.runLater(() -> showAlert("Error", "No se pudo eliminar la tarea"));
+                        Platform.runLater(() -> showAlert(lm.get("error.title"), lm.get("trash.error.delete.task")));
                     }
                 }).start();
             }

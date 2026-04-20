@@ -18,35 +18,35 @@
     <Label text="TaskMaster"
            style="-fx-font-size: 32px; -fx-font-weight: bold; -fx-text-fill: #2d2d2d;"/>
 
-    <Label text="Crea tu cuenta"
+    <Label text="%register.subtitle"
            style="-fx-font-size: 14px; -fx-text-fill: #888888;"/>
 
     <!-- FORMULARIO -->
     <VBox spacing="8">
-        <Label text="Usuario" style="-fx-font-size: 13px; -fx-text-fill: #2d2d2d;"/>
+        <Label text="%register.username" style="-fx-font-size: 13px; -fx-text-fill: #2d2d2d;"/>
         <TextField fx:id="usernameField"
-                   promptText="Introduce tu usuario"
+                   promptText="%register.username.prompt"
                    style="-fx-pref-height: 40px; -fx-font-size: 13px;"/>
     </VBox>
 
     <VBox spacing="8">
-        <Label text="Email" style="-fx-font-size: 13px; -fx-text-fill: #2d2d2d;"/>
+        <Label text="%register.email" style="-fx-font-size: 13px; -fx-text-fill: #2d2d2d;"/>
         <TextField fx:id="emailField"
-                   promptText="Introduce tu email"
+                   promptText="%register.email.prompt"
                    style="-fx-pref-height: 40px; -fx-font-size: 13px;"/>
     </VBox>
 
     <VBox spacing="8">
-        <Label text="Contraseña" style="-fx-font-size: 13px; -fx-text-fill: #2d2d2d;"/>
+        <Label text="%register.password" style="-fx-font-size: 13px; -fx-text-fill: #2d2d2d;"/>
         <PasswordField fx:id="passwordField"
-                       promptText="Introduce tu contraseña"
+                       promptText="%register.password.prompt"
                        style="-fx-pref-height: 40px; -fx-font-size: 13px;"/>
     </VBox>
 
     <VBox spacing="8">
-        <Label text="Fecha de nacimiento" style="-fx-font-size: 13px; -fx-text-fill: #2d2d2d;"/>
+        <Label text="%register.birthdate" style="-fx-font-size: 13px; -fx-text-fill: #2d2d2d;"/>
         <DatePicker fx:id="birthDatePicker"
-                    promptText="Selecciona tu fecha de nacimiento"
+                    promptText="%register.birthdate.prompt"
                     style="-fx-pref-height: 40px; -fx-font-size: 13px; -fx-pref-width: 300px;"/>
     </VBox>
 
@@ -56,7 +56,7 @@
            visible="false"/>
 
     <!-- BOTÓN REGISTRO -->
-    <Button text="Crear cuenta"
+    <Button text="%register.button"
             onAction="#handleRegister"
             style="-fx-background-color: #3498db; -fx-text-fill: white;
                    -fx-font-size: 14px; -fx-pref-width: 300px; -fx-pref-height: 40px;
@@ -65,8 +65,8 @@
 
     <!-- ENLACE LOGIN -->
     <HBox alignment="CENTER" spacing="5">
-        <Label text="¿Ya tienes cuenta?" style="-fx-text-fill: #888888;"/>
-        <Hyperlink text="Inicia sesión"
+        <Label text="%register.has.account" style="-fx-text-fill: #888888;"/>
+        <Hyperlink text="%register.login.link"
                    onAction="#handleGoToLogin"
                    style="-fx-text-fill: #3498db;"/>
     </HBox>

@@ -16,13 +16,13 @@
         <Label fx:id="taskTitleLabel"
                style="-fx-font-size: 16px; -fx-font-weight: bold; -fx-text-fill: #1e1e2e;"/>
         <Region HBox.hgrow="ALWAYS"/>
-        <Button text="✏️  Editar"
+        <Button text="%task.detail.edit"
                 fx:id="editButton"
                 onAction="#handleEdit"
                 style="-fx-background-color: #f0f0f5; -fx-text-fill: #555555;
                        -fx-font-size: 12px; -fx-background-radius: 6px;
                        -fx-cursor: hand; -fx-padding: 5 12 5 12;"/>
-        <Button text="Cerrar"
+        <Button text="%task.detail.close"
                 onAction="#handleClose"
                 style="-fx-background-color: transparent; -fx-text-fill: #888888;
                        -fx-font-size: 12px; -fx-cursor: hand; -fx-padding: 5 12 5 12;"/>
@@ -52,7 +52,7 @@
                   style="-fx-background-color: white; -fx-padding: 14 16 14 16;
                      -fx-background-radius: 8px; -fx-border-color: #e8e8e8;
                      -fx-border-radius: 8px; -fx-border-width: 1;">
-                <Label text="Descripción"
+                <Label text="%task.detail.description"
                        style="-fx-font-size: 11px; -fx-font-weight: bold; -fx-text-fill: #888888;"/>
                 <Label fx:id="descriptionLabel"
                        style="-fx-font-size: 13px; -fx-text-fill: #1e1e2e;"
@@ -64,14 +64,14 @@
              -fx-background-radius: 8px; -fx-border-color: #e8e8e8;
              -fx-border-radius: 8px; -fx-border-width: 1;">
                 <HBox alignment="CENTER_LEFT" spacing="10" style="-fx-padding: 0 0 10 0;">
-                    <Label text="Subtareas"
+                    <Label text="%task.detail.subtasks"
                            style="-fx-font-size: 13px; -fx-font-weight: bold; -fx-text-fill: #1e1e2e;"/>
                     <Label fx:id="subtaskProgressLabel"
                            style="-fx-font-size: 11px; -fx-text-fill: #888888;
                               -fx-padding: 2 8 2 8; -fx-background-color: #f0f0f5;
                               -fx-background-radius: 20px;"/>
                     <Region HBox.hgrow="ALWAYS"/>
-                    <Button text="＋  Nueva subtarea"
+                    <Button text="%task.detail.subtasks.new"
                             onAction="#handleNewSubtask"
                             style="-fx-background-color: #7c3aed; -fx-text-fill: white;
                                -fx-font-size: 11px; -fx-background-radius: 6px;
@@ -87,7 +87,7 @@
                 </StackPane>
                 <VBox fx:id="subtaskContainer" spacing="0" style="-fx-padding: 8 0 0 0;"/>
                 <Label fx:id="emptySubtasksLabel"
-                       text="Sin subtareas actualmente."
+                       text="%task.detail.subtasks.empty"
                        style="-fx-text-fill: #aaaaaa; -fx-font-size: 12px; -fx-padding: 8 0 0 0;"/>
             </VBox>
             <!-- Registro de tiempo -->
@@ -96,14 +96,14 @@
                      -fx-background-radius: 8px; -fx-border-color: #e8e8e8;
                      -fx-border-radius: 8px; -fx-border-width: 1;">
                 <HBox alignment="CENTER_LEFT" spacing="10" style="-fx-padding: 0 0 10 0;">
-                    <Label text="Registro de tiempo"
+                    <Label text="%task.detail.worklog"
                            style="-fx-font-size: 13px; -fx-font-weight: bold; -fx-text-fill: #1e1e2e;"/>
                     <Label fx:id="totalHoursLabel"
                            style="-fx-font-size: 11px; -fx-text-fill: #888888;
                               -fx-padding: 2 8 2 8; -fx-background-color: #f0f0f5;
                               -fx-background-radius: 20px;"/>
                     <Region HBox.hgrow="ALWAYS"/>
-                    <Button text="＋  Añadir registro"
+                    <Button text="%task.detail.worklog.add"
                             onAction="#handleAddWorkLog"
                             style="-fx-background-color: #7c3aed; -fx-text-fill: white;
                                -fx-font-size: 11px; -fx-background-radius: 6px;
@@ -111,7 +111,7 @@
                 </HBox>
                 <VBox fx:id="workLogContainer" spacing="0"/>
                 <Label fx:id="emptyWorkLogLabel"
-                       text="Sin registros de tiempo."
+                       text="%task.detail.worklog.empty"
                        style="-fx-text-fill: #aaaaaa; -fx-font-size: 12px; -fx-padding: 4 0 0 0;"/>
             </VBox>
 

@@ -19,21 +19,21 @@
     <Label text="TaskMaster"
            style="-fx-font-size: 32px; -fx-font-weight: bold; -fx-text-fill: #2d2d2d;"/>
 
-    <Label text="Inicia sesión en tu cuenta"
+    <Label text="%login.subtitle"
            style="-fx-font-size: 14px; -fx-text-fill: #888888;"/>
 
     <!-- FORMULARIO -->
     <VBox spacing="8">
-        <Label text="Usuario" style="-fx-font-size: 13px; -fx-text-fill: #2d2d2d;"/>
+        <Label text="%login.username" style="-fx-font-size: 13px; -fx-text-fill: #2d2d2d;"/>
         <TextField fx:id="usernameField"
-                   promptText="Introduce tu usuario"
+                   promptText="%login.username.prompt"
                    style="-fx-pref-height: 40px; -fx-font-size: 13px;"/>
     </VBox>
 
     <VBox spacing="8">
-        <Label text="Contraseña" style="-fx-font-size: 13px; -fx-text-fill: #2d2d2d;"/>
+        <Label text="%login.password" style="-fx-font-size: 13px; -fx-text-fill: #2d2d2d;"/>
         <PasswordField fx:id="passwordField"
-                       promptText="Introduce tu contraseña"
+                       promptText="%login.password.prompt"
                        style="-fx-pref-height: 40px; -fx-font-size: 13px;"/>
     </VBox>
 
@@ -43,7 +43,7 @@
            visible="false"/>
 
     <!-- BOTÓN LOGIN -->
-    <Button text="Iniciar sesión"
+    <Button text="%login.button"
             fx:id="loginButton"
             onAction="#handleLogin"
             style="-fx-background-color: #3498db; -fx-text-fill: white;
@@ -53,8 +53,8 @@
 
     <!-- ENLACE REGISTRO -->
     <HBox alignment="CENTER" spacing="5">
-        <Label text="¿No tienes cuenta?" style="-fx-text-fill: #888888;"/>
-        <Hyperlink text="Regístrate"
+        <Label text="%login.no.account" style="-fx-text-fill: #888888;"/>
+        <Hyperlink text="%login.register.link"
                    fx:id="registerLink"
                    onAction="#handleGoToRegister"
                    style="-fx-text-fill: #3498db;"/>

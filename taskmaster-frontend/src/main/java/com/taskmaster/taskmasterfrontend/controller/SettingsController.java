@@ -29,6 +29,7 @@ public class SettingsController {
     @FXML private Label languageStatusLabel;
 
     private final ObjectMapper objectMapper = new ObjectMapper();
+    private final LanguageManager lm = LanguageManager.getInstance();
 
     @FXML
     public void initialize() {
@@ -67,7 +68,6 @@ public class SettingsController {
 
     @FXML
     private void handleSaveRetention () {
-        LanguageManager lm = LanguageManager.getInstance();
         int days = days7.isSelected() ? 7 : days15.isSelected() ? 15 : 30;
 
         new Thread(() -> {
@@ -98,11 +98,10 @@ public class SettingsController {
 
     @FXML
     private void handleSaveLanguage() {
-        LanguageManager lm = LanguageManager.getInstance();
         Locale locale = langEs.isSelected() ? new Locale("es") : Locale.ENGLISH;
         lm.setLocale(locale);
         lm.saveLocalePreference(locale);
-        languageStatusLabel.setText(lm.get("settings.language.restart"));
+        languageStatusLabel.setText(lm.get("settings.saved"));
         languageStatusLabel.setStyle("-fx-font-size: 12px; -fx-text-fill: #f59e0b;");
         languageStatusLabel.setVisible(true);
     }

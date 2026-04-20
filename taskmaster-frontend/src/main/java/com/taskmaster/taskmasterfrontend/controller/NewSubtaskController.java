@@ -2,6 +2,7 @@ package com.taskmaster.taskmasterfrontend.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.taskmaster.taskmasterfrontend.util.AppContext;
+import com.taskmaster.taskmasterfrontend.util.LanguageManager;
 import javafx.application.Platform;
 import javafx.collections.FXCollections;
 import javafx.fxml.FXML;
@@ -27,6 +28,7 @@ public class NewSubtaskController {
     private Runnable onSubtaskCreated;
 
     private final ObjectMapper objectMapper = new ObjectMapper();
+    private final LanguageManager lm = LanguageManager.getInstance();
 
     public void setOnSubtaskCreated(Runnable callback) {
         this.onSubtaskCreated = callback;
@@ -44,8 +46,9 @@ public class NewSubtaskController {
     @FXML
     public void initialize() {
         priorityCombo.setItems(FXCollections.observableArrayList(
-                "BAJA", "MEDIA", "ALTA", "URGENTE"));
-        priorityCombo.setValue("MEDIA");
+                lm.get("priority.low.label"), lm.get("priority.medium.label"),
+                lm.get("priority.high.label"), lm.get("priority.urgent.label")));
+        priorityCombo.setValue(lm.get("priority.medium.label"));
 
         titleField.setOnKeyPressed(e -> {
             if (e.getCode() == javafx.scene.input.KeyCode.ENTER) handleCreate();
@@ -56,23 +59,23 @@ public class NewSubtaskController {
     private void handleCreate() {
         String title = titleField.getText().trim();
         if (title.isEmpty()) {
-            showError("El título es obligatorio");
+            showError(lm.get("new.subtask.error.title"));
             return;
         }
-
         hideError();
 
+        String p = priorityCombo.getValue();
+        String priorityEnum;
+        if (p.equals(lm.get("priority.low.label")))         priorityEnum = "LOW";
+        else if (p.equals(lm.get("priority.medium.label"))) priorityEnum = "MEDIUM";
+        else if (p.equals(lm.get("priority.high.label")))   priorityEnum = "HIGH";
+        else if (p.equals(lm.get("priority.urgent.label"))) priorityEnum = "URGENT";
+        else priorityEnum = "MEDIUM";
+
         Map<String, Object> body = new HashMap<>();
-        body.put("title",        title);
-        body.put("description",  descriptionField.getText().trim());
-        String priority = switch (priorityCombo.getValue()) {
-            case "BAJA"    -> "LOW";
-            case "MEDIA"   -> "MEDIUM";
-            case "ALTA"    -> "HIGH";
-            case "URGENTE" -> "URGENT";
-            default        -> "MEDIUM";
-        };
-        body.put("priority", priority);
+        body.put("title",       title);
+        body.put("description", descriptionField.getText().trim());
+        body.put("priority",    priorityEnum);
         body.put("parentTaskId", parentTaskId);
 
         if (projectId != null) {
@@ -90,11 +93,11 @@ public class NewSubtaskController {
                         if (onSubtaskCreated != null) onSubtaskCreated.run();
                         closeDialog();
                     } else {
-                        showError("Error al crear la subtarea");
+                        showError(lm.get("new.subtask.error.create"));
                     }
                 });
             } catch (Exception e) {
-                Platform.runLater(() -> showError("Error de conexión con el servidor"));
+                Platform.runLater(() -> showError(lm.get("error.connection")));
             }
         }).start();
     }

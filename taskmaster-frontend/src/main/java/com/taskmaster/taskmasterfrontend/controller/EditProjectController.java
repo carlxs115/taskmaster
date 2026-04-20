@@ -1,6 +1,7 @@
 package com.taskmaster.taskmasterfrontend.controller;
 
 import com.taskmaster.taskmasterfrontend.util.AppContext;
+import com.taskmaster.taskmasterfrontend.util.LanguageManager;
 import javafx.application.Platform;
 import javafx.collections.FXCollections;
 import javafx.fxml.FXML;
@@ -23,6 +24,8 @@ public class EditProjectController {
     private Long projectId;
     private Runnable onProjectUpdated;
 
+    private final LanguageManager lm = LanguageManager.getInstance();
+
     public void setOnProjectUpdated(Runnable callback) {
         this.onProjectUpdated = callback;
     }
@@ -30,19 +33,18 @@ public class EditProjectController {
     @FXML
     public void initialize() {
         categoryCombo.setItems(FXCollections.observableArrayList(
-                "PERSONAL", "ESTUDIOS", "TRABAJO"
-        ));
-        categoryCombo.setValue("PERSONAL");
+                lm.get("category.PERSONAL"), lm.get("category.ESTUDIOS"), lm.get("category.TRABAJO")));
+        categoryCombo.setValue(lm.get("category.PERSONAL"));
 
         statusCombo.setItems(FXCollections.observableArrayList(
-                "PENDIENTE", "EN CURSO", "COMPLETADO", "CANCELADO"
-        ));
-        statusCombo.setValue("PENDIENTE");
+                lm.get("status.todo.label"), lm.get("status.inprogress.label"),
+                lm.get("status.done.project.label"), lm.get("status.cancelled.project.label")));
+        statusCombo.setValue(lm.get("status.todo.label"));
 
         priorityCombo.setItems(FXCollections.observableArrayList(
-                "BAJA", "MEDIA", "ALTA", "URGENTE"
-        ));
-        priorityCombo.setValue("MEDIA");
+                lm.get("priority.low.label"), lm.get("priority.medium.label"),
+                lm.get("priority.high.label"), lm.get("priority.urgent.label")));
+        priorityCombo.setValue(lm.get("priority.medium.label"));
     }
 
     public void initData(Long projectId, String projectName) {
@@ -66,25 +68,29 @@ public class EditProjectController {
                             descriptionField.setText(project.get("description").asText());
                         }
                         if (project.has("category") && !project.get("category").isNull()) {
-                            categoryCombo.setValue(project.get("category").asText());
+                            String cat = project.get("category").asText();
+                            categoryCombo.setValue(switch (cat) {
+                                case "ESTUDIOS" -> lm.get("category.ESTUDIOS");
+                                case "TRABAJO"  -> lm.get("category.TRABAJO");
+                                default         -> lm.get("category.PERSONAL");
+                            });
                         }
-
                         if (project.has("status") && !project.get("status").isNull()) {
                             String status = project.get("status").asText();
                             statusCombo.setValue(switch (status) {
-                                case "IN_PROGRESS" -> "EN CURSO";
-                                case "DONE"        -> "COMPLETADO";
-                                case "CANCELLED"   -> "CANCELADO";
-                                default            -> "PENDIENTE";
+                                case "IN_PROGRESS" -> lm.get("status.inprogress.label");
+                                case "DONE"        -> lm.get("status.done.project.label");
+                                case "CANCELLED"   -> lm.get("status.cancelled.project.label");
+                                default            -> lm.get("status.todo.label");
                             });
                         }
                         if (project.has("priority") && !project.get("priority").isNull()) {
                             String priority = project.get("priority").asText();
                             priorityCombo.setValue(switch (priority) {
-                                case "LOW"    -> "BAJA";
-                                case "HIGH"   -> "ALTA";
-                                case "URGENT" -> "URGENTE";
-                                default       -> "MEDIA";
+                                case "LOW"    -> lm.get("priority.low.label");
+                                case "HIGH"   -> lm.get("priority.high.label");
+                                case "URGENT" -> lm.get("priority.urgent.label");
+                                default       -> lm.get("priority.medium.label");
                             });
                         }
                         nameField.deselect();
@@ -93,7 +99,7 @@ public class EditProjectController {
                 }
             } catch (Exception e) {
                 javafx.application.Platform.runLater(() ->
-                        showError("Error al cargar los datos del proyecto"));
+                        showError(lm.get("edit.project.error.load")));
             }
         }).start();
     }
@@ -102,12 +108,12 @@ public class EditProjectController {
     private void handleSave() {
         String name = nameField.getText().trim();
         if (name.isEmpty()) {
-            showError("El nombre es obligatorio");
+            showError(lm.get("edit.project.error.name"));
             return;
         }
 
         if (categoryCombo.getValue() == null) {
-            showError("La categoría es obligatoria");
+            showError(lm.get("edit.project.error.category"));
             return;
         }
 
@@ -117,7 +123,7 @@ public class EditProjectController {
                         "?name=" + java.net.URLEncoder.encode(name, "UTF-8") +
                         "&description=" + java.net.URLEncoder.encode(
                         descriptionField.getText().trim(), "UTF-8") +
-                        "&category=" + categoryCombo.getValue() +
+                        "&category=" + mapCategory(categoryCombo.getValue()) +
                         "&status=" + mapStatus(statusCombo.getValue()) +
                         "&priority=" + mapPriority(priorityCombo.getValue());
 
@@ -130,12 +136,12 @@ public class EditProjectController {
                         if (onProjectUpdated != null) onProjectUpdated.run();
                         closeDialog();
                     } else {
-                        showError("Error al guardar los cambios");
+                        showError(lm.get("edit.project.error.save"));
                     }
                 });
 
             } catch (Exception e) {
-                Platform.runLater(() -> showError("Error de conexión con el servidor"));
+                Platform.runLater(() -> showError(lm.get("error.connection")));
             }
         }).start();
     }
@@ -149,22 +155,24 @@ public class EditProjectController {
         nameField.getScene().getWindow().hide();
     }
 
+    private String mapCategory(String label) {
+        if (label.equals(lm.get("category.ESTUDIOS")))      return "ESTUDIOS";
+        else if (label.equals(lm.get("category.TRABAJO")))  return "TRABAJO";
+        else return "PERSONAL";
+    }
+
     private String mapStatus(String label) {
-        return switch (label) {
-            case "EN CURSO"    -> "IN_PROGRESS";
-            case "COMPLETADO"  -> "DONE";
-            case "CANCELADO"   -> "CANCELLED";
-            default            -> "TODO";
-        };
+        if (label.equals(lm.get("status.inprogress.label")))           return "IN_PROGRESS";
+        else if (label.equals(lm.get("status.done.project.label")))    return "DONE";
+        else if (label.equals(lm.get("status.cancelled.project.label"))) return "CANCELLED";
+        else return "TODO";
     }
 
     private String mapPriority(String label) {
-        return switch (label) {
-            case "BAJA"   -> "LOW";
-            case "ALTA"   -> "HIGH";
-            case "URGENTE"-> "URGENT";
-            default       -> "MEDIUM";
-        };
+        if (label.equals(lm.get("priority.low.label")))         return "LOW";
+        else if (label.equals(lm.get("priority.high.label")))   return "HIGH";
+        else if (label.equals(lm.get("priority.urgent.label"))) return "URGENT";
+        else return "MEDIUM";
     }
 
     private void showError(String message) {

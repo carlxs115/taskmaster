@@ -13,7 +13,7 @@
     <HBox style="-fx-background-color: white; -fx-padding: 16 20 16 20;
                  -fx-border-color: #e0e0e0; -fx-border-width: 0 0 1 0;"
           alignment="CENTER_LEFT">
-        <Label text="⚙ Ajustes"
+        <Label text="%settings.title"
                style="-fx-font-size: 18px; -fx-font-weight: bold; -fx-text-fill: #2d2d2d;"/>
     </HBox>
 
@@ -24,28 +24,28 @@
                                    -fx-background-radius: 8px; -fx-border-color: #e0e0e0;
                                    -fx-border-radius: 8px;">
 
-            <Label text="🗑 Periodo de retención de papelera"
+            <Label text="%settings.trash.title"
                    style="-fx-font-size: 15px; -fx-font-weight: bold; -fx-text-fill: #2d2d2d;"/>
 
-            <Label text="Los elementos eliminados se borrarán permanentemente después de:"
+            <Label text="%settings.trash.description"
                    style="-fx-font-size: 13px; -fx-text-fill: #666666;"/>
 
             <HBox spacing="12" alignment="CENTER_LEFT">
-                <RadioButton fx:id="days7" text="7 días"
+                <RadioButton fx:id="days7" text="%settings.trash.7days"
                              style="-fx-font-size: 13px;">
                     <toggleGroup>
                         <ToggleGroup fx:id="retentionGroup"/>
                     </toggleGroup>
                 </RadioButton>
-                <RadioButton fx:id="days15" text="15 días"
+                <RadioButton fx:id="days15" text="%settings.trash.15days"
                              toggleGroup="$retentionGroup"
                              style="-fx-font-size: 13px;"/>
-                <RadioButton fx:id="days30" text="30 días"
+                <RadioButton fx:id="days30" text="%settings.trash.30days"
                              toggleGroup="$retentionGroup"
                              style="-fx-font-size: 13px;"/>
             </HBox>
 
-            <Button text="Guardar cambios"
+            <Button text="%settings.save"
                     onAction="#handleSaveRetention"
                     style="-fx-background-color: #3498db; -fx-text-fill: white;
                            -fx-background-radius: 4px; -fx-cursor: hand;
@@ -60,9 +60,9 @@
         <VBox spacing="12" style="-fx-background-color: white; -fx-padding: 20;
                            -fx-background-radius: 8px; -fx-border-color: #e0e0e0;
                            -fx-border-radius: 8px;">
-            <Label text="🌍 Idioma de la aplicación"
+            <Label text="%settings.language.title"
                    style="-fx-font-size: 15px; -fx-font-weight: bold; -fx-text-fill: #2d2d2d;"/>
-            <Label text="Selecciona el idioma en el que quieres usar TaskMaster:"
+            <Label text="%settings.language.description"
                    style="-fx-font-size: 13px; -fx-text-fill: #666666;"/>
             <HBox spacing="12" alignment="CENTER_LEFT">
                 <RadioButton fx:id="langEs" text="🇪🇸  Español">
@@ -73,7 +73,7 @@
                 <RadioButton fx:id="langEn" text="🇬🇧  English"
                              toggleGroup="$languageGroup"/>
             </HBox>
-            <Button text="Aplicar idioma"
+            <Button text="%settings.language.apply"
                     onAction="#handleSaveLanguage"
                     style="-fx-background-color: #3498db; -fx-text-fill: white;
                    -fx-background-radius: 4px; -fx-cursor: hand;

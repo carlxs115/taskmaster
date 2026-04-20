@@ -2,6 +2,7 @@ package com.taskmaster.taskmasterfrontend.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.taskmaster.taskmasterfrontend.util.AppContext;
+import com.taskmaster.taskmasterfrontend.util.LanguageManager;
 import javafx.application.Platform;
 import javafx.fxml.FXML;
 import javafx.scene.control.Label;
@@ -19,6 +20,7 @@ public class ChangePasswordController {
     @FXML private Label errorLabel;
 
     private final ObjectMapper objectMapper = new ObjectMapper();
+    private final LanguageManager lm = LanguageManager.getInstance();
 
     @FXML
     private void handleSave() {
@@ -27,15 +29,15 @@ public class ChangePasswordController {
         String confirm  = confirmPasswordField.getText();
 
         if (current.isEmpty() || newPass.isEmpty() || confirm.isEmpty()) {
-            showError("Todos los campos son obligatorios");
+            showError(lm.get("security.password.error.fields"));
             return;
         }
         if (!newPass.equals(confirm)) {
-            showError("Las contraseñas nuevas no coinciden");
+            showError(lm.get("security.password.error.match"));
             return;
         }
         if (newPass.length() < 6) {
-            showError("La nueva contraseña debe tener al menos 6 caracteres");
+            showError(lm.get("security.password.error.length"));
             return;
         }
 
@@ -58,11 +60,11 @@ public class ChangePasswordController {
                     } else {
                         String msg = response.body();
                         showError(msg != null && !msg.isEmpty()
-                                ? msg : "Error al cambiar la contraseña");
+                                ? msg : lm.get("security.password.error.generic"));
                     }
                 });
             } catch (Exception e) {
-                Platform.runLater(() -> showError("Error de conexión con el servidor"));
+                Platform.runLater(() -> showError(lm.get("error.connection")));
             }
         }).start();
     }

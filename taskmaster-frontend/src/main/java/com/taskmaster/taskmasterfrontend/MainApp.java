@@ -1,5 +1,6 @@
 package com.taskmaster.taskmasterfrontend;
 
+import com.taskmaster.taskmasterfrontend.util.LanguageManager;
 import javafx.application.Application;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Scene;
@@ -19,7 +20,8 @@ public class MainApp extends Application {
     @Override
     public void start(Stage stage) throws IOException {
         FXMLLoader fxmlLoader = new FXMLLoader(
-                MainApp.class.getResource("/com/taskmaster/taskmasterfrontend/login-view.fxml")
+                MainApp.class.getResource("/com/taskmaster/taskmasterfrontend/login-view.fxml"),
+                LanguageManager.getInstance().getBundle()
         );
         Scene scene = new Scene(fxmlLoader.load(), 400, 500);
         stage.setTitle("TaskMaster");

@@ -6,10 +6,10 @@
       fx:controller="com.taskmaster.taskmasterfrontend.controller.AvatarCropController"
       spacing="16" style="-fx-background-color: white; -fx-padding: 20;">
 
-    <Label text="Ajusta tu foto de perfil"
+    <Label text="%avatar.crop.title"
            style="-fx-font-size: 15px; -fx-font-weight: bold; -fx-text-fill: #1e1e2e;"/>
 
-    <Label text="Arrastra la imagen para reposicionarla y usa el slider para hacer zoom."
+    <Label text="%avatar.crop.description"
            style="-fx-font-size: 12px; -fx-text-fill: #888888;"
            wrapText="true"/>
 
@@ -32,12 +32,12 @@
 
     <!-- Botones -->
     <HBox spacing="10" alignment="CENTER_RIGHT">
-        <Button fx:id="cancelButton" text="Cancelar"
+        <Button fx:id="cancelButton" text="%avatar.crop.cancel"
                 onAction="#handleCancel"
                 style="-fx-background-color: #f0f0f5; -fx-text-fill: #555570;
                        -fx-font-size: 12px; -fx-background-radius: 6px;
                        -fx-cursor: hand; -fx-padding: 8 16 8 16;"/>
-        <Button fx:id="saveButton" text="Guardar"
+        <Button fx:id="saveButton" text="%avatar.crop.save"
                 onAction="#handleSave"
                 style="-fx-background-color: #7c3aed; -fx-text-fill: white;
                        -fx-font-size: 12px; -fx-background-radius: 6px;

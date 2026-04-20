@@ -3,6 +3,7 @@ package com.taskmaster.taskmasterfrontend.controller;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.taskmaster.taskmasterfrontend.util.AppContext;
+import com.taskmaster.taskmasterfrontend.util.LanguageManager;
 import javafx.application.Platform;
 import javafx.collections.FXCollections;
 import javafx.fxml.FXML;
@@ -41,8 +42,8 @@ public class NewTaskController {
     private Long parentTaskId;
 
     private final List<Long> projectIds = new ArrayList<>();
-
     private final ObjectMapper objectMapper = new ObjectMapper();
+    private final LanguageManager lm = LanguageManager.getInstance();
 
     public void setProjectId(Long projectId) {
         this.preSelectedProjectId = projectId;
@@ -55,14 +56,13 @@ public class NewTaskController {
     @FXML
     public void initialize() {
         priorityCombo.setItems(FXCollections.observableArrayList(
-                "BAJA", "MEDIA", "ALTA", "URGENTE"
-        ));
-        priorityCombo.setValue("MEDIA");
+                lm.get("priority.low.label"), lm.get("priority.medium.label"),
+                lm.get("priority.high.label"), lm.get("priority.urgent.label")));
+        priorityCombo.setValue(lm.get("priority.medium.label"));
 
         categoryCombo.setItems(FXCollections.observableArrayList(
-                "PERSONAL", "ESTUDIOS", "TRABAJO"
-        ));
-        categoryCombo.setValue("PERSONAL");
+                lm.get("category.PERSONAL"), lm.get("category.ESTUDIOS"), lm.get("category.TRABAJO")));
+        categoryCombo.setValue(lm.get("category.PERSONAL"));
 
         // Ocultamos el combo de categoría si hay proyecto preseleccionado
         // porque la categoría se hereda del proyecto
@@ -115,7 +115,7 @@ public class NewTaskController {
                     List<Long> ids = new ArrayList<>();
 
                     // Primera opción: sin proyecto
-                    names.add("Sin proyecto");
+                    names.add(lm.get("new.task.project.prompt"));
                     ids.add(null);
 
                     for (JsonNode project : projects) {
@@ -139,7 +139,7 @@ public class NewTaskController {
                     });
                 }
             } catch (Exception e) {
-                Platform.runLater(() -> showError("Error al cargar los proyectos"));
+                Platform.runLater(() -> showError(lm.get("new.task.error.load.projects")));
             }
         }).start();
     }
@@ -148,21 +148,22 @@ public class NewTaskController {
     private void handleCreate() {
         String title = titleField.getText().trim();
         String description = descriptionField.getText().trim();
-        String priority = switch (priorityCombo.getValue()) {
-            case "BAJA"    -> "LOW";
-            case "MEDIA"   -> "MEDIUM";
-            case "ALTA"    -> "HIGH";
-            case "URGENTE" -> "URGENT";
-            default        -> "MEDIUM";
-        };
+
+        String priority = priorityCombo.getValue();
+        String priorityEnum;
+        if (priority.equals(lm.get("priority.low.label")))         priorityEnum = "LOW";
+        else if (priority.equals(lm.get("priority.medium.label"))) priorityEnum = "MEDIUM";
+        else if (priority.equals(lm.get("priority.high.label")))   priorityEnum = "HIGH";
+        else if (priority.equals(lm.get("priority.urgent.label"))) priorityEnum = "URGENT";
+        else priorityEnum = "MEDIUM";
+
         LocalDate dueDate = dueDatePicker.getValue();
 
         if (title.isEmpty()) {
-            showError("El título de la tarea es obligatorio");
+            showError(lm.get("new.task.error.title"));
             return;
         }
 
-        // Obtenemos el projectId seleccionado (puede ser null si es personal)
         int selectedIndex = projectCombo.getSelectionModel().getSelectedIndex();
         Long projectId = (selectedIndex >= 0 && selectedIndex < projectIds.size())
                 ? projectIds.get(selectedIndex)
@@ -173,7 +174,8 @@ public class NewTaskController {
                 Map<String, Object> body = new HashMap<>();
                 body.put("title", title);
                 body.put("description", description);
-                body.put("priority", priority);
+                body.put("priority", priorityEnum);
+
                 if (projectId != null) {
                     body.put("projectId", projectId);
                 }
@@ -181,12 +183,12 @@ public class NewTaskController {
                     body.put("dueDate", dueDate.toString());
                 }
                 if (projectId == null) {
-                    String category = switch (categoryCombo.getValue()) {
-                        case "ESTUDIOS" -> "ESTUDIOS";
-                        case "TRABAJO"  -> "TRABAJO";
-                        default         -> "PERSONAL";
-                    };
-                    body.put("category", category);
+                    String cat = categoryCombo.getValue();
+                    String catEnum;
+                    if (cat.equals(lm.get("category.ESTUDIOS")))       catEnum = "ESTUDIOS";
+                    else if (cat.equals(lm.get("category.TRABAJO")))    catEnum = "TRABAJO";
+                    else                                                 catEnum = "PERSONAL";
+                    body.put("category", catEnum);
                 }
                 if (parentTaskId != null) {
                     body.put("parentTaskId", parentTaskId);
@@ -201,12 +203,11 @@ public class NewTaskController {
                         if (onTaskCreated != null) onTaskCreated.run();
                         closeDialog();
                     } else {
-                        showError("Error al cargar la tarea");
+                        showError(lm.get("new.task.error.create"));
                     }
                 });
             } catch (Exception e) {
-                Platform.runLater(() ->
-                        showError("Error de conexión con el servidor"));
+                Platform.runLater(() -> showError(lm.get("error.connection")));
             }
         }).start();
     }

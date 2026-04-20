@@ -29,9 +29,10 @@ public class LoginController {
     @FXML private Label errorLabel;
     @FXML private Button loginButton;
 
+    private final LanguageManager lm = LanguageManager.getInstance();
+
     @FXML
     private void initialize() {
-        applyLanguage();
         usernameField.setOnKeyPressed(e -> {
             if (e.getCode() == KeyCode.ENTER) {
                 handleLogin();
@@ -44,12 +45,6 @@ public class LoginController {
         });
     }
 
-    private void applyLanguage() {
-        LanguageManager lm = LanguageManager.getInstance();
-        // Los textos fijos del FXML se actualizan aquí en runtime
-        // cuando el usuario cambie idioma desde ajustes
-    }
-
     /**
      * Se ejecuta cuando el usuario pulsa "Iniciar sesión".
      * Por ahora validamos que los campos no estén vacíos.
@@ -57,7 +52,6 @@ public class LoginController {
      */
     @FXML
     private void handleLogin(){
-        LanguageManager lm = LanguageManager.getInstance();
         String username = usernameField.getText().trim();
         String password = passwordField.getText().trim();
 
@@ -138,7 +132,8 @@ public class LoginController {
     private void navigateToMain() {
         try {
             FXMLLoader loader = new FXMLLoader(
-                    getClass().getResource("/com/taskmaster/taskmasterfrontend/main-view.fxml")
+                    getClass().getResource("/com/taskmaster/taskmasterfrontend/main-view.fxml"),
+                    LanguageManager.getInstance().getBundle()
             );
             Stage stage = (Stage) usernameField.getScene().getWindow();
             stage.setScene(new Scene(loader.load(), 900, 600));
@@ -146,7 +141,7 @@ public class LoginController {
         } catch (Exception e) {
             e.printStackTrace();
             Platform.runLater(() -> {
-                showError("Error al cargar la pantalla principal" + e.getMessage());
+                showError(lm.get("error.open.dialog"));
                 loginButton.setDisable(false);
             });
         }
@@ -160,12 +155,13 @@ public class LoginController {
     private void handleGoToRegister() {
         try {
             FXMLLoader loader = new FXMLLoader(
-                    getClass().getResource("/com/taskmaster/taskmasterfrontend/register-view.fxml")
+                    getClass().getResource("/com/taskmaster/taskmasterfrontend/register-view.fxml"),
+                    LanguageManager.getInstance().getBundle()
             );
             Stage stage = (Stage) usernameField.getScene().getWindow();
             stage.setScene(new Scene(loader.load(), 400, 600));
         } catch (IOException e) {
-            showError("Error al cargar la pantalla de registro");
+            showError(lm.get("error.open.dialog"));
         }
     }
 
@@ -180,13 +176,13 @@ public class LoginController {
         if (birthDate.getMonthValue() == today.getMonthValue()
                 && birthDate.getDayOfMonth() == today.getDayOfMonth()) {
             Alert alert = new Alert(Alert.AlertType.INFORMATION);
-            alert.setTitle("🎂 ¡Feliz cumpleaños!");
-            alert.setHeaderText("¡Feliz cumpleaños, " +
-                    AppContext.getInstance().getCurrentUsername() + "! 🎉");
-            alert.setContentText("El equipo de TaskMaster te desea un feliz cumpleaños. " +
-                    "¡Que tengas un día increíble!");
-            ButtonType gracias = new ButtonType("¡Gracias!");
-            alert.getButtonTypes().setAll(gracias);
+            alert.setTitle(lm.get("birthday.title"));
+            alert.setHeaderText(java.text.MessageFormat.format(
+                    lm.get("birthday.header"),
+                    AppContext.getInstance().getCurrentUsername()));
+            alert.setContentText(lm.get("birthday.message"));
+            ButtonType btn = new ButtonType(lm.get("birthday.button"));
+            alert.getButtonTypes().setAll(btn);
             alert.showAndWait();
         }
     }

@@ -27,6 +27,8 @@ public class RegisterController {
     @FXML private DatePicker birthDatePicker;
     @FXML private Label errorLabel;
 
+    private final LanguageManager lm = LanguageManager.getInstance();
+
     @FXML
     private void initialize() {
         usernameField.setOnKeyPressed(e -> {
@@ -51,7 +53,6 @@ public class RegisterController {
      */
     @FXML
     private void handleRegister() {
-        LanguageManager lm = LanguageManager.getInstance();
         String username = usernameField.getText().trim();
         String email = emailField.getText().trim();
         String password = passwordField.getText().trim();
@@ -112,12 +113,13 @@ public class RegisterController {
     private void handleGoToLogin() {
         try {
             FXMLLoader loader = new FXMLLoader(
-                    getClass().getResource("/com/taskmaster/taskmasterfrontend/login-view.fxml")
+                    getClass().getResource("/com/taskmaster/taskmasterfrontend/login-view.fxml"),
+                    LanguageManager.getInstance().getBundle()
             );
             Stage stage = (Stage) usernameField.getScene().getWindow();
             stage.setScene(new Scene(loader.load(), 400, 500));
         } catch (IOException e) {
-            showError("Error al cargar la pantalla de login");
+            showError(lm.get("error.open.dialog"));
         }
     }
 

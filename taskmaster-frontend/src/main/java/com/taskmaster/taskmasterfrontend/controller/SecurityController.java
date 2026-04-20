@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.taskmaster.taskmasterfrontend.util.AppContext;
+import com.taskmaster.taskmasterfrontend.util.LanguageManager;
 import javafx.application.Platform;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
@@ -38,6 +39,8 @@ public class SecurityController {
 
     private static final DateTimeFormatter FORMATTER =
             DateTimeFormatter.ofPattern("d MMM yyyy, HH:mm", new Locale("es", "ES"));
+
+    private final LanguageManager lm = LanguageManager.getInstance();
 
     @FXML
     public void initialize() {
@@ -75,7 +78,7 @@ public class SecurityController {
 
             boolean isLogin = "LOGIN".equals(actionType);
             String icon  = isLogin ? "→" : "←";
-            String label = isLogin ? "Inicio de sesión" : "Cierre de sesión";
+            String label = isLogin ? lm.get("security.access.login") : lm.get("security.access.logout");
             String color = isLogin ? "#22c55e" : "#9999bb";
 
             LocalDateTime dt = LocalDateTime.parse(createdAt);
@@ -111,15 +114,15 @@ public class SecurityController {
         String confirm = confirmPasswordField.getText().trim();
 
         if (current.isEmpty() || newPass.isEmpty() || confirm.isEmpty()) {
-            showError("Rellena todos los campos.");
+            showError(lm.get("security.password.error.fields"));
             return;
         }
         if (!newPass.equals(confirm)) {
-            showError("Las contraseñas nuevas no coinciden.");
+            showError(lm.get("security.password.error.match"));
             return;
         }
         if (newPass.length() < 6) {
-            showError("La contraseña debe tener al menos 6 caracteres.");
+            showError(lm.get("security.password.error.length"));
             return;
         }
 
@@ -141,13 +144,13 @@ public class SecurityController {
                         AppContext.getInstance().setCurrentPassword(newPass);
                         AppContext.getInstance().getApiService()
                                 .setCredentials(AppContext.getInstance().getCurrentUsername(), newPass);
-                        showInfo("Contraseña cambiada correctamente.");
+                        showInfo(lm.get("security.password.success"));
                     } else {
-                        showError("Contraseña actual incorrecta.");
+                        showError(lm.get("security.password.error.wrong"));
                     }
                 });
             } catch (Exception e) {
-                Platform.runLater(() -> showError("Error al cambiar la contraseña."));
+                Platform.runLater(() -> showError(lm.get("security.password.error.generic")));
             }
         }).start();
     }
@@ -156,9 +159,9 @@ public class SecurityController {
     private void handleDeleteAccount() {
         // Pedir la contraseña antes de eliminar
         TextInputDialog dialog = new TextInputDialog();
-        dialog.setTitle("Eliminar cuenta");
-        dialog.setHeaderText("Confirma tu contraseña para continuar");
-        dialog.setContentText("Contraseña:");
+        dialog.setTitle(lm.get("security.delete.title"));
+        dialog.setHeaderText(lm.get("security.delete.header"));
+        dialog.setContentText(lm.get("security.delete.prompt"));
 
         // Convertir el TextField en PasswordField
         PasswordField pf = new PasswordField();
@@ -167,14 +170,14 @@ public class SecurityController {
 
         dialog.showAndWait().ifPresent(password -> {
             if (password.isBlank()) {
-                showInfo("Debes introducir tu contraseña.");
+                showInfo(lm.get("security.delete.empty"));
                 return;
             }
 
             Alert confirm = new Alert(Alert.AlertType.CONFIRMATION);
-            confirm.setTitle("Eliminar cuenta");
-            confirm.setHeaderText("¿Estás seguro?");
-            confirm.setContentText("Esta acción es permanente. Se eliminarán todos tus datos.");
+            confirm.setTitle(lm.get("security.delete.title"));
+            confirm.setHeaderText(lm.get("security.delete.confirm.header"));
+            confirm.setContentText(lm.get("security.delete.confirm.content"));
             confirm.showAndWait().ifPresent(result -> {
                 if (result == ButtonType.OK) {
                     new Thread(() -> {
@@ -187,11 +190,11 @@ public class SecurityController {
                                     AppContext.getInstance().logout();
                                     navigateToLogin();
                                 } else {
-                                    showInfo("Contraseña incorrecta o no se pudo eliminar la cuenta.");
+                                    showInfo(lm.get("security.delete.error"));
                                 }
                             });
                         } catch (Exception e) {
-                            Platform.runLater(() -> showInfo("Error al eliminar la cuenta."));
+                            Platform.runLater(() -> showInfo(lm.get("security.delete.error.generic")));
                         }
                     }).start();
                 }
@@ -202,7 +205,9 @@ public class SecurityController {
     private void navigateToLogin() {
         try {
             FXMLLoader loader = new FXMLLoader(
-                    getClass().getResource("/com/taskmaster/taskmasterfrontend/login-view.fxml"));
+                    getClass().getResource("/com/taskmaster/taskmasterfrontend/login-view.fxml"),
+                    LanguageManager.getInstance().getBundle()
+            );
             Stage stage = (Stage) accessLogContainer.getScene().getWindow();
             stage.setScene(new Scene(loader.load(), 400, 500));
             stage.setTitle("TaskMaster");
@@ -224,7 +229,7 @@ public class SecurityController {
 
     private void showInfo(String msg) {
         Alert alert = new Alert(Alert.AlertType.INFORMATION);
-        alert.setTitle("Información");
+        alert.setTitle(lm.get("security.info.title"));
         alert.setHeaderText(null);
         alert.setContentText(msg);
         alert.showAndWait();

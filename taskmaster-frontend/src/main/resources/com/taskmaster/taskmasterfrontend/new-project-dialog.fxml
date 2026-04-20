@@ -9,26 +9,26 @@
       spacing="16"
       style="-fx-background-color: white; -fx-padding: 24;">
 
-    <Label text="Nuevo proyecto"
+    <Label text="%new.project.title"
            style="-fx-font-size: 18px; -fx-font-weight: bold; -fx-text-fill: #2d2d2d;"/>
 
     <VBox spacing="6">
-        <Label text="Nombre *" style="-fx-font-size: 13px; -fx-text-fill: #2d2d2d;"/>
+        <Label text="%new.project.name" style="-fx-font-size: 13px; -fx-text-fill: #2d2d2d;"/>
         <TextField fx:id="nameField"
-                   promptText="Nombre del proyecto"
+                   promptText="%new.project.name.prompt"
                    style="-fx-pref-height: 38px;"/>
     </VBox>
 
     <VBox spacing="6">
-        <Label text="Descripción" style="-fx-font-size: 13px; -fx-text-fill: #2d2d2d;"/>
+        <Label text="%new.project.description" style="-fx-font-size: 13px; -fx-text-fill: #2d2d2d;"/>
         <TextArea fx:id="descriptionField"
-                  promptText="Descripción opcional"
+                  promptText="%new.project.description.prompt"
                   style="-fx-pref-height: 80px;"
                   wrapText="true"/>
     </VBox>
 
     <VBox spacing="6">
-        <Label text="Categoría *" style="-fx-font-size: 13px; -fx-text-fill: #2d2d2d;"/>
+        <Label text="%new.project.category" style="-fx-font-size: 13px; -fx-text-fill: #2d2d2d;"/>
         <ComboBox fx:id="categoryCombo"
                   maxWidth="Infinity"
                   style="-fx-pref-height: 38px;"/>
@@ -36,14 +36,14 @@
 
     <HBox spacing="16">
         <VBox spacing="6" HBox.hgrow="ALWAYS">
-            <Label text="Estado" style="-fx-font-size: 13px; -fx-text-fill: #2d2d2d;"/>
+            <Label text="%status" style="-fx-font-size: 13px; -fx-text-fill: #2d2d2d;"/>
             <ComboBox fx:id="statusCombo"
                       maxWidth="Infinity"
                       style="-fx-pref-height: 38px;"/>
         </VBox>
 
         <VBox spacing="6" HBox.hgrow="ALWAYS">
-            <Label text="Prioridad" style="-fx-font-size: 13px; -fx-text-fill: #2d2d2d;"/>
+            <Label text="%priority" style="-fx-font-size: 13px; -fx-text-fill: #2d2d2d;"/>
             <ComboBox fx:id="priorityCombo"
                       maxWidth="Infinity"
                       style="-fx-pref-height: 38px;"/>
@@ -55,11 +55,11 @@
            visible="false"/>
 
     <HBox spacing="10" alignment="CENTER_RIGHT">
-        <Button text="Cancelar"
+        <Button text="%dialog.cancel"
                 onAction="#handleCancel"
                 style="-fx-background-color: #e0e0e0; -fx-text-fill: #2d2d2d;
                        -fx-background-radius: 4px; -fx-cursor: hand;"/>
-        <Button text="Crear proyecto"
+        <Button text="%new.project.button"
                 onAction="#handleCreate"
                 style="-fx-background-color: #3498db; -fx-text-fill: white;
                        -fx-background-radius: 4px; -fx-cursor: hand;"/>

@@ -2,6 +2,7 @@ package com.taskmaster.taskmasterfrontend.controller;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.taskmaster.taskmasterfrontend.util.AppContext;
+import com.taskmaster.taskmasterfrontend.util.LanguageManager;
 import javafx.application.Platform;
 import javafx.collections.FXCollections;
 import javafx.fxml.FXML;
@@ -32,6 +33,8 @@ public class EditTaskController {
     private Long taskId;
     private Runnable onTaskUpdated;
 
+    private final LanguageManager lm = LanguageManager.getInstance();
+
     public void setOnTaskUpdated(Runnable callback) {
         this.onTaskUpdated = callback;
     }
@@ -43,14 +46,15 @@ public class EditTaskController {
     @FXML
     public void initialize() {
         statusCombo.setItems(FXCollections.observableArrayList(
-                "PENDIENTE", "EN CURSO", "COMPLETADA", "ENTREGADA", "CANCELADA"
-        ));
-        statusCombo.setValue("PENDIENTE");
+                lm.get("status.todo.label"), lm.get("status.inprogress.label"),
+                lm.get("status.done.task.label"), lm.get("status.submitted.label"),
+                lm.get("status.cancelled.task.label")));
+        statusCombo.setValue(lm.get("status.todo.label"));
 
         priorityCombo.setItems(FXCollections.observableArrayList(
-                "BAJA", "MEDIA", "ALTA", "URGENTE"
-        ));
-        priorityCombo.setValue("MEDIA");
+                lm.get("priority.low.label"), lm.get("priority.medium.label"),
+                lm.get("priority.high.label"), lm.get("priority.urgent.label")));
+        priorityCombo.setValue(lm.get("priority.medium.label"));
     }
 
     /**
@@ -83,7 +87,7 @@ public class EditTaskController {
     private void handleSave() {
         String title = titleField.getText().trim();
         if (title.isEmpty()) {
-            showError("El título es obligatorio");
+            showError(lm.get("edit.task.error.title"));
             return;
         }
 
@@ -107,12 +111,12 @@ public class EditTaskController {
                         if (onTaskUpdated != null) onTaskUpdated.run();
                         closeDialog();
                     } else {
-                        showError("Error al guardar los cambios");
+                        showError(lm.get("edit.task.error.save"));
                     }
                 });
 
             } catch (Exception e) {
-                Platform.runLater(() -> showError("Error de conexión con el servidor"));
+                Platform.runLater(() -> showError(lm.get("error.connection")));
             }
         }).start();
     }
@@ -129,44 +133,40 @@ public class EditTaskController {
 
     private String translateStatus(String s) {
         return switch (s) {
-            case "TODO"        -> "PENDIENTE";
-            case "IN_PROGRESS" -> "EN CURSO";
-            case "DONE"        -> "COMPLETADA";
-            case "SUBMITTED" -> "ENTREGADA";
-            case "CANCELLED"   -> "CANCELADA";
+            case "TODO"        -> lm.get("status.todo.label");
+            case "IN_PROGRESS" -> lm.get("status.inprogress.label");
+            case "DONE"        -> lm.get("status.done.task.label");
+            case "SUBMITTED"   -> lm.get("status.submitted.label");
+            case "CANCELLED"   -> lm.get("status.cancelled.task.label");
             default            -> s;
         };
     }
 
+
     private String translatePriority(String p) {
         return switch (p) {
-            case "LOW"    -> "BAJA";
-            case "MEDIUM" -> "MEDIA";
-            case "HIGH"   -> "ALTA";
-            case "URGENT" -> "URGENTE";
+            case "LOW"    -> lm.get("priority.low.label");
+            case "MEDIUM" -> lm.get("priority.medium.label");
+            case "HIGH"   -> lm.get("priority.high.label");
+            case "URGENT" -> lm.get("priority.urgent.label");
             default       -> p;
         };
     }
 
+
     private String reverseStatus(String s) {
-        return switch (s) {
-            case "PENDIENTE"   -> "TODO";
-            case "EN CURSO" -> "IN_PROGRESS";
-            case "COMPLETADA"  -> "DONE";
-            case "ENTREGADA" -> "SUBMITTED";
-            case "CANCELADA"   -> "CANCELLED";
-            default            -> s;
-        };
+        if (s.equals(lm.get("status.inprogress.label")))          return "IN_PROGRESS";
+        else if (s.equals(lm.get("status.done.task.label")))      return "DONE";
+        else if (s.equals(lm.get("status.submitted.label")))      return "SUBMITTED";
+        else if (s.equals(lm.get("status.cancelled.task.label"))) return "CANCELLED";
+        else return "TODO";
     }
 
     private String reversePriority(String p) {
-        return switch (p) {
-            case "BAJA"    -> "LOW";
-            case "MEDIA"   -> "MEDIUM";
-            case "ALTA"    -> "HIGH";
-            case "URGENTE" -> "URGENT";
-            default        -> p;
-        };
+        if (p.equals(lm.get("priority.low.label")))         return "LOW";
+        else if (p.equals(lm.get("priority.high.label")))   return "HIGH";
+        else if (p.equals(lm.get("priority.urgent.label"))) return "URGENT";
+        else return "MEDIUM";
     }
 
     private void showError(String message) {

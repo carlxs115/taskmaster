@@ -9,26 +9,26 @@
       spacing="16"
       style="-fx-background-color: white; -fx-padding: 24;">
 
-    <Label text="Nueva tarea"
+    <Label text="%new.task.title"
            style="-fx-font-size: 18px; -fx-font-weight: bold; -fx-text-fill: #2d2d2d;"/>
 
     <VBox spacing="6">
-        <Label text="Título *" style="-fx-font-size: 13px; -fx-text-fill: #2d2d2d;"/>
+        <Label text="%new.task.title.field" style="-fx-font-size: 13px; -fx-text-fill: #2d2d2d;"/>
         <TextField fx:id="titleField"
-                   promptText="Título de la tarea"
+                   promptText="%new.task.title.prompt"
                    style="-fx-pref-height: 38px;"/>
     </VBox>
 
     <VBox spacing="6">
-        <Label text="Descripción" style="-fx-font-size: 13px; -fx-text-fill: #2d2d2d;"/>
+        <Label text="%new.task.description" style="-fx-font-size: 13px; -fx-text-fill: #2d2d2d;"/>
         <TextArea fx:id="descriptionField"
-                  promptText="Descripción opcional"
+                  promptText="%new.task.description.prompt"
                   style="-fx-pref-height: 80px;"
                   wrapText="true"/>
     </VBox>
 
     <VBox fx:id="categoryBox" spacing="6">
-        <Label text="Categoría *" style="-fx-font-size: 13px; -fx-text-fill: #2d2d2d;"/>
+        <Label text="%new.task.category" style="-fx-font-size: 13px; -fx-text-fill: #2d2d2d;"/>
         <ComboBox fx:id="categoryCombo"
                   maxWidth="Infinity"
                   style="-fx-pref-height: 38px;"/>
@@ -36,21 +36,21 @@
 
     <HBox spacing="16">
         <VBox spacing="6" HBox.hgrow="ALWAYS">
-            <Label text="Prioridad" style="-fx-font-size: 13px; -fx-text-fill: #2d2d2d;"/>
+            <Label text="%priority" style="-fx-font-size: 13px; -fx-text-fill: #2d2d2d;"/>
             <ComboBox fx:id="priorityCombo"
                       maxWidth="Infinity"
                       style="-fx-pref-height: 38px;"/>
         </VBox>
 
         <VBox spacing="6" HBox.hgrow="ALWAYS">
-            <Label text="Fecha límite" style="-fx-font-size: 13px; -fx-text-fill: #2d2d2d;"/>
+            <Label text="%duedate" style="-fx-font-size: 13px; -fx-text-fill: #2d2d2d;"/>
             <DatePicker fx:id="dueDatePicker"
                         maxWidth="Infinity"
                         style="-fx-pref-height: 38px;"/>
         </VBox>
 
         <VBox fx:id="projectBox" spacing="6">
-            <Label text="Proyecto (opcional)" style="-fx-font-size: 13px; -fx-text-fill: #2d2d2d;"/>
+            <Label text="%new.task.project" style="-fx-font-size: 13px; -fx-text-fill: #2d2d2d;"/>
             <ComboBox fx:id="projectCombo"
                       promptText="Sin proyecto (tarea personal)"
                       maxWidth="Infinity"
@@ -63,11 +63,11 @@
            visible="false"/>
 
     <HBox spacing="10" alignment="CENTER_RIGHT">
-        <Button text="Cancelar"
+        <Button text="%dialog.cancel"
                 onAction="#handleCancel"
                 style="-fx-background-color: #e0e0e0; -fx-text-fill: #2d2d2d;
                        -fx-background-radius: 4px; -fx-cursor: hand;"/>
-        <Button text="Crear tarea"
+        <Button text="%new.task.button"
                 onAction="#handleCreate"
                 style="-fx-background-color: #3498db; -fx-text-fill: white;
                        -fx-background-radius: 4px; -fx-cursor: hand;"/>

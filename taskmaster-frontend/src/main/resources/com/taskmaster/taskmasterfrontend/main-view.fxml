@@ -39,7 +39,7 @@
                   spacing="0">
                 <padding><Insets top="16" bottom="16"/></padding>
 
-                <Button fx:id="btnHome" text="🏠  Inicio"
+                <Button fx:id="btnHome" text="%sidebar.home"
                         onAction="#handleGoHome"
                         maxWidth="Infinity"
                         style="-fx-background-color: #2a1f4e; -fx-text-fill: #a78bfa;
@@ -48,28 +48,28 @@
 
                 <Separator style="-fx-background-color: #2a2a3e;"/>
 
-                <Label text="MIS TAREAS"
+                <Label text="%sidebar.section.tasks"
                        style="-fx-text-fill: #555570; -fx-font-size: 10px;
                               -fx-font-weight: bold; -fx-padding: 12 16 4 16;"/>
-                <Button fx:id="btnAllTasks" text="📋  Todas las tareas"
+                <Button fx:id="btnAllTasks" text="%sidebar.all.tasks"
                         onAction="#handleAllTasks"
                         maxWidth="Infinity"
                         style="-fx-background-color: transparent; -fx-text-fill: #9999bb;
                                -fx-font-size: 13px; -fx-cursor: hand; -fx-alignment: CENTER-LEFT;
                                -fx-padding: 7 16 7 16;"/>
-                <Button fx:id="btnPersonal" text="👤  Personal"
+                <Button fx:id="btnPersonal" text="%sidebar.personal"
                         onAction="#handleCategoryPersonal"
                         maxWidth="Infinity"
                         style="-fx-background-color: transparent; -fx-text-fill: #9999bb;
                                -fx-font-size: 13px; -fx-cursor: hand; -fx-alignment: CENTER-LEFT;
                                -fx-padding: 7 16 7 16;"/>
-                <Button fx:id="btnEstudios" text="📚  Estudios"
+                <Button fx:id="btnEstudios" text="%sidebar.estudios"
                         onAction="#handleCategoryEstudios"
                         maxWidth="Infinity"
                         style="-fx-background-color: transparent; -fx-text-fill: #9999bb;
                                -fx-font-size: 13px; -fx-cursor: hand; -fx-alignment: CENTER-LEFT;
                                -fx-padding: 7 16 7 16;"/>
-                <Button fx:id="btnTrabajo" text="💼  Trabajo"
+                <Button fx:id="btnTrabajo" text="%sidebar.trabajo"
                         onAction="#handleCategoryTrabajo"
                         maxWidth="Infinity"
                         style="-fx-background-color: transparent; -fx-text-fill: #9999bb;
@@ -78,7 +78,7 @@
 
                 <Separator style="-fx-background-color: #2a2a3e;"/>
 
-                <Label text="MIS PROYECTOS"
+                <Label text="%sidebar.section.projects"
                        style="-fx-text-fill: #555570; -fx-font-size: 10px;
                               -fx-font-weight: bold; -fx-padding: 12 16 4 16;"/>
 
@@ -90,7 +90,7 @@
                 </ScrollPane>
 
                 <Separator style="-fx-background-color: #2a2a3e;"/>
-                <Button fx:id="btnHelp" text="❓  Ayuda"
+                <Button fx:id="btnHelp" text="%sidebar.help"
                         onAction="#handleHelp"
                         maxWidth="Infinity"
                         style="-fx-background-color: transparent; -fx-text-fill: #9999bb;
@@ -98,19 +98,19 @@
                -fx-padding: 8 16 8 16;"/>
 
                 <Separator style="-fx-background-color: #2a2a3e;"/>
-                <Button fx:id="btnSettings" text="⚙  Ajustes"
+                <Button fx:id="btnSettings" text="%sidebar.settings"
                         onAction="#handleSettings"
                         maxWidth="Infinity"
                         style="-fx-background-color: transparent; -fx-text-fill: #9999bb;
                                -fx-font-size: 13px; -fx-cursor: hand; -fx-alignment: CENTER-LEFT;
                                -fx-padding: 8 16 8 16;"/>
-                <Button fx:id="btnSecurity" text="🔒  Seguridad"
+                <Button fx:id="btnSecurity" text="%sidebar.security"
                         onAction="#handleSecurity"
                         maxWidth="Infinity"
                         style="-fx-background-color: transparent; -fx-text-fill: #9999bb;
                -fx-font-size: 13px; -fx-cursor: hand; -fx-alignment: CENTER-LEFT;
                -fx-padding: 8 16 8 16;"/>
-                <Button fx:id="btnTrash" text="🗑  Papelera"
+                <Button fx:id="btnTrash" text="%sidebar.trash"
                         onAction="#handleTrash"
                         maxWidth="Infinity"
                         style="-fx-background-color: transparent; -fx-text-fill: #9999bb;
@@ -127,18 +127,18 @@
                       style="-fx-background-color: white; -fx-padding: 14 20 14 20;
                              -fx-border-color: #e8e8e8; -fx-border-width: 0 0 1 0;"
                       alignment="CENTER_LEFT" spacing="12">
-                    <Label fx:id="areaTitle" text="Inicio"
+                    <Label fx:id="areaTitle" text="%sidebar.home"
                            style="-fx-font-size: 15px; -fx-font-weight: bold; -fx-text-fill: #1e1e2e;"/>
                     <Region HBox.hgrow="ALWAYS"/>
                     <TextField fx:id="searchField"
-                               promptText="🔍  Buscar tareas..."
+                               promptText="%topbar.search.prompt"
                                onKeyReleased="#handleSearch"
                                style="-fx-font-size: 12px; -fx-padding: 6 12 6 12;
                                       -fx-background-radius: 20px; -fx-border-radius: 20px;
                                       -fx-border-color: #e8e8e8; -fx-border-width: 1;
                                       -fx-pref-width: 200px;"
                                managed="false" visible="false"/>
-                    <Button fx:id="createButton" text="＋  Crear  ▾"
+                    <Button fx:id="createButton" text="%topbar.create"
                             onAction="#handleCreateMenu"
                             style="-fx-background-color: #7c3aed; -fx-text-fill: white;
                                    -fx-font-size: 12px; -fx-background-radius: 6px;
@@ -152,11 +152,11 @@
                       spacing="8" alignment="CENTER_LEFT" managed="false" visible="false">
 
                     <!-- FILTRAR -->
-                    <Label text="Filtrar:"
+                    <Label fx:id="filterLabel" text="%filter.label"
                            style="-fx-font-size: 11px; -fx-text-fill: #888888; -fx-font-weight: bold;"/>
-                    <ComboBox fx:id="statusFilter" promptText="Estado"
+                    <ComboBox fx:id="statusFilter" promptText="%status"
                               style="-fx-font-size: 11px;" prefWidth="130"/>
-                    <ComboBox fx:id="priorityFilter" promptText="Prioridad"
+                    <ComboBox fx:id="priorityFilter" promptText="%priority"
                               style="-fx-font-size: 11px;" prefWidth="130"/>
 
                     <!-- Separador visual -->
@@ -164,9 +164,9 @@
                                style="-fx-padding: 0 4 0 4;"/>
 
                     <!-- ORDENAR -->
-                    <Label text="Ordenar:"
+                    <Label fx:id="sortLabel" text="%sort.label"
                            style="-fx-font-size: 11px; -fx-text-fill: #888888; -fx-font-weight: bold;"/>
-                    <ComboBox fx:id="sortFilter" promptText="Criterio"
+                    <ComboBox fx:id="sortFilter" promptText="%sort.criteria"
                               style="-fx-font-size: 11px;" prefWidth="140"/>
                     <Button fx:id="sortDirectionBtn" text="↑"
                             onAction="#handleSortDirection"
@@ -178,7 +178,7 @@
                     <Region HBox.hgrow="ALWAYS"/>
 
                     <!-- Botón limpiar filtros -->
-                    <Button text="✕ Limpiar"
+                    <Button fx:id="clearFiltersBtn" text="%filter.clear"
                             onAction="#handleClearFilters"
                             style="-fx-background-color: transparent; -fx-text-fill: #aaaaaa;
                    -fx-font-size: 11px; -fx-cursor: hand; -fx-padding: 3 8 3 8;
@@ -192,7 +192,7 @@
                     <VBox fx:id="taskContainer" spacing="0">
                         <padding><Insets top="0" right="0" bottom="16" left="0"/></padding>
                         <Label fx:id="emptyLabel"
-                               text="✨ No tienes tareas activas. ¡Crea una para empezar!"
+                               text="%tasks.empty.default"
                                style="-fx-text-fill: #aaaaaa; -fx-font-size: 14px;
                                       -fx-padding: 24 20 0 20;"/>
                     </VBox>

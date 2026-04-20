@@ -45,7 +45,7 @@
            visible="false" managed="false"/>
 
     <HBox spacing="10" alignment="CENTER_RIGHT">
-        <Button text="Cancelar"
+        <Button text="%dialog.cancel"
                 onAction="#handleCancel"
                 style="-fx-background-color: #f0f0f5; -fx-text-fill: #555555;
                        -fx-background-radius: 6px; -fx-cursor: hand;
