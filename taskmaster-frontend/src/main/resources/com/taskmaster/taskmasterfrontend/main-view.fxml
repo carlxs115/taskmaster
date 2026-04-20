@@ -90,6 +90,14 @@
                 </ScrollPane>
 
                 <Separator style="-fx-background-color: #2a2a3e;"/>
+                <Button fx:id="btnHelp" text="❓  Ayuda"
+                        onAction="#handleHelp"
+                        maxWidth="Infinity"
+                        style="-fx-background-color: transparent; -fx-text-fill: #9999bb;
+               -fx-font-size: 13px; -fx-cursor: hand; -fx-alignment: CENTER-LEFT;
+               -fx-padding: 8 16 8 16;"/>
+
+                <Separator style="-fx-background-color: #2a2a3e;"/>
                 <Button fx:id="btnSettings" text="⚙  Ajustes"
                         onAction="#handleSettings"
                         maxWidth="Infinity"

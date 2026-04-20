@@ -52,6 +52,8 @@ public class MainController {
     @FXML private Button btnSecurity;
     @FXML private StackPane sidebarAvatarContainer;
     private AvatarView sidebarAvatar;
+    @FXML private Button btnHelp;
+
 
     private final java.util.Deque<Runnable> navigationStack = new java.util.ArrayDeque<>();
 
@@ -1195,7 +1197,7 @@ public class MainController {
     }
 
     // =========================================================================
-    //  OVERLAYS — ajustes, seguridad y papelera
+    //  OVERLAYS — ajustes, seguridad, papelera y ayuda
     // =========================================================================
     @FXML
     private void handleSettings() {
@@ -1251,6 +1253,117 @@ public class MainController {
         } catch (IOException e) {
             showAlert("Error", "No se pudo abrir la papelera");
         }
+    }
+
+    @FXML
+    private void handleHelp() {
+        ContextMenu menu = new ContextMenu();
+        menu.setStyle("-fx-background-color: #1a1a2e; -fx-border-color: #2a2a3e; " +
+                "-fx-border-width: 1; -fx-background-radius: 8; -fx-border-radius: 8;");
+
+        MenuItem manualItem = new MenuItem("📖  Manual de usuario");
+        manualItem.setStyle("-fx-font-size: 13px; -fx-padding: 8 16 8 16; -fx-text-fill: #9999bb;");
+        manualItem.setOnAction(e -> {
+            // TODO: abrir PDF del manual cuando esté listo
+            showAlert("Próximamente", "El manual de usuario estará disponible en una próxima versión.");
+        });
+
+        MenuItem aboutItem = new MenuItem("ℹ  Acerca de TaskMaster");
+        aboutItem.setStyle("-fx-font-size: 13px; -fx-padding: 8 16 8 16; -fx-text-fill: #9999bb;");
+        aboutItem.setOnAction(e -> showAboutDialog());
+
+        menu.getItems().addAll(manualItem, new SeparatorMenuItem(), aboutItem);
+        menu.show(btnHelp, javafx.geometry.Side.RIGHT, 4, 0);
+    }
+
+    private void showAboutDialog() {
+        Stage dialog = new Stage();
+        dialog.setTitle("Acerca de TaskMaster");
+        dialog.initModality(Modality.APPLICATION_MODAL);
+        dialog.initOwner(btnHome.getScene().getWindow());
+        dialog.setResizable(false);
+
+        // ── Logo placeholder (sustituir por ImageView cuando haya icono) ──
+        StackPane logoContainer = new StackPane();
+        logoContainer.setMinSize(72, 72);
+        logoContainer.setMaxSize(72, 72);
+        logoContainer.setStyle("-fx-background-color: #2a1f4e; -fx-background-radius: 16px;");
+        Label logoLabel = new Label("TM");
+        logoLabel.setStyle("-fx-font-size: 22px; -fx-font-weight: bold; " +
+                "-fx-text-fill: #a78bfa;");
+        logoContainer.getChildren().add(logoLabel);
+
+        // ── Nombre y versión ──
+        Label appName = new Label("TaskMaster");
+        appName.setStyle("-fx-font-size: 20px; -fx-font-weight: bold; -fx-text-fill: #1e1e2e;");
+
+        Label version = new Label("Versión 1.0.0");
+        version.setStyle("-fx-font-size: 12px; -fx-text-fill: #888888;");
+
+        Label description = new Label("Aplicación de gestión de tareas y proyectos\ndesarrollada como Trabajo de Fin de Grado (TFG)\ndel ciclo formativo DAM.");
+        description.setStyle("-fx-font-size: 12px; -fx-text-fill: #555555; -fx-text-alignment: center;");
+        description.setTextAlignment(javafx.scene.text.TextAlignment.CENTER);
+
+        Separator sep1 = new Separator();
+        sep1.setStyle("-fx-background-color: #e8e8e8;");
+
+        // ── Autor ──
+        Label authorTitle = new Label("AUTOR");
+        authorTitle.setStyle("-fx-font-size: 10px; -fx-font-weight: bold; -fx-text-fill: #aaaaaa;");
+
+        Label authorName = new Label("Carlos Riera");
+        authorName.setStyle("-fx-font-size: 13px; -fx-font-weight: bold; -fx-text-fill: #1e1e2e;");
+
+        Separator sep2 = new Separator();
+        sep2.setStyle("-fx-background-color: #e8e8e8;");
+
+        // ── Stack tecnológico ──
+        Label stackTitle = new Label("TECNOLOGÍAS");
+        stackTitle.setStyle("-fx-font-size: 10px; -fx-font-weight: bold; -fx-text-fill: #aaaaaa;");
+
+        HBox stackBadges = new HBox(8);
+        stackBadges.setAlignment(Pos.CENTER);
+        for (String[] tech : new String[][]{
+                {"JavaFX 21", "#dbeafe", "#1e40af"},
+                {"Spring Boot 3", "#dcfce7", "#166534"},
+                {"JDK 25",        "#f3e8ff", "#6b21a8"},
+                {"H2 Database",   "#fef3c7", "#92400e"}
+        }) {
+            Label badge = new Label(tech[0]);
+            badge.setStyle("-fx-font-size: 10px; -fx-padding: 3 9 3 9; " +
+                    "-fx-background-radius: 10px; " +
+                    "-fx-background-color: " + tech[1] + "; " +
+                    "-fx-text-fill: " + tech[2] + ";");
+            stackBadges.getChildren().add(badge);
+        }
+
+        // ── Botón cerrar ──
+        Button closeBtn = new Button("Cerrar");
+        closeBtn.setStyle("-fx-background-color: #7c3aed; -fx-text-fill: white; " +
+                "-fx-font-size: 13px; -fx-background-radius: 6px; " +
+                "-fx-cursor: hand; -fx-padding: 7 24 7 24;");
+        closeBtn.setOnAction(e -> dialog.close());
+
+        // ── Layout ──
+        VBox content = new VBox(14);
+        content.setAlignment(Pos.CENTER);
+        content.setStyle("-fx-background-color: white; -fx-padding: 32 36 28 36;");
+        content.getChildren().addAll(
+                logoContainer,
+                appName,
+                version,
+                description,
+                sep1,
+                authorTitle,
+                authorName,
+                sep2,
+                stackTitle,
+                stackBadges,
+                closeBtn
+        );
+
+        dialog.setScene(new Scene(content, 360, 500));
+        dialog.showAndWait();
     }
 
     /** Oculta el mainArea y añade el overlay al HBox central */
@@ -1641,7 +1754,7 @@ public class MainController {
 
     private void clearSidebarSelection() {
         for (Button btn : new Button[]{btnHome, btnAllTasks, btnPersonal,
-                btnEstudios, btnTrabajo, btnSettings, btnSecurity, btnTrash}) {
+                btnEstudios, btnTrabajo, btnSettings, btnSecurity, btnTrash, btnHelp}) {
             btn.setStyle(SIDEBAR_INACTIVE);
         }
         for (Node node : projectListContainer.getChildren()) {
