@@ -16,12 +16,11 @@
     <!-- Área de recorte circular (256x256 fijo) -->
     <StackPane fx:id="cropContainer"
                style="-fx-background-color: #f0f0f5; -fx-border-color: #3d2f6e;
-                      -fx-border-width: 2; -fx-border-radius: 128;
-                      -fx-background-radius: 128;"
+                  -fx-border-width: 2; -fx-border-radius: 128;
+                  -fx-background-radius: 128;"
                minWidth="256" minHeight="256"
-               maxWidth="256" maxHeight="256"
-               StackPane.alignment="CENTER">
-        <ImageView fx:id="imageView" preserveRatio="true"/>
+               maxWidth="256" maxHeight="256">
+        <ImageView fx:id="imageView" fitWidth="256" fitHeight="256"/>
     </StackPane>
 
     <!-- Slider de zoom -->

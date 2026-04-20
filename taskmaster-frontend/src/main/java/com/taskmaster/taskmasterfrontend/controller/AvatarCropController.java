@@ -12,28 +12,22 @@ import javafx.scene.image.WritableImage;
 import javafx.scene.layout.StackPane;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Circle;
-import javafx.scene.shape.Rectangle;
-import javafx.scene.shape.Shape;
 import javafx.stage.Stage;
 
 import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayOutputStream;
-import java.io.File;
 
 /**
  * AVATARCROPCONTROLLER
  *
  * Diálogo modal para recortar una imagen en círculo antes de subirla como avatar.
  *
- * Funcionalidad:
- *   - El usuario selecciona una imagen (pasada desde el controller padre).
- *   - La imagen se muestra en un área circular fija de 256x256 px.
- *   - Se puede arrastrar la imagen para reposicionarla.
- *   - Se puede ajustar el zoom con un slider (1.0x - 3.0x).
- *   - Al guardar, se genera un PNG de 256x256 ya recortado en círculo.
- *
- * El resultado se obtiene con getCroppedImageBytes() tras showAndWait().
+ * Implementación basada en viewport del ImageView:
+ *   - El ImageView siempre ocupa 256x256 fijos en la UI.
+ *   - El viewport define qué región de la imagen original se muestra dentro.
+ *   - Arrastrar/zoom modifican el viewport (x, y, width, height en coordenadas de la imagen original).
+ *   - Al guardar, se renderiza el ImageView (ya con el viewport aplicado) a PNG.
  */
 public class AvatarCropController {
 
@@ -50,34 +44,36 @@ public class AvatarCropController {
     private byte[] resultBytes;
     private boolean saved = false;
 
+    // Estado del viewport actual sobre la imagen original (en coords de la imagen)
+    private double vpX, vpY, vpSize;
+
     // Estado del arrastre
     private double dragAnchorX, dragAnchorY;
-    private double imageTranslateAnchorX, imageTranslateAnchorY;
+    private double vpAnchorX, vpAnchorY;
 
     @FXML
     public void initialize() {
-        // Máscara circular visual en el contenedor
+        // Máscara circular visual sobre el contenedor
         Circle clip = new Circle(OUTPUT_SIZE / 2.0, OUTPUT_SIZE / 2.0, OUTPUT_SIZE / 2.0);
         cropContainer.setClip(clip);
 
-        // Slider de zoom: escala la imagen en vivo
-        zoomSlider.valueProperty().addListener((obs, oldV, newV) -> {
-            imageView.setScaleX(newV.doubleValue());
-            imageView.setScaleY(newV.doubleValue());
-        });
+        // Slider de zoom: cambia el tamaño del viewport (menor viewport = más zoom)
+        zoomSlider.valueProperty().addListener((obs, oldV, newV) -> updateZoom(newV.doubleValue()));
 
-        // Arrastrar para reposicionar
+        // Arrastre para reposicionar el viewport
         imageView.setOnMousePressed(e -> {
             dragAnchorX = e.getSceneX();
             dragAnchorY = e.getSceneY();
-            imageTranslateAnchorX = imageView.getTranslateX();
-            imageTranslateAnchorY = imageView.getTranslateY();
+            vpAnchorX = vpX;
+            vpAnchorY = vpY;
         });
         imageView.setOnMouseDragged(e -> {
-            double dx = e.getSceneX() - dragAnchorX;
-            double dy = e.getSceneY() - dragAnchorY;
-            imageView.setTranslateX(imageTranslateAnchorX + dx);
-            imageView.setTranslateY(imageTranslateAnchorY + dy);
+            // Convertimos delta de pantalla a delta en coords de imagen original.
+            // El ImageView mide OUTPUT_SIZE pero muestra vpSize píxeles de imagen.
+            double ratio = vpSize / OUTPUT_SIZE;
+            double dx = (e.getSceneX() - dragAnchorX) * ratio;
+            double dy = (e.getSceneY() - dragAnchorY) * ratio;
+            setViewport(vpAnchorX - dx, vpAnchorY - dy, vpSize);
         });
     }
 
@@ -86,18 +82,35 @@ public class AvatarCropController {
         this.sourceImage = image;
         imageView.setImage(image);
 
-        // Ajuste inicial: que la imagen cubra el área circular (cover, no contain)
-        double scale = Math.max(
-                OUTPUT_SIZE / image.getWidth(),
-                OUTPUT_SIZE / image.getHeight()
-        );
-        imageView.setFitWidth(image.getWidth() * scale);
-        imageView.setFitHeight(image.getHeight() * scale);
-        imageView.setTranslateX(0);
-        imageView.setTranslateY(0);
-        imageView.setScaleX(1.0);
-        imageView.setScaleY(1.0);
+        // Viewport inicial: cuadrado centrado del tamaño del lado más corto.
+        double minSide = Math.min(image.getWidth(), image.getHeight());
+        vpSize = minSide;
+        vpX = (image.getWidth() - minSide) / 2.0;
+        vpY = (image.getHeight() - minSide) / 2.0;
+
+        setViewport(vpX, vpY, vpSize);
         zoomSlider.setValue(1.0);
+    }
+
+    /** Aplica un valor de zoom (1.0 = cuadrado completo, 3.0 = solo 1/3 del lado). */
+    private void updateZoom(double zoom) {
+        double minSide = Math.min(sourceImage.getWidth(), sourceImage.getHeight());
+        double newSize = minSide / zoom;
+
+        // Centramos el zoom manteniendo el punto central del viewport actual
+        double centerX = vpX + vpSize / 2.0;
+        double centerY = vpY + vpSize / 2.0;
+        setViewport(centerX - newSize / 2.0, centerY - newSize / 2.0, newSize);
+    }
+
+    /** Aplica un viewport clampeado para que no se salga de la imagen. */
+    private void setViewport(double x, double y, double size) {
+        double maxX = sourceImage.getWidth()  - size;
+        double maxY = sourceImage.getHeight() - size;
+        vpX = Math.max(0, Math.min(x, maxX));
+        vpY = Math.max(0, Math.min(y, maxY));
+        vpSize = size;
+        imageView.setViewport(new Rectangle2D(vpX, vpY, vpSize, vpSize));
     }
 
     @FXML
@@ -126,15 +139,10 @@ public class AvatarCropController {
         return saved ? resultBytes : null;
     }
 
-    /**
-     * Renderiza el contenido del cropContainer (ya clipado circularmente)
-     * a un PNG de 256x256. Usa JavaFX Snapshot + conversión via SwingFXUtils.
-     */
+    /** Renderiza el cropContainer (ImageView + clip circular) a un PNG de 256x256. */
     private byte[] renderToPng() throws Exception {
         SnapshotParameters params = new SnapshotParameters();
         params.setFill(Color.TRANSPARENT);
-        // Recortamos exactamente al área circular visible
-        params.setViewport(new Rectangle2D(0, 0, OUTPUT_SIZE, OUTPUT_SIZE));
 
         WritableImage fxImage = new WritableImage(OUTPUT_SIZE, OUTPUT_SIZE);
         cropContainer.snapshot(params, fxImage);
