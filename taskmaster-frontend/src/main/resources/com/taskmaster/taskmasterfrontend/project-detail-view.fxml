@@ -16,7 +16,12 @@
         <Label fx:id="projectNameLabel"
                style="-fx-font-size: 16px; -fx-font-weight: bold; -fx-text-fill: #1e1e2e;"/>
         <Region HBox.hgrow="ALWAYS"/>
-        <Button text="%project.detail.close"
+        <Button text="%common.menu.edit"
+                onAction="#handleEdit"
+                style="-fx-background-color: #7c3aed; -fx-text-fill: white;
+                   -fx-font-size: 12px; -fx-cursor: hand; -fx-padding: 5 12 5 12;
+                   -fx-background-radius: 6px;"/>
+        <Button text="%common.close"
                 onAction="#handleClose"
                 style="-fx-background-color: transparent; -fx-text-fill: #888888;
                        -fx-font-size: 12px; -fx-cursor: hand; -fx-padding: 5 12 5 12;"/>

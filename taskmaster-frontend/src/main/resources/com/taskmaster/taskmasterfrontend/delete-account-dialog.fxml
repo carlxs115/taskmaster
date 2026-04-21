@@ -22,9 +22,9 @@
               style="-fx-background-color: #fff5f5; -fx-padding: 14 16 14 16;
                      -fx-background-radius: 8px; -fx-border-color: #fecaca;
                      -fx-border-radius: 8px; -fx-border-width: 1;">
-            <Label text="⚠ Esta acción no se puede deshacer"
+            <Label text="%delete.account.warning"
                    style="-fx-font-size: 13px; -fx-font-weight: bold; -fx-text-fill: #e74c3c;"/>
-            <Label text="Se eliminarán permanentemente tu cuenta, todos tus proyectos y todas tus tareas."
+            <Label text="%delete.account.warning.detail"
                    style="-fx-font-size: 12px; -fx-text-fill: #888888;"
                    wrapText="true"
                    maxWidth="-Infinity"/>
@@ -32,7 +32,7 @@
 
         <!-- Confirmación con contraseña -->
         <VBox spacing="6">
-            <Label text="Introduce tu contraseña para confirmar"
+            <Label text="%delete.account.password.prompt"
                    style="-fx-font-size: 12px; -fx-font-weight: bold; -fx-text-fill: #555555;"/>
             <PasswordField fx:id="passwordField"
                            style="-fx-font-size: 13px; -fx-padding: 8 12 8 12;
@@ -51,7 +51,7 @@
                     style="-fx-background-color: #f0f0f5; -fx-text-fill: #555555;
                            -fx-font-size: 13px; -fx-background-radius: 6px;
                            -fx-cursor: hand; -fx-padding: 8 16 8 16;"/>
-            <Button text="Eliminar mi cuenta"
+            <Button text="%common.delete.account"
                     onAction="#handleDelete"
                     style="-fx-background-color: #e74c3c; -fx-text-fill: white;
                            -fx-font-size: 13px; -fx-background-radius: 6px;

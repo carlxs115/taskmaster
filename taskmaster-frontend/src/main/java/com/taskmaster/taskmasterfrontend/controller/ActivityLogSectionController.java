@@ -122,7 +122,6 @@ public class ActivityLogSectionController {
             rows.sort((a, b) -> b.rawDate().compareTo(a.rawDate()));
             activityTable.setItems(FXCollections.observableArrayList(rows));
         } catch (Exception e) {
-            System.out.println("ERROR en loadForEntity: " + e.getMessage());
             e.printStackTrace();
             activityTable.setItems(FXCollections.emptyObservableList());
         }

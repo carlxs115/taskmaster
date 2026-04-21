@@ -71,12 +71,14 @@ public class NewProjectController {
                 params.put("name", name);
                 params.put("description", description);
 
-                // Usamos postWithAuth porque este endpoint requiere autenticación
                 HttpResponse<String> response = AppContext.getInstance()
                         .getApiService()
                         .postWithAuthNoBody("/api/projects?name=" +
                                 java.net.URLEncoder.encode(name, "UTF-8") + "&description=" +
-                                java.net.URLEncoder.encode(description, "UTF-8") + "&category=" + categoryCombo.getValue());
+                                java.net.URLEncoder.encode(description, "UTF-8") +
+                                "&category=" + categoryToEnum(categoryCombo.getValue()) +
+                                "&status="   + statusToEnum(statusCombo.getValue()) +
+                                "&priority=" + priorityToEnum(priorityCombo.getValue()));
 
                 javafx.application.Platform.runLater(() -> {
                     if (response.statusCode() == 201) {
@@ -88,6 +90,7 @@ public class NewProjectController {
                     }
                 });
             } catch (Exception e) {
+                e.printStackTrace();
                 javafx.application.Platform.runLater(() -> showError(lm.get("error.connection")));
             }
         }).start();
@@ -105,5 +108,28 @@ public class NewProjectController {
     private void showError(String message) {
         errorLabel.setText(message);
         errorLabel.setVisible(true);
+    }
+
+    private String categoryToEnum(String label) {
+        if (label.equals(lm.get("category.PERSONAL"))) return "PERSONAL";
+        if (label.equals(lm.get("category.ESTUDIOS"))) return "ESTUDIOS";
+        if (label.equals(lm.get("category.TRABAJO")))  return "TRABAJO";
+        return label;
+    }
+
+    private String statusToEnum(String label) {
+        if (label.equals(lm.get("status.todo")))       return "TODO";
+        if (label.equals(lm.get("status.inprogress"))) return "IN_PROGRESS";
+        if (label.equals(lm.get("status.done")))       return "DONE";
+        if (label.equals(lm.get("status.cancelled")))  return "CANCELLED";
+        return label;
+    }
+
+    private String priorityToEnum(String label) {
+        if (label.equals(lm.get("priority.low")))    return "LOW";
+        if (label.equals(lm.get("priority.medium"))) return "MEDIUM";
+        if (label.equals(lm.get("priority.high")))   return "HIGH";
+        if (label.equals(lm.get("priority.urgent"))) return "URGENT";
+        return label;
     }
 }

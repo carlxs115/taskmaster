@@ -154,6 +154,7 @@ public class TaskDetailController {
                     Platform.runLater(() -> renderSubtasks(subtasks, taskId));
                 }
             } catch (Exception e) {
+                e.printStackTrace();
                 Platform.runLater(() -> showAlert(lm.get("error.title"), lm.get("task.detail.subtask.error.load")));
             }
         }).start();
@@ -215,6 +216,13 @@ public class TaskDetailController {
         titleLabel.setStyle(isDone
                 ? "-fx-font-size: 13px; -fx-text-fill: #aaaaaa; -fx-strikethrough: true;"
                 : "-fx-font-size: 13px; -fx-text-fill: #1e1e2e;");
+
+        titleLabel.setOnMouseClicked(e -> openSubtaskDetail(stId));
+        titleLabel.setStyle(isDone
+                ? "-fx-font-size: 13px; -fx-text-fill: #aaaaaa; -fx-strikethrough: true; -fx-cursor: hand;"
+                : "-fx-font-size: 13px; -fx-text-fill: #1e1e2e; -fx-cursor: hand;");
+
+
         HBox.setHgrow(titleLabel, Priority.ALWAYS);
 
         Label priBadge = new Label(translatePriority(priority));
@@ -238,16 +246,13 @@ public class TaskDetailController {
             ContextMenu menu = new ContextMenu();
             menu.setStyle("-fx-background-color: white; -fx-border-color: #e8e8e8; " +
                     "-fx-border-width: 1; -fx-background-radius: 8; -fx-border-radius: 8;");
-            MenuItem detail = new MenuItem(lm.get("common.menu.detail"));
-            detail.setStyle("-fx-font-size: 13px; -fx-padding: 2 10 2 10;");
-            detail.setOnAction(ev -> openSubtaskDetail(stId));
             MenuItem edit   = new MenuItem(lm.get("common.menu.edit"));
             edit.setStyle("-fx-font-size: 13px; -fx-padding: 2 10 2 10;");
             edit.setOnAction(ev -> openEditSubtask(stId, parentTaskId));
             MenuItem delete = new MenuItem(lm.get("common.menu.delete"));
             delete.setStyle("-fx-font-size: 13px; -fx-padding: 2 10 2 10; -fx-text-fill: #e74c3c;");
             delete.setOnAction(ev -> deleteSubtask(stId, parentTaskId));
-            menu.getItems().addAll(detail, edit, delete);
+            menu.getItems().addAll(edit, delete);
             menu.show(menuBtn, javafx.geometry.Side.BOTTOM, 0, 0);
         });
 
@@ -315,6 +320,7 @@ public class TaskDetailController {
             Long parentTaskId = taskData.get("id").asLong();
             loadSubtasks(parentTaskId);
         } catch (Exception e) {
+            e.printStackTrace();
             showAlert(lm.get("error.title"), lm.get("error.open.subtask.detail"));
         }
     }
@@ -349,6 +355,7 @@ public class TaskDetailController {
             loadSubtasks(parentTaskId2);
             activityLogSectionController.loadForEntity("TASK", parentTaskId2, "SUBTASK");
         } catch (Exception e) {
+            e.printStackTrace();
             showAlert(lm.get("error.title"), lm.get("task.detail.subtask.error.edit"));
         }
     }
@@ -369,6 +376,7 @@ public class TaskDetailController {
                             if (onTaskChanged != null) onTaskChanged.run();
                         });
                     } catch (Exception e) {
+                        e.printStackTrace();
                         Platform.runLater(() -> showAlert(lm.get("error.title"), lm.get("task.detail.subtask.error.delete")));
                     }
                 }).start();
@@ -388,6 +396,7 @@ public class TaskDetailController {
                     Platform.runLater(() -> renderWorkLogs(logs));
                 }
             } catch (Exception e) {
+                e.printStackTrace();
                 Platform.runLater(() -> showAlert(lm.get("error.title"), lm.get("task.detail.worklog.error.load")));
             }
         }).start();
@@ -485,6 +494,7 @@ public class TaskDetailController {
             });
             showAsDialog(root, lm.get("task.detail.worklog.edit"));
         } catch (IOException e) {
+            e.printStackTrace();
             showAlert(lm.get("error.title"), lm.get("task.detail.worklog.error.open"));
         }
     }
@@ -505,6 +515,7 @@ public class TaskDetailController {
                             loadTotalHours(taskId);
                         });
                     } catch (Exception e) {
+                        e.printStackTrace();
                         Platform.runLater(() -> showAlert(lm.get("error.title"), lm.get("task.detail.worklog.error.delete")));
                     }
                 }).start();
@@ -545,6 +556,7 @@ public class TaskDetailController {
             });
             showAsDialog(root, lm.get("common.worklog.add.title"));
         } catch (IOException e) {
+            e.printStackTrace();
             showAlert(lm.get("error.title"), lm.get("error.open.dialog"));
         }
     }
@@ -578,6 +590,7 @@ public class TaskDetailController {
             });
             showAsDialog(root, lm.get("task.detail.subtask.edit"));
         } catch (IOException e) {
+            e.printStackTrace();
             showAlert(lm.get("error.title"), lm.get("error.open.dialog"));
         }
     }
@@ -599,6 +612,7 @@ public class TaskDetailController {
             });
             showAsDialog(root, isSubtask ? lm.get("task.detail.subtask.edit") : lm.get("common.menu.edit"));
         } catch (IOException e) {
+            e.printStackTrace();
             showAlert(lm.get("error.title"), lm.get("error.open.dialog"));
         }
     }

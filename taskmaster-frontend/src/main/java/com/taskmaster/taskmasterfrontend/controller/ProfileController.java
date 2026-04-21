@@ -277,6 +277,9 @@ public class ProfileController {
     private void renderProfile(JsonNode user) {
         String username = user.get("username").asText();
         String email = user.get("email").asText();
+        usernameLabel.setText(username);
+        usernameValueLabel.setText(username);
+        emailLabel.setText(email);
 
         // Fecha de nacimiento
         if (user.has("birthDate") && !user.get("birthDate").isNull()) {

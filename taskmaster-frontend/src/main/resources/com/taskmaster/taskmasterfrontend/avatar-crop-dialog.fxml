@@ -32,7 +32,7 @@
 
     <!-- Botones -->
     <HBox spacing="10" alignment="CENTER_RIGHT">
-        <Button fx:id="cancelButton" text="%avatar.crop.cancel"
+        <Button fx:id="cancelButton" text="%common.cancel"
                 onAction="#handleCancel"
                 style="-fx-background-color: #f0f0f5; -fx-text-fill: #555570;
                        -fx-font-size: 12px; -fx-background-radius: 6px;

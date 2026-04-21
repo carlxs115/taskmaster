@@ -15,6 +15,7 @@ import javafx.scene.layout.*;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
 
+import java.io.IOException;
 import java.net.http.HttpResponse;
 import java.time.LocalDate;
 
@@ -38,6 +39,7 @@ public class ProjectDetailController {
     @FXML private ActivityLogSectionController activityLogSectionController;
 
     private Runnable onClose;
+    private Runnable onProjectUpdated;
     private JsonNode projectData;
     private java.util.function.Consumer<JsonNode> onOpenTaskDetail;
     private final ObjectMapper objectMapper = new ObjectMapper()
@@ -53,6 +55,10 @@ public class ProjectDetailController {
 
     public void setOnClose(Runnable callback) {
         this.onClose = callback;
+    }
+
+    public void setOnProjectUpdated(Runnable callback) {
+        this.onProjectUpdated = callback;
     }
 
     public void setOnOpenTaskDetail(java.util.function.Consumer<JsonNode> callback) {
@@ -102,7 +108,7 @@ public class ProjectDetailController {
                     Platform.runLater(() -> renderTasks(tasks));
                 }
             } catch (Exception e) {
-                Platform.runLater(() -> showAlert("Error", "No se pudieron cargar las tareas"));
+                Platform.runLater(() -> showAlert(lm.get("error.title"), lm.get("error.load.tasks")));
             }
         }).start();
     }
@@ -188,6 +194,12 @@ public class ProjectDetailController {
                 ? "-fx-font-size: 13px; -fx-text-fill: #aaaaaa; -fx-strikethrough: true;"
                 : "-fx-font-size: 13px; -fx-text-fill: #1e1e2e;");
 
+        titleLabel.setOnMouseClicked(e -> openTaskDetail(task, task.path("id").asLong()));
+        titleLabel.setStyle(isDone
+                ? "-fx-font-size: 13px; -fx-text-fill: #aaaaaa; -fx-strikethrough: true; -fx-cursor: hand;"
+                : "-fx-font-size: 13px; -fx-text-fill: #1e1e2e; -fx-cursor: hand;");
+
+
         // Badge fecha vencida
         boolean isOverdue = false;
         if (task.has("dueDate") && !task.get("dueDate").isNull() && !isDone) {
@@ -205,7 +217,7 @@ public class ProjectDetailController {
         row.getChildren().addAll(statusDot, titleLabel);
 
         if (isOverdue) {
-            Label overdueLabel = new Label("Vencida");
+            Label overdueLabel = new Label(lm.get("date.overdue"));
             overdueLabel.setStyle("-fx-font-size: 10px; -fx-padding: 2 7 2 7; " +
                     "-fx-background-radius: 10px; -fx-text-fill: #991b1b; " +
                     "-fx-background-color: #fee2e2;");
@@ -231,16 +243,13 @@ public class ProjectDetailController {
             ContextMenu menu = new ContextMenu();
             menu.setStyle("-fx-background-color: white; -fx-border-color: #e8e8e8; " +
                     "-fx-border-width: 1; -fx-background-radius: 8; -fx-border-radius: 8;");
-            MenuItem detail = new MenuItem(lm.get("common.menu.detail"));
-            detail.setStyle("-fx-font-size: 13px; -fx-padding: 2 10 2 10;");
-            detail.setOnAction(ev -> openTaskDetail(task, taskId));
             MenuItem edit = new MenuItem(lm.get("common.menu.edit"));
             edit.setStyle("-fx-font-size: 13px; -fx-padding: 2 10 2 10;");
             edit.setOnAction(ev -> openEditTask(task, taskId));
             MenuItem delete = new MenuItem(lm.get("common.menu.delete"));
             delete.setStyle("-fx-font-size: 13px; -fx-padding: 2 10 2 10; -fx-text-fill: #e74c3c;");
             delete.setOnAction(ev -> deleteTask(taskId));
-            menu.getItems().addAll(detail, edit, delete);
+            menu.getItems().addAll(edit, delete);
             menu.show(menuBtn, javafx.geometry.Side.BOTTOM, 0, 0);
         });
 
@@ -260,7 +269,9 @@ public class ProjectDetailController {
         // fallback
         try {
             FXMLLoader loader = new FXMLLoader(
-                    getClass().getResource("/com/taskmaster/taskmasterfrontend/task-detail-view.fxml"));
+                    getClass().getResource("/com/taskmaster/taskmasterfrontend/task-detail-view.fxml"),
+                    LanguageManager.getInstance().getBundle()
+            );
             VBox root = loader.load();
             TaskDetailController controller = loader.getController();
             controller.initData(task);
@@ -269,14 +280,16 @@ public class ProjectDetailController {
             activityLogSectionController.loadForEntity("PROJECT", projectId, "TASK");
             loadTasks(projectId);
         } catch (Exception e) {
-            showAlert("Error", "No se pudo abrir el detalle de la tarea");
+            showAlert(lm.get("error.title"), lm.get("error.open.task.detail"));
         }
     }
 
     private void openEditTask(JsonNode task, Long taskId) {
         try {
             FXMLLoader loader = new FXMLLoader(
-                    getClass().getResource("/com/taskmaster/taskmasterfrontend/edit-task-dialog.fxml"));
+                    getClass().getResource("/com/taskmaster/taskmasterfrontend/edit-task-dialog.fxml"),
+                    LanguageManager.getInstance().getBundle()
+            );
             VBox root = loader.load();
             EditTaskController controller = loader.getController();
             controller.initData(task);
@@ -285,7 +298,7 @@ public class ProjectDetailController {
                 loadTasks(projectId);
                 activityLogSectionController.loadForEntity("PROJECT", projectId, "TASK");
             });
-            showAsDialog(root, lm.get("project.detail.task.edit"));
+            showAsDialog(root, lm.get("common.task.edit"));
         } catch (Exception e) {
             showAlert(lm.get("error.title"), lm.get("project.detail.task.editor.error"));
         }
@@ -313,6 +326,37 @@ public class ProjectDetailController {
                 }).start();
             }
         });
+    }
+
+    @FXML
+    private void handleEdit() {
+        Long projectId   = projectData.get("id").asLong();
+        String projectName = projectData.get("name").asText();
+        try {
+            FXMLLoader loader = new FXMLLoader(
+                    getClass().getResource("/com/taskmaster/taskmasterfrontend/edit-project-dialog.fxml"),
+                    LanguageManager.getInstance().getBundle()
+            );
+            VBox root = loader.load();
+            EditProjectController controller = loader.getController();
+            controller.initData(projectId, projectName);
+            controller.setOnProjectUpdated(() -> {
+                new Thread(() -> {
+                    try {
+                        HttpResponse<String> r = AppContext.getInstance()
+                                .getApiService().get("/api/projects/" + projectId);
+                        if (r.statusCode() == 200) {
+                            JsonNode updated = objectMapper.readTree(r.body());
+                            Platform.runLater(() -> initData(updated));
+                        }
+                    } catch (Exception ignored) {}
+                }).start();
+                if (onProjectUpdated != null) onProjectUpdated.run();
+            });
+            showAsDialog(root, LanguageManager.getInstance().get("edit.project.title"));
+        } catch (IOException e) {
+            showAlert(lm.get("error.title"), lm.get("error.open.dialog"));
+        }
     }
 
     @FXML
@@ -366,21 +410,21 @@ public class ProjectDetailController {
 
     private String translateStatus(String status) {
         return switch (status) {
-            case "TODO"        -> "PENDIENTE";
-            case "IN_PROGRESS" -> "EN CURSO";
-            case "DONE"        -> "COMPLETADA";
-            case "SUBMITTED" -> "ENTREGADA";
-            case "CANCELLED"   -> "CANCELADA";
+            case "TODO"        -> lm.get("status.TODO");
+            case "IN_PROGRESS" -> lm.get("status.IN_PROGRESS");
+            case "DONE"        -> lm.get("status.DONE");
+            case "SUBMITTED"   -> lm.get("status.SUBMITTED");
+            case "CANCELLED"   -> lm.get("status.CANCELLED");
             default            -> status;
         };
     }
 
     private String translatePriority(String priority) {
         return switch (priority) {
-            case "LOW"    -> "BAJA";
-            case "MEDIUM" -> "MEDIA";
-            case "HIGH"   -> "ALTA";
-            case "URGENT" -> "URGENTE";
+            case "LOW"    -> lm.get("priority.LOW");
+            case "MEDIUM" -> lm.get("priority.MEDIUM");
+            case "HIGH"   -> lm.get("priority.HIGH");
+            case "URGENT" -> lm.get("priority.URGENT");
             default       -> priority;
         };
     }

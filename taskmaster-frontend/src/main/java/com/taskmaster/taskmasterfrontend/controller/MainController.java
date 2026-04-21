@@ -55,10 +55,12 @@ public class MainController {
     @FXML private TextField searchField;
     @FXML private Button btnSecurity;
     @FXML private StackPane sidebarAvatarContainer;
-    private AvatarView sidebarAvatar;
     @FXML private Button btnHelp;
 
+    private AvatarView sidebarAvatar;
+
     private final java.util.Deque<Runnable> navigationStack = new java.util.ArrayDeque<>();
+    private ProjectDetailController activeProjectDetailController;
     private final LanguageManager lm = LanguageManager.getInstance();
 
     // ── Filtros y orden ───────────────────────────────────────────────────────
@@ -148,7 +150,9 @@ public class MainController {
         clearSidebarSelection();
         try {
             FXMLLoader loader = new FXMLLoader(
-                    getClass().getResource("/com/taskmaster/taskmasterfrontend/profile-view.fxml"));
+                    getClass().getResource("/com/taskmaster/taskmasterfrontend/profile-view.fxml"),
+                    LanguageManager.getInstance().getBundle()
+            );
             VBox profileView = loader.load();
             HBox.setHgrow(profileView, Priority.ALWAYS);
             profileView.setUserData("profile");
@@ -168,7 +172,9 @@ public class MainController {
     private void openChangePassword() {
         try {
             FXMLLoader loader = new FXMLLoader(
-                    getClass().getResource("/com/taskmaster/taskmasterfrontend/change-password-dialog.fxml"));
+                    getClass().getResource("/com/taskmaster/taskmasterfrontend/change-password-dialog.fxml"),
+                    LanguageManager.getInstance().getBundle()
+            );
             VBox root = loader.load();
             Stage dialog = new Stage();
             dialog.setTitle(lm.get("%security.password.button"));
@@ -183,7 +189,9 @@ public class MainController {
     private void openDeleteAccount() {
         try {
             FXMLLoader loader = new FXMLLoader(
-                    getClass().getResource("/com/taskmaster/taskmasterfrontend/delete-account-dialog.fxml"));
+                    getClass().getResource("/com/taskmaster/taskmasterfrontend/delete-account-dialog.fxml"),
+                    LanguageManager.getInstance().getBundle()
+            );
             VBox root = loader.load();
             DeleteAccountController controller = loader.getController();
             controller.setOnAccountDeleted(this::handleLogout);
@@ -202,7 +210,7 @@ public class MainController {
     // =========================================================================
     @FXML
     private void handleCreateMenu() {
-        boolean isHome = "Inicio".equals(areaTitle.getText());
+        boolean isHome = selectedProjectId == null && selectedCategory == null && !viewingAllTasks;
 
         if (!isHome) {
             handleNewTask();
@@ -275,9 +283,8 @@ public class MainController {
             btn.setOnAction(e -> {
                 selectedProjectId = pid;
                 selectedCategory  = null;
-                areaTitle.setText(name);
                 setSidebarProjectActive(pid);
-                loadTasksForProject(pid);
+                openProjectDetail(pNode);
             });
 
             Button menuBtn = new Button("•••");
@@ -286,16 +293,13 @@ public class MainController {
                     "-fx-padding: 2 6 2 6; -fx-background-radius: 6px;");
             menuBtn.setOnAction(e -> {
                 ContextMenu cm = new ContextMenu();
-                MenuItem detail = new MenuItem("👁 Ver detalles");
-                MenuItem edit   = new MenuItem("✏ Editar");
-                MenuItem delete = new MenuItem("🗑 Eliminar");
-                detail.setStyle("-fx-font-size: 13px; -fx-padding: 6 16 6 16;");
+                MenuItem edit   = new MenuItem(lm.get("common.menu.edit"));
+                MenuItem delete = new MenuItem(lm.get("common.menu.delete"));
                 edit.setStyle("-fx-font-size: 13px; -fx-padding: 6 16 6 16;");
                 delete.setStyle("-fx-font-size: 13px; -fx-padding: 6 16 6 16;");
-                detail.setOnAction(ev -> openProjectDetail(pNode));
                 edit.setOnAction(ev   -> handleEditProject(pid, name));
                 delete.setOnAction(ev -> handleDeleteProject(pid, name));
-                cm.getItems().addAll(detail, edit, delete);
+                cm.getItems().addAll(edit, delete);
                 cm.show(menuBtn, javafx.geometry.Side.BOTTOM, 0, 0);
             });
 
@@ -390,8 +394,9 @@ public class MainController {
                 birthdayBanner.setStyle("-fx-background-color: #fef3c7; -fx-padding: 10 24 10 24; " +
                         "-fx-border-color: #fcd34d; -fx-border-width: 0 0 1 0;");
                 birthdayBanner.setAlignment(Pos.CENTER_LEFT);
-                Label birthdayLabel = new Label("🎂  ¡Feliz cumpleaños, " +
-                        AppContext.getInstance().getCurrentUsername() + "! Que tengas un día genial 🎉");
+                Label birthdayLabel = new Label(
+                        java.text.MessageFormat.format(lm.get("birthday.header"),
+                                AppContext.getInstance().getCurrentUsername()));
                 birthdayLabel.setStyle("-fx-font-size: 13px; -fx-text-fill: #92400e;");
                 birthdayBanner.getChildren().add(birthdayLabel);
                 taskContainer.getChildren().add(birthdayBanner);
@@ -639,6 +644,12 @@ public class MainController {
             Region spacer = new Region();
             HBox.setHgrow(spacer, Priority.ALWAYS);
             row.getChildren().addAll(check, titleLabel, badges);
+            row.setOnMouseClicked(e -> {
+                if (e.getTarget() != check) {
+                    openTaskDetail(task);
+                }
+            });
+            row.setStyle("-fx-padding: 9 0 9 0; -fx-cursor: hand;");
             panel.getChildren().add(row);
         }
         return panel;
@@ -738,20 +749,20 @@ public class MainController {
 
     private boolean matchesStatusLabel(String enumVal, String label) {
         return switch (enumVal) {
-            case "TODO"        -> label.equals("Pendiente");
-            case "IN_PROGRESS" -> label.equals("En curso");
-            case "DONE"        -> label.equals("Completada");
-            case "CANCELLED"   -> label.equals("Cancelada");
+            case "TODO"        -> label.equals(lm.get("status.todo"));
+            case "IN_PROGRESS" -> label.equals(lm.get("status.inprogress"));
+            case "DONE"        -> label.equals(lm.get("status.done"));
+            case "CANCELLED"   -> label.equals(lm.get("status.cancelled"));
             default            -> false;
         };
     }
 
     private boolean matchesPriorityLabel(String enumVal, String label) {
         return switch (enumVal) {
-            case "LOW"    -> label.equals("Baja");
-            case "MEDIUM" -> label.equals("Media");
-            case "HIGH"   -> label.equals("Alta");
-            case "URGENT" -> label.equals("Urgente");
+            case "LOW"    -> label.equals(lm.get("priority.low"));
+            case "MEDIUM" -> label.equals(lm.get("priority.medium"));
+            case "HIGH"   -> label.equals(lm.get("priority.high"));
+            case "URGENT" -> label.equals(lm.get("priority.urgent"));
             default       -> false;
         };
     }
@@ -788,6 +799,9 @@ public class MainController {
         Label titleLabel = new Label(title);
         updateTitleStyle(titleLabel, "DONE".equals(status));
         HBox.setHgrow(titleLabel, Priority.ALWAYS);
+
+        titleLabel.setOnMouseClicked(e -> openTaskDetail(task));
+        titleLabel.setStyle("-fx-font-size: 13px; -fx-text-fill: #1e1e2e; -fx-cursor: hand;");
 
         Label statusBadge = new Label(translateStatus(status));
         statusBadge.setStyle("-fx-font-size: 11px; -fx-padding: 2 8 2 8; " +
@@ -844,19 +858,15 @@ public class MainController {
             menu.setStyle("-fx-background-color: white; -fx-border-color: #e8e8e8; " +
                     "-fx-border-width: 1; -fx-background-radius: 8; -fx-border-radius: 8;");
 
-            MenuItem detail = new MenuItem("👁  Ver detalles");
-            detail.setStyle("-fx-font-size: 13px; -fx-padding: 2 10 2 10;");
-            detail.setOnAction(ev -> openTaskDetail(task));
-
-            MenuItem edit = new MenuItem("✏️  Editar");
+            MenuItem edit = new MenuItem(lm.get("common.menu.edit"));
             edit.setStyle("-fx-font-size: 13px; -fx-padding: 2 10 2 10;");
             edit.setOnAction(ev -> handleEditTask(taskId, task));
 
-            MenuItem delete = new MenuItem("🗑  Eliminar");
+            MenuItem delete = new MenuItem(lm.get("common.menu.delete"));
             delete.setStyle("-fx-font-size: 13px; -fx-padding: 2 10 2 10; -fx-text-fill: #e74c3c;");
             delete.setOnAction(ev -> handleDeleteTask(taskId));
 
-            menu.getItems().addAll(detail, edit, delete);
+            menu.getItems().addAll(edit, delete);
             menu.show(menuBtn, javafx.geometry.Side.BOTTOM, 0, 0);
         });
 
@@ -878,7 +888,7 @@ public class MainController {
                     "-fx-border-radius: 8px; -fx-border-width: 1; " +
                     "-fx-border-color: #fecaca; " +
                     "-fx-border-left-color: #e74c3c; -fx-border-width: 1 1 1 3;");
-            Label overdueLabel = new Label("Vencida");
+            Label overdueLabel = new Label(lm.get("date.overdue"));
             overdueLabel.setStyle("-fx-font-size: 10px; -fx-padding: 2 7 2 7; " +
                     "-fx-background-radius: 10px; -fx-text-fill: #991b1b; " +
                     "-fx-background-color: #fee2e2;");
@@ -892,7 +902,9 @@ public class MainController {
     private void openProjectDetail(JsonNode project) {
         try {
             FXMLLoader loader = new FXMLLoader(
-                    getClass().getResource("/com/taskmaster/taskmasterfrontend/project-detail-view.fxml"));
+                    getClass().getResource("/com/taskmaster/taskmasterfrontend/project-detail-view.fxml"),
+                    LanguageManager.getInstance().getBundle()
+            );
             VBox root = loader.load();
             root.setUserData("detail");
             HBox.setHgrow(root, Priority.ALWAYS);
@@ -901,10 +913,33 @@ public class MainController {
             ProjectDetailController controller = loader.getController();
             controller.initData(project);
             controller.setOnClose(this::navigateBack);
+            activeProjectDetailController = controller;
+
+            controller.setOnProjectUpdated(() -> {
+                loadProjects();
+                reloadTasks();
+                new Thread(() -> {
+                    try {
+                        HttpResponse<String> r = AppContext.getInstance()
+                                .getApiService().get("/api/projects/" + project.get("id").asLong());
+                        if (r.statusCode() == 200) {
+                            JsonNode updated = objectMapper.readTree(r.body());
+                            Platform.runLater(() -> activeProjectDetailController.initData(updated));
+                        }
+                    } catch (Exception ignored) {}
+                }).start();
+            });
+
             controller.setOnOpenTaskDetail(task -> {
                 navigationStack.push(() -> openProjectDetail(project));
                 openTaskDetail(task);
             });
+
+            controller.setOnClose(() -> {
+                activeProjectDetailController = null;
+                navigateBack();
+            });
+
             navigationStack.clear();
             swapMainAreaWith(root);
         } catch (IOException e) {
@@ -915,7 +950,9 @@ public class MainController {
     private void openTaskDetail(JsonNode task) {
         try {
             FXMLLoader loader = new FXMLLoader(
-                    getClass().getResource("/com/taskmaster/taskmasterfrontend/task-detail-view.fxml"));
+                    getClass().getResource("/com/taskmaster/taskmasterfrontend/task-detail-view.fxml"),
+                    LanguageManager.getInstance().getBundle()
+            );
             VBox root = loader.load();
             root.setUserData("detail");
             HBox.setHgrow(root, Priority.ALWAYS);
@@ -931,6 +968,7 @@ public class MainController {
             });
             swapMainAreaWith(root);
         } catch (IOException e) {
+            e.printStackTrace();
             showAlert("error.title", "error.open.task.detail");
         }
     }
@@ -938,7 +976,9 @@ public class MainController {
     private void openSubtaskDetail(JsonNode subtask) {
         try {
             FXMLLoader loader = new FXMLLoader(
-                    getClass().getResource("/com/taskmaster/taskmasterfrontend/task-detail-view.fxml"));
+                    getClass().getResource("/com/taskmaster/taskmasterfrontend/task-detail-view.fxml"),
+                    LanguageManager.getInstance().getBundle()
+            );
             VBox root = loader.load();
             root.setUserData("detail");
             HBox.setHgrow(root, Priority.ALWAYS);
@@ -967,6 +1007,7 @@ public class MainController {
         selectedProjectId = null;
         selectedCategory  = null;
         viewingAllTasks = false;
+        activeProjectDetailController = null;
         areaTitle.setText(LanguageManager.getInstance().get("sidebar.home"));
         removeOverlayPanels();
         showMainArea();
@@ -977,6 +1018,7 @@ public class MainController {
 
     @FXML
     private void handleAllTasks() {
+        activeProjectDetailController = null;
         removeOverlayPanels();
         showMainArea();
         selectedProjectId = null;
@@ -1000,6 +1042,7 @@ public class MainController {
     }
 
     @FXML private void handleCategoryPersonal() {
+        activeProjectDetailController = null;
         viewingAllTasks = false;
         removeOverlayPanels();
         showMainArea();
@@ -1007,6 +1050,7 @@ public class MainController {
         setSidebarActive(btnPersonal);
     }
     @FXML private void handleCategoryEstudios() {
+        activeProjectDetailController = null;
         viewingAllTasks = false;
         removeOverlayPanels();
         showMainArea();
@@ -1014,6 +1058,7 @@ public class MainController {
         setSidebarActive(btnEstudios);
     }
     @FXML private void handleCategoryTrabajo()  {
+        activeProjectDetailController = null;
         viewingAllTasks = false;
         removeOverlayPanels();
         showMainArea();
@@ -1182,7 +1227,7 @@ public class MainController {
         taskContainer.getChildren().clear();
         taskContainer.getChildren().add(emptyLabel);
         if (tasks.isEmpty()) {
-            emptyLabel.setText("No hay tareas que coincidan con los filtros");
+            emptyLabel.setText(lm.get("tasks.empty.filter"));
             emptyLabel.setVisible(true);
             emptyLabel.setManaged(true);
             return;
@@ -1567,17 +1612,7 @@ public class MainController {
                 controller.setPreSelectedCategory(currentCategory);
             }
 
-            controller.setOnTaskCreated(() -> {
-                if (currentProjectId != null) {
-                    loadTasksForProject(currentProjectId);
-                } else if (currentCategory != null) {
-                    loadTasksByCategory(currentCategory, currentTitle);
-                } else if (!"Inicio".equals(currentTitle)) {
-                    handleAllTasks();
-                } else {
-                    loadHome();
-                }
-            });
+            controller.setOnTaskCreated(this::reloadTasks);
             showAsDialog(root, lm.get("new.task.title"));
         } catch (IOException e) {
             showAlert("error.title", "error.open.dialog");
@@ -1593,8 +1628,24 @@ public class MainController {
             VBox root = loader.load();
             EditProjectController controller = loader.getController();
             controller.initData(projectId, projectName);
-            controller.setOnProjectUpdated(this::loadProjects);
-            showAsDialog(root, "Editar proyecto");
+            controller.setOnProjectUpdated(() -> {
+                loadProjects();
+                if (activeProjectDetailController != null) {
+                    new Thread(() -> {
+                        try {
+                            HttpResponse<String> r = AppContext.getInstance()
+                                    .getApiService().get("/api/projects/" + projectId);
+                            if (r.statusCode() == 200) {
+                                JsonNode updated = objectMapper.readTree(r.body());
+                                Platform.runLater(() -> activeProjectDetailController.initData(updated));
+                            }
+                        } catch (Exception ignored) {}
+                    }).start();
+                } else {
+                    reloadTasks();
+                }
+            });
+            showAsDialog(root, lm.get("edit.project.title"));
         } catch (IOException e) {
             showAlert("error.title", "error.open.dialog");
         }
@@ -1604,7 +1655,8 @@ public class MainController {
         Alert confirm = new Alert(Alert.AlertType.CONFIRMATION);
         confirm.setTitle(lm.get("confirm.delete.title.project"));
         confirm.setHeaderText(null);
-        confirm.setContentText(lm.get("confirm.delete.project") + projectName);
+        confirm.setContentText(
+                java.text.MessageFormat.format(lm.get("confirm.delete.project"), projectName));
         confirm.showAndWait().ifPresent(r -> {
             if (r == ButtonType.OK) {
                 new Thread(() -> {
@@ -1637,7 +1689,7 @@ public class MainController {
             controller.initData(task);
             controller.setOnTaskUpdated(this::reloadTasks);
             Stage dialog = new Stage();
-            dialog.setTitle("Editar tarea");
+            dialog.setTitle(lm.get("common.task.edit"));
             dialog.initModality(Modality.APPLICATION_MODAL);
             dialog.initOwner(btnHome.getScene().getWindow());
             dialog.setScene(new Scene(root));
@@ -1668,10 +1720,8 @@ public class MainController {
                                 }
                                 else if (currentCategory != null) {
                                     loadTasksByCategory(currentCategory, currentTitle);
-                                } else if (!"Inicio".equals(currentTitle)) {
-                                    handleAllTasks();
                                 } else {
-                                    loadHome();
+                                reloadTasks();
                                 }
                                 if (trashController != null) trashController.refresh();
                             } else showAlert("error.title", "error.delete.task");
@@ -1709,6 +1759,8 @@ public class MainController {
     //  HELPERS
     // =========================================================================
     private void reloadTasks() {
+        System.out.println("DEBUG reloadTasks: projectId=" + selectedProjectId +
+                " category=" + selectedCategory + " viewingAll=" + viewingAllTasks);
         if (selectedProjectId != null) loadTasksForProject(selectedProjectId);
         else if (selectedCategory != null) loadTasksByCategory(selectedCategory, areaTitle.getText());
         else if (viewingAllTasks) handleAllTasks();

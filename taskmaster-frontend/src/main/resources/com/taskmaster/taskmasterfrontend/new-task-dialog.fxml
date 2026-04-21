@@ -52,7 +52,7 @@
         <VBox fx:id="projectBox" spacing="6">
             <Label text="%new.task.project" style="-fx-font-size: 13px; -fx-text-fill: #2d2d2d;"/>
             <ComboBox fx:id="projectCombo"
-                      promptText="Sin proyecto (tarea personal)"
+                      promptText="%new.task.project.prompt"
                       maxWidth="Infinity"
                       style="-fx-pref-height: 38px;"/>
         </VBox>
