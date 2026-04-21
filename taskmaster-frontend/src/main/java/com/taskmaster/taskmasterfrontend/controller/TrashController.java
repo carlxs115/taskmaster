@@ -240,7 +240,7 @@ public class TrashController {
                             if (httpResponse.statusCode() == 200 || httpResponse.statusCode() == 204) {
                                 loadTrashTasks();
                             } else {
-                                showAlert(lm.get("error.title"), lm.get("trash.error.delete.task"));
+                                showAlert(lm.get("error.title"), lm.get("error.delete.task"));
                             }
                         });
                     } catch (Exception e) {
@@ -290,7 +290,7 @@ public class TrashController {
                             if (httpResponse.statusCode() == 200 || httpResponse.statusCode() == 204) {
                                 loadTrashProjects();
                             } else {
-                                showAlert(lm.get("error.title"), lm.get("trash.error.delete.project"));
+                                showAlert(lm.get("error.title"), lm.get("error.delete.project"));
                             }
                         });
                     } catch (Exception e) {

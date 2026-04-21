@@ -28,7 +28,7 @@
              style="-fx-background-color: #f5f5f5;">
 
         <!-- Pestaña Tareas -->
-        <Tab text="%trash.tab.tasks" closable="false">
+        <Tab text="%common.tasks" closable="false">
             <ScrollPane fitToWidth="true"
                         style="-fx-background-color: transparent; -fx-border-color: transparent;">
                 <VBox fx:id="trashTaskContainer" spacing="8">
@@ -43,7 +43,7 @@
         </Tab>
 
         <!-- Pestaña Proyectos -->
-        <Tab text="%trash.tab.projects" closable="false">
+        <Tab text="%common.projects" closable="false">
             <ScrollPane fitToWidth="true"
                         style="-fx-background-color: transparent; -fx-border-color: transparent;">
                 <VBox fx:id="trashProjectContainer" spacing="8">

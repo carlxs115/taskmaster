@@ -91,7 +91,7 @@ public class TaskDetailController {
 
         taskIdLabel.setText("#" + taskId);
         taskTitleLabel.setText(title);
-        descriptionLabel.setText(desc.isEmpty() ? lm.get("task.detail.no.description") : desc);
+        descriptionLabel.setText(desc.isEmpty() ? lm.get("common.no.description") : desc);
 
         // Status badge
         statusBadge.setText(translateStatus(status));
@@ -238,13 +238,13 @@ public class TaskDetailController {
             ContextMenu menu = new ContextMenu();
             menu.setStyle("-fx-background-color: white; -fx-border-color: #e8e8e8; " +
                     "-fx-border-width: 1; -fx-background-radius: 8; -fx-border-radius: 8;");
-            MenuItem detail = new MenuItem(lm.get("task.detail.menu.detail"));
+            MenuItem detail = new MenuItem(lm.get("common.menu.detail"));
             detail.setStyle("-fx-font-size: 13px; -fx-padding: 2 10 2 10;");
             detail.setOnAction(ev -> openSubtaskDetail(stId));
-            MenuItem edit   = new MenuItem(lm.get("task.detail.menu.edit"));
+            MenuItem edit   = new MenuItem(lm.get("common.menu.edit"));
             edit.setStyle("-fx-font-size: 13px; -fx-padding: 2 10 2 10;");
             edit.setOnAction(ev -> openEditSubtask(stId, parentTaskId));
-            MenuItem delete = new MenuItem(lm.get("task.detail.menu.delete"));
+            MenuItem delete = new MenuItem(lm.get("common.menu.delete"));
             delete.setStyle("-fx-font-size: 13px; -fx-padding: 2 10 2 10; -fx-text-fill: #e74c3c;");
             delete.setOnAction(ev -> deleteSubtask(stId, parentTaskId));
             menu.getItems().addAll(detail, edit, delete);
@@ -315,7 +315,7 @@ public class TaskDetailController {
             Long parentTaskId = taskData.get("id").asLong();
             loadSubtasks(parentTaskId);
         } catch (Exception e) {
-            showAlert(lm.get("error.title"), lm.get("task.detail.subtask.error.open"));
+            showAlert(lm.get("error.title"), lm.get("error.open.subtask.detail"));
         }
     }
 
@@ -450,11 +450,11 @@ public class TaskDetailController {
                 menu.setStyle("-fx-background-color: white; -fx-border-color: #e8e8e8; " +
                         "-fx-border-width: 1; -fx-background-radius: 8; -fx-border-radius: 8;");
 
-                MenuItem editItem   = new MenuItem(lm.get("task.detail.menu.edit"));
+                MenuItem editItem   = new MenuItem(lm.get("common.menu.edit"));
                 editItem.setStyle("-fx-font-size: 13px; -fx-padding: 2 10 2 10;");
                 editItem.setOnAction(ev -> openEditWorkLog(logId, log, taskId));
 
-                MenuItem deleteItem = new MenuItem(lm.get("task.detail.menu.delete"));
+                MenuItem deleteItem = new MenuItem(lm.get("common.menu.delete"));
                 deleteItem.setStyle("-fx-font-size: 13px; -fx-padding: 2 10 2 10; -fx-text-fill: #e74c3c;");
                 deleteItem.setOnAction(ev -> deleteWorkLog(logId, taskId));
 
@@ -543,7 +543,7 @@ public class TaskDetailController {
                 loadWorkLogs(taskId);
                 loadTotalHours(taskId);
             });
-            showAsDialog(root, lm.get("task.detail.worklog.add.title"));
+            showAsDialog(root, lm.get("common.worklog.add.title"));
         } catch (IOException e) {
             showAlert(lm.get("error.title"), lm.get("error.open.dialog"));
         }
@@ -592,12 +592,12 @@ public class TaskDetailController {
             VBox root = loader.load();
             EditTaskController controller = loader.getController();
             controller.initData(taskData);
-            controller.setDialogTitle(isSubtask ? lm.get("task.detail.subtask.edit") : lm.get("task.detail.edit"));
+            controller.setDialogTitle(isSubtask ? lm.get("task.detail.subtask.edit") : lm.get("common.menu.edit"));
             controller.setOnTaskUpdated(() -> {
                 if (onTaskChanged != null) onTaskChanged.run();
                 closeDialog();
             });
-            showAsDialog(root, isSubtask ? lm.get("task.detail.subtask.edit") : lm.get("task.detail.edit"));
+            showAsDialog(root, isSubtask ? lm.get("task.detail.subtask.edit") : lm.get("common.menu.edit"));
         } catch (IOException e) {
             showAlert(lm.get("error.title"), lm.get("error.open.dialog"));
         }

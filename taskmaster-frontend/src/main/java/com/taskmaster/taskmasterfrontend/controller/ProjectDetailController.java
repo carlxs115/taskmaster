@@ -73,7 +73,7 @@ public class ProjectDetailController {
 
         projectIdLabel.setText("#" + id);
         projectNameLabel.setText(name);
-        descriptionLabel.setText(desc.isEmpty() ? lm.get("project.detail.no.description") : desc);
+        descriptionLabel.setText(desc.isEmpty() ? lm.get("common.no.description") : desc);
 
         statusBadge.setText(translateStatus(status));
         statusBadge.setStyle("-fx-font-size: 11px; -fx-padding: 3 10 3 10; " +
@@ -231,13 +231,13 @@ public class ProjectDetailController {
             ContextMenu menu = new ContextMenu();
             menu.setStyle("-fx-background-color: white; -fx-border-color: #e8e8e8; " +
                     "-fx-border-width: 1; -fx-background-radius: 8; -fx-border-radius: 8;");
-            MenuItem detail = new MenuItem(lm.get("project.detail.menu.detail"));
+            MenuItem detail = new MenuItem(lm.get("common.menu.detail"));
             detail.setStyle("-fx-font-size: 13px; -fx-padding: 2 10 2 10;");
             detail.setOnAction(ev -> openTaskDetail(task, taskId));
-            MenuItem edit = new MenuItem(lm.get("project.detail.menu.edit"));
+            MenuItem edit = new MenuItem(lm.get("common.menu.edit"));
             edit.setStyle("-fx-font-size: 13px; -fx-padding: 2 10 2 10;");
             edit.setOnAction(ev -> openEditTask(task, taskId));
-            MenuItem delete = new MenuItem(lm.get("project.detail.menu.delete"));
+            MenuItem delete = new MenuItem(lm.get("common.menu.delete"));
             delete.setStyle("-fx-font-size: 13px; -fx-padding: 2 10 2 10; -fx-text-fill: #e74c3c;");
             delete.setOnAction(ev -> deleteTask(taskId));
             menu.getItems().addAll(detail, edit, delete);
@@ -293,7 +293,7 @@ public class ProjectDetailController {
 
     private void deleteTask(Long taskId) {
         Alert confirm = new Alert(Alert.AlertType.CONFIRMATION);
-        confirm.setTitle(lm.get("project.detail.delete.title"));
+        confirm.setTitle(lm.get("common.delete.task.title"));
         confirm.setHeaderText(null);
         confirm.setContentText(lm.get("project.detail.delete.content"));
         confirm.showAndWait().ifPresent(r -> {
@@ -308,7 +308,7 @@ public class ProjectDetailController {
                             activityLogSectionController.loadForEntity("PROJECT", projectId, "TASK");
                         });
                     } catch (Exception e) {
-                        Platform.runLater(() -> showAlert(lm.get("error.title"), lm.get("trash.error.delete.task")));
+                        Platform.runLater(() -> showAlert(lm.get("error.title"), lm.get("error.delete.task")));
                     }
                 }).start();
             }

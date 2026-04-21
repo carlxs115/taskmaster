@@ -96,22 +96,22 @@ public class MainController {
         userMenuButton.setText(username + "  ▾");
 
         statusFilter.setItems(FXCollections.observableArrayList(
-                lm.get("status.all"), lm.get("status.todo"), lm.get("status.inprogress"),
+                lm.get("common.all"), lm.get("status.todo"), lm.get("status.inprogress"),
                 lm.get("status.done"), lm.get("status.cancelled")));
-        statusFilter.setPromptText(lm.get("status"));
+        statusFilter.setPromptText(lm.get("common.status"));
         statusFilter.getSelectionModel().selectedItemProperty().addListener(
                 (obs, o, n) -> applyFiltersAndSort());
 
         priorityFilter.setItems(FXCollections.observableArrayList(
-                lm.get("priority.all"), lm.get("priority.low"), lm.get("priority.medium"),
+                lm.get("common.all"), lm.get("priority.low"), lm.get("priority.medium"),
                 lm.get("priority.high"), lm.get("priority.urgent")));
-        priorityFilter.setPromptText(lm.get("priority"));
+        priorityFilter.setPromptText(lm.get("common.priority"));
         priorityFilter.getSelectionModel().selectedItemProperty().addListener(
                 (obs, o, n) -> applyFiltersAndSort());
 
         sortFilter.setItems(FXCollections.observableArrayList(
                 lm.get("sort.title"), lm.get("id"),
-                lm.get("duedate"), lm.get("priority")));
+                lm.get("common.duedate"), lm.get("common.priority")));
         sortFilter.setPromptText(lm.get("sort.criteria"));
         sortFilter.getSelectionModel().selectedItemProperty().addListener(
                 (obs, o, n) -> applyFiltersAndSort());
@@ -403,10 +403,10 @@ public class MainController {
         HBox statsRow = new HBox(10);
         statsRow.setStyle("-fx-padding: 16 20 8 20;");
         statsRow.getChildren().addAll(
-                createStatCard(String.valueOf(stats[0]), lm.get("home.stat.pending"),    "#3b82f6"),
-                createStatCard(String.valueOf(stats[1]), lm.get("home.stat.inprogress"), "#f59e0b"),
-                createStatCard(String.valueOf(stats[2]), lm.get("home.stat.done"),       "#22c55e"),
-                createStatCard(String.valueOf(stats[3]), lm.get("home.stat.projects"),   "#e11d48")
+                createStatCard(String.valueOf(stats[0]), lm.get("profile.stats.pending"),    "#3b82f6"),
+                createStatCard(String.valueOf(stats[1]), lm.get("status.inprogress"), "#f59e0b"),
+                createStatCard(String.valueOf(stats[2]), lm.get("common.done"),       "#22c55e"),
+                createStatCard(String.valueOf(stats[3]), lm.get("common.active.projects"),   "#e11d48")
         );
         for (javafx.scene.Node c : statsRow.getChildren()) HBox.setHgrow(c, Priority.ALWAYS);
         taskContainer.getChildren().add(statsRow);
@@ -446,8 +446,8 @@ public class MainController {
 
     private VBox buildProjectsColumn(JsonNode projects) {
         VBox panel = createPanel();
-        panel.getChildren().add(createPanelHeader(lm.get("home.active.projects"),
-                projects != null ? projects.size() + " " + lm.get("home.stat.projects").toLowerCase() : "0"));
+        panel.getChildren().add(createPanelHeader(lm.get("common.active.projects"),
+                projects != null ? projects.size() + " " + lm.get("common.active.projects").toLowerCase() : "0"));
 
         if (projects == null || !projects.isArray() || projects.isEmpty()) {
             Label empty = new Label(lm.get("home.no.projects"));
@@ -582,7 +582,7 @@ public class MainController {
                         isUrgentDate = true;
                         isOverdue = true;
                     }
-                    else if (due.equals(today))                  { dueLbl = lm.get("date.today");    isUrgentDate = true; }
+                    else if (due.equals(today))                  { dueLbl = lm.get("common.date.today");    isUrgentDate = true; }
                     else if (due.equals(today.plusDays(1))) { dueLbl = lm.get("date.tomorrow"); }
                     else dueLbl = due.format(DateTimeFormatter.ofPattern("d MMM", new Locale("es", "ES")));
                 } catch (Exception ignored) {}
@@ -700,14 +700,14 @@ public class MainController {
                     cmp = a.get("title").asText().compareToIgnoreCase(b.get("title").asText());
                 } else if (sortCrit.equals(lm.get("id"))) {
                     cmp = Long.compare(a.get("id").asLong(), b.get("id").asLong());
-                } else if (sortCrit.equals(lm.get("duedate"))) {
+                } else if (sortCrit.equals(lm.get("common.duedate"))) {
                     boolean aH = a.has("dueDate") && !a.get("dueDate").isNull();
                     boolean bH = b.has("dueDate") && !b.get("dueDate").isNull();
                     if (!aH && !bH)     cmp = 0;
                     else if (!aH)       cmp = 1;
                     else if (!bH)       cmp = -1;
                     else cmp = a.get("dueDate").asText().compareTo(b.get("dueDate").asText());
-                } else if (sortCrit.equals(lm.get("priority"))) {
+                } else if (sortCrit.equals(lm.get("common.priority"))) {
                     cmp = Integer.compare(
                             priorityOrder(a.has("priority") ? a.get("priority").asText() : "MEDIUM"),
                             priorityOrder(b.has("priority") ? b.get("priority").asText() : "MEDIUM")
@@ -758,8 +758,8 @@ public class MainController {
 
     @FXML
     private void handleClearFilters() {
-        resetComboBox(statusFilter,   lm.get("status"));
-        resetComboBox(priorityFilter, lm.get("priority"));
+        resetComboBox(statusFilter,   lm.get("common.status"));
+        resetComboBox(priorityFilter, lm.get("common.priority"));
         resetComboBox(sortFilter,     lm.get("sort.criteria"));
         sortAscending = true;
         sortDirectionBtn.setText("↑");
@@ -1349,7 +1349,7 @@ public class MainController {
         }
 
         // ── Botón cerrar ──
-        Button closeBtn = new Button(lm.get("about.close"));
+        Button closeBtn = new Button(lm.get("common.close"));
         closeBtn.setStyle("-fx-background-color: #7c3aed; -fx-text-fill: white; " +
                 "-fx-font-size: 13px; -fx-background-radius: 6px; " +
                 "-fx-cursor: hand; -fx-padding: 7 24 7 24;");
@@ -1456,8 +1456,8 @@ public class MainController {
     }
 
     private void showFilters() {
-        resetComboBox(statusFilter,   lm.get("status"));
-        resetComboBox(priorityFilter, lm.get("priority"));
+        resetComboBox(statusFilter,   lm.get("common.status"));
+        resetComboBox(priorityFilter, lm.get("common.priority"));
         resetComboBox(sortFilter,     lm.get("sort.criteria"));
         sortAscending = true;
         sortDirectionBtn.setText("↑");
@@ -1652,7 +1652,7 @@ public class MainController {
         final String currentCategory  = selectedCategory;
         final String currentTitle     = areaTitle.getText();
         Alert confirm = new Alert(Alert.AlertType.CONFIRMATION);
-        confirm.setTitle(lm.get("confirm.delete.title.task"));
+        confirm.setTitle(lm.get("common.delete.task.title"));
         confirm.setHeaderText(null);
         confirm.setContentText(lm.get("confirm.delete.task"));
         confirm.showAndWait().ifPresent(r -> {
@@ -1900,8 +1900,8 @@ public class MainController {
         btnHelp.setText(lm.get("sidebar.help"));
         createButton.setText(lm.get("topbar.create"));
         searchField.setPromptText(lm.get("topbar.search.prompt"));
-        statusFilter.setPromptText(lm.get("status"));
-        priorityFilter.setPromptText(lm.get("priority"));
+        statusFilter.setPromptText(lm.get("common.status"));
+        priorityFilter.setPromptText(lm.get("common.priority"));
         sortFilter.setPromptText(lm.get("sort.criteria"));
         filterLabel.setText(lm.get("filter.label"));
         sortLabel.setText(lm.get("sort.label"));
@@ -1912,13 +1912,13 @@ public class MainController {
         String currentSort     = sortFilter.getValue();
 
         statusFilter.setItems(FXCollections.observableArrayList(
-                lm.get("status.all"), lm.get("status.todo"), lm.get("status.inprogress"),
+                lm.get("common.all"), lm.get("status.todo"), lm.get("status.inprogress"),
                 lm.get("status.done"), lm.get("status.cancelled")));
         priorityFilter.setItems(FXCollections.observableArrayList(
-                lm.get("priority.all"), lm.get("priority.low"), lm.get("priority.medium"),
+                lm.get("common.all"), lm.get("priority.low"), lm.get("priority.medium"),
                 lm.get("priority.high"), lm.get("priority.urgent")));
         sortFilter.setItems(FXCollections.observableArrayList(
                 lm.get("sort.title"), lm.get("id"),
-                lm.get("duedate"), lm.get("priority")));
+                lm.get("common.duedate"), lm.get("common.priority")));
     }
 }

@@ -31,32 +31,31 @@ public class ActivityLogSectionController {
 
     private String getActionLabel(String actionType) {
         return switch (actionType) {
-            case "TASK_CREATED"             -> lm.get("actlog.action.task.created");
-            case "TASK_EDITED"              -> lm.get("actlog.action.task.edited");
+            case "TASK_CREATED"             -> lm.get("common.task.created");
+            case "TASK_EDITED"              -> lm.get("common.task.edited");
             case "TASK_DELETED"             -> lm.get("actlog.action.task.deleted");
             case "TASK_PERMANENTLY_DELETED" -> lm.get("actlog.action.task.perm.deleted");
             case "TASK_RESTORED"            -> lm.get("actlog.action.task.restored");
-            case "TASK_STATUS_CHANGED"      -> lm.get("actlog.action.task.status");
-            case "SUBTASK_CREATED"          -> lm.get("actlog.action.subtask.created");
-            case "SUBTASK_EDITED"           -> lm.get("actlog.action.subtask.edited");
-            case "SUBTASK_DELETED"          -> lm.get("actlog.action.subtask.deleted");
-            case "PROJECT_CREATED"          -> lm.get("actlog.action.project.created");
-            case "PROJECT_EDITED"           -> lm.get("actlog.action.project.edited");
+            case "TASK_STATUS_CHANGED", "PROJECT_STATUS_CHANGED" -> lm.get("common.status.changed");
+            case "SUBTASK_CREATED"          -> lm.get("common.subtask.created");
+            case "SUBTASK_EDITED"           -> lm.get("common.subtask.edited");
+            case "SUBTASK_DELETED"          -> lm.get("common.subtask.deleted");
+            case "PROJECT_CREATED"          -> lm.get("common.project.created");
+            case "PROJECT_EDITED"           -> lm.get("common.project.edited");
             case "PROJECT_DELETED"          -> lm.get("actlog.action.project.deleted");
             case "PROJECT_PERMANENTLY_DELETED" -> lm.get("actlog.action.project.perm.deleted");
-            case "PROJECT_RESTORED"         -> lm.get("actlog.action.project.restored");
-            case "PROJECT_STATUS_CHANGED"   -> lm.get("actlog.action.project.status");
-            case "PROFILE_UPDATED"          -> lm.get("actlog.action.profile.updated");
-            case "PASSWORD_CHANGED"         -> lm.get("actlog.action.password.changed");
+            case "PROJECT_RESTORED"         -> lm.get("common.project.restored");
+            case "PROFILE_UPDATED"          -> lm.get("common.profile.updated");
+            case "PASSWORD_CHANGED"         -> lm.get("common.password.changed");
             default                         -> actionType;
         };
     }
 
     private String getEntityLabel(String entityType) {
         return switch (entityType) {
-            case "TASK"    -> lm.get("actlog.entity.task");
+            case "TASK"    -> lm.get("common.task");
             case "SUBTASK" -> lm.get("actlog.entity.subtask");
-            case "PROJECT" -> lm.get("actlog.entity.project");
+            case "PROJECT" -> lm.get("common.project");
             case "PROFILE" -> lm.get("actlog.entity.profile");
             default        -> entityType;
         };
@@ -207,14 +206,14 @@ public class ActivityLogSectionController {
 
     private String translateValue(String value) {
         return switch (value) {
-            case "TODO"        -> lm.get("status.translate.TODO");
-            case "IN_PROGRESS" -> lm.get("status.translate.IN_PROGRESS");
-            case "DONE"        -> lm.get("status.translate.DONE");
-            case "CANCELLED"   -> lm.get("status.translate.CANCELLED");
-            case "LOW"         -> lm.get("priority.low.label");
-            case "MEDIUM"      -> lm.get("priority.medium.label");
-            case "HIGH"        -> lm.get("priority.high.label");
-            case "URGENT"      -> lm.get("priority.urgent.label");
+            case "TODO"        -> lm.get("status.todo");
+            case "IN_PROGRESS" -> lm.get("status.inprogress");
+            case "DONE"        -> lm.get("status.done");
+            case "CANCELLED"   -> lm.get("status.cancelled");
+            case "LOW"         -> lm.get("priority.low");
+            case "MEDIUM"      -> lm.get("priority.medium");
+            case "HIGH"        -> lm.get("priority.high");
+            case "URGENT"      -> lm.get("priority.urgent");
             default            -> value;
         };
     }

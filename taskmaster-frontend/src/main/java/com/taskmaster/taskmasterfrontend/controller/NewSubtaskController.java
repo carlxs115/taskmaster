@@ -46,9 +46,9 @@ public class NewSubtaskController {
     @FXML
     public void initialize() {
         priorityCombo.setItems(FXCollections.observableArrayList(
-                lm.get("priority.low.label"), lm.get("priority.medium.label"),
-                lm.get("priority.high.label"), lm.get("priority.urgent.label")));
-        priorityCombo.setValue(lm.get("priority.medium.label"));
+                lm.get("priority.low"), lm.get("priority.medium"),
+                lm.get("priority.high"), lm.get("priority.urgent")));
+        priorityCombo.setValue(lm.get("priority.medium"));
 
         titleField.setOnKeyPressed(e -> {
             if (e.getCode() == javafx.scene.input.KeyCode.ENTER) handleCreate();
@@ -59,17 +59,17 @@ public class NewSubtaskController {
     private void handleCreate() {
         String title = titleField.getText().trim();
         if (title.isEmpty()) {
-            showError(lm.get("new.subtask.error.title"));
+            showError(lm.get("common.error.title.required"));
             return;
         }
         hideError();
 
         String p = priorityCombo.getValue();
         String priorityEnum;
-        if (p.equals(lm.get("priority.low.label")))         priorityEnum = "LOW";
-        else if (p.equals(lm.get("priority.medium.label"))) priorityEnum = "MEDIUM";
-        else if (p.equals(lm.get("priority.high.label")))   priorityEnum = "HIGH";
-        else if (p.equals(lm.get("priority.urgent.label"))) priorityEnum = "URGENT";
+        if (p.equals(lm.get("priority.low")))         priorityEnum = "LOW";
+        else if (p.equals(lm.get("priority.medium"))) priorityEnum = "MEDIUM";
+        else if (p.equals(lm.get("priority.high")))   priorityEnum = "HIGH";
+        else if (p.equals(lm.get("priority.urgent"))) priorityEnum = "URGENT";
         else priorityEnum = "MEDIUM";
 
         Map<String, Object> body = new HashMap<>();

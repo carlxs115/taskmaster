@@ -11,22 +11,22 @@
            style="-fx-font-size: 18px; -fx-font-weight: bold; -fx-text-fill: #1e1e2e;"/>
 
     <VBox spacing="6">
-        <Label text="%new.subtask.title.field" style="-fx-font-size: 13px; -fx-text-fill: #555555;"/>
+        <Label text="%common.title.field" style="-fx-font-size: 13px; -fx-text-fill: #555555;"/>
         <TextField fx:id="titleField"
                    promptText="%new.subtask.title.prompt"
                    style="-fx-pref-height: 38px;"/>
     </VBox>
 
     <VBox spacing="6">
-        <Label text="%new.subtask.description" style="-fx-font-size: 13px; -fx-text-fill: #555555;"/>
+        <Label text="%common.description" style="-fx-font-size: 13px; -fx-text-fill: #555555;"/>
         <TextArea fx:id="descriptionField"
-                  promptText="%new.subtask.description.prompt"
+                  promptText="%common.description.prompt"
                   style="-fx-pref-height: 80px;"
                   wrapText="true"/>
     </VBox>
 
     <VBox spacing="6">
-        <Label text="%priority" style="-fx-font-size: 13px; -fx-text-fill: #555555;"/>
+        <Label text="%common.priority" style="-fx-font-size: 13px; -fx-text-fill: #555555;"/>
         <ComboBox fx:id="priorityCombo"
                   maxWidth="Infinity"
                   style="-fx-pref-height: 38px;"/>

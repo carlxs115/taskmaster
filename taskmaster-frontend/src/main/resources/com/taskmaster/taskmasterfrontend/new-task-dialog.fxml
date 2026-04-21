@@ -13,22 +13,22 @@
            style="-fx-font-size: 18px; -fx-font-weight: bold; -fx-text-fill: #2d2d2d;"/>
 
     <VBox spacing="6">
-        <Label text="%new.task.title.field" style="-fx-font-size: 13px; -fx-text-fill: #2d2d2d;"/>
+        <Label text="%common.title.field" style="-fx-font-size: 13px; -fx-text-fill: #2d2d2d;"/>
         <TextField fx:id="titleField"
                    promptText="%new.task.title.prompt"
                    style="-fx-pref-height: 38px;"/>
     </VBox>
 
     <VBox spacing="6">
-        <Label text="%new.task.description" style="-fx-font-size: 13px; -fx-text-fill: #2d2d2d;"/>
+        <Label text="%common.description" style="-fx-font-size: 13px; -fx-text-fill: #2d2d2d;"/>
         <TextArea fx:id="descriptionField"
-                  promptText="%new.task.description.prompt"
+                  promptText="%common.description.prompt"
                   style="-fx-pref-height: 80px;"
                   wrapText="true"/>
     </VBox>
 
     <VBox fx:id="categoryBox" spacing="6">
-        <Label text="%new.task.category" style="-fx-font-size: 13px; -fx-text-fill: #2d2d2d;"/>
+        <Label text="%common.new.category" style="-fx-font-size: 13px; -fx-text-fill: #2d2d2d;"/>
         <ComboBox fx:id="categoryCombo"
                   maxWidth="Infinity"
                   style="-fx-pref-height: 38px;"/>
@@ -36,14 +36,14 @@
 
     <HBox spacing="16">
         <VBox spacing="6" HBox.hgrow="ALWAYS">
-            <Label text="%priority" style="-fx-font-size: 13px; -fx-text-fill: #2d2d2d;"/>
+            <Label text="%common.priority" style="-fx-font-size: 13px; -fx-text-fill: #2d2d2d;"/>
             <ComboBox fx:id="priorityCombo"
                       maxWidth="Infinity"
                       style="-fx-pref-height: 38px;"/>
         </VBox>
 
         <VBox spacing="6" HBox.hgrow="ALWAYS">
-            <Label text="%duedate" style="-fx-font-size: 13px; -fx-text-fill: #2d2d2d;"/>
+            <Label text="%common.duedate" style="-fx-font-size: 13px; -fx-text-fill: #2d2d2d;"/>
             <DatePicker fx:id="dueDatePicker"
                         maxWidth="Infinity"
                         style="-fx-pref-height: 38px;"/>
@@ -63,7 +63,7 @@
            visible="false"/>
 
     <HBox spacing="10" alignment="CENTER_RIGHT">
-        <Button text="%dialog.cancel"
+        <Button text="%common.cancel"
                 onAction="#handleCancel"
                 style="-fx-background-color: #e0e0e0; -fx-text-fill: #2d2d2d;
                        -fx-background-radius: 4px; -fx-cursor: hand;"/>

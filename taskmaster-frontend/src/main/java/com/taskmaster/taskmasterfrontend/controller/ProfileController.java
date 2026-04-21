@@ -312,11 +312,11 @@ public class ProfileController {
 
         statsRow.getChildren().setAll(
                 createStatCard(String.valueOf(total),      lm.get("profile.stats.total"),      "#7c3aed"),
-                createStatCard(String.valueOf(completed),  lm.get("profile.stats.completed"),  "#22c55e"),
+                createStatCard(String.valueOf(completed),  lm.get("common.done"),  "#22c55e"),
                 createStatCard(String.valueOf(pending),    lm.get("profile.stats.pending"),    "#3b82f6"),
-                createStatCard(String.valueOf(inProgress), lm.get("profile.stats.inprogress"), "#f59e0b"),
+                createStatCard(String.valueOf(inProgress), lm.get("status.inprogress"), "#f59e0b"),
                 createStatCard(String.valueOf(cancelled),  lm.get("profile.stats.cancelled"),  "#e74c3c"),
-                createStatCard(String.valueOf(projects),   lm.get("profile.stats.projects"),   "#ec4899")
+                createStatCard(String.valueOf(projects),   lm.get("common.projects"),   "#ec4899")
         );
         for (javafx.scene.Node c : statsRow.getChildren())
             HBox.setHgrow(c, Priority.ALWAYS);
@@ -352,7 +352,7 @@ public class ProfileController {
         for (JsonNode entry : entries) {
             LocalDate date = LocalDateTime.parse(entry.get("createdAt").asText()).toLocalDate();
             String group;
-            if (date.equals(today))          group = lm.get("activity.group.today");
+            if (date.equals(today))          group = lm.get("common.date.today");
             else if (date.equals(yesterday)) group = lm.get("activity.group.yesterday");
             else if (!date.isBefore(today.minusDays(7))) group = lm.get("activity.group.week");
             else                             group = lm.get("activity.group.older");
@@ -497,24 +497,24 @@ public class ProfileController {
                                           String oldValue, String newValue) {
         String name = entityName.isEmpty() ? "" : " \"" + entityName + "\"";
         return switch (actionType) {
-            case "TASK_CREATED"                -> lm.get("activity.task.created") + name;
-            case "TASK_EDITED"                 -> lm.get("activity.task.edited") + name;
+            case "TASK_CREATED"                -> lm.get("common.task.created") + name;
+            case "TASK_EDITED"                 -> lm.get("common.task.edited") + name;
             case "TASK_DELETED"                -> lm.get("activity.task.deleted") + name;
             case "TASK_PERMANENTLY_DELETED"    -> lm.get("activity.task.perm.deleted") + name;
             case "TASK_RESTORED"               -> lm.get("activity.task.restored") + name;
-            case "TASK_STATUS_CHANGED"         -> lm.get("activity.task.status") + name + " → " + translateStatus(newValue);
-            case "SUBTASK_CREATED"             -> lm.get("activity.subtask.created") + name;
-            case "SUBTASK_EDITED"              -> lm.get("activity.subtask.edited") + name;
-            case "SUBTASK_DELETED"             -> lm.get("activity.subtask.deleted") + name;
-            case "PROJECT_CREATED"             -> lm.get("activity.project.created") + name;
-            case "PROJECT_EDITED"              -> lm.get("activity.project.edited") + name;
+            case "TASK_STATUS_CHANGED"         -> lm.get("common.task") + name + " → " + translateStatus(newValue);
+            case "SUBTASK_CREATED"             -> lm.get("common.subtask.created") + name;
+            case "SUBTASK_EDITED"              -> lm.get("common.subtask.edited") + name;
+            case "SUBTASK_DELETED"             -> lm.get("common.subtask.deleted") + name;
+            case "PROJECT_CREATED"             -> lm.get("common.project.created") + name;
+            case "PROJECT_EDITED"              -> lm.get("common.project.edited") + name;
             case "PROJECT_DELETED"             -> lm.get("activity.project.deleted") + name;
             case "PROJECT_PERMANENTLY_DELETED" -> lm.get("activity.project.perm.deleted") + name;
-            case "PROJECT_RESTORED"            -> lm.get("activity.project.restored") + name;
-            case "PROJECT_STATUS_CHANGED"      -> lm.get("activity.project.status") + name + " · " +
+            case "PROJECT_RESTORED"            -> lm.get("common.project.restored") + name;
+            case "PROJECT_STATUS_CHANGED"      -> lm.get("common.project") + name + " · " +
                     translateStatus(oldValue) + " → " + translateStatus(newValue);
-            case "PROFILE_UPDATED"             -> lm.get("activity.profile.updated");
-            case "PASSWORD_CHANGED"            -> lm.get("activity.password.changed");
+            case "PROFILE_UPDATED"             -> lm.get("common.profile.updated");
+            case "PASSWORD_CHANGED"            -> lm.get("common.password.changed");
             default                            -> actionType;
         };
     }

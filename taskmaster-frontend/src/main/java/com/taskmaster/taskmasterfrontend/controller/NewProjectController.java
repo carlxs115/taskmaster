@@ -46,14 +46,14 @@ public class NewProjectController {
         categoryCombo.setValue(lm.get("category.PERSONAL"));
 
         statusCombo.setItems(FXCollections.observableArrayList(
-                lm.get("status.pending.label"), lm.get("status.inprogress.label"),
-                lm.get("status.done.label"), lm.get("status.cancelled.label")));
-        statusCombo.setValue(lm.get("status.pending.label"));
+                lm.get("status.todo"), lm.get("status.inprogress"),
+                lm.get("status.done"), lm.get("status.cancelled")));
+        statusCombo.setValue(lm.get("status.todo"));
 
         priorityCombo.setItems(FXCollections.observableArrayList(
-                lm.get("priority.low.label"), lm.get("priority.medium.label"),
-                lm.get("priority.high.label"), lm.get("priority.urgent.label")));
-        priorityCombo.setValue(lm.get("priority.medium.label"));
+                lm.get("priority.low"), lm.get("priority.medium"),
+                lm.get("priority.high"), lm.get("priority.urgent")));
+        priorityCombo.setValue(lm.get("priority.medium"));
     }
 
     @FXML

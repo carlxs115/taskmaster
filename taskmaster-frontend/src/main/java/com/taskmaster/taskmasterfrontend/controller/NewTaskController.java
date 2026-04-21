@@ -56,9 +56,9 @@ public class NewTaskController {
     @FXML
     public void initialize() {
         priorityCombo.setItems(FXCollections.observableArrayList(
-                lm.get("priority.low.label"), lm.get("priority.medium.label"),
-                lm.get("priority.high.label"), lm.get("priority.urgent.label")));
-        priorityCombo.setValue(lm.get("priority.medium.label"));
+                lm.get("priority.low"), lm.get("priority.medium"),
+                lm.get("priority.high"), lm.get("priority.urgent")));
+        priorityCombo.setValue(lm.get("priority.medium"));
 
         categoryCombo.setItems(FXCollections.observableArrayList(
                 lm.get("category.PERSONAL"), lm.get("category.ESTUDIOS"), lm.get("category.TRABAJO")));
@@ -151,10 +151,10 @@ public class NewTaskController {
 
         String priority = priorityCombo.getValue();
         String priorityEnum;
-        if (priority.equals(lm.get("priority.low.label")))         priorityEnum = "LOW";
-        else if (priority.equals(lm.get("priority.medium.label"))) priorityEnum = "MEDIUM";
-        else if (priority.equals(lm.get("priority.high.label")))   priorityEnum = "HIGH";
-        else if (priority.equals(lm.get("priority.urgent.label"))) priorityEnum = "URGENT";
+        if (priority.equals(lm.get("priority.low")))         priorityEnum = "LOW";
+        else if (priority.equals(lm.get("priority.medium"))) priorityEnum = "MEDIUM";
+        else if (priority.equals(lm.get("priority.high")))   priorityEnum = "HIGH";
+        else if (priority.equals(lm.get("priority.urgent"))) priorityEnum = "URGENT";
         else priorityEnum = "MEDIUM";
 
         LocalDate dueDate = dueDatePicker.getValue();

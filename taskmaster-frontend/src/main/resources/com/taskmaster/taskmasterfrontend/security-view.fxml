@@ -57,7 +57,7 @@
                style="-fx-font-size: 13px; -fx-font-weight: bold; -fx-text-fill: #e74c3c;"/>
         <Label text="%security.danger.description"
                style="-fx-font-size: 12px; -fx-text-fill: #888888;" wrapText="true"/>
-        <Button text="%security.danger.button" onAction="#handleDeleteAccount"
+        <Button text="%common.delete.account" onAction="#handleDeleteAccount"
                 style="-fx-background-color: #e74c3c; -fx-text-fill: white;
                        -fx-font-size: 12px; -fx-background-radius: 6px;
                        -fx-cursor: hand; -fx-padding: 7 16 7 16;"/>

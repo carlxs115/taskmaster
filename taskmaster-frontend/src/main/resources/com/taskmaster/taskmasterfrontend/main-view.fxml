@@ -154,9 +154,9 @@
                     <!-- FILTRAR -->
                     <Label fx:id="filterLabel" text="%filter.label"
                            style="-fx-font-size: 11px; -fx-text-fill: #888888; -fx-font-weight: bold;"/>
-                    <ComboBox fx:id="statusFilter" promptText="%status"
+                    <ComboBox fx:id="statusFilter" promptText="%common.status"
                               style="-fx-font-size: 11px;" prefWidth="130"/>
-                    <ComboBox fx:id="priorityFilter" promptText="%priority"
+                    <ComboBox fx:id="priorityFilter" promptText="%common.priority"
                               style="-fx-font-size: 11px;" prefWidth="130"/>
 
                     <!-- Separador visual -->

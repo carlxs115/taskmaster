@@ -71,21 +71,21 @@
                          -fx-border-radius: 10px; -fx-border-width: 1;">
                 <HBox style="-fx-padding: 14 20 14 20; -fx-border-color: transparent transparent #f0f0f0 transparent;
                              -fx-border-width: 0 0 1 0;" alignment="CENTER_LEFT" spacing="16">
-                    <Label text="%profile.field.username"
+                    <Label text="%common.username"
                            style="-fx-font-size: 12px; -fx-text-fill: #888888; -fx-min-width: 140px;"/>
                     <Label fx:id="usernameValueLabel"
                            style="-fx-font-size: 13px; -fx-text-fill: #1e1e2e;"/>
                 </HBox>
                 <HBox style="-fx-padding: 14 20 14 20; -fx-border-color: transparent transparent #f0f0f0 transparent;
                              -fx-border-width: 0 0 1 0;" alignment="CENTER_LEFT" spacing="16">
-                    <Label text="%profile.field.email"
+                    <Label text="%common.email"
                            style="-fx-font-size: 12px; -fx-text-fill: #888888; -fx-min-width: 140px;"/>
                     <Label fx:id="emailLabel"
                            style="-fx-font-size: 13px; -fx-text-fill: #1e1e2e;"/>
                 </HBox>
                 <HBox style="-fx-padding: 14 20 14 20; -fx-border-color: transparent transparent #f0f0f0 transparent;
                              -fx-border-width: 0 0 1 0;" alignment="CENTER_LEFT" spacing="16">
-                    <Label text="%profile.field.birthdate"
+                    <Label text="%common.birthdate"
                            style="-fx-font-size: 12px; -fx-text-fill: #888888; -fx-min-width: 140px;"/>
                     <Label fx:id="birthDateLabel"
                            style="-fx-font-size: 13px; -fx-text-fill: #1e1e2e;"/>

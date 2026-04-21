@@ -23,30 +23,30 @@
 
     <!-- FORMULARIO -->
     <VBox spacing="8">
-        <Label text="%register.username" style="-fx-font-size: 13px; -fx-text-fill: #2d2d2d;"/>
+        <Label text="%common.username" style="-fx-font-size: 13px; -fx-text-fill: #2d2d2d;"/>
         <TextField fx:id="usernameField"
-                   promptText="%register.username.prompt"
+                   promptText="%common.username.prompt"
                    style="-fx-pref-height: 40px; -fx-font-size: 13px;"/>
     </VBox>
 
     <VBox spacing="8">
-        <Label text="%register.email" style="-fx-font-size: 13px; -fx-text-fill: #2d2d2d;"/>
+        <Label text="%common.email" style="-fx-font-size: 13px; -fx-text-fill: #2d2d2d;"/>
         <TextField fx:id="emailField"
                    promptText="%register.email.prompt"
                    style="-fx-pref-height: 40px; -fx-font-size: 13px;"/>
     </VBox>
 
     <VBox spacing="8">
-        <Label text="%register.password" style="-fx-font-size: 13px; -fx-text-fill: #2d2d2d;"/>
+        <Label text="%common.password" style="-fx-font-size: 13px; -fx-text-fill: #2d2d2d;"/>
         <PasswordField fx:id="passwordField"
-                       promptText="%register.password.prompt"
+                       promptText="%common.password.prompt"
                        style="-fx-pref-height: 40px; -fx-font-size: 13px;"/>
     </VBox>
 
     <VBox spacing="8">
-        <Label text="%register.birthdate" style="-fx-font-size: 13px; -fx-text-fill: #2d2d2d;"/>
+        <Label text="%common.birthdate" style="-fx-font-size: 13px; -fx-text-fill: #2d2d2d;"/>
         <DatePicker fx:id="birthDatePicker"
-                    promptText="%register.birthdate.prompt"
+                    promptText="%common.birthdate.prompt"
                     style="-fx-pref-height: 40px; -fx-font-size: 13px; -fx-pref-width: 300px;"/>
     </VBox>
 

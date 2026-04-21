@@ -24,16 +24,16 @@
 
     <!-- FORMULARIO -->
     <VBox spacing="8">
-        <Label text="%login.username" style="-fx-font-size: 13px; -fx-text-fill: #2d2d2d;"/>
+        <Label text="%common.username" style="-fx-font-size: 13px; -fx-text-fill: #2d2d2d;"/>
         <TextField fx:id="usernameField"
-                   promptText="%login.username.prompt"
+                   promptText="%common.username.prompt"
                    style="-fx-pref-height: 40px; -fx-font-size: 13px;"/>
     </VBox>
 
     <VBox spacing="8">
-        <Label text="%login.password" style="-fx-font-size: 13px; -fx-text-fill: #2d2d2d;"/>
+        <Label text="%common.password" style="-fx-font-size: 13px; -fx-text-fill: #2d2d2d;"/>
         <PasswordField fx:id="passwordField"
-                       promptText="%login.password.prompt"
+                       promptText="%common.password.prompt"
                        style="-fx-pref-height: 40px; -fx-font-size: 13px;"/>
     </VBox>
 

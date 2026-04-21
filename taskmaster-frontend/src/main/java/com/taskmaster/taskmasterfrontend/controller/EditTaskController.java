@@ -46,15 +46,15 @@ public class EditTaskController {
     @FXML
     public void initialize() {
         statusCombo.setItems(FXCollections.observableArrayList(
-                lm.get("status.todo.label"), lm.get("status.inprogress.label"),
-                lm.get("status.done.task.label"), lm.get("status.submitted.label"),
-                lm.get("status.cancelled.task.label")));
-        statusCombo.setValue(lm.get("status.todo.label"));
+                lm.get("status.todo"), lm.get("status.inprogress"),
+                lm.get("status.done"), lm.get("status.submitted"),
+                lm.get("status.cancelled")));
+        statusCombo.setValue(lm.get("status.todo"));
 
         priorityCombo.setItems(FXCollections.observableArrayList(
-                lm.get("priority.low.label"), lm.get("priority.medium.label"),
-                lm.get("priority.high.label"), lm.get("priority.urgent.label")));
-        priorityCombo.setValue(lm.get("priority.medium.label"));
+                lm.get("priority.low"), lm.get("priority.medium"),
+                lm.get("priority.high"), lm.get("priority.urgent")));
+        priorityCombo.setValue(lm.get("priority.medium"));
     }
 
     /**
@@ -87,7 +87,7 @@ public class EditTaskController {
     private void handleSave() {
         String title = titleField.getText().trim();
         if (title.isEmpty()) {
-            showError(lm.get("edit.task.error.title"));
+            showError(lm.get("common.error.title.required"));
             return;
         }
 
@@ -111,7 +111,7 @@ public class EditTaskController {
                         if (onTaskUpdated != null) onTaskUpdated.run();
                         closeDialog();
                     } else {
-                        showError(lm.get("edit.task.error.save"));
+                        showError(lm.get("common.error.save"));
                     }
                 });
 
@@ -133,11 +133,11 @@ public class EditTaskController {
 
     private String translateStatus(String s) {
         return switch (s) {
-            case "TODO"        -> lm.get("status.todo.label");
-            case "IN_PROGRESS" -> lm.get("status.inprogress.label");
-            case "DONE"        -> lm.get("status.done.task.label");
-            case "SUBMITTED"   -> lm.get("status.submitted.label");
-            case "CANCELLED"   -> lm.get("status.cancelled.task.label");
+            case "TODO"        -> lm.get("status.todo");
+            case "IN_PROGRESS" -> lm.get("status.inprogress");
+            case "DONE"        -> lm.get("status.done.task");
+            case "SUBMITTED"   -> lm.get("status.submitted");
+            case "CANCELLED"   -> lm.get("status.cancelled.task");
             default            -> s;
         };
     }
@@ -145,27 +145,27 @@ public class EditTaskController {
 
     private String translatePriority(String p) {
         return switch (p) {
-            case "LOW"    -> lm.get("priority.low.label");
-            case "MEDIUM" -> lm.get("priority.medium.label");
-            case "HIGH"   -> lm.get("priority.high.label");
-            case "URGENT" -> lm.get("priority.urgent.label");
+            case "LOW"    -> lm.get("priority.low");
+            case "MEDIUM" -> lm.get("priority.medium");
+            case "HIGH"   -> lm.get("priority.high");
+            case "URGENT" -> lm.get("priority.urgent");
             default       -> p;
         };
     }
 
 
     private String reverseStatus(String s) {
-        if (s.equals(lm.get("status.inprogress.label")))          return "IN_PROGRESS";
-        else if (s.equals(lm.get("status.done.task.label")))      return "DONE";
-        else if (s.equals(lm.get("status.submitted.label")))      return "SUBMITTED";
-        else if (s.equals(lm.get("status.cancelled.task.label"))) return "CANCELLED";
+        if (s.equals(lm.get("status.inprogress")))          return "IN_PROGRESS";
+        else if (s.equals(lm.get("status.done")))      return "DONE";
+        else if (s.equals(lm.get("status.submitted")))      return "SUBMITTED";
+        else if (s.equals(lm.get("status.cancelled"))) return "CANCELLED";
         else return "TODO";
     }
 
     private String reversePriority(String p) {
-        if (p.equals(lm.get("priority.low.label")))         return "LOW";
-        else if (p.equals(lm.get("priority.high.label")))   return "HIGH";
-        else if (p.equals(lm.get("priority.urgent.label"))) return "URGENT";
+        if (p.equals(lm.get("priority.low")))         return "LOW";
+        else if (p.equals(lm.get("priority.high")))   return "HIGH";
+        else if (p.equals(lm.get("priority.urgent"))) return "URGENT";
         else return "MEDIUM";
     }
 

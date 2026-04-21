@@ -34,14 +34,14 @@
 
     <HBox spacing="16">
         <VBox spacing="6" HBox.hgrow="ALWAYS">
-            <Label text="%status" style="-fx-font-size: 13px; -fx-text-fill: #2d2d2d;"/>
+            <Label text="%common.status" style="-fx-font-size: 13px; -fx-text-fill: #2d2d2d;"/>
             <ComboBox fx:id="statusCombo"
                       maxWidth="Infinity"
                       style="-fx-pref-height: 38px;"/>
         </VBox>
 
         <VBox spacing="6" HBox.hgrow="ALWAYS">
-            <Label text="%priority" style="-fx-font-size: 13px; -fx-text-fill: #2d2d2d;"/>
+            <Label text="%common.priority" style="-fx-font-size: 13px; -fx-text-fill: #2d2d2d;"/>
             <ComboBox fx:id="priorityCombo"
                       maxWidth="Infinity"
                       style="-fx-pref-height: 38px;"/>
@@ -53,7 +53,7 @@
            visible="false"/>
 
     <HBox spacing="10" alignment="CENTER_RIGHT">
-        <Button text="%dialog.cancel"
+        <Button text="%common.cancel"
                 onAction="#handleCancel"
                 style="-fx-background-color: #e0e0e0; -fx-text-fill: #2d2d2d;
                        -fx-background-radius: 4px; -fx-cursor: hand;"/>

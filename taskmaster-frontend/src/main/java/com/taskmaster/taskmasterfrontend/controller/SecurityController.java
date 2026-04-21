@@ -159,9 +159,9 @@ public class SecurityController {
     private void handleDeleteAccount() {
         // Pedir la contraseña antes de eliminar
         TextInputDialog dialog = new TextInputDialog();
-        dialog.setTitle(lm.get("security.delete.title"));
+        dialog.setTitle(lm.get("common.delete.account"));
         dialog.setHeaderText(lm.get("security.delete.header"));
-        dialog.setContentText(lm.get("security.delete.prompt"));
+        dialog.setContentText(lm.get("common.password"));
 
         // Convertir el TextField en PasswordField
         PasswordField pf = new PasswordField();
@@ -175,7 +175,7 @@ public class SecurityController {
             }
 
             Alert confirm = new Alert(Alert.AlertType.CONFIRMATION);
-            confirm.setTitle(lm.get("security.delete.title"));
+            confirm.setTitle(lm.get("common.delete.account"));
             confirm.setHeaderText(lm.get("security.delete.confirm.header"));
             confirm.setContentText(lm.get("security.delete.confirm.content"));
             confirm.showAndWait().ifPresent(result -> {

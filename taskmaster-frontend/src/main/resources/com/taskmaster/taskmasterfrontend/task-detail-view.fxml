@@ -16,7 +16,7 @@
         <Label fx:id="taskTitleLabel"
                style="-fx-font-size: 16px; -fx-font-weight: bold; -fx-text-fill: #1e1e2e;"/>
         <Region HBox.hgrow="ALWAYS"/>
-        <Button text="%task.detail.edit"
+        <Button text="%common.menu.edit"
                 fx:id="editButton"
                 onAction="#handleEdit"
                 style="-fx-background-color: #f0f0f5; -fx-text-fill: #555555;
@@ -52,7 +52,7 @@
                   style="-fx-background-color: white; -fx-padding: 14 16 14 16;
                      -fx-background-radius: 8px; -fx-border-color: #e8e8e8;
                      -fx-border-radius: 8px; -fx-border-width: 1;">
-                <Label text="%task.detail.description"
+                <Label text="%common.description"
                        style="-fx-font-size: 11px; -fx-font-weight: bold; -fx-text-fill: #888888;"/>
                 <Label fx:id="descriptionLabel"
                        style="-fx-font-size: 13px; -fx-text-fill: #1e1e2e;"

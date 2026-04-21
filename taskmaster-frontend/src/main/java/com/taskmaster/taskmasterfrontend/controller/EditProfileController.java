@@ -113,9 +113,9 @@ public class EditProfileController {
                     } else {
                         try {
                             String msg = response.body();
-                            showError(msg.isEmpty() ? lm.get("edit.profile.error.save") : msg);
+                            showError(msg.isEmpty() ? lm.get("common.error.save") : msg);
                         } catch (Exception ignored) {
-                            showError(lm.get("edit.profile.error.save"));
+                            showError(lm.get("common.error.save"));
                         }
                     }
                 });

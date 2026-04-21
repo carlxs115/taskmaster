@@ -11,7 +11,7 @@
     <HBox style="-fx-background-color: white; -fx-padding: 16 20 16 20;
                  -fx-border-color: #e8e8e8; -fx-border-width: 0 0 1 0;"
           alignment="CENTER_LEFT">
-        <Label text="%security.delete.title"
+        <Label text="%common.delete.account"
                style="-fx-font-size: 16px; -fx-font-weight: bold; -fx-text-fill: #e74c3c;"/>
     </HBox>
 
@@ -46,7 +46,7 @@
 
         <!-- Botones -->
         <HBox spacing="10" alignment="CENTER_RIGHT" style="-fx-padding: 8 0 0 0;">
-            <Button text="%dialog.cancel"
+            <Button text="%common.cancel"
                     onAction="#handleCancel"
                     style="-fx-background-color: #f0f0f5; -fx-text-fill: #555555;
                            -fx-font-size: 13px; -fx-background-radius: 6px;

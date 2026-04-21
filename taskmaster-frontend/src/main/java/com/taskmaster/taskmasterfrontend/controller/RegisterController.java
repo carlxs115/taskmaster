@@ -65,7 +65,7 @@ public class RegisterController {
         }
 
         if (birthDate == null) {
-            showError(lm.get("register.error.birthdate"));
+            showError(lm.get("common.birthdate.prompt"));
             return;
         }
 
