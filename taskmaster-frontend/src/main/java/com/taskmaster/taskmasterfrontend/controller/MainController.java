@@ -695,26 +695,24 @@ public class MainController {
         // 2. Ordenar
         if (sortCrit != null) {
             result.sort((a, b) -> {
-                int cmp = switch (sortCrit) {
-                    case "Título" ->
-                            a.get("title").asText().compareToIgnoreCase(b.get("title").asText());
-                    case "ID" ->
-                            Long.compare(a.get("id").asLong(), b.get("id").asLong());
-                    case "Fecha límite" -> {
-                        boolean aH = a.has("dueDate") && !a.get("dueDate").isNull();
-                        boolean bH = b.has("dueDate") && !b.get("dueDate").isNull();
-                        if (!aH && !bH) yield 0;
-                        if (!aH)        yield 1;   // sin fecha → al final
-                        if (!bH)        yield -1;
-                        yield a.get("dueDate").asText().compareTo(b.get("dueDate").asText());
-                    }
-                    case "Prioridad" ->
-                            Integer.compare(
-                                    priorityOrder(a.has("priority") ? a.get("priority").asText() : "MEDIUM"),
-                                    priorityOrder(b.has("priority") ? b.get("priority").asText() : "MEDIUM")
-                            );
-                    default -> 0;
-                };
+                int cmp = 0;
+                if (sortCrit.equals(lm.get("sort.title"))) {
+                    cmp = a.get("title").asText().compareToIgnoreCase(b.get("title").asText());
+                } else if (sortCrit.equals(lm.get("id"))) {
+                    cmp = Long.compare(a.get("id").asLong(), b.get("id").asLong());
+                } else if (sortCrit.equals(lm.get("duedate"))) {
+                    boolean aH = a.has("dueDate") && !a.get("dueDate").isNull();
+                    boolean bH = b.has("dueDate") && !b.get("dueDate").isNull();
+                    if (!aH && !bH)     cmp = 0;
+                    else if (!aH)       cmp = 1;
+                    else if (!bH)       cmp = -1;
+                    else cmp = a.get("dueDate").asText().compareTo(b.get("dueDate").asText());
+                } else if (sortCrit.equals(lm.get("priority"))) {
+                    cmp = Integer.compare(
+                            priorityOrder(a.has("priority") ? a.get("priority").asText() : "MEDIUM"),
+                            priorityOrder(b.has("priority") ? b.get("priority").asText() : "MEDIUM")
+                    );
+                }
                 return sortAscending ? cmp : -cmp;
             });
         }

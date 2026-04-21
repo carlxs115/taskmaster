@@ -11,7 +11,7 @@
     <HBox style="-fx-background-color: white; -fx-padding: 16 20 16 20;
                  -fx-border-color: #e8e8e8; -fx-border-width: 0 0 1 0;"
           alignment="CENTER_LEFT">
-        <Label text="Editar perfil"
+        <Label text="%profile.edit.dialog.title"
                style="-fx-font-size: 16px; -fx-font-weight: bold; -fx-text-fill: #1e1e2e;"/>
     </HBox>
 
@@ -29,7 +29,7 @@
 
         <!-- Email -->
         <VBox spacing="6">
-            <Label text="Email"
+            <Label text="%profile.field.email"
                    style="-fx-font-size: 12px; -fx-font-weight: bold; -fx-text-fill: #555555;"/>
             <TextField fx:id="emailField"
                        style="-fx-font-size: 13px; -fx-padding: 8 12 8 12;
@@ -39,7 +39,7 @@
 
         <!-- Fecha de nacimiento -->
         <VBox spacing="6">
-            <Label text="Fecha de nacimiento"
+            <Label text="%profile.field.birthdate"
                    style="-fx-font-size: 12px; -fx-font-weight: bold; -fx-text-fill: #555555;"/>
             <DatePicker fx:id="birthDatePicker"
                         style="-fx-font-size: 13px; -fx-background-radius: 6px;"/>

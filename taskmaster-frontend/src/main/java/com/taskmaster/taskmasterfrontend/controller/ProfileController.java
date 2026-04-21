@@ -95,14 +95,14 @@ public class ProfileController {
         menu.setStyle("-fx-background-color: white; -fx-border-color: #e8e8e8; " +
                 "-fx-border-width: 1; -fx-background-radius: 8; -fx-border-radius: 8;");
 
-        javafx.scene.control.MenuItem change = new javafx.scene.control.MenuItem("📷  Cambiar foto");
+        javafx.scene.control.MenuItem change = new javafx.scene.control.MenuItem(lm.get("profile.avatar.change"));
         change.setStyle("-fx-font-size: 13px; -fx-padding: 6 16 6 16;");
         change.setOnAction(e -> handleChangePhoto());
         menu.getItems().add(change);
 
         // "Eliminar foto" solo si el usuario tiene foto actualmente
         if (AppContext.getInstance().hasAvatar()) {
-            javafx.scene.control.MenuItem remove = new javafx.scene.control.MenuItem("🗑  Eliminar foto");
+            javafx.scene.control.MenuItem remove = new javafx.scene.control.MenuItem(lm.get("profile.avatar.remove"));
             remove.setStyle("-fx-font-size: 13px; -fx-padding: 6 16 6 16; -fx-text-fill: #e74c3c;");
             remove.setOnAction(e -> handleRemovePhoto());
             menu.getItems().add(remove);
@@ -114,7 +114,7 @@ public class ProfileController {
     /** Abre el FileChooser, luego el diálogo de recorte, y sube el resultado. */
     private void handleChangePhoto() {
         FileChooser fileChooser = new FileChooser();
-        fileChooser.setTitle("Selecciona tu foto de perfil");
+        fileChooser.setTitle(lm.get("profile.avatar.title"));
         fileChooser.getExtensionFilters().add(
                 new FileChooser.ExtensionFilter("Imágenes", "*.png", "*.jpg", "*.jpeg"));
 
@@ -123,20 +123,20 @@ public class ProfileController {
 
         // Validación de tamaño local (2 MB) antes de abrir el diálogo
         if (selected.length() > 2 * 1024 * 1024) {
-            showAlert("Archivo demasiado grande",
-                    "La imagen no puede superar los 2 MB. Elige una más pequeña.");
+            showAlert(lm.get("error.title"), lm.get("profile.avatar.too.large"));
             return;
         }
 
         try (FileInputStream fis = new FileInputStream(selected)) {
             Image image = new Image(fis);
             if (image.isError()) {
-                showAlert("Error", "No se pudo leer la imagen seleccionada.");
+                showAlert(lm.get("error.title"), lm.get("profile.avatar.error.read"));
                 return;
             }
             openCropDialog(image);
         } catch (Exception e) {
-            showAlert("Error", "No se pudo abrir la imagen: " + e.getMessage());
+            showAlert(lm.get("error.title"),
+                    java.text.MessageFormat.format(lm.get("profile.avatar.error.open"), e.getMessage()));
         }
     }
 
@@ -144,14 +144,16 @@ public class ProfileController {
     private void openCropDialog(Image image) {
         try {
             FXMLLoader loader = new FXMLLoader(
-                    getClass().getResource("/com/taskmaster/taskmasterfrontend/avatar-crop-dialog.fxml"));
+                    getClass().getResource("/com/taskmaster/taskmasterfrontend/avatar-crop-dialog.fxml"),
+                    LanguageManager.getInstance().getBundle()
+            );
             VBox root = loader.load();
 
             AvatarCropController cropController = loader.getController();
             cropController.setImage(image);
 
             Stage dialog = new Stage();
-            dialog.setTitle("Recortar foto de perfil");
+            dialog.setTitle(lm.get("profile.avatar.crop.title"));
             dialog.initModality(Modality.APPLICATION_MODAL);
             dialog.initOwner(avatarContainer.getScene().getWindow());
             dialog.setScene(new Scene(root));
@@ -163,7 +165,8 @@ public class ProfileController {
                 uploadAvatar(croppedPng);
             }
         } catch (Exception e) {
-            showAlert("Error", "No se pudo abrir el diálogo de recorte: " + e.getMessage());
+            showAlert(lm.get("error.title"),
+                    java.text.MessageFormat.format(lm.get("profile.avatar.error.open"), e.getMessage()));
         }
     }
 
@@ -182,11 +185,13 @@ public class ProfileController {
                         loadActivityLog();
                         if (onProfileUpdated != null) onProfileUpdated.run();
                     } else {
-                        showAlert("Error", "No se pudo subir la foto (código " + response.statusCode() + ")");
+                        showAlert(lm.get("error.title"),
+                                java.text.MessageFormat.format(lm.get("profile.avatar.error.upload"), response.statusCode()));
                     }
                 });
             } catch (Exception e) {
-                Platform.runLater(() -> showAlert("Error", "Error de conexión: " + e.getMessage()));
+                Platform.runLater(() -> showAlert(lm.get("error.title"),
+                        java.text.MessageFormat.format(lm.get("profile.avatar.error.connection"), e.getMessage())));
             }
         }).start();
     }
@@ -194,9 +199,9 @@ public class ProfileController {
     /** Llama al backend para eliminar el avatar y refresca la UI. */
     private void handleRemovePhoto() {
         Alert confirm = new Alert(Alert.AlertType.CONFIRMATION);
-        confirm.setTitle("Eliminar foto");
+        confirm.setTitle(lm.get("profile.avatar.delete.title"));
         confirm.setHeaderText(null);
-        confirm.setContentText("¿Seguro que quieres eliminar tu foto de perfil?");
+        confirm.setContentText(lm.get("profile.avatar.delete.content"));
         confirm.showAndWait().ifPresent(r -> {
             if (r == ButtonType.OK) {
                 new Thread(() -> {
@@ -210,11 +215,11 @@ public class ProfileController {
                                 loadActivityLog();
                                 if (onProfileUpdated != null) onProfileUpdated.run();
                             } else {
-                                showAlert("Error", "No se pudo eliminar la foto");
+                                showAlert(lm.get("error.title"), lm.get("profile.avatar.error.delete"));
                             }
                         });
                     } catch (Exception e) {
-                        Platform.runLater(() -> showAlert("Error", "Error de conexión"));
+                        Platform.runLater(() -> showAlert(lm.get("error.title"), lm.get("error.connection")));
                     }
                 }).start();
             }
@@ -231,7 +236,7 @@ public class ProfileController {
                     Platform.runLater(() -> renderProfile(user));
                 }
             } catch (Exception e) {
-                Platform.runLater(() -> showAlert("Error", "No se pudo cargar el perfil"));
+                Platform.runLater(() -> showAlert(lm.get("error.title"), lm.get("profile.error.load")));
             }
         }).start();
     }
@@ -249,7 +254,7 @@ public class ProfileController {
                 }
             } catch (Exception e) {
                 e.printStackTrace();
-                Platform.runLater(() -> showAlert("Error", "No se pudieron cargar las estadísticas"));
+                Platform.runLater(() -> showAlert(lm.get("error.title"), lm.get("profile.error.stats")));
             }
         }).start();
     }
@@ -306,18 +311,18 @@ public class ProfileController {
         int  rate       = stats.get("completionRate").asInt();
 
         statsRow.getChildren().setAll(
-                createStatCard(String.valueOf(total),      "Total tareas",    "#7c3aed"),
-                createStatCard(String.valueOf(completed),  "Completadas",     "#22c55e"),
-                createStatCard(String.valueOf(pending),    "Pendientes",      "#3b82f6"),
-                createStatCard(String.valueOf(inProgress), "En progreso",     "#f59e0b"),
-                createStatCard(String.valueOf(cancelled),  "Canceladas",      "#e74c3c"),
-                createStatCard(String.valueOf(projects),   "Proyectos",       "#ec4899")
+                createStatCard(String.valueOf(total),      lm.get("profile.stats.total"),      "#7c3aed"),
+                createStatCard(String.valueOf(completed),  lm.get("profile.stats.completed"),  "#22c55e"),
+                createStatCard(String.valueOf(pending),    lm.get("profile.stats.pending"),    "#3b82f6"),
+                createStatCard(String.valueOf(inProgress), lm.get("profile.stats.inprogress"), "#f59e0b"),
+                createStatCard(String.valueOf(cancelled),  lm.get("profile.stats.cancelled"),  "#e74c3c"),
+                createStatCard(String.valueOf(projects),   lm.get("profile.stats.projects"),   "#ec4899")
         );
         for (javafx.scene.Node c : statsRow.getChildren())
             HBox.setHgrow(c, Priority.ALWAYS);
 
         // Barra de progreso
-        completionRateLabel.setText(rate + "% completado");
+        completionRateLabel.setText(rate + "% " + lm.get("profile.stats.rate").toLowerCase());
         completionBarFill.prefWidthProperty().bind(
                 completionBarFill.getParent() instanceof javafx.scene.layout.Region parent
                         ? parent.widthProperty().multiply(rate / 100.0)
@@ -347,10 +352,10 @@ public class ProfileController {
         for (JsonNode entry : entries) {
             LocalDate date = LocalDateTime.parse(entry.get("createdAt").asText()).toLocalDate();
             String group;
-            if (date.equals(today))          group = "Hoy";
-            else if (date.equals(yesterday)) group = "Ayer";
-            else if (!date.isBefore(today.minusDays(7))) group = "Esta semana";
-            else                             group = "Anteriores";
+            if (date.equals(today))          group = lm.get("activity.group.today");
+            else if (date.equals(yesterday)) group = lm.get("activity.group.yesterday");
+            else if (!date.isBefore(today.minusDays(7))) group = lm.get("activity.group.week");
+            else                             group = lm.get("activity.group.older");
 
             groups.computeIfAbsent(group, k -> new java.util.ArrayList<>()).add(entry);
         }
@@ -434,7 +439,9 @@ public class ProfileController {
     private void handleEditProfile() {
         try {
             FXMLLoader loader = new FXMLLoader(
-                    getClass().getResource("/com/taskmaster/taskmasterfrontend/edit-profile-dialog.fxml"));
+                    getClass().getResource("/com/taskmaster/taskmasterfrontend/edit-profile-dialog.fxml"),
+                    LanguageManager.getInstance().getBundle()
+            );
             VBox root = loader.load();
             EditProfileController controller = loader.getController();
             controller.setOnProfileUpdated(() -> {
@@ -446,12 +453,12 @@ public class ProfileController {
             });
 
             Stage dialog = new Stage();
-            dialog.setTitle("Editar perfil");
+            dialog.setTitle(lm.get("profile.edit.dialog.title"));
             dialog.setScene(new Scene(root, 400, 380));
             dialog.initModality(Modality.APPLICATION_MODAL);
             dialog.showAndWait();
         } catch (Exception e) {
-            showAlert("Error", "No se pudo abrir el diálogo");
+            showAlert(lm.get("error.title"), lm.get("error.open.dialog"));
         }
     }
 
@@ -490,38 +497,33 @@ public class ProfileController {
                                           String oldValue, String newValue) {
         String name = entityName.isEmpty() ? "" : " \"" + entityName + "\"";
         return switch (actionType) {
-            case "TASK_CREATED"               -> "Tarea creada" + name;
-            case "TASK_EDITED"                -> "Tarea editada" + name;
-            case "TASK_DELETED"               -> "Tarea enviada a la papelera" + name;
-            case "TASK_PERMANENTLY_DELETED"   -> "Tarea eliminada permanentemente" + name;
-            case "TASK_RESTORED"              -> "Tarea restaurada" + name;
-            case "TASK_STATUS_CHANGED"        -> "Tarea" + name + " → " + translateStatus(newValue);
-            case "SUBTASK_CREATED"            -> "Subtarea creada" + name;
-            case "SUBTASK_EDITED"             -> "Subtarea editada" + name;
-            case "SUBTASK_DELETED"            -> "Subtarea eliminada" + name;
-            case "PROJECT_CREATED"            -> "Proyecto creado" + name;
-            case "PROJECT_EDITED"             -> "Proyecto editado" + name;
-            case "PROJECT_DELETED"            -> "Proyecto enviado a la papelera" + name;
-            case "PROJECT_PERMANENTLY_DELETED"-> "Proyecto eliminado permanentemente" + name;
-            case "PROJECT_RESTORED"           -> "Proyecto restaurado" + name;
-            case "PROJECT_STATUS_CHANGED"     -> "Proyecto" + name + " · " +
+            case "TASK_CREATED"                -> lm.get("activity.task.created") + name;
+            case "TASK_EDITED"                 -> lm.get("activity.task.edited") + name;
+            case "TASK_DELETED"                -> lm.get("activity.task.deleted") + name;
+            case "TASK_PERMANENTLY_DELETED"    -> lm.get("activity.task.perm.deleted") + name;
+            case "TASK_RESTORED"               -> lm.get("activity.task.restored") + name;
+            case "TASK_STATUS_CHANGED"         -> lm.get("activity.task.status") + name + " → " + translateStatus(newValue);
+            case "SUBTASK_CREATED"             -> lm.get("activity.subtask.created") + name;
+            case "SUBTASK_EDITED"              -> lm.get("activity.subtask.edited") + name;
+            case "SUBTASK_DELETED"             -> lm.get("activity.subtask.deleted") + name;
+            case "PROJECT_CREATED"             -> lm.get("activity.project.created") + name;
+            case "PROJECT_EDITED"              -> lm.get("activity.project.edited") + name;
+            case "PROJECT_DELETED"             -> lm.get("activity.project.deleted") + name;
+            case "PROJECT_PERMANENTLY_DELETED" -> lm.get("activity.project.perm.deleted") + name;
+            case "PROJECT_RESTORED"            -> lm.get("activity.project.restored") + name;
+            case "PROJECT_STATUS_CHANGED"      -> lm.get("activity.project.status") + name + " · " +
                     translateStatus(oldValue) + " → " + translateStatus(newValue);
-            case "PROFILE_UPDATED"            -> "Perfil actualizado";
-            case "PASSWORD_CHANGED"           -> "Contraseña cambiada";
-            default                           -> actionType;
+            case "PROFILE_UPDATED"             -> lm.get("activity.profile.updated");
+            case "PASSWORD_CHANGED"            -> lm.get("activity.password.changed");
+            default                            -> actionType;
         };
     }
 
     private String translateStatus(String status) {
         if (status == null) return "";
-        return switch (status) {
-            case "TODO"        -> "Pendiente";
-            case "IN_PROGRESS" -> "En progreso";
-            case "DONE"        -> "Completada";
-            case "SUBMITTED" -> "Entregada";
-            case "CANCELLED"   -> "Cancelada";
-            default            -> status;
-        };
+        String key = "status.translate." + status;
+        String val = lm.get(key);
+        return val.startsWith("?") ? status : val;
     }
 
     private void showAlert(String title, String message) {

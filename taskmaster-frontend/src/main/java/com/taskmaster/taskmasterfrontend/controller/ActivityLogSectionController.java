@@ -2,6 +2,7 @@ package com.taskmaster.taskmasterfrontend.controller;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.taskmaster.taskmasterfrontend.util.AppContext;
+import com.taskmaster.taskmasterfrontend.util.LanguageManager;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
 import javafx.fxml.FXML;
@@ -24,35 +25,42 @@ public class ActivityLogSectionController {
     @FXML private TableColumn<ActivityRow, String> colEntity;
     @FXML private TableColumn<ActivityRow, String> colDetail;
 
+    private final LanguageManager lm = LanguageManager.getInstance();
     private static final DateTimeFormatter FORMATTER =
             DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
 
-    private static final Map<String, String> ACTION_LABELS = Map.ofEntries(
-            Map.entry("TASK_CREATED",             "Tarea creada"),
-            Map.entry("TASK_EDITED",              "Tarea editada"),
-            Map.entry("TASK_DELETED",             "Enviada a papelera"),
-            Map.entry("TASK_PERMANENTLY_DELETED", "Eliminada definitivamente"),
-            Map.entry("TASK_RESTORED",            "Restaurada"),
-            Map.entry("TASK_STATUS_CHANGED",      "Estado cambiado"),
-            Map.entry("SUBTASK_CREATED",          "Subtarea creada"),
-            Map.entry("SUBTASK_EDITED",           "Subtarea editada"),
-            Map.entry("SUBTASK_DELETED",          "Subtarea eliminada"),
-            Map.entry("PROJECT_CREATED",          "Proyecto creado"),
-            Map.entry("PROJECT_EDITED",           "Proyecto editado"),
-            Map.entry("PROJECT_DELETED",          "Enviado a papelera"),
-            Map.entry("PROJECT_PERMANENTLY_DELETED", "Eliminado definitivamente"),
-            Map.entry("PROJECT_RESTORED",         "Proyecto restaurado"),
-            Map.entry("PROJECT_STATUS_CHANGED",   "Estado cambiado"),
-            Map.entry("PROFILE_UPDATED",          "Perfil actualizado"),
-            Map.entry("PASSWORD_CHANGED",         "Contraseña cambiada")
-    );
+    private String getActionLabel(String actionType) {
+        return switch (actionType) {
+            case "TASK_CREATED"             -> lm.get("actlog.action.task.created");
+            case "TASK_EDITED"              -> lm.get("actlog.action.task.edited");
+            case "TASK_DELETED"             -> lm.get("actlog.action.task.deleted");
+            case "TASK_PERMANENTLY_DELETED" -> lm.get("actlog.action.task.perm.deleted");
+            case "TASK_RESTORED"            -> lm.get("actlog.action.task.restored");
+            case "TASK_STATUS_CHANGED"      -> lm.get("actlog.action.task.status");
+            case "SUBTASK_CREATED"          -> lm.get("actlog.action.subtask.created");
+            case "SUBTASK_EDITED"           -> lm.get("actlog.action.subtask.edited");
+            case "SUBTASK_DELETED"          -> lm.get("actlog.action.subtask.deleted");
+            case "PROJECT_CREATED"          -> lm.get("actlog.action.project.created");
+            case "PROJECT_EDITED"           -> lm.get("actlog.action.project.edited");
+            case "PROJECT_DELETED"          -> lm.get("actlog.action.project.deleted");
+            case "PROJECT_PERMANENTLY_DELETED" -> lm.get("actlog.action.project.perm.deleted");
+            case "PROJECT_RESTORED"         -> lm.get("actlog.action.project.restored");
+            case "PROJECT_STATUS_CHANGED"   -> lm.get("actlog.action.project.status");
+            case "PROFILE_UPDATED"          -> lm.get("actlog.action.profile.updated");
+            case "PASSWORD_CHANGED"         -> lm.get("actlog.action.password.changed");
+            default                         -> actionType;
+        };
+    }
 
-    private static final Map<String, String> ENTITY_LABELS = Map.of(
-            "TASK",    "Tarea",
-            "SUBTASK", "Subtarea",
-            "PROJECT", "Proyecto",
-            "PROFILE", "Perfil"
-    );
+    private String getEntityLabel(String entityType) {
+        return switch (entityType) {
+            case "TASK"    -> lm.get("actlog.entity.task");
+            case "SUBTASK" -> lm.get("actlog.entity.subtask");
+            case "PROJECT" -> lm.get("actlog.entity.project");
+            case "PROFILE" -> lm.get("actlog.entity.profile");
+            default        -> entityType;
+        };
+    }
 
     @FXML
     public void initialize() {
@@ -150,10 +158,10 @@ public class ActivityLogSectionController {
                 String entityName = node.path("entityName").asText("");
 
                 String dateStr     = formatDate(rawDate);
-                String actionLabel = ACTION_LABELS.getOrDefault(actionType, actionType);
+                String actionLabel = getActionLabel(actionType);
                 String entityId2   = node.path("entityId").asText("");
                 String entityLabel = (!entityId2.isBlank() ? "#" + entityId2 + " " : "")
-                        + ENTITY_LABELS.getOrDefault(entType, entType);
+                        + getEntityLabel(entType);
                 String detail      = buildDetail(actionType, oldVal, newVal, entityName);
 
                 rows.add(new ActivityRow(dateStr, actionLabel, entityLabel, detail, rawDate));
@@ -166,22 +174,27 @@ public class ActivityLogSectionController {
         if (!oldVal.isBlank() && !newVal.isBlank()) {
             String old = translateValue(oldVal);
             String nw  = translateValue(newVal);
-
-            if (STATUS_LABELS.containsKey(oldVal) || STATUS_LABELS.containsKey(newVal)) {
-                return "Estado: " + old + " → " + nw;
-            }
-            if (PRIORITY_LABELS.containsKey(oldVal) || PRIORITY_LABELS.containsKey(newVal)) {
-                return "Prioridad: " + old + " → " + nw;
-            }
-            if (oldVal.matches("\\d{2}/\\d{2}/\\d{4}") || newVal.matches("\\d{2}/\\d{2}/\\d{4}")
-                    || oldVal.equals("Sin fecha") || newVal.equals("Sin fecha")) {
-                return "Fecha límite: " + old + " → " + nw;
-            }
+            boolean isStatus   = isStatusValue(oldVal) || isStatusValue(newVal);
+            boolean isPriority = isPriorityValue(oldVal) || isPriorityValue(newVal);
+            boolean isDate     = oldVal.matches("\\d{2}/\\d{2}/\\d{4}")
+                    || newVal.matches("\\d{2}/\\d{2}/\\d{4}")
+                    || oldVal.equals("Sin fecha") || newVal.equals("Sin fecha");
+            if (isStatus)   return java.text.MessageFormat.format(lm.get("actlog.detail.status"),   old, nw);
+            if (isPriority) return java.text.MessageFormat.format(lm.get("actlog.detail.priority"), old, nw);
+            if (isDate)     return java.text.MessageFormat.format(lm.get("actlog.detail.duedate"),  old, nw);
             return old + " → " + nw;
         }
         if (!newVal.isBlank()) return translateValue(newVal);
         if (!oldVal.isBlank()) return translateValue(oldVal);
         return entityName;
+    }
+
+    private boolean isStatusValue(String v) {
+        return switch (v) { case "TODO","IN_PROGRESS","DONE","CANCELLED" -> true; default -> false; };
+    }
+
+    private boolean isPriorityValue(String v) {
+        return switch (v) { case "LOW","MEDIUM","HIGH","URGENT" -> true; default -> false; };
     }
 
     private String formatDate(String raw) {
@@ -192,24 +205,18 @@ public class ActivityLogSectionController {
         }
     }
 
-    private static final Map<String, String> STATUS_LABELS = Map.of(
-            "TODO",        "Pendiente",
-            "IN_PROGRESS", "En curso",
-            "DONE",        "Completada",
-            "CANCELLED",   "Cancelada"
-    );
-
-    private static final Map<String, String> PRIORITY_LABELS = Map.of(
-            "LOW",    "Baja",
-            "MEDIUM", "Media",
-            "HIGH",   "Alta",
-            "URGENT", "Urgente"
-    );
-
     private String translateValue(String value) {
-        if (STATUS_LABELS.containsKey(value))   return STATUS_LABELS.get(value);
-        if (PRIORITY_LABELS.containsKey(value)) return PRIORITY_LABELS.get(value);
-        return value;
+        return switch (value) {
+            case "TODO"        -> lm.get("status.translate.TODO");
+            case "IN_PROGRESS" -> lm.get("status.translate.IN_PROGRESS");
+            case "DONE"        -> lm.get("status.translate.DONE");
+            case "CANCELLED"   -> lm.get("status.translate.CANCELLED");
+            case "LOW"         -> lm.get("priority.low.label");
+            case "MEDIUM"      -> lm.get("priority.medium.label");
+            case "HIGH"        -> lm.get("priority.high.label");
+            case "URGENT"      -> lm.get("priority.urgent.label");
+            default            -> value;
+        };
     }
 
     public record ActivityRow(String date, String action, String entity, String detail, String rawDate) {}

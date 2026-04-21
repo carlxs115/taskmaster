@@ -10,10 +10,10 @@
     <HBox style="-fx-background-color: white; -fx-padding: 14 20 14 20;
                  -fx-border-color: #e8e8e8; -fx-border-width: 0 0 1 0;"
           alignment="CENTER_LEFT" spacing="10">
-        <Label text="Mi perfil"
+        <Label text="%profile.title"
                style="-fx-font-size: 15px; -fx-font-weight: bold; -fx-text-fill: #1e1e2e;"/>
         <Region HBox.hgrow="ALWAYS"/>
-        <Button text="✏️  Editar perfil"
+        <Button text="%profile.edit.button"
                 onAction="#handleEditProfile"
                 style="-fx-background-color: #7c3aed; -fx-text-fill: white;
                        -fx-font-size: 12px; -fx-background-radius: 6px;
@@ -41,14 +41,14 @@
                   style="-fx-background-color: white; -fx-padding: 16 20 16 20;
                          -fx-background-radius: 10px; -fx-border-color: #e8e8e8;
                          -fx-border-radius: 10px; -fx-border-width: 1;">
-                <Label text="Estadísticas"
+                <Label text="%profile.stats.title"
                        style="-fx-font-size: 13px; -fx-font-weight: bold; -fx-text-fill: #1e1e2e;"/>
                 <HBox fx:id="statsRow" spacing="8"/>
 
                 <!-- Barra de progreso global -->
                 <VBox spacing="6" style="-fx-padding: 8 0 0 0;">
                     <HBox alignment="CENTER_LEFT">
-                        <Label text="Tasa de completado"
+                        <Label text="%profile.stats.rate"
                                style="-fx-font-size: 11px; -fx-text-fill: #888888;"/>
                         <Region HBox.hgrow="ALWAYS"/>
                         <Label fx:id="completionRateLabel"
@@ -71,27 +71,27 @@
                          -fx-border-radius: 10px; -fx-border-width: 1;">
                 <HBox style="-fx-padding: 14 20 14 20; -fx-border-color: transparent transparent #f0f0f0 transparent;
                              -fx-border-width: 0 0 1 0;" alignment="CENTER_LEFT" spacing="16">
-                    <Label text="Usuario"
+                    <Label text="%profile.field.username"
                            style="-fx-font-size: 12px; -fx-text-fill: #888888; -fx-min-width: 140px;"/>
                     <Label fx:id="usernameValueLabel"
                            style="-fx-font-size: 13px; -fx-text-fill: #1e1e2e;"/>
                 </HBox>
                 <HBox style="-fx-padding: 14 20 14 20; -fx-border-color: transparent transparent #f0f0f0 transparent;
                              -fx-border-width: 0 0 1 0;" alignment="CENTER_LEFT" spacing="16">
-                    <Label text="Email"
+                    <Label text="%profile.field.email"
                            style="-fx-font-size: 12px; -fx-text-fill: #888888; -fx-min-width: 140px;"/>
                     <Label fx:id="emailLabel"
                            style="-fx-font-size: 13px; -fx-text-fill: #1e1e2e;"/>
                 </HBox>
                 <HBox style="-fx-padding: 14 20 14 20; -fx-border-color: transparent transparent #f0f0f0 transparent;
                              -fx-border-width: 0 0 1 0;" alignment="CENTER_LEFT" spacing="16">
-                    <Label text="Fecha de nacimiento"
+                    <Label text="%profile.field.birthdate"
                            style="-fx-font-size: 12px; -fx-text-fill: #888888; -fx-min-width: 140px;"/>
                     <Label fx:id="birthDateLabel"
                            style="-fx-font-size: 13px; -fx-text-fill: #1e1e2e;"/>
                 </HBox>
                 <HBox style="-fx-padding: 14 20 14 20;" alignment="CENTER_LEFT" spacing="16">
-                    <Label text="Miembro desde"
+                    <Label text="%profile.field.member.since"
                            style="-fx-font-size: 12px; -fx-text-fill: #888888; -fx-min-width: 140px;"/>
                     <Label fx:id="createdAtLabel"
                            style="-fx-font-size: 13px; -fx-text-fill: #1e1e2e;"/>
@@ -104,11 +104,11 @@
              -fx-border-color: #e8e8e8; -fx-border-radius: 10px; -fx-border-width: 1;">
                 <HBox style="-fx-padding: 14 20 14 20; -fx-border-color: transparent transparent #f0f0f0 transparent;
                  -fx-border-width: 0 0 1 0;" alignment="CENTER_LEFT">
-                    <Label text="Actividad reciente"
+                    <Label text="%profile.activity.title"
                            style="-fx-font-size: 13px; -fx-font-weight: bold; -fx-text-fill: #1e1e2e;"/>
                 </HBox>
                 <VBox fx:id="activityLogContainer" spacing="0">
-                    <Label fx:id="activityLogEmpty" text="No hay actividad registrada."
+                    <Label fx:id="activityLogEmpty" text="%profile.activity.empty"
                            style="-fx-text-fill: #aaaaaa; -fx-font-size: 12px; -fx-padding: 14 20 14 20;"/>
                 </VBox>
             </VBox>
