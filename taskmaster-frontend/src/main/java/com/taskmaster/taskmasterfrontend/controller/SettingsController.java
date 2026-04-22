@@ -2,16 +2,17 @@ package com.taskmaster.taskmasterfrontend.controller;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.taskmaster.taskmasterfrontend.util.AppContext;
-import com.taskmaster.taskmasterfrontend.util.DateFormatManager;
-import com.taskmaster.taskmasterfrontend.util.LanguageManager;
-import com.taskmaster.taskmasterfrontend.util.TimeFormatManager;
+import com.taskmaster.taskmasterfrontend.util.*;
 import javafx.application.Platform;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.Label;
 import javafx.scene.control.RadioButton;
+import javafx.scene.layout.FlowPane;
+import javafx.scene.layout.StackPane;
+import javafx.scene.layout.VBox;
+import javafx.scene.shape.Circle;
 
 import java.net.http.HttpResponse;
 import java.util.Locale;
@@ -24,35 +25,62 @@ import java.util.ResourceBundle;
  */
 public class SettingsController {
 
+    // ── Papelera ──
     @FXML private RadioButton days7;
     @FXML private RadioButton days15;
     @FXML private RadioButton days30;
     @FXML private Label retentionStatusLabel;
+
+    // ── Idioma ──
     @FXML private RadioButton langEs;
     @FXML private RadioButton langEn;
     @FXML private Label languageStatusLabel;
+
+    // ── Formato hora ──
     @FXML private RadioButton timeSystem;
     @FXML private RadioButton time24h;
     @FXML private RadioButton time12h;
     @FXML private Label timeFormatStatusLabel;
+
+    // ── Formato fecha ──
     @FXML private ComboBox<String> dateFormatCombo;
     @FXML private Label dateFormatStatusLabel;
 
+    // ── Apariencia ──
+    @FXML private FlowPane themesContainer;
+    @FXML private Label themeStatusLabel;
+
     private final ObjectMapper objectMapper = new ObjectMapper();
     private final LanguageManager lm = LanguageManager.getInstance();
+
+    // Datos de cada tema: enum, nombre visible, color primario, color fondo
+    private static final Object[][] THEME_DATA = {
+            { ThemeManager.Theme.AMATISTA,        "Amatista",      "#7c3aed", "#ffffff" },
+            { ThemeManager.Theme.AMATISTA_DARK,   "Amatista Dark", "#a78bfa", "#13131f" },
+            { ThemeManager.Theme.AURORA_BOREALIS, "Aurora Boreal", "#64FFDA", "#0B1426" },
+            { ThemeManager.Theme.OCEANO,          "Océano",        "#3b82f6", "#0f2447" },
+            { ThemeManager.Theme.PRADERA,         "Pradera",       "#10b981", "#ffffff" },
+            { ThemeManager.Theme.AMBAR,           "Ámbar",         "#f59e0b", "#ffffff" },
+            { ThemeManager.Theme.AURORA,          "Aurora",        "#ec4899", "#ffffff" },
+            { ThemeManager.Theme.PERLA,           "Perla",         "#3b82f6", "#f0f4ff" },
+            { ThemeManager.Theme.ARTICO,          "Ártico",        "#67e8f9", "#f0f9ff" },
+            { ThemeManager.Theme.NOCHE,           "Noche",         "#22d3ee", "#000000" },
+            { ThemeManager.Theme.VIGILANTE,       "Vigilante",     "#facc15", "#0a0a0a" },
+            { ThemeManager.Theme.LUZ,             "Luz",           "#f472b6", "#ffffff" },
+    };
 
     @FXML
     public void initialize() {
         loadSettings();
 
-        // Seleccionar idioma actual
+        // Idioma actual
         if (LanguageManager.getInstance().isSpanish()) {
             langEs.setSelected(true);
         } else {
             langEn.setSelected(true);
         }
 
-        // Seleccionar formato de horas actual
+        // Formato de horas actual
         TimeFormatManager tfm = TimeFormatManager.getInstance();
         switch (tfm.getCurrentFormat()) {
             case H24    -> time24h.setSelected(true);
@@ -60,26 +88,145 @@ public class SettingsController {
             default     -> timeSystem.setSelected(true);
         }
 
-        // Actualizar textos al cambiar idioma
+        // Listener de cambio de idioma
         lm.bundleProperty().addListener((obs, oldBundle, newBundle) -> {
-            // Los labels con %clave en FXML no se actualizan solos, pero el statusLabel sí necesita reset
             languageStatusLabel.setVisible(false);
             retentionStatusLabel.setVisible(false);
             timeFormatStatusLabel.setVisible(false);
         });
 
-        // Poblar ComboBox de formato de fecha
-        Locale locale = lm.getCurrentLocale();
+        // ComboBox de formato de fecha
         for (DateFormatManager.DateFormat fmt : DateFormatManager.DateFormat.values()) {
             dateFormatCombo.getItems().add(DateFormatManager.getLabel(fmt));
         }
-
-        // Seleccionar el formato actual
-        DateFormatManager dfm = DateFormatManager.getInstance();
         dateFormatCombo.getSelectionModel().select(
-                dfm.getCurrentFormat().ordinal()
-        );
+                DateFormatManager.getInstance().getCurrentFormat().ordinal());
+
+        // Construir selector de temas
+        buildThemeSelector();
     }
+
+    /**
+     * Construye las tarjetas de selección de tema en el FlowPane.
+     * Cada tarjeta muestra el nombre y dos círculos de color (acento + fondo).
+     */
+    private void buildThemeSelector() {
+        ThemeManager.Theme current = ThemeManager.getInstance().getCurrentTheme();
+        themesContainer.getChildren().clear();
+
+        for (Object[] data : THEME_DATA) {
+            ThemeManager.Theme theme = (ThemeManager.Theme) data[0];
+            String name    = (String) data[1];
+            String accent  = (String) data[2];
+            String bg      = (String) data[3];
+
+            boolean isSelected = theme == current;
+
+            // Tarjeta contenedora
+            VBox card = new VBox(6);
+            card.setAlignment(javafx.geometry.Pos.CENTER);
+            card.setPrefWidth(90);
+            card.setPadding(new javafx.geometry.Insets(10, 8, 10, 8));
+            card.setStyle(buildCardStyle(bg, accent, isSelected));
+            card.setUserData(theme);
+            card.setCursor(javafx.scene.Cursor.HAND);
+
+            // Preview: dos círculos (fondo + acento)
+            StackPane preview = new StackPane();
+            preview.setPrefSize(40, 40);
+            preview.setStyle("-fx-background-radius: 20px; -fx-background-color: " + bg + ";" +
+                    "-fx-border-radius: 20px; -fx-border-color: " + accent + "; -fx-border-width: 2;");
+
+            Circle accentDot = new Circle(8);
+            accentDot.setFill(javafx.scene.paint.Color.web(accent));
+
+            preview.getChildren().add(accentDot);
+
+            // Nombre del tema
+            Label nameLabel = new Label(name);
+            nameLabel.setStyle("-fx-font-size: 11px; -fx-font-weight: bold; " +
+                    "-fx-text-fill: " + (isDarkBg(bg) ? "#ffffff" : "#2d2d2d") + "; " +
+                    "-fx-wrap-text: true; -fx-text-alignment: center;");
+            nameLabel.setMaxWidth(80);
+            nameLabel.setAlignment(javafx.geometry.Pos.CENTER);
+
+            card.getChildren().addAll(preview, nameLabel);
+
+            // Click — aplicar tema inmediatamente
+            card.setOnMouseClicked(e -> handleThemeSelected(theme, card));
+
+            themesContainer.getChildren().add(card);
+        }
+    }
+
+    private String buildCardStyle(String bg, String accent, boolean selected) {
+        String border = selected ? accent : "#e0e0e0";
+        String borderWidth = selected ? "2.5" : "1";
+        String shadow = selected ? "-fx-effect: dropshadow(gaussian, " + accent + ", 8, 0.4, 0, 0);" : "";
+        return "-fx-background-color: " + bg + "; " +
+                "-fx-background-radius: 10px; " +
+                "-fx-border-color: " + border + "; " +
+                "-fx-border-radius: 10px; " +
+                "-fx-border-width: " + borderWidth + "; " +
+                "-fx-cursor: hand; " +
+                shadow;
+    }
+
+    private boolean isDarkBg(String hex) {
+        // Comprueba si el color de fondo es oscuro para elegir el color del texto
+        try {
+            javafx.scene.paint.Color c = javafx.scene.paint.Color.web(hex);
+            double luminance = 0.299 * c.getRed() + 0.587 * c.getGreen() + 0.114 * c.getBlue();
+            return luminance < 0.5;
+        } catch (Exception e) {
+            return false;
+        }
+    }
+
+    private void handleThemeSelected(ThemeManager.Theme theme, VBox selectedCard) {
+        // Aplicar tema visualmente de inmediato
+        ThemeManager.getInstance().applyTheme(theme);
+
+        // Actualizar estilos de todas las tarjetas
+        for (var node : themesContainer.getChildren()) {
+            if (node instanceof VBox card) {
+                ThemeManager.Theme cardTheme = (ThemeManager.Theme) card.getUserData();
+                // Buscar datos de este tema
+                for (Object[] data : THEME_DATA) {
+                    if (data[0] == cardTheme) {
+                        boolean sel = card == selectedCard;
+                        card.setStyle(buildCardStyle((String) data[2], (String) data[2], sel));
+                        // Reconstruir con bg correcto
+                        card.setStyle(buildCardStyle((String) data[3], (String) data[2], sel));
+                        break;
+                    }
+                }
+            }
+        }
+
+        // Guardar en backend en hilo separado
+        new Thread(() -> {
+            try {
+                HttpResponse<String> response = AppContext.getInstance()
+                        .getApiService()
+                        .patch("/api/settings/theme?theme=" + theme.name(), null);
+                Platform.runLater(() -> {
+                    if (response.statusCode() == 200) {
+                        themeStatusLabel.setText(lm.get("settings.saved"));
+                        themeStatusLabel.setStyle("-fx-font-size: 12px; -fx-text-fill: #2ecc71;");
+                        themeStatusLabel.setVisible(true);
+                    }
+                });
+            } catch (Exception e) {
+                Platform.runLater(() -> {
+                    themeStatusLabel.setText(lm.get("settings.connection.error"));
+                    themeStatusLabel.setStyle("-fx-font-size: 12px; -fx-text-fill: #e74c3c;");
+                    themeStatusLabel.setVisible(true);
+                });
+            }
+        }).start();
+    }
+
 
     private void loadSettings() {
         new Thread(() -> {
@@ -87,19 +234,28 @@ public class SettingsController {
                 HttpResponse<String> response = AppContext.getInstance()
                         .getApiService()
                         .get("/api/settings");
-
                 if (response.statusCode() == 200) {
                     JsonNode settings = objectMapper.readTree(response.body());
                     int days = settings.get("trashRetentionDays").asInt();
+
+                    // Cargar tema guardado
+                    String themeName = settings.has("theme")
+                            ? settings.get("theme").asText()
+                            : "AMATISTA";
+                    ThemeManager.Theme savedTheme = ThemeManager.fromString(themeName);
 
                     Platform.runLater(() -> {
                         if (days == 7) days7.setSelected(true);
                         else if (days == 15) days15.setSelected(true);
                         else days30.setSelected(true);
+
+                        // Aplicar tema y reconstruir selector con el tema correcto marcado
+                        ThemeManager.getInstance().applyTheme(savedTheme);
+                        buildThemeSelector();
                     });
                 }
             } catch (Exception e) {
-
+                // silencioso
             }
         }).start();
     }

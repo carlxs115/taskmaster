@@ -23,6 +23,31 @@
     <VBox spacing="24" style="-fx-padding: 24;">
 
         <!-- ═══════════════════════════════════════════════════
+             SECCIÓN: APARIENCIA
+        ════════════════════════════════════════════════════ -->
+        <Label text="%settings.section.appearance"
+               style="-fx-font-size: 12px; -fx-font-weight: bold; -fx-text-fill: #888888;
+                      -fx-padding: 4 0 0 2;"/>
+
+        <VBox spacing="14" style="-fx-background-color: white; -fx-padding: 20;
+                                  -fx-background-radius: 8px; -fx-border-color: #e0e0e0;
+                                  -fx-border-radius: 8px;">
+            <Label text="%settings.theme.title"
+                   style="-fx-font-size: 15px; -fx-font-weight: bold; -fx-text-fill: #2d2d2d;"/>
+            <Label text="%settings.theme.description"
+                   style="-fx-font-size: 13px; -fx-text-fill: #666666;"/>
+
+            <!-- Cuadrícula de temas generada dinámicamente -->
+            <FlowPane fx:id="themesContainer"
+                      hgap="10" vgap="10"
+                      style="-fx-padding: 4 0 4 0;"/>
+
+            <Label fx:id="themeStatusLabel"
+                   style="-fx-font-size: 12px; -fx-text-fill: #2ecc71;"
+                   visible="false"/>
+        </VBox>
+
+        <!-- ═══════════════════════════════════════════════════
          SECCIÓN: FECHA Y HORA
         ════════════════════════════════════════════════════ -->
         <Label text="%settings.section.datetime"
