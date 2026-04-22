@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.taskmaster.taskmasterfrontend.util.AppContext;
+import com.taskmaster.taskmasterfrontend.util.DateFormatManager;
 import com.taskmaster.taskmasterfrontend.util.LanguageManager;
 import javafx.application.Platform;
 import javafx.fxml.FXML;
@@ -118,8 +119,7 @@ public class TaskDetailController {
                 boolean overdue = due.isBefore(LocalDate.now())
                         && !"DONE".equals(status) && !"CANCELLED".equals(status);
 
-                dueDateLabel.setText("📅 " + due.format(
-                        DateTimeFormatter.ofPattern("d MMM yyyy", LanguageManager.getInstance().getCurrentLocale())));
+                dueDateLabel.setText("📅 " + DateFormatManager.getInstance().format(due));
 
                 if (overdue) {
                     dueDateLabel.setStyle("-fx-font-size: 11px; -fx-padding: 3 10 3 10; " +
@@ -325,33 +325,30 @@ public class TaskDetailController {
 
     private void openEditSubtask(Long subtaskId, Long parentTaskId) {
         try {
-            // Primero cargar datos
             HttpResponse<String> resp = AppContext.getInstance().getApiService()
                     .get("/api/tasks/" + subtaskId);
             if (resp.statusCode() != 200) return;
-
-            JsonNode subtask = new com.fasterxml.jackson.databind.ObjectMapper()
-                    .registerModule(new com.fasterxml.jackson.datatype.jsr310.JavaTimeModule())
+            JsonNode subtask = new ObjectMapper()
+                    .registerModule(new JavaTimeModule())
                     .readTree(resp.body());
 
-            // Luego cargar el FXML
             FXMLLoader loader = new FXMLLoader(
-                    getClass().getResource("/com/taskmaster/taskmasterfrontend/edit-task-dialog.fxml"),
+                    getClass().getResource(
+                            "/com/taskmaster/taskmasterfrontend/edit-task-dialog.fxml"),
                     LanguageManager.getInstance().getBundle()
             );
-            javafx.scene.layout.VBox root = loader.load();
-
+            VBox root = loader.load();
             EditTaskController controller = loader.getController();
             controller.initData(subtask);
             controller.setDialogTitle(lm.get("task.detail.subtask.edit"));
-            controller.setOnTaskUpdated(() -> loadSubtasks(parentTaskId));
+            controller.setOnTaskUpdated(() -> {
+                loadSubtasks(parentTaskId);
+                // Recargar historial dentro del callback, cuando el backend ya ha guardado
+                Long taskId = taskData.get("id").asLong();
+                activityLogSectionController.loadForEntity("TASK", taskId, "SUBTASK");
+            });
 
             showAsDialog(root, lm.get("task.detail.subtask.edit"));
-
-            // Recargar historial tras editar
-            Long parentTaskId2 = taskData.get("id").asLong();
-            loadSubtasks(parentTaskId2);
-            activityLogSectionController.loadForEntity("TASK", parentTaskId2, "SUBTASK");
         } catch (Exception e) {
             showAlert(lm.get("error.title"), lm.get("task.detail.subtask.error.edit"));
         }
@@ -578,6 +575,8 @@ public class TaskDetailController {
             controller.initData(parentId, projectId, category);
             controller.setOnSubtaskCreated(() -> {
                 loadSubtasks(parentId);
+                // Recargar historial al crear subtarea
+                activityLogSectionController.loadForEntity("TASK", parentId, "SUBTASK");
                 if (onTaskChanged != null) onTaskChanged.run();
             });
             showAsDialog(root, lm.get("new.subtask.title"));
@@ -590,18 +589,45 @@ public class TaskDetailController {
     private void handleEdit() {
         try {
             FXMLLoader loader = new FXMLLoader(
-                    getClass().getResource("/com/taskmaster/taskmasterfrontend/edit-task-dialog.fxml"),
+                    getClass().getResource(
+                            "/com/taskmaster/taskmasterfrontend/edit-task-dialog.fxml"),
                     LanguageManager.getInstance().getBundle()
             );
             VBox root = loader.load();
             EditTaskController controller = loader.getController();
             controller.initData(taskData);
-            controller.setDialogTitle(isSubtask ? lm.get("task.detail.subtask.edit") : lm.get("common.menu.edit"));
+            controller.setDialogTitle(isSubtask
+                    ? lm.get("task.detail.subtask.edit")
+                    : lm.get("common.menu.edit"));
+
             controller.setOnTaskUpdated(() -> {
-                if (onTaskChanged != null) onTaskChanged.run();
-                closeDialog();
+                Long taskId = taskData.get("id").asLong();
+                new Thread(() -> {
+                    try {
+                        HttpResponse<String> resp = AppContext.getInstance()
+                                .getApiService().get("/api/tasks/" + taskId);
+                        if (resp.statusCode() == 200) {
+                            taskData = objectMapper.readTree(resp.body());
+                            Platform.runLater(() -> {
+                                loadTaskDetail();
+                                // Recargar historial de actividad en tiempo real
+                                if (isSubtask) {
+                                    activityLogSectionController.loadForEntity("SUBTASK", taskId);
+                                } else {
+                                    activityLogSectionController.loadForEntity("TASK", taskId, "SUBTASK");
+                                }
+                                if (onTaskChanged != null) onTaskChanged.run();
+                            });
+                        }
+                    } catch (Exception ex) {
+                        ex.printStackTrace();
+                    }
+                }).start();
             });
-            showAsDialog(root, isSubtask ? lm.get("task.detail.subtask.edit") : lm.get("common.menu.edit"));
+
+            showAsDialog(root, isSubtask
+                    ? lm.get("task.detail.subtask.edit")
+                    : lm.get("common.menu.edit"));
         } catch (IOException e) {
             showAlert(lm.get("error.title"), lm.get("error.open.dialog"));
         }

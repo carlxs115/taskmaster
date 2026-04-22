@@ -10,6 +10,7 @@ module com.taskmaster.taskmasterfrontend {
     requires com.fasterxml.jackson.datatype.jsr310;
     requires java.desktop;
     requires javafx.swing;
+    requires java.prefs;
 
     opens com.taskmaster.taskmasterfrontend to javafx.fxml;
     opens com.taskmaster.taskmasterfrontend.controller to javafx.fxml;

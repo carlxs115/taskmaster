@@ -2,7 +2,9 @@ package com.taskmaster.taskmasterfrontend.controller;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.taskmaster.taskmasterfrontend.util.AppContext;
+import com.taskmaster.taskmasterfrontend.util.DateFormatManager;
 import com.taskmaster.taskmasterfrontend.util.LanguageManager;
+import com.taskmaster.taskmasterfrontend.util.TimeFormatManager;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
 import javafx.fxml.FXML;
@@ -26,8 +28,6 @@ public class ActivityLogSectionController {
     @FXML private TableColumn<ActivityRow, String> colDetail;
 
     private final LanguageManager lm = LanguageManager.getInstance();
-    private static final DateTimeFormatter FORMATTER =
-            DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
 
     private String getActionLabel(String actionType) {
         return switch (actionType) {
@@ -197,7 +197,10 @@ public class ActivityLogSectionController {
 
     private String formatDate(String raw) {
         try {
-            return LocalDateTime.parse(raw).format(FORMATTER);
+            LocalDateTime dt = LocalDateTime.parse(raw);
+            DateTimeFormatter datePart = DateFormatManager.getInstance().getFormatter();
+            DateTimeFormatter timePart = TimeFormatManager.getInstance().getFormatter();
+            return dt.format(datePart) + " " + dt.format(timePart);
         } catch (Exception e) {
             return raw;
         }
