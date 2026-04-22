@@ -265,7 +265,8 @@ public class MainController {
             final Long   pid  = ids.get(i);
             final String name = names.get(i);
             final JsonNode pNode = nodes.get(i);
-            String dotColor   = getCategoryColorForIndex(i);
+
+            String dotColor = getCategoryColorForIndex(i);
 
             HBox row = new HBox(4);
             row.setUserData(pid);
@@ -277,9 +278,11 @@ public class MainController {
             Button btn = new Button(name);
             btn.setMaxWidth(Double.MAX_VALUE);
             HBox.setHgrow(btn, Priority.ALWAYS);
-            btn.setStyle("-fx-background-color: transparent; -fx-text-fill: #9999bb; " +
-                    "-fx-font-size: 13px; -fx-cursor: hand; -fx-alignment: CENTER-LEFT; " +
-                    "-fx-padding: 7 4 7 6;");
+            btn.getStyleClass().add("sidebar-project-btn");
+
+            Button menuBtn = new Button("•••");
+            menuBtn.getStyleClass().add("sidebar-project-dots");
+
             btn.setOnAction(e -> {
                 selectedProjectId = pid;
                 selectedCategory  = null;
@@ -287,10 +290,6 @@ public class MainController {
                 openProjectDetail(pNode);
             });
 
-            Button menuBtn = new Button("•••");
-            menuBtn.setStyle("-fx-background-color: transparent; -fx-text-fill: transparent; " +
-                    "-fx-font-size: 10px; -fx-font-weight: bold; -fx-cursor: hand; " +
-                    "-fx-padding: 2 6 2 6; -fx-background-radius: 6px;");
             menuBtn.setOnAction(e -> {
                 ContextMenu cm = new ContextMenu();
                 MenuItem edit   = new MenuItem(lm.get("common.menu.edit"));
@@ -304,29 +303,23 @@ public class MainController {
             });
 
             row.setOnMouseEntered(e -> {
-                btn.setStyle("-fx-background-color: #1e1e35; -fx-text-fill: white; " +
-                        "-fx-font-size: 13px; -fx-cursor: hand; -fx-alignment: CENTER-LEFT; " +
-                        "-fx-padding: 7 4 7 6;");
-                menuBtn.setStyle("-fx-background-color: transparent; -fx-text-fill: #9999bb; " +
-                        "-fx-font-size: 10px; -fx-font-weight: bold; -fx-cursor: hand; " +
-                        "-fx-padding: 2 6 2 6; -fx-background-radius: 6px;");
-            });
-            row.setOnMouseExited(e -> {
-                if (pid.equals(selectedProjectId)) {
-                    btn.setStyle("-fx-background-color: #2a1f4e; -fx-text-fill: #a78bfa; " +
-                            "-fx-font-size: 13px; -fx-cursor: hand; -fx-alignment: CENTER-LEFT; " +
-                            "-fx-padding: 7 4 7 6;");
-                    menuBtn.setStyle("-fx-background-color: transparent; -fx-text-fill: #9999bb; " +
-                            "-fx-font-size: 10px; -fx-font-weight: bold; -fx-cursor: hand; " +
-                            "-fx-padding: 2 6 2 6; -fx-background-radius: 6px;");
-                } else {
-                    btn.setStyle("-fx-background-color: transparent; -fx-text-fill: #9999bb; " +
-                            "-fx-font-size: 13px; -fx-cursor: hand; -fx-alignment: CENTER-LEFT; " +
-                            "-fx-padding: 7 4 7 6;");
-                    menuBtn.setStyle("-fx-background-color: transparent; -fx-text-fill: transparent; " +
-                            "-fx-font-size: 10px; -fx-font-weight: bold; -fx-cursor: hand; " +
-                            "-fx-padding: 2 6 2 6; -fx-background-radius: 6px;");
+                if (!pid.equals(selectedProjectId)) {
+                    btn.getStyleClass().removeAll("sidebar-project-btn");
+                    btn.getStyleClass().add("sidebar-project-btn-hover");
                 }
+                menuBtn.getStyleClass().removeAll("sidebar-project-dots");
+                menuBtn.getStyleClass().add("sidebar-project-dots-visible");
+            });
+
+            row.setOnMouseExited(e -> {
+                if (!pid.equals(selectedProjectId)) {
+                    btn.getStyleClass().removeAll("sidebar-project-btn-hover");
+                    if (!btn.getStyleClass().contains("sidebar-project-btn"))
+                        btn.getStyleClass().add("sidebar-project-btn");
+                }
+                menuBtn.getStyleClass().removeAll("sidebar-project-dots-visible");
+                if (!menuBtn.getStyleClass().contains("sidebar-project-dots"))
+                    menuBtn.getStyleClass().add("sidebar-project-dots");
             });
 
             row.getChildren().addAll(dot, btn, menuBtn);
@@ -371,16 +364,15 @@ public class MainController {
         String subText = dateStr + "  ·  " + pendingStr;
 
         HBox greetingBox = new HBox();
-        greetingBox.setStyle("-fx-background-color: white; -fx-padding: 20 24 20 24; " +
-                "-fx-border-color: #e8e8e8; -fx-border-width: 0 0 1 0;");
+        greetingBox.getStyleClass().add("home-greeting-box");
         greetingBox.setAlignment(Pos.CENTER_LEFT);
         VBox greetingText = new VBox(3);
         Label greetingLabel = new Label(
                 java.text.MessageFormat.format(lm.get("home.greeting"),
                         AppContext.getInstance().getCurrentUsername()));
-        greetingLabel.setStyle("-fx-font-size: 17px; -fx-font-weight: bold; -fx-text-fill: #1e1e2e;");
+        greetingLabel.getStyleClass().add("home-greeting-label");
         Label subLabel = new Label(subText);
-        subLabel.setStyle("-fx-font-size: 12px; -fx-text-fill: #888888;");
+        subLabel.getStyleClass().add("home-greeting-sub");
         greetingText.getChildren().addAll(greetingLabel, subLabel);
         greetingBox.getChildren().add(greetingText);
         taskContainer.getChildren().add(greetingBox);
@@ -432,18 +424,18 @@ public class MainController {
 
     private VBox createStatCard(String number, String label, String dotColor) {
         VBox card = new VBox(4);
-        card.setStyle("-fx-background-color: white; -fx-padding: 12 14 12 14; " +
-                "-fx-background-radius: 8px; -fx-border-color: #e8e8e8; " +
-                "-fx-border-radius: 8px; -fx-border-width: 1;");
+        card.getStyleClass().add("stat-card");
         card.setAlignment(Pos.TOP_LEFT);
+
         Label num = new Label(number);
-        num.setStyle("-fx-font-size: 22px; -fx-font-weight: bold; -fx-text-fill: #1e1e2e;");
+        num.getStyleClass().add("stat-card-number");
+
         HBox labelRow = new HBox(5);
         labelRow.setAlignment(Pos.CENTER_LEFT);
         Label dot = new Label("●");
         dot.setStyle("-fx-text-fill: " + dotColor + "; -fx-font-size: 8px;");
         Label lbl = new Label(label);
-        lbl.setStyle("-fx-font-size: 11px; -fx-text-fill: #888888;");
+        lbl.getStyleClass().add("stat-card-label");
         labelRow.getChildren().addAll(dot, lbl);
         card.getChildren().addAll(num, labelRow);
         return card;
@@ -491,7 +483,7 @@ public class MainController {
             nameRow.getChildren().addAll(nameLabel, spacer, pctLabel);
 
             StackPane barBg = new StackPane();
-            barBg.setStyle("-fx-background-color: #f0f0f5; -fx-background-radius: 2px;");
+            barBg.getStyleClass().add("progress-bar-bg");
             barBg.setMinHeight(5); barBg.setMaxHeight(5);
             HBox barFill = new HBox();
             String barColor = getCategoryColor(pCategory);
@@ -780,9 +772,8 @@ public class MainController {
     private HBox createTaskCard(JsonNode task) {
         HBox card = new HBox(12);
         card.setAlignment(Pos.CENTER_LEFT);
-        card.setStyle("-fx-background-color: white; -fx-padding: 12 16 12 16; " +
-                "-fx-background-radius: 8px; -fx-border-color: #e8e8e8; " +
-                "-fx-border-radius: 8px; -fx-border-width: 1; -fx-margin: 0 0 8 0;");
+
+        card.getStyleClass().add("task-card");
 
         String status   = task.get("status").asText();
         String title    = task.get("title").asText();
@@ -801,7 +792,7 @@ public class MainController {
         HBox.setHgrow(titleLabel, Priority.ALWAYS);
 
         titleLabel.setOnMouseClicked(e -> openTaskDetail(task));
-        titleLabel.setStyle("-fx-font-size: 13px; -fx-text-fill: #1e1e2e; -fx-cursor: hand;");
+        titleLabel.getStyleClass().add("task-title");
 
         Label statusBadge = new Label(translateStatus(status));
         statusBadge.setStyle("-fx-font-size: 11px; -fx-padding: 2 8 2 8; " +
@@ -814,7 +805,7 @@ public class MainController {
                 "-fx-background-color: " + getPriorityColor(priority) + ";");
 
         Label idLabel = new Label("#" + taskId);
-        idLabel.setStyle("-fx-font-size: 10px; -fx-text-fill: #9999bb; -fx-padding: 0 4 0 0;");
+        idLabel.getStyleClass().add("task-id-label");
 
         final boolean[] updating = {false};
         checkBox.selectedProperty().addListener((obs, was, is) -> {
@@ -841,31 +832,18 @@ public class MainController {
         });
 
         Button menuBtn = new Button("•••");
-        menuBtn.setStyle("-fx-background-color: transparent; -fx-text-fill: #666688; " +
-                "-fx-font-size: 16px; -fx-font-weight: bold; -fx-cursor: hand; " +
-                "-fx-padding: 2 8 2 8; -fx-background-radius: 6px;");
-        menuBtn.setOnMouseEntered(e -> menuBtn.setStyle(
-                "-fx-background-color: #f0f0f5; -fx-text-fill: #1e1e2e; " +
-                        "-fx-font-size: 16px; -fx-font-weight: bold; -fx-cursor: hand; " +
-                        "-fx-padding: 2 8 2 8; -fx-background-radius: 6px;"));
-        menuBtn.setOnMouseExited(e -> menuBtn.setStyle(
-                "-fx-background-color: transparent; -fx-text-fill: #666688; " +
-                        "-fx-font-size: 16px; -fx-font-weight: bold; -fx-cursor: hand; " +
-                        "-fx-padding: 2 8 2 8; -fx-background-radius: 6px;"));
+        menuBtn.getStyleClass().add("task-menu-btn");
 
         menuBtn.setOnAction(e -> {
             ContextMenu menu = new ContextMenu();
             menu.setStyle("-fx-background-color: white; -fx-border-color: #e8e8e8; " +
                     "-fx-border-width: 1; -fx-background-radius: 8; -fx-border-radius: 8;");
-
             MenuItem edit = new MenuItem(lm.get("common.menu.edit"));
             edit.setStyle("-fx-font-size: 13px; -fx-padding: 2 10 2 10;");
             edit.setOnAction(ev -> handleEditTask(taskId, task));
-
             MenuItem delete = new MenuItem(lm.get("common.menu.delete"));
             delete.setStyle("-fx-font-size: 13px; -fx-padding: 2 10 2 10; -fx-text-fill: #e74c3c;");
             delete.setOnAction(ev -> handleDeleteTask(taskId));
-
             menu.getItems().addAll(edit, delete);
             menu.show(menuBtn, javafx.geometry.Side.BOTTOM, 0, 0);
         });
@@ -883,18 +861,17 @@ public class MainController {
         HBox.setHgrow(spacer, Priority.ALWAYS);
 
         if (isOverdue) {
-            card.setStyle("-fx-background-color: white; -fx-padding: 12 16 12 14; " +
-                    "-fx-background-radius: 8px; -fx-border-color: #e8e8e8; " +
-                    "-fx-border-radius: 8px; -fx-border-width: 1; " +
-                    "-fx-border-color: #fecaca; " +
-                    "-fx-border-left-color: #e74c3c; -fx-border-width: 1 1 1 3;");
+            card.getStyleClass().removeAll("task-card");
+            card.getStyleClass().add("task-card-overdue");
             Label overdueLabel = new Label(lm.get("date.overdue"));
             overdueLabel.setStyle("-fx-font-size: 10px; -fx-padding: 2 7 2 7; " +
                     "-fx-background-radius: 10px; -fx-text-fill: #991b1b; " +
                     "-fx-background-color: #fee2e2;");
-            card.getChildren().addAll(checkBox, idLabel, titleLabel, overdueLabel, statusBadge, priorityBadge, spacer, menuBtn);
+            card.getChildren().addAll(checkBox, idLabel, titleLabel, overdueLabel,
+                    statusBadge, priorityBadge, spacer, menuBtn);
         } else {
-            card.getChildren().addAll(checkBox, idLabel, titleLabel, statusBadge, priorityBadge, spacer, menuBtn);
+            card.getChildren().addAll(checkBox, idLabel, titleLabel,
+                    statusBadge, priorityBadge, spacer, menuBtn);
         }
         return card;
     }
@@ -993,9 +970,8 @@ public class MainController {
     }
 
     private void updateTitleStyle(Label l, boolean done) {
-        l.setStyle(done
-                ? "-fx-font-size: 13px; -fx-text-fill: #aaaaaa; -fx-strikethrough: true;"
-                : "-fx-font-size: 13px; -fx-text-fill: #1e1e2e;");
+        l.getStyleClass().removeAll("task-title", "task-title-done");
+        l.getStyleClass().add(done ? "task-title-done" : "task-title");
     }
 
     // =========================================================================
@@ -1451,47 +1427,37 @@ public class MainController {
         return (HBox) root.getCenter();
     }
 
-    private static final String SIDEBAR_ACTIVE   = "-fx-background-color: #2a1f4e; -fx-text-fill: #a78bfa; -fx-font-size: 13px; -fx-cursor: hand; -fx-alignment: CENTER-LEFT; -fx-padding: 8 16 8 18;";
-    private static final String SIDEBAR_INACTIVE = "-fx-background-color: transparent; -fx-text-fill: #9999bb; -fx-font-size: 13px; -fx-cursor: hand; -fx-alignment: CENTER-LEFT; -fx-padding: 7 16 7 16;";
+    private static final String SIDEBAR_ACTIVE   = "sidebar-btn-active";
+    private static final String SIDEBAR_INACTIVE = "sidebar-btn";
 
     private void setSidebarActive(Button active) {
         clearSidebarSelection();
-        active.setStyle(SIDEBAR_ACTIVE);
+        active.getStyleClass().removeAll("sidebar-btn");
+        active.getStyleClass().add("sidebar-btn-active");
     }
 
     private void setSidebarProjectActive(Long projectId) {
-        // Desactivar todos los botones fijos del sidebar
         for (Button btn : new Button[]{btnHome, btnAllTasks, btnPersonal,
                 btnEstudios, btnTrabajo, btnSettings, btnSecurity, btnTrash}) {
-            btn.setStyle(SIDEBAR_INACTIVE);
+            btn.getStyleClass().removeAll("sidebar-btn-active");
+            if (!btn.getStyleClass().contains("sidebar-btn"))
+                btn.getStyleClass().add("sidebar-btn");
         }
-        // Recorrer las filas del projectListContainer
         for (Node node : projectListContainer.getChildren()) {
             if (node instanceof HBox row) {
-                // El botón del proyecto es el segundo hijo (índice 1)
                 if (row.getChildren().size() >= 2 && row.getChildren().get(1) instanceof Button btn) {
                     Object tag = row.getUserData();
-                    if (tag instanceof Long pid && pid.equals(projectId)) {
-                        btn.setStyle("-fx-background-color: #2a1f4e; -fx-text-fill: #a78bfa; " +
-                                "-fx-font-size: 13px; -fx-cursor: hand; -fx-alignment: CENTER-LEFT; " +
-                                "-fx-padding: 7 4 7 6;");
-
-                        if (row.getChildren().size() >= 3 && row.getChildren().get(2) instanceof Button dots) {
-                            dots.setStyle("-fx-background-color: transparent; -fx-text-fill: #9999bb; " +
-                                    "-fx-font-size: 10px; -fx-font-weight: bold; -fx-cursor: hand; " +
-                                    "-fx-padding: 2 6 2 6; -fx-background-radius: 6px;");
-                        }
-                    } else {
-                        btn.setStyle("-fx-background-color: transparent; -fx-text-fill: #9999bb; " +
-                                "-fx-font-size: 13px; -fx-cursor: hand; -fx-alignment: CENTER-LEFT; " +
-                                "-fx-padding: 7 4 7 6;");
-
-                        if (row.getChildren().size() >= 3 && row.getChildren().get(2) instanceof Button dots) {
-                            dots.setStyle("-fx-background-color: transparent; -fx-text-fill: transparent; " +
-                                    "-fx-font-size: 10px; -fx-font-weight: bold; -fx-cursor: hand; " +
-                                    "-fx-padding: 2 6 2 6; -fx-background-radius: 6px;");
-                        }
-                    }
+                    boolean isActive = tag instanceof Long pid && pid.equals(projectId);
+                    btn.getStyleClass().removeAll(
+                            "sidebar-project-btn", "sidebar-project-btn-hover", "sidebar-project-btn-active");
+                    btn.getStyleClass().add(isActive
+                            ? "sidebar-project-btn-active"
+                            : "sidebar-project-btn");
+                }
+                if (row.getChildren().size() >= 3 && row.getChildren().get(2) instanceof Button dots) {
+                    dots.getStyleClass().removeAll("sidebar-project-dots-visible");
+                    if (!dots.getStyleClass().contains("sidebar-project-dots"))
+                        dots.getStyleClass().add("sidebar-project-dots");
                 }
             }
         }
@@ -1797,9 +1763,7 @@ public class MainController {
 
     private VBox createPanel() {
         VBox panel = new VBox(0);
-        panel.setStyle("-fx-background-color: white; -fx-padding: 14 16 14 16; " +
-                "-fx-background-radius: 10px; -fx-border-color: #e8e8e8; " +
-                "-fx-border-radius: 10px; -fx-border-width: 1;");
+        panel.getStyleClass().add("home-panel");
         return panel;
     }
 
@@ -1807,12 +1771,14 @@ public class MainController {
         HBox header = new HBox();
         header.setAlignment(Pos.CENTER_LEFT);
         header.setStyle("-fx-padding: 0 0 12 0;");
+
         Label titleLabel = new Label(title);
-        titleLabel.setStyle("-fx-font-size: 13px; -fx-font-weight: bold; -fx-text-fill: #1e1e2e;");
+        titleLabel.getStyleClass().add("home-panel-title");
         HBox.setHgrow(titleLabel, Priority.ALWAYS);
+
         Label countLabel = new Label(count);
-        countLabel.setStyle("-fx-font-size: 11px; -fx-text-fill: #888888; -fx-padding: 2 8 2 8; " +
-                "-fx-background-color: #f0f0f5; -fx-background-radius: 20px;");
+        countLabel.getStyleClass().add("home-panel-count");
+
         header.getChildren().addAll(titleLabel, countLabel);
         return header;
     }
@@ -1820,18 +1786,22 @@ public class MainController {
     private void clearSidebarSelection() {
         for (Button btn : new Button[]{btnHome, btnAllTasks, btnPersonal,
                 btnEstudios, btnTrabajo, btnSettings, btnSecurity, btnTrash, btnHelp}) {
-            btn.setStyle(SIDEBAR_INACTIVE);
+            btn.getStyleClass().removeAll("sidebar-btn-active");
+            if (!btn.getStyleClass().contains("sidebar-btn"))
+                btn.getStyleClass().add("sidebar-btn");
         }
         for (Node node : projectListContainer.getChildren()) {
             if (node instanceof HBox row) {
-                if (row.getChildren().size() >= 2 && row.getChildren().get(1) instanceof Button b)
-                    b.setStyle("-fx-background-color: transparent; -fx-text-fill: #9999bb; " +
-                            "-fx-font-size: 13px; -fx-cursor: hand; -fx-alignment: CENTER-LEFT; " +
-                            "-fx-padding: 7 4 7 6;");
-                if (row.getChildren().size() >= 3 && row.getChildren().get(2) instanceof Button dots)
+                if (row.getChildren().size() >= 2 && row.getChildren().get(1) instanceof Button b) {
+                    b.getStyleClass().removeAll("sidebar-project-btn-active");
+                    if (!b.getStyleClass().contains("sidebar-project-btn"))
+                        b.getStyleClass().add("sidebar-project-btn");
+                }
+                if (row.getChildren().size() >= 3 && row.getChildren().get(2) instanceof Button dots) {
                     dots.setStyle("-fx-background-color: transparent; -fx-text-fill: transparent; " +
                             "-fx-font-size: 10px; -fx-font-weight: bold; -fx-cursor: hand; " +
                             "-fx-padding: 2 6 2 6; -fx-background-radius: 6px;");
+                }
             }
         }
     }

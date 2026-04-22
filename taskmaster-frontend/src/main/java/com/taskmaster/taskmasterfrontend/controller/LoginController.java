@@ -149,8 +149,13 @@ public class LoginController {
                     getClass().getResource("/com/taskmaster/taskmasterfrontend/main-view.fxml"),
                     LanguageManager.getInstance().getBundle()
             );
+            Scene scene = new Scene(loader.load(), 900, 600);
+
+            // ── Registrar el nuevo Scene en ThemeManager y aplicar tema ──
+            ThemeManager.getInstance().setMainScene(scene);
+
             Stage stage = (Stage) usernameField.getScene().getWindow();
-            stage.setScene(new Scene(loader.load(), 900, 600));
+            stage.setScene(scene);
             stage.setTitle("TaskMaster");
         } catch (Exception e) {
             Platform.runLater(() -> {

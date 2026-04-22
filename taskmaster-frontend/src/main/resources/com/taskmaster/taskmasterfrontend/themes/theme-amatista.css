@@ -53,6 +53,7 @@
     -tm-sidebar-section-text: #555570;
     -tm-topbar-user-bg:       #2a1f4e;
     -tm-topbar-user-border:   #3d2f6e;
+    -tm-bg-hover-sidebar:     #1e1e30;
 }
 
 /* ── Topbar ── */
@@ -230,4 +231,366 @@
 .auth-error {
     -fx-text-fill: -tm-status-urgent;
     -fx-font-size: 12px;
+}
+
+/* =====================================================
+   MAIN — Topbar global
+   ===================================================== */
+
+.app-topbar {
+    -fx-background-color: -tm-bg-topbar;
+    -fx-border-color: -tm-border-topbar;
+    -fx-border-width: 0 0 1 0;
+    -fx-padding: 13 20 13 20;
+}
+
+.app-topbar-logo-task {
+    -fx-font-size: 17px;
+    -fx-font-weight: bold;
+    -fx-text-fill: white;
+}
+
+.app-topbar-logo-master {
+    -fx-font-size: 17px;
+    -fx-font-weight: bold;
+    -fx-text-fill: -tm-accent-light;
+}
+
+.app-topbar-user-pill {
+    -fx-background-color: -tm-topbar-user-bg;
+    -fx-background-radius: 20px;
+    -fx-border-color: -tm-topbar-user-border;
+    -fx-border-radius: 20px;
+    -fx-border-width: 1;
+    -fx-padding: 4 12 4 4;
+    -fx-cursor: hand;
+}
+
+.app-topbar-username {
+    -fx-text-fill: -tm-accent-light;
+    -fx-font-size: 13px;
+    -fx-font-weight: bold;
+}
+
+/* =====================================================
+   MAIN — Sidebar
+   ===================================================== */
+
+.sidebar {
+    -fx-background-color: -tm-bg-sidebar;
+    -fx-min-width: 220px;
+    -fx-max-width: 220px;
+    -fx-border-color: -tm-border-sidebar;
+    -fx-border-width: 0 1 0 0;
+}
+
+.sidebar-scroll {
+    -fx-background-color: -tm-bg-sidebar;
+    -fx-background: -tm-bg-sidebar;
+    -fx-border-color: transparent;
+}
+
+.sidebar-project-list {
+    -fx-background-color: -tm-bg-sidebar;
+}
+
+.sidebar-section-label {
+    -fx-text-fill: -tm-text-label;
+    -fx-font-size: 10px;
+    -fx-font-weight: bold;
+    -fx-padding: 12 16 4 16;
+}
+
+.sidebar-separator {
+    -fx-background-color: -tm-border-sidebar;
+}
+
+.sidebar-btn {
+    -fx-background-color: transparent;
+    -fx-text-fill: -tm-text-sidebar;
+    -fx-font-size: 13px;
+    -fx-cursor: hand;
+    -fx-alignment: CENTER-LEFT;
+    -fx-padding: 7 16 7 16;
+}
+
+.sidebar-btn:hover {
+    -fx-background-color: -tm-bg-hover-sidebar;
+}
+
+.sidebar-btn-active {
+    -fx-background-color: -tm-bg-active;
+    -fx-text-fill: -tm-accent-light;
+    -fx-font-size: 13px;
+    -fx-cursor: hand;
+    -fx-alignment: CENTER-LEFT;
+    -fx-padding: 8 16 8 18;
+}
+
+.sidebar-project-btn {
+    -fx-background-color: transparent;
+    -fx-text-fill: -tm-text-sidebar;
+    -fx-font-size: 13px;
+    -fx-cursor: hand;
+    -fx-alignment: CENTER-LEFT;
+    -fx-padding: 7 4 7 6;
+}
+
+.sidebar-project-btn-hover {
+    -fx-background-color: -tm-bg-hover-sidebar;
+    -fx-text-fill: white;
+    -fx-font-size: 13px;
+    -fx-cursor: hand;
+    -fx-alignment: CENTER-LEFT;
+    -fx-padding: 7 4 7 6;
+}
+
+.sidebar-project-btn-active {
+    -fx-background-color: -tm-bg-active;
+    -fx-text-fill: -tm-accent-light;
+    -fx-font-size: 13px;
+    -fx-cursor: hand;
+    -fx-alignment: CENTER-LEFT;
+    -fx-padding: 7 4 7 6;
+}
+
+.sidebar-project-dots {
+    -fx-background-color: transparent;
+    -fx-text-fill: transparent;
+    -fx-font-size: 10px;
+    -fx-font-weight: bold;
+    -fx-cursor: hand;
+    -fx-padding: 2 6 2 6;
+    -fx-background-radius: 6px;
+}
+
+.sidebar-project-dots-visible {
+    -fx-background-color: transparent;
+    -fx-text-fill: -tm-text-sidebar;
+    -fx-font-size: 10px;
+    -fx-font-weight: bold;
+    -fx-cursor: hand;
+    -fx-padding: 2 6 2 6;
+    -fx-background-radius: 6px;
+}
+
+/* =====================================================
+   MAIN — Área principal
+   ===================================================== */
+
+.main-area {
+    -fx-background-color: -tm-bg-app;
+}
+
+.area-topbar {
+    -fx-background-color: -tm-bg-surface;
+    -fx-padding: 14 20 14 20;
+    -fx-border-color: -tm-border;
+    -fx-border-width: 0 0 1 0;
+}
+
+.area-title {
+    -fx-font-size: 15px;
+    -fx-font-weight: bold;
+    -fx-text-fill: -tm-text-primary;
+}
+
+.area-search-field {
+    -fx-font-size: 12px;
+    -fx-padding: 6 12 6 12;
+    -fx-background-radius: 20px;
+    -fx-border-radius: 20px;
+    -fx-border-color: -tm-border;
+    -fx-border-width: 1;
+    -fx-pref-width: 200px;
+    -fx-background-color: -tm-bg-input;
+}
+
+.btn-create {
+    -fx-background-color: -tm-btn-primary;
+    -fx-text-fill: white;
+    -fx-font-size: 12px;
+    -fx-background-radius: 6px;
+    -fx-cursor: hand;
+    -fx-padding: 6 14 6 14;
+}
+
+.btn-create:hover {
+    -fx-background-color: -tm-btn-primary-hover;
+}
+
+/* =====================================================
+   MAIN — Barra de filtros
+   ===================================================== */
+
+.filters-bar {
+    -fx-background-color: -tm-bg-surface;
+    -fx-padding: 8 20 8 20;
+    -fx-border-color: -tm-border;
+    -fx-border-width: 0 0 1 0;
+}
+
+.filter-label {
+    -fx-font-size: 11px;
+    -fx-text-fill: -tm-text-secondary;
+    -fx-font-weight: bold;
+}
+
+.filter-combo {
+    -fx-font-size: 11px;
+}
+
+.sort-direction-btn {
+    -fx-background-color: -tm-bg-app;
+    -fx-text-fill: -tm-text-label;
+    -fx-font-size: 13px;
+    -fx-cursor: hand;
+    -fx-background-radius: 6px;
+    -fx-border-color: -tm-border;
+    -fx-border-radius: 6px;
+    -fx-border-width: 1;
+    -fx-padding: 3 10 3 10;
+}
+
+.btn-clear-filters {
+    -fx-background-color: transparent;
+    -fx-text-fill: -tm-text-muted;
+    -fx-font-size: 11px;
+    -fx-cursor: hand;
+    -fx-padding: 3 8 3 8;
+    -fx-border-color: -tm-border;
+    -fx-border-radius: 6px;
+    -fx-border-width: 1;
+    -fx-background-radius: 6px;
+}
+
+/* =====================================================
+   MAIN — Task cards
+   ===================================================== */
+
+.task-card {
+    -fx-background-color: -tm-bg-surface;
+    -fx-padding: 12 16 12 16;
+    -fx-background-radius: 8px;
+    -fx-border-color: -tm-border;
+    -fx-border-radius: 8px;
+    -fx-border-width: 1;
+}
+
+.task-card-overdue {
+    -fx-background-color: -tm-bg-surface;
+    -fx-padding: 12 16 12 14;
+    -fx-background-radius: 8px;
+    -fx-border-color: #fecaca;
+    -fx-border-radius: 8px;
+    -fx-border-width: 1 1 1 3;
+}
+
+.task-title {
+    -fx-font-size: 13px;
+    -fx-text-fill: -tm-text-primary;
+    -fx-cursor: hand;
+}
+
+.task-title-done {
+    -fx-font-size: 13px;
+    -fx-text-fill: -tm-text-muted;
+    -fx-strikethrough: true;
+}
+
+.task-id-label {
+    -fx-font-size: 10px;
+    -fx-text-fill: -tm-text-sidebar;
+    -fx-padding: 0 4 0 0;
+}
+
+.task-menu-btn {
+    -fx-background-color: transparent;
+    -fx-text-fill: #666688;
+    -fx-font-size: 16px;
+    -fx-font-weight: bold;
+    -fx-cursor: hand;
+    -fx-padding: 2 8 2 8;
+    -fx-background-radius: 6px;
+}
+
+.task-menu-btn:hover {
+    -fx-background-color: -tm-bg-app;
+    -fx-text-fill: -tm-text-primary;
+}
+
+/* =====================================================
+   MAIN — Home cards / panels
+   ===================================================== */
+
+.home-greeting-box {
+    -fx-background-color: -tm-bg-surface;
+    -fx-padding: 20 24 20 24;
+    -fx-border-color: -tm-border;
+    -fx-border-width: 0 0 1 0;
+}
+
+.home-greeting-label {
+    -fx-font-size: 17px;
+    -fx-font-weight: bold;
+    -fx-text-fill: -tm-text-primary;
+}
+
+.home-greeting-sub {
+    -fx-font-size: 12px;
+    -fx-text-fill: -tm-text-secondary;
+}
+
+.stat-card {
+    -fx-background-color: -tm-bg-surface;
+    -fx-padding: 12 14 12 14;
+    -fx-background-radius: 8px;
+    -fx-border-color: -tm-border;
+    -fx-border-radius: 8px;
+    -fx-border-width: 1;
+}
+
+.stat-card-number {
+    -fx-font-size: 22px;
+    -fx-font-weight: bold;
+    -fx-text-fill: -tm-text-primary;
+}
+
+.stat-card-label {
+    -fx-font-size: 11px;
+    -fx-text-fill: -tm-text-secondary;
+}
+
+.home-panel {
+    -fx-background-color: -tm-bg-surface;
+    -fx-padding: 14 16 14 16;
+    -fx-background-radius: 10px;
+    -fx-border-color: -tm-border;
+    -fx-border-radius: 10px;
+    -fx-border-width: 1;
+}
+
+.home-panel-title {
+    -fx-font-size: 13px;
+    -fx-font-weight: bold;
+    -fx-text-fill: -tm-text-primary;
+}
+
+.home-panel-count {
+    -fx-font-size: 11px;
+    -fx-text-fill: -tm-text-secondary;
+    -fx-padding: 2 8 2 8;
+    -fx-background-color: -tm-bg-app;
+    -fx-background-radius: 20px;
+}
+
+.empty-label {
+    -fx-text-fill: -tm-text-muted;
+    -fx-font-size: 14px;
+    -fx-padding: 24 20 0 20;
+}
+
+.progress-bar-bg {
+    -fx-background-color: -tm-bg-app;
+    -fx-background-radius: 2px;
 }

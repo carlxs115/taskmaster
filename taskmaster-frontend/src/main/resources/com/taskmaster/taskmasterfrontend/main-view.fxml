@@ -4,28 +4,20 @@
 <?import javafx.scene.layout.*?>
 <BorderPane xmlns:fx="http://javafx.com/fxml"
             fx:controller="com.taskmaster.taskmasterfrontend.controller.MainController"
-            style="-fx-background-color: #f0f0f5;">
+            styleClass="main-area">
 
     <!-- ===== TOPBAR APP ===== -->
     <top>
-        <HBox style="-fx-background-color: #13131f; -fx-padding: 13 20 13 20;
-                     -fx-border-color: #2a2a3e; -fx-border-width: 0 0 1 0;"
-              alignment="CENTER_LEFT" spacing="12">
+        <HBox styleClass="app-topbar" alignment="CENTER_LEFT" spacing="12">
             <HBox spacing="0" onMouseClicked="#handleGoHome" style="-fx-cursor: hand;">
-                <Label text="Task"
-                       style="-fx-font-size: 17px; -fx-font-weight: bold; -fx-text-fill: white;"/>
-                <Label text="Master"
-                       style="-fx-font-size: 17px; -fx-font-weight: bold; -fx-text-fill: #a78bfa;"/>
+                <Label text="Task"   styleClass="app-topbar-logo-task"/>
+                <Label text="Master" styleClass="app-topbar-logo-master"/>
             </HBox>
             <Region HBox.hgrow="ALWAYS"/>
-            <!-- Avatar + nombre + desplegable -->
             <HBox alignment="CENTER" spacing="8" onMouseClicked="#handleUserMenu"
-                  style="-fx-cursor: hand; -fx-background-color: #2a1f4e; -fx-background-radius: 20px;
-             -fx-border-color: #3d2f6e; -fx-border-radius: 20px; -fx-border-width: 1;
-             -fx-padding: 4 12 4 4;">
+                  styleClass="app-topbar-user-pill">
                 <StackPane fx:id="sidebarAvatarContainer"/>
-                <Label fx:id="userMenuButton"
-                       style="-fx-text-fill: #a78bfa; -fx-font-size: 13px; -fx-font-weight: bold;"/>
+                <Label fx:id="userMenuButton" styleClass="app-topbar-username"/>
             </HBox>
         </HBox>
     </top>
@@ -34,167 +26,96 @@
     <center>
         <HBox>
             <!-- ===== SIDEBAR ===== -->
-            <VBox style="-fx-background-color: #13131f; -fx-min-width: 220px; -fx-max-width: 220px;
-                         -fx-border-color: #2a2a3e; -fx-border-width: 0 1 0 0;"
-                  spacing="0">
+            <VBox styleClass="sidebar" spacing="0">
                 <padding><Insets top="16" bottom="16"/></padding>
 
                 <Button fx:id="btnHome" text="%sidebar.home"
                         onAction="#handleGoHome"
                         maxWidth="Infinity"
-                        style="-fx-background-color: #2a1f4e; -fx-text-fill: #a78bfa;
-                               -fx-font-size: 13px; -fx-cursor: hand; -fx-alignment: CENTER-LEFT;
-                               -fx-padding: 8 16 8 18;"/>
+                        styleClass="sidebar-btn-active"/>
+                <Separator styleClass="sidebar-separator"/>
 
-                <Separator style="-fx-background-color: #2a2a3e;"/>
-
-                <Label text="%sidebar.section.tasks"
-                       style="-fx-text-fill: #555570; -fx-font-size: 10px;
-                              -fx-font-weight: bold; -fx-padding: 12 16 4 16;"/>
+                <Label text="%sidebar.section.tasks" styleClass="sidebar-section-label"/>
                 <Button fx:id="btnAllTasks" text="%sidebar.all.tasks"
                         onAction="#handleAllTasks"
-                        maxWidth="Infinity"
-                        style="-fx-background-color: transparent; -fx-text-fill: #9999bb;
-                               -fx-font-size: 13px; -fx-cursor: hand; -fx-alignment: CENTER-LEFT;
-                               -fx-padding: 7 16 7 16;"/>
+                        maxWidth="Infinity" styleClass="sidebar-btn"/>
                 <Button fx:id="btnPersonal" text="%sidebar.personal"
                         onAction="#handleCategoryPersonal"
-                        maxWidth="Infinity"
-                        style="-fx-background-color: transparent; -fx-text-fill: #9999bb;
-                               -fx-font-size: 13px; -fx-cursor: hand; -fx-alignment: CENTER-LEFT;
-                               -fx-padding: 7 16 7 16;"/>
+                        maxWidth="Infinity" styleClass="sidebar-btn"/>
                 <Button fx:id="btnEstudios" text="%sidebar.estudios"
                         onAction="#handleCategoryEstudios"
-                        maxWidth="Infinity"
-                        style="-fx-background-color: transparent; -fx-text-fill: #9999bb;
-                               -fx-font-size: 13px; -fx-cursor: hand; -fx-alignment: CENTER-LEFT;
-                               -fx-padding: 7 16 7 16;"/>
+                        maxWidth="Infinity" styleClass="sidebar-btn"/>
                 <Button fx:id="btnTrabajo" text="%sidebar.trabajo"
                         onAction="#handleCategoryTrabajo"
-                        maxWidth="Infinity"
-                        style="-fx-background-color: transparent; -fx-text-fill: #9999bb;
-                               -fx-font-size: 13px; -fx-cursor: hand; -fx-alignment: CENTER-LEFT;
-                               -fx-padding: 7 16 7 16;"/>
+                        maxWidth="Infinity" styleClass="sidebar-btn"/>
 
-                <Separator style="-fx-background-color: #2a2a3e;"/>
+                <Separator styleClass="sidebar-separator"/>
+                <Label text="%sidebar.section.projects" styleClass="sidebar-section-label"/>
 
-                <Label text="%sidebar.section.projects"
-                       style="-fx-text-fill: #555570; -fx-font-size: 10px;
-                              -fx-font-weight: bold; -fx-padding: 12 16 4 16;"/>
-
-                <ScrollPane VBox.vgrow="ALWAYS" fitToWidth="true"
-                            style="-fx-background-color: #13131f; -fx-background: #13131f;
-                                   -fx-border-color: transparent;">
-                    <VBox fx:id="projectListContainer" spacing="0"
-                          style="-fx-background-color: #13131f;"/>
+                <ScrollPane VBox.vgrow="ALWAYS" fitToWidth="true" styleClass="sidebar-scroll">
+                    <VBox fx:id="projectListContainer" styleClass="sidebar-project-list" spacing="0"/>
                 </ScrollPane>
 
-                <Separator style="-fx-background-color: #2a2a3e;"/>
+                <Separator styleClass="sidebar-separator"/>
                 <Button fx:id="btnHelp" text="%sidebar.help"
                         onAction="#handleHelp"
-                        maxWidth="Infinity"
-                        style="-fx-background-color: transparent; -fx-text-fill: #9999bb;
-               -fx-font-size: 13px; -fx-cursor: hand; -fx-alignment: CENTER-LEFT;
-               -fx-padding: 8 16 8 16;"/>
-
-                <Separator style="-fx-background-color: #2a2a3e;"/>
+                        maxWidth="Infinity" styleClass="sidebar-btn"/>
+                <Separator styleClass="sidebar-separator"/>
                 <Button fx:id="btnSettings" text="%sidebar.settings"
                         onAction="#handleSettings"
-                        maxWidth="Infinity"
-                        style="-fx-background-color: transparent; -fx-text-fill: #9999bb;
-                               -fx-font-size: 13px; -fx-cursor: hand; -fx-alignment: CENTER-LEFT;
-                               -fx-padding: 8 16 8 16;"/>
+                        maxWidth="Infinity" styleClass="sidebar-btn"/>
                 <Button fx:id="btnSecurity" text="%sidebar.security"
                         onAction="#handleSecurity"
-                        maxWidth="Infinity"
-                        style="-fx-background-color: transparent; -fx-text-fill: #9999bb;
-               -fx-font-size: 13px; -fx-cursor: hand; -fx-alignment: CENTER-LEFT;
-               -fx-padding: 8 16 8 16;"/>
+                        maxWidth="Infinity" styleClass="sidebar-btn"/>
                 <Button fx:id="btnTrash" text="%sidebar.trash"
                         onAction="#handleTrash"
-                        maxWidth="Infinity"
-                        style="-fx-background-color: transparent; -fx-text-fill: #9999bb;
-                               -fx-font-size: 13px; -fx-cursor: hand; -fx-alignment: CENTER-LEFT;
-                               -fx-padding: 8 16 8 16;"/>
+                        maxWidth="Infinity" styleClass="sidebar-btn"/>
             </VBox>
 
             <!-- ===== ÁREA PRINCIPAL ===== -->
-            <VBox fx:id="mainArea" HBox.hgrow="ALWAYS" spacing="0"
-                  style="-fx-background-color: #f0f0f5;">
+            <VBox fx:id="mainArea" HBox.hgrow="ALWAYS" spacing="0" styleClass="main-area">
 
-                <!-- TOPBAR DEL ÁREA: título + búsqueda + botón Crear -->
-                <HBox fx:id="areaTopBar"
-                      style="-fx-background-color: white; -fx-padding: 14 20 14 20;
-                             -fx-border-color: #e8e8e8; -fx-border-width: 0 0 1 0;"
+                <!-- TOPBAR DEL ÁREA -->
+                <HBox fx:id="areaTopBar" styleClass="area-topbar"
                       alignment="CENTER_LEFT" spacing="12">
-                    <Label fx:id="areaTitle" text="%sidebar.home"
-                           style="-fx-font-size: 15px; -fx-font-weight: bold; -fx-text-fill: #1e1e2e;"/>
+                    <Label fx:id="areaTitle" text="%sidebar.home" styleClass="area-title"/>
                     <Region HBox.hgrow="ALWAYS"/>
                     <TextField fx:id="searchField"
                                promptText="%topbar.search.prompt"
                                onKeyReleased="#handleSearch"
-                               style="-fx-font-size: 12px; -fx-padding: 6 12 6 12;
-                                      -fx-background-radius: 20px; -fx-border-radius: 20px;
-                                      -fx-border-color: #e8e8e8; -fx-border-width: 1;
-                                      -fx-pref-width: 200px;"
+                               styleClass="area-search-field"
                                managed="false" visible="false"/>
                     <Button fx:id="createButton" text="%topbar.create"
                             onAction="#handleCreateMenu"
-                            style="-fx-background-color: #7c3aed; -fx-text-fill: white;
-                                   -fx-font-size: 12px; -fx-background-radius: 6px;
-                                   -fx-cursor: hand; -fx-padding: 6 14 6 14;"/>
+                            styleClass="btn-create"/>
                 </HBox>
 
-                <!-- FILTROS (ocultos en home) -->
-                <HBox fx:id="taskFiltersBar"
-                      style="-fx-background-color: white; -fx-padding: 8 20 8 20;
-             -fx-border-color: #e8e8e8; -fx-border-width: 0 0 1 0;"
+                <!-- FILTROS -->
+                <HBox fx:id="taskFiltersBar" styleClass="filters-bar"
                       spacing="8" alignment="CENTER_LEFT" managed="false" visible="false">
-
-                    <!-- FILTRAR -->
-                    <Label fx:id="filterLabel" text="%filter.label"
-                           style="-fx-font-size: 11px; -fx-text-fill: #888888; -fx-font-weight: bold;"/>
-                    <ComboBox fx:id="statusFilter" promptText="%common.status"
-                              style="-fx-font-size: 11px;" prefWidth="130"/>
-                    <ComboBox fx:id="priorityFilter" promptText="%common.priority"
-                              style="-fx-font-size: 11px;" prefWidth="130"/>
-
-                    <!-- Separador visual -->
-                    <Separator orientation="VERTICAL"
-                               style="-fx-padding: 0 4 0 4;"/>
-
-                    <!-- ORDENAR -->
-                    <Label fx:id="sortLabel" text="%sort.label"
-                           style="-fx-font-size: 11px; -fx-text-fill: #888888; -fx-font-weight: bold;"/>
-                    <ComboBox fx:id="sortFilter" promptText="%sort.criteria"
-                              style="-fx-font-size: 11px;" prefWidth="140"/>
+                    <Label fx:id="filterLabel" text="%filter.label" styleClass="filter-label"/>
+                    <ComboBox fx:id="statusFilter"   promptText="%common.status"   styleClass="filter-combo" prefWidth="130"/>
+                    <ComboBox fx:id="priorityFilter" promptText="%common.priority" styleClass="filter-combo" prefWidth="130"/>
+                    <Separator orientation="VERTICAL" style="-fx-padding: 0 4 0 4;"/>
+                    <Label fx:id="sortLabel" text="%sort.label" styleClass="filter-label"/>
+                    <ComboBox fx:id="sortFilter" promptText="%sort.criteria" styleClass="filter-combo" prefWidth="140"/>
                     <Button fx:id="sortDirectionBtn" text="↑"
                             onAction="#handleSortDirection"
-                            style="-fx-background-color: #f0f0f5; -fx-text-fill: #555570;
-                   -fx-font-size: 13px; -fx-cursor: hand; -fx-background-radius: 6px;
-                   -fx-border-color: #e8e8e8; -fx-border-radius: 6px;
-                   -fx-border-width: 1; -fx-padding: 3 10 3 10;"/>
-
+                            styleClass="sort-direction-btn"/>
                     <Region HBox.hgrow="ALWAYS"/>
-
-                    <!-- Botón limpiar filtros -->
                     <Button fx:id="clearFiltersBtn" text="%filter.clear"
                             onAction="#handleClearFilters"
-                            style="-fx-background-color: transparent; -fx-text-fill: #aaaaaa;
-                   -fx-font-size: 11px; -fx-cursor: hand; -fx-padding: 3 8 3 8;
-                   -fx-border-color: #e8e8e8; -fx-border-radius: 6px; -fx-border-width: 1;
-                   -fx-background-radius: 6px;"/>
+                            styleClass="btn-clear-filters"/>
                 </HBox>
 
-                <!-- CONTENIDO PRINCIPAL -->
+                <!-- CONTENIDO -->
                 <ScrollPane VBox.vgrow="ALWAYS" fitToWidth="true"
                             style="-fx-background-color: transparent; -fx-border-color: transparent;">
                     <VBox fx:id="taskContainer" spacing="0">
                         <padding><Insets top="0" right="0" bottom="16" left="0"/></padding>
                         <Label fx:id="emptyLabel"
                                text="%tasks.empty.default"
-                               style="-fx-text-fill: #aaaaaa; -fx-font-size: 14px;
-                                      -fx-padding: 24 20 0 20;"/>
+                               styleClass="empty-label"/>
                     </VBox>
                 </ScrollPane>
             </VBox>
