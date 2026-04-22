@@ -1,0 +1,20 @@
+@import "theme-amatista.css";
+
+/* =====================================================
+   THEME: ÁMBAR
+   TaskMaster — Naranja cálido sobre blanco
+   ===================================================== */
+
+.root {
+    -tm-accent:          #f59e0b;
+    -tm-accent-light:    #fbbf24;
+    -tm-accent-dark:     #d97706;
+    -tm-accent-subtle:   #fef3c7;
+    -tm-btn-primary:     #f59e0b;
+    -tm-btn-primary-hover: #d97706;
+    -tm-sidebar-active-bg:    #78350f;
+    -tm-sidebar-active-text:  #fbbf24;
+    -tm-topbar-user-bg:       #78350f;
+    -tm-topbar-user-border:   #92400e;
+    -tm-bg-active:       #78350f;
+}

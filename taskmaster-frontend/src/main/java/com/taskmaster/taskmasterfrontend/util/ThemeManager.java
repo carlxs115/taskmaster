@@ -25,11 +25,12 @@ public class ThemeManager {
         OCEANO,
         PRADERA,
         AMBAR,
-        AURORA,
+        SAKURA,
         PERLA,
         ARTICO,
         NOCHE,
         VIGILANTE,
+        HACKER,
         LUZ
     }
 
@@ -90,23 +91,25 @@ public class ThemeManager {
                 || currentTheme.get() == Theme.AURORA_BOREALIS
                 || currentTheme.get() == Theme.OCEANO
                 || currentTheme.get() == Theme.NOCHE
-                || currentTheme.get() == Theme.VIGILANTE;
+                || currentTheme.get() == Theme.VIGILANTE
+                || currentTheme.get() == Theme.HACKER;
     }
 
     private String getCssFileName(Theme theme) {
         return switch (theme) {
             case AMATISTA          -> "theme-amatista.css";
             case AMATISTA_DARK     -> "theme-amatista-dark.css";
-            case AURORA_BOREALIS -> "theme-aurora-borealis.css";
-            case OCEANO          -> "theme-oceano.css";
-            case PRADERA         -> "theme-pradera.css";
-            case AMBAR           -> "theme-ambar.css";
-            case AURORA          -> "theme-aurora.css";
-            case PERLA           -> "theme-perla.css";
-            case ARTICO          -> "theme-artico.css";
-            case NOCHE           -> "theme-noche.css";
-            case VIGILANTE       -> "theme-vigilante.css";
-            case LUZ             -> "theme-luz.css";
+            case AURORA_BOREALIS   -> "theme-aurora-borealis.css";
+            case OCEANO            -> "theme-oceano.css";
+            case PRADERA           -> "theme-pradera.css";
+            case AMBAR             -> "theme-ambar.css";
+            case SAKURA            -> "theme-sakura.css";
+            case PERLA             -> "theme-perla.css";
+            case ARTICO            -> "theme-artico.css";
+            case NOCHE             -> "theme-noche.css";
+            case VIGILANTE         -> "theme-vigilante.css";
+            case HACKER            -> "theme-hacker.css";
+            case LUZ               -> "theme-luz.css";
         };
     }
 

@@ -1,0 +1,58 @@
+@import "theme-amatista.css";
+
+/* =====================================================
+   THEME: AMATISTA DARK
+   TaskMaster — Tema oscuro con acentos morado/amatista
+   ===================================================== */
+
+.root {
+    /* Fondos */
+    -tm-bg-app:          #0d0d1a;
+    -tm-bg-topbar:       #080810;
+    -tm-bg-sidebar:      #080810;
+    -tm-bg-surface:      #13131f;
+    -tm-bg-surface-alt:  #1a1a2e;
+    -tm-bg-input:        #1e1e30;
+    -tm-bg-hover:        #2a1f4e;
+    -tm-bg-active:       #2a1f4e;
+    -tm-bg-badge:        #2a1f4e;
+
+    /* Acentos */
+    -tm-accent:          #7c3aed;
+    -tm-accent-light:    #a78bfa;
+    -tm-accent-dark:     #5b21b6;
+    -tm-accent-subtle:   #2a1f4e;
+
+    /* Textos */
+    -tm-text-primary:    #e8e8f0;
+    -tm-text-secondary:  #9999bb;
+    -tm-text-muted:      #555570;
+    -tm-text-sidebar:    #9999bb;
+    -tm-text-on-accent:  white;
+    -tm-text-label:      #555570;
+    -tm-text-header:     #e8e8f0;
+
+    /* Bordes */
+    -tm-border:          #2a2a3e;
+    -tm-border-topbar:   #2a2a3e;
+    -tm-border-sidebar:  #2a2a3e;
+
+    /* Botón acción principal */
+    -tm-btn-primary:     #7c3aed;
+    -tm-btn-primary-hover: #5b21b6;
+    -tm-btn-secondary:   #2980b9;
+
+    /* Estados de tarea */
+    -tm-status-done:     #2ecc71;
+    -tm-status-progress: #3498db;
+    -tm-status-pending:  #f59e0b;
+    -tm-status-urgent:   #e74c3c;
+
+    /* Sidebar activo */
+    -tm-sidebar-active-bg:    #2a1f4e;
+    -tm-sidebar-active-text:  #a78bfa;
+    -tm-sidebar-section-text: #555570;
+    -tm-topbar-user-bg:       #2a1f4e;
+    -tm-topbar-user-border:   #3d2f6e;
+    -tm-bg-hover-sidebar:     #1e1e35;
+}

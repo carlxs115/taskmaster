@@ -1,0 +1,58 @@
+@import "theme-amatista.css";
+
+/* =====================================================
+   THEME: NOCHE
+   TaskMaster — Negro puro con acentos cyan/amatista
+   ===================================================== */
+
+.root {
+    /* Fondos */
+    -tm-bg-app:          #080808;
+    -tm-bg-topbar:       #000000;
+    -tm-bg-sidebar:      #000000;
+    -tm-bg-surface:      #0f0f0f;
+    -tm-bg-surface-alt:  #0a0a0a;
+    -tm-bg-input:        #141414;
+    -tm-bg-hover:        #1a1a1a;
+    -tm-bg-active:       #1a1a1a;
+    -tm-bg-badge:        #1a1a1a;
+
+    /* Acentos */
+    -tm-accent:          #22d3ee;
+    -tm-accent-light:    #67e8f9;
+    -tm-accent-dark:     #0891b2;
+    -tm-accent-subtle:   #1a1a1a;
+
+    /* Textos */
+    -tm-text-primary:    #f0f0f0;
+    -tm-text-secondary:  #888888;
+    -tm-text-muted:      #444444;
+    -tm-text-sidebar:    #888888;
+    -tm-text-on-accent:  #000000;
+    -tm-text-label:      #444444;
+    -tm-text-header:     #f0f0f0;
+
+    /* Bordes */
+    -tm-border:          #222222;
+    -tm-border-topbar:   #222222;
+    -tm-border-sidebar:  #222222;
+
+    /* Botón acción principal */
+    -tm-btn-primary:     #22d3ee;
+    -tm-btn-primary-hover: #0891b2;
+    -tm-btn-secondary:   #6366f1;
+
+    /* Estados de tarea */
+    -tm-status-done:     #22c55e;
+    -tm-status-progress: #22d3ee;
+    -tm-status-pending:  #f59e0b;
+    -tm-status-urgent:   #ef4444;
+
+    /* Sidebar activo */
+    -tm-sidebar-active-bg:    #1a1a1a;
+    -tm-sidebar-active-text:  #22d3ee;
+    -tm-sidebar-section-text: #444444;
+    -tm-topbar-user-bg:       #1a1a1a;
+    -tm-topbar-user-border:   #333333;
+    -tm-bg-hover-sidebar:     #141414;
+}

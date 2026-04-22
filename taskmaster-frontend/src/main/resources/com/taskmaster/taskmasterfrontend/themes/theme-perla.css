@@ -1,0 +1,22 @@
+@import "theme-amatista.css";
+
+/* =====================================================
+   THEME: PERLA
+   TaskMaster — Azul acero sobre blanco frío
+   ===================================================== */
+
+.root {
+    -tm-bg-app:          #f0f4ff;
+    -tm-bg-surface-alt:  #e8edf8;
+    -tm-accent:          #3b82f6;
+    -tm-accent-light:    #60a5fa;
+    -tm-accent-dark:     #1d4ed8;
+    -tm-accent-subtle:   #dbeafe;
+    -tm-btn-primary:     #3b82f6;
+    -tm-btn-primary-hover: #1d4ed8;
+    -tm-sidebar-active-bg:    #1e3a8a;
+    -tm-sidebar-active-text:  #60a5fa;
+    -tm-topbar-user-bg:       #1e3a8a;
+    -tm-topbar-user-border:   #1e40af;
+    -tm-bg-active:       #1e3a8a;
+}

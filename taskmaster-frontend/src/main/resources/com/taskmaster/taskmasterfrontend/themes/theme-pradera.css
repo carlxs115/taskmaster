@@ -1,0 +1,20 @@
+@import "theme-amatista.css";
+
+/* =====================================================
+   THEME: PRADERA
+   TaskMaster — Verde esmeralda sobre blanco
+   ===================================================== */
+
+.root {
+    -tm-accent:          #10b981;
+    -tm-accent-light:    #34d399;
+    -tm-accent-dark:     #059669;
+    -tm-accent-subtle:   #d1fae5;
+    -tm-btn-primary:     #10b981;
+    -tm-btn-primary-hover: #059669;
+    -tm-sidebar-active-bg:    #064e3b;
+    -tm-sidebar-active-text:  #34d399;
+    -tm-topbar-user-bg:       #064e3b;
+    -tm-topbar-user-border:   #065f46;
+    -tm-bg-active:       #064e3b;
+}

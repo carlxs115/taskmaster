@@ -1,0 +1,20 @@
+@import "theme-amatista.css";
+
+/* =====================================================
+   THEME: SAKURA
+   TaskMaster — Rosa/lila japonés sobre blanco
+   ===================================================== */
+
+.root {
+    -tm-accent:          #ec4899;
+    -tm-accent-light:    #f472b6;
+    -tm-accent-dark:     #db2777;
+    -tm-accent-subtle:   #fce7f3;
+    -tm-btn-primary:     #ec4899;
+    -tm-btn-primary-hover: #db2777;
+    -tm-sidebar-active-bg:    #831843;
+    -tm-sidebar-active-text:  #f472b6;
+    -tm-topbar-user-bg:       #831843;
+    -tm-topbar-user-border:   #9d174d;
+    -tm-bg-active:       #831843;
+}

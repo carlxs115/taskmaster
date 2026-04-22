@@ -1,0 +1,22 @@
+@import "theme-amatista.css";
+
+/* =====================================================
+   THEME: ÁRTICO
+   TaskMaster — Azul hielo sobre blanco azulado
+   ===================================================== */
+
+.root {
+    -tm-bg-app:          #f0f9ff;
+    -tm-bg-surface-alt:  #e0f2fe;
+    -tm-accent:          #0ea5e9;
+    -tm-accent-light:    #38bdf8;
+    -tm-accent-dark:     #0284c7;
+    -tm-accent-subtle:   #e0f2fe;
+    -tm-btn-primary:     #0ea5e9;
+    -tm-btn-primary-hover: #0284c7;
+    -tm-sidebar-active-bg:    #0c4a6e;
+    -tm-sidebar-active-text:  #38bdf8;
+    -tm-topbar-user-bg:       #0c4a6e;
+    -tm-topbar-user-border:   #075985;
+    -tm-bg-active:       #0c4a6e;
+}

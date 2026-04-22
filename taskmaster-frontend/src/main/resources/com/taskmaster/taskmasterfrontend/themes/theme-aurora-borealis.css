@@ -1,0 +1,58 @@
+@import "theme-amatista.css";
+
+/* =====================================================
+   THEME: AURORA BOREAL
+   TaskMaster — Noche ártica con acentos neón
+   ===================================================== */
+
+.root {
+    /* Fondos */
+    -tm-bg-app:          #0d1520;
+    -tm-bg-topbar:       #0B1426;
+    -tm-bg-sidebar:      #0B1426;
+    -tm-bg-surface:      #111d35;
+    -tm-bg-surface-alt:  #0f1a2e;
+    -tm-bg-input:        #162240;
+    -tm-bg-hover:        #1a2d50;
+    -tm-bg-active:       #1a2d50;
+    -tm-bg-badge:        #1a2d50;
+
+    /* Acentos */
+    -tm-accent:          #64FFDA;
+    -tm-accent-light:    #64FFDA;
+    -tm-accent-dark:     #00bfa5;
+    -tm-accent-subtle:   #1a2d50;
+
+    /* Textos */
+    -tm-text-primary:    #E8EAF6;
+    -tm-text-secondary:  #82B1FF;
+    -tm-text-muted:      #3d5a8a;
+    -tm-text-sidebar:    #82B1FF;
+    -tm-text-on-accent:  #0B1426;
+    -tm-text-label:      #3d5a8a;
+    -tm-text-header:     #E8EAF6;
+
+    /* Bordes */
+    -tm-border:          #1e3a5f;
+    -tm-border-topbar:   #1e3a5f;
+    -tm-border-sidebar:  #1e3a5f;
+
+    /* Botón acción principal */
+    -tm-btn-primary:     #64FFDA;
+    -tm-btn-primary-hover: #00bfa5;
+    -tm-btn-secondary:   #82B1FF;
+
+    /* Estados de tarea */
+    -tm-status-done:     #64FFDA;
+    -tm-status-progress: #82B1FF;
+    -tm-status-pending:  #FFE082;
+    -tm-status-urgent:   #FF8A80;
+
+    /* Sidebar activo */
+    -tm-sidebar-active-bg:    #1a2d50;
+    -tm-sidebar-active-text:  #64FFDA;
+    -tm-sidebar-section-text: #3d5a8a;
+    -tm-topbar-user-bg:       #1a2d50;
+    -tm-topbar-user-border:   #2a4a7f;
+    -tm-bg-hover-sidebar:     #162240;
+}

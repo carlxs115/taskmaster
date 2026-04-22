@@ -61,11 +61,12 @@ public class SettingsController {
             { ThemeManager.Theme.OCEANO,          "Océano",        "#3b82f6", "#0f2447" },
             { ThemeManager.Theme.PRADERA,         "Pradera",       "#10b981", "#ffffff" },
             { ThemeManager.Theme.AMBAR,           "Ámbar",         "#f59e0b", "#ffffff" },
-            { ThemeManager.Theme.AURORA,          "Aurora",        "#ec4899", "#ffffff" },
+            { ThemeManager.Theme.SAKURA,          "Sakura",        "#ec4899", "#ffffff" },
             { ThemeManager.Theme.PERLA,           "Perla",         "#3b82f6", "#f0f4ff" },
             { ThemeManager.Theme.ARTICO,          "Ártico",        "#67e8f9", "#f0f9ff" },
             { ThemeManager.Theme.NOCHE,           "Noche",         "#22d3ee", "#000000" },
             { ThemeManager.Theme.VIGILANTE,       "Vigilante",     "#facc15", "#0a0a0a" },
+            { ThemeManager.Theme.HACKER,          "Hacker",        "#00ff41", "#000000" },
             { ThemeManager.Theme.LUZ,             "Luz",           "#f472b6", "#ffffff" },
     };
 
