@@ -38,4 +38,12 @@ public class UserSettingsController {
         Long userId = securityUtils.getUserId(userDetails);
         return ResponseEntity.ok(userSettingsService.updateTrashRetention(userId, days));
     }
+
+    @PatchMapping("/theme")
+    public ResponseEntity<UserSettings> updateTheme(
+            @RequestParam String theme,
+            @AuthenticationPrincipal UserDetails userDetails) {
+        Long userId = securityUtils.getUserId(userDetails);
+        return ResponseEntity.ok(userSettingsService.updateTheme(userId, theme));
+    }
 }

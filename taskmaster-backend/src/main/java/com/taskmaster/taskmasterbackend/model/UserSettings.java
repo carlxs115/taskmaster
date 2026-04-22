@@ -43,4 +43,8 @@ public class UserSettings {
     @Column(nullable = false)
     @Builder.Default
     private int trashRetentionDays = 30;
+
+    @Column(nullable = false)
+    @Builder.Default
+    private String theme = "AMATISTA";
 }

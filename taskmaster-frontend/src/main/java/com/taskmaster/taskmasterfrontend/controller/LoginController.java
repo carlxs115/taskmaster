@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.taskmaster.taskmasterfrontend.util.AppContext;
 import com.taskmaster.taskmasterfrontend.util.LanguageManager;
+import com.taskmaster.taskmasterfrontend.util.ThemeManager;
 import javafx.application.Platform;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
@@ -103,6 +104,19 @@ public class LoginController {
                             AppContext.getInstance().setCurrentBirthDate(birthDate);
                         } catch (Exception ignored) {}
                     }
+
+                    try {
+                        HttpResponse<String> settingsResp = AppContext.getInstance()
+                                .getApiService().get("/api/settings");
+                        if (settingsResp.statusCode() == 200) {
+                            JsonNode settings = mapper.readTree(settingsResp.body());
+                            String themeName = settings.has("theme")
+                                    ? settings.get("theme").asText()
+                                    : "AMATISTA";
+                            ThemeManager.Theme theme = ThemeManager.fromString(themeName);
+                            Platform.runLater(() -> ThemeManager.getInstance().applyTheme(theme));
+                        }
+                    } catch (Exception ignored) {}
 
                     // Navegamos a la pantalla principal en el hilo de JavaFX
                     Platform.runLater(() -> {

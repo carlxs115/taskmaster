@@ -41,4 +41,10 @@ public class UserSettingsService {
         settings.setTrashRetentionDays(retentionDays);
         return userSettingsRepository.save(settings);
     }
+
+    public UserSettings updateTheme(Long userId, String theme) {
+        UserSettings settings = getSettingsByUserId(userId);
+        settings.setTheme(theme);
+        return userSettingsRepository.save(settings);
+    }
 }

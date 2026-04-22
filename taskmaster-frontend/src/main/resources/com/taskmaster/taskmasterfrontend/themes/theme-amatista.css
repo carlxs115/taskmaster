@@ -1,0 +1,148 @@
+/* =====================================================
+   THEME: AMATISTA (por defecto)
+   TaskMaster — Tema claro con acentos morado/amatista
+   ===================================================== */
+
+/* ── Variables globales ── */
+.root {
+    /* Fondos */
+    -tm-bg-app:          #f0f0f5;
+    -tm-bg-topbar:       #13131f;
+    -tm-bg-sidebar:      #13131f;
+    -tm-bg-surface:      white;
+    -tm-bg-surface-alt:  #f5f5f5;
+    -tm-bg-input:        white;
+    -tm-bg-hover:        #f5f3ff;
+    -tm-bg-active:       #2a1f4e;
+    -tm-bg-badge:        #ede9fe;
+
+    /* Acentos */
+    -tm-accent:          #7c3aed;
+    -tm-accent-light:    #a78bfa;
+    -tm-accent-dark:     #5b21b6;
+    -tm-accent-subtle:   #ede9fe;
+
+    /* Textos */
+    -tm-text-primary:    #1e1e2e;
+    -tm-text-secondary:  #666666;
+    -tm-text-muted:      #9999bb;
+    -tm-text-sidebar:    #9999bb;
+    -tm-text-on-accent:  white;
+    -tm-text-label:      #555570;
+    -tm-text-header:     #2d2d2d;
+
+    /* Bordes */
+    -tm-border:          #e0e0e0;
+    -tm-border-topbar:   #2a2a3e;
+    -tm-border-sidebar:  #2a2a3e;
+
+    /* Botón acción principal */
+    -tm-btn-primary:     #7c3aed;
+    -tm-btn-primary-hover: #5b21b6;
+    -tm-btn-secondary:   #3498db;
+
+    /* Estados de tarea */
+    -tm-status-done:     #2ecc71;
+    -tm-status-progress: #3498db;
+    -tm-status-pending:  #f59e0b;
+    -tm-status-urgent:   #e74c3c;
+
+    /* Sidebar activo */
+    -tm-sidebar-active-bg:    #2a1f4e;
+    -tm-sidebar-active-text:  #a78bfa;
+    -tm-sidebar-section-text: #555570;
+    -tm-topbar-user-bg:       #2a1f4e;
+    -tm-topbar-user-border:   #3d2f6e;
+}
+
+/* ── Topbar ── */
+.topbar {
+    -fx-background-color: -tm-bg-topbar;
+    -fx-border-color: -tm-border-topbar;
+    -fx-border-width: 0 0 1 0;
+}
+
+
+/* ── Sidebar ── */
+.sidebar {
+    -fx-background-color: -tm-bg-sidebar;
+    -fx-border-color: -tm-border-sidebar;
+    -fx-border-width: 0 1 0 0;
+}
+
+.sidebar-btn {
+    -fx-background-color: transparent;
+    -fx-text-fill: -tm-text-sidebar;
+    -fx-font-size: 13px;
+    -fx-cursor: hand;
+    -fx-alignment: CENTER-LEFT;
+    -fx-padding: 7 16 7 16;
+}
+
+.sidebar-btn:hover {
+    -fx-background-color: #1e1e30;
+}
+
+.sidebar-btn-active {
+    -fx-background-color: -tm-sidebar-active-bg;
+    -fx-text-fill: -tm-sidebar-active-text;
+}
+
+.sidebar-section-label {
+    -fx-text-fill: -tm-sidebar-section-text;
+    -fx-font-size: 10px;
+    -fx-font-weight: bold;
+    -fx-padding: 12 16 4 16;
+}
+
+/* ── Área principal ── */
+.main-area {
+    -fx-background-color: -tm-bg-app;
+}
+
+.area-topbar {
+    -fx-background-color: -tm-bg-surface;
+    -fx-border-color: -tm-border;
+    -fx-border-width: 0 0 1 0;
+}
+
+/* ── Cards / superficies ── */
+.card {
+    -fx-background-color: -tm-bg-surface;
+    -fx-border-color: -tm-border;
+    -fx-background-radius: 8px;
+    -fx-border-radius: 8px;
+}
+
+/* ── Botón primario ── */
+.btn-primary {
+    -fx-background-color: -tm-btn-primary;
+    -fx-text-fill: -tm-text-on-accent;
+    -fx-background-radius: 6px;
+    -fx-cursor: hand;
+}
+
+.btn-primary:hover {
+    -fx-background-color: -tm-btn-primary-hover;
+}
+
+/* ── Botón secundario (guardar en settings, etc.) ── */
+.btn-secondary {
+    -fx-background-color: -tm-btn-secondary;
+    -fx-text-fill: white;
+    -fx-background-radius: 4px;
+    -fx-cursor: hand;
+    -fx-font-size: 13px;
+}
+
+/* ── ScrollPane transparente ── */
+.scroll-transparent {
+    -fx-background-color: transparent;
+    -fx-border-color: transparent;
+}
+
+/* ── Textos generales ── */
+.text-primary   { -fx-text-fill: -tm-text-primary; }
+.text-secondary { -fx-text-fill: -tm-text-secondary; }
+.text-muted     { -fx-text-fill: -tm-text-muted; }
+.text-accent    { -fx-text-fill: -tm-accent-light; }

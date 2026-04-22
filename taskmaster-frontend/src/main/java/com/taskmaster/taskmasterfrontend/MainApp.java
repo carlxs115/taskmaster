@@ -1,6 +1,7 @@
 package com.taskmaster.taskmasterfrontend;
 
 import com.taskmaster.taskmasterfrontend.util.LanguageManager;
+import com.taskmaster.taskmasterfrontend.util.ThemeManager;
 import javafx.application.Application;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Scene;
@@ -24,6 +25,9 @@ public class MainApp extends Application {
                 LanguageManager.getInstance().getBundle()
         );
         Scene scene = new Scene(fxmlLoader.load(), 400, 500);
+
+        ThemeManager.getInstance().setMainScene(scene);
+
         stage.setTitle("TaskMaster");
         stage.setScene(scene);
         stage.show();
