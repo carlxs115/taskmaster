@@ -139,15 +139,12 @@ public class ProjectDetailController {
 
             if ("DONE".equals(s)) {
                 done++;
-            } else if ("DONE".equals(s) || "IN_PROGRESS".equals(s)) {
+            } else if (!"CANCELLED".equals(s)) {
                 pending++;
-
                 if (task.has("dueDate") && !task.get("dueDate").isNull()) {
                     try {
                         LocalDate due = LocalDate.parse(task.get("dueDate").asText().substring(0, 10));
-                        if (due.isBefore(today)) {
-                            overdue++;
-                        }
+                        if (due.isBefore(today)) overdue++;
                     } catch (Exception ignored) {}
                 }
             }
@@ -209,7 +206,7 @@ public class ProjectDetailController {
             } catch (Exception ignored) {}
         }
 
-        Label priBadge = new Label(priority);
+        Label priBadge = new Label(translatePriority(priority));
         priBadge.setStyle("-fx-font-size: 10px; -fx-padding: 2 7 2 7; " +
                 "-fx-background-radius: 10px; -fx-text-fill: white; " +
                 "-fx-background-color: " + getPriorityColor(priority) + ";");

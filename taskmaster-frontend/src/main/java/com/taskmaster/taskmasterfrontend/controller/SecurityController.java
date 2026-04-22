@@ -22,7 +22,6 @@ import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.Locale;
 import java.util.Map;
 
 public class SecurityController {
@@ -36,9 +35,6 @@ public class SecurityController {
 
     private final ObjectMapper objectMapper = new ObjectMapper()
             .registerModule(new JavaTimeModule());
-
-    private static final DateTimeFormatter FORMATTER =
-            DateTimeFormatter.ofPattern("d MMM yyyy, HH:mm", new Locale("es", "ES"));
 
     private final LanguageManager lm = LanguageManager.getInstance();
 
@@ -82,7 +78,8 @@ public class SecurityController {
             String color = isLogin ? "#22c55e" : "#9999bb";
 
             LocalDateTime dt = LocalDateTime.parse(createdAt);
-            String dateStr   = dt.format(FORMATTER);
+            String dateStr = dt.format(DateTimeFormatter.ofPattern("d MMM yyyy, HH:mm",
+                    LanguageManager.getInstance().getCurrentLocale()));
 
             HBox row = new HBox(12);
             row.setAlignment(Pos.CENTER_LEFT);
@@ -130,7 +127,6 @@ public class SecurityController {
             try {
                 String body = objectMapper.writeValueAsString(
                         Map.of("currentPassword", current, "newPassword", newPass));
-                System.out.println(">>> body enviado: " + body);
                 // PATCH /api/auth/password (no PUT, no /api/users/password)
                 HttpResponse<String> response = AppContext.getInstance()
                         .getApiService().patch("/api/auth/password", body);
@@ -165,7 +161,7 @@ public class SecurityController {
 
         // Convertir el TextField en PasswordField
         PasswordField pf = new PasswordField();
-        pf.setPromptText("Contraseña");
+        pf.setPromptText(lm.get("common.password"));
         dialog.getEditor().textProperty().bindBidirectional(pf.textProperty());
 
         dialog.showAndWait().ifPresent(password -> {

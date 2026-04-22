@@ -105,9 +105,4 @@ public class SettingsController {
         languageStatusLabel.setStyle("-fx-font-size: 12px; -fx-text-fill: #f59e0b;");
         languageStatusLabel.setVisible(true);
     }
-
-    private void applyLanguageToSettings() {
-        ResourceBundle b = LanguageManager.getInstance().getBundle();
-        // Los textos fijos del settings se actualizan aquí cuando hagamos el refactor completo
-    }
 }

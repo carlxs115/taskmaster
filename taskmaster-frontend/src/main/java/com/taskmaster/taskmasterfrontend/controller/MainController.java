@@ -518,7 +518,7 @@ public class MainController {
                             "-fx-background-radius: 10px; -fx-text-fill: white; " +
                             "-fx-background-color: " + getPriorityColor(pPriority) + ";"),
                     createBadge(pCategory, getCategoryBadgeStyle(pCategory)),
-                    createBadge(total + " tareas", "-fx-background-color: #f0f0f5; " +
+                    createBadge(total + " " + lm.get("common.tasks").toLowerCase(), "-fx-background-color: #f0f0f5; " +
                             "-fx-text-fill: #666666; -fx-background-radius: 10px; " +
                             "-fx-font-size: 10px; -fx-padding: 2 7 2 7;"));
 
@@ -694,11 +694,11 @@ public class MainController {
         // 1. Filtrar desde los datos originales
         List<JsonNode> result = currentTasks.stream()
                 .filter(t -> {
-                    if (statusVal == null || statusVal.equals("Todas")) return true;
+                    if (statusVal == null || statusVal.equals(lm.get("common.all"))) return true;
                     return matchesStatusLabel(t.get("status").asText(), statusVal);
                 })
                 .filter(t -> {
-                    if (priorityVal == null || priorityVal.equals("Todas")) return true;
+                    if (priorityVal == null || priorityVal.equals(lm.get("common.all"))) return true;
                     return matchesPriorityLabel(t.get("priority").asText(), priorityVal);
                 })
                 .collect(java.util.stream.Collectors.toList());
@@ -968,7 +968,6 @@ public class MainController {
             });
             swapMainAreaWith(root);
         } catch (IOException e) {
-            e.printStackTrace();
             showAlert("error.title", "error.open.task.detail");
         }
     }
@@ -1271,7 +1270,6 @@ public class MainController {
             setSidebarActive(btnSettings);
             swapMainAreaWith(settingsView);
         } catch (Exception e) {
-            e.printStackTrace();
             showAlert("error.title", "error.open.settings");
         }
     }
@@ -1289,7 +1287,6 @@ public class MainController {
             setSidebarActive(btnSecurity);
             swapMainAreaWith(securityView);
         } catch (Exception e) {
-            e.printStackTrace();
             showAlert("error.title", "error.open.settings");
         }
     }
@@ -1759,8 +1756,6 @@ public class MainController {
     //  HELPERS
     // =========================================================================
     private void reloadTasks() {
-        System.out.println("DEBUG reloadTasks: projectId=" + selectedProjectId +
-                " category=" + selectedCategory + " viewingAll=" + viewingAllTasks);
         if (selectedProjectId != null) loadTasksForProject(selectedProjectId);
         else if (selectedCategory != null) loadTasksByCategory(selectedCategory, areaTitle.getText());
         else if (viewingAllTasks) handleAllTasks();

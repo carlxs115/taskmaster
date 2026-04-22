@@ -119,7 +119,7 @@ public class TaskDetailController {
                         && !"DONE".equals(status) && !"CANCELLED".equals(status);
 
                 dueDateLabel.setText("📅 " + due.format(
-                        DateTimeFormatter.ofPattern("d MMM yyyy", new Locale("es", "ES"))));
+                        DateTimeFormatter.ofPattern("d MMM yyyy", LanguageManager.getInstance().getCurrentLocale())));
 
                 if (overdue) {
                     dueDateLabel.setStyle("-fx-font-size: 11px; -fx-padding: 3 10 3 10; " +
@@ -154,7 +154,6 @@ public class TaskDetailController {
                     Platform.runLater(() -> renderSubtasks(subtasks, taskId));
                 }
             } catch (Exception e) {
-                e.printStackTrace();
                 Platform.runLater(() -> showAlert(lm.get("error.title"), lm.get("task.detail.subtask.error.load")));
             }
         }).start();
@@ -320,7 +319,6 @@ public class TaskDetailController {
             Long parentTaskId = taskData.get("id").asLong();
             loadSubtasks(parentTaskId);
         } catch (Exception e) {
-            e.printStackTrace();
             showAlert(lm.get("error.title"), lm.get("error.open.subtask.detail"));
         }
     }
@@ -355,7 +353,6 @@ public class TaskDetailController {
             loadSubtasks(parentTaskId2);
             activityLogSectionController.loadForEntity("TASK", parentTaskId2, "SUBTASK");
         } catch (Exception e) {
-            e.printStackTrace();
             showAlert(lm.get("error.title"), lm.get("task.detail.subtask.error.edit"));
         }
     }
@@ -376,7 +373,6 @@ public class TaskDetailController {
                             if (onTaskChanged != null) onTaskChanged.run();
                         });
                     } catch (Exception e) {
-                        e.printStackTrace();
                         Platform.runLater(() -> showAlert(lm.get("error.title"), lm.get("task.detail.subtask.error.delete")));
                     }
                 }).start();
@@ -396,7 +392,6 @@ public class TaskDetailController {
                     Platform.runLater(() -> renderWorkLogs(logs));
                 }
             } catch (Exception e) {
-                e.printStackTrace();
                 Platform.runLater(() -> showAlert(lm.get("error.title"), lm.get("task.detail.worklog.error.load")));
             }
         }).start();
@@ -494,7 +489,6 @@ public class TaskDetailController {
             });
             showAsDialog(root, lm.get("task.detail.worklog.edit"));
         } catch (IOException e) {
-            e.printStackTrace();
             showAlert(lm.get("error.title"), lm.get("task.detail.worklog.error.open"));
         }
     }
@@ -515,7 +509,6 @@ public class TaskDetailController {
                             loadTotalHours(taskId);
                         });
                     } catch (Exception e) {
-                        e.printStackTrace();
                         Platform.runLater(() -> showAlert(lm.get("error.title"), lm.get("task.detail.worklog.error.delete")));
                     }
                 }).start();
@@ -556,7 +549,6 @@ public class TaskDetailController {
             });
             showAsDialog(root, lm.get("common.worklog.add.title"));
         } catch (IOException e) {
-            e.printStackTrace();
             showAlert(lm.get("error.title"), lm.get("error.open.dialog"));
         }
     }
@@ -588,9 +580,8 @@ public class TaskDetailController {
                 loadSubtasks(parentId);
                 if (onTaskChanged != null) onTaskChanged.run();
             });
-            showAsDialog(root, lm.get("task.detail.subtask.edit"));
+            showAsDialog(root, lm.get("new.subtask.title"));
         } catch (IOException e) {
-            e.printStackTrace();
             showAlert(lm.get("error.title"), lm.get("error.open.dialog"));
         }
     }
@@ -612,7 +603,6 @@ public class TaskDetailController {
             });
             showAsDialog(root, isSubtask ? lm.get("task.detail.subtask.edit") : lm.get("common.menu.edit"));
         } catch (IOException e) {
-            e.printStackTrace();
             showAlert(lm.get("error.title"), lm.get("error.open.dialog"));
         }
     }

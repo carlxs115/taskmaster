@@ -65,12 +65,12 @@
             <Label text="%settings.language.description"
                    style="-fx-font-size: 13px; -fx-text-fill: #666666;"/>
             <HBox spacing="12" alignment="CENTER_LEFT">
-                <RadioButton fx:id="langEs" text="🇪🇸  Español">
+                <RadioButton fx:id="langEs" text="ES  Español">
                     <toggleGroup>
                         <ToggleGroup fx:id="languageGroup"/>
                     </toggleGroup>
                 </RadioButton>
-                <RadioButton fx:id="langEn" text="🇬🇧  English"
+                <RadioButton fx:id="langEn" text="EN  English"
                              toggleGroup="$languageGroup"/>
             </HBox>
             <Button text="%settings.language.apply"

@@ -10,6 +10,7 @@ import javafx.scene.control.TextArea;
 import javafx.scene.control.TextField;
 
 import java.net.http.HttpResponse;
+import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -74,8 +75,8 @@ public class NewProjectController {
                 HttpResponse<String> response = AppContext.getInstance()
                         .getApiService()
                         .postWithAuthNoBody("/api/projects?name=" +
-                                java.net.URLEncoder.encode(name, "UTF-8") + "&description=" +
-                                java.net.URLEncoder.encode(description, "UTF-8") +
+                                java.net.URLEncoder.encode(name, StandardCharsets.UTF_8) + "&description=" +
+                                java.net.URLEncoder.encode(description, StandardCharsets.UTF_8) +
                                 "&category=" + categoryToEnum(categoryCombo.getValue()) +
                                 "&status="   + statusToEnum(statusCombo.getValue()) +
                                 "&priority=" + priorityToEnum(priorityCombo.getValue()));
@@ -90,7 +91,6 @@ public class NewProjectController {
                     }
                 });
             } catch (Exception e) {
-                e.printStackTrace();
                 javafx.application.Platform.runLater(() -> showError(lm.get("error.connection")));
             }
         }).start();

@@ -58,6 +58,7 @@ public class ProfileController {
     private final ObjectMapper objectMapper = new ObjectMapper()
             .registerModule(new JavaTimeModule());
     private final LanguageManager lm = LanguageManager.getInstance();
+    Locale locale = LanguageManager.getInstance().getCurrentLocale();
 
     @FXML
     public void initialize() {
@@ -246,14 +247,12 @@ public class ProfileController {
             try {
                 HttpResponse<String> response = AppContext.getInstance()
                         .getApiService().get("/api/users/stats");
-                System.out.println("Stats status: " + response.statusCode());
-                System.out.println("Stats body: " + response.body());
+
                 if (response.statusCode() == 200) {
                     JsonNode stats = objectMapper.readTree(response.body());
                     Platform.runLater(() -> renderStats(stats));
                 }
             } catch (Exception e) {
-                e.printStackTrace();
                 Platform.runLater(() -> showAlert(lm.get("error.title"), lm.get("profile.error.stats")));
             }
         }).start();
@@ -285,8 +284,9 @@ public class ProfileController {
         if (user.has("birthDate") && !user.get("birthDate").isNull()) {
             try {
                 LocalDate bd = LocalDate.parse(user.get("birthDate").asText().substring(0, 10));
+
                 birthDateLabel.setText(bd.format(
-                        DateTimeFormatter.ofPattern("d 'de' MMMM 'de' yyyy", new Locale("es", "ES"))));
+                        DateTimeFormatter.ofPattern("d MMMM yyyy", locale)));
             } catch (Exception ignored) {
                 birthDateLabel.setText("-");
             }
@@ -297,7 +297,7 @@ public class ProfileController {
             try {
                 LocalDateTime ca = LocalDateTime.parse(user.get("createdAt").asText());
                 createdAtLabel.setText(ca.format(
-                        DateTimeFormatter.ofPattern("d 'de' MMMM 'de' yyyy", new Locale("es", "ES"))));
+                        DateTimeFormatter.ofPattern("d MMMM yyyy", locale)));
             } catch (Exception ignored) {
                 createdAtLabel.setText("-");
             }

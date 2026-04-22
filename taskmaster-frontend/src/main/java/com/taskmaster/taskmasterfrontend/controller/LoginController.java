@@ -139,7 +139,6 @@ public class LoginController {
             stage.setScene(new Scene(loader.load(), 900, 600));
             stage.setTitle("TaskMaster");
         } catch (Exception e) {
-            e.printStackTrace();
             Platform.runLater(() -> {
                 showError(lm.get("error.open.dialog"));
                 loginButton.setDisable(false);
