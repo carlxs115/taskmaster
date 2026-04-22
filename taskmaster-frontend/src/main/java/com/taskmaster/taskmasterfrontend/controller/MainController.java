@@ -6,6 +6,7 @@ import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.taskmaster.taskmasterfrontend.util.AppContext;
 import com.taskmaster.taskmasterfrontend.util.AvatarView;
 import com.taskmaster.taskmasterfrontend.util.LanguageManager;
+import com.taskmaster.taskmasterfrontend.util.ThemeManager;
 import javafx.application.Platform;
 import javafx.collections.FXCollections;
 import javafx.fxml.FXML;
@@ -169,6 +170,7 @@ public class MainController {
         }
     }
 
+    /**
     private void openChangePassword() {
         try {
             FXMLLoader loader = new FXMLLoader(
@@ -185,7 +187,9 @@ public class MainController {
             showAlert("error.title", "error.open.dialog");
         }
     }
+     */
 
+    /**
     private void openDeleteAccount() {
         try {
             FXMLLoader loader = new FXMLLoader(
@@ -204,6 +208,7 @@ public class MainController {
             showAlert("error.title", "error.open.dialog");
         }
     }
+     */
 
     // =========================================================================
     //  BOTÓN CREAR — desplegable Proyecto / Tarea
@@ -1391,7 +1396,9 @@ public class MainController {
                 closeBtn
         );
 
-        dialog.setScene(new Scene(content, 360, 500));
+        Scene scene = new Scene(content, 360, 500);
+        applyThemeToScene(scene);
+        dialog.setScene(scene);
         dialog.showAndWait();
     }
 
@@ -1655,7 +1662,9 @@ public class MainController {
             dialog.setTitle(lm.get("common.task.edit"));
             dialog.initModality(Modality.APPLICATION_MODAL);
             dialog.initOwner(btnHome.getScene().getWindow());
-            dialog.setScene(new Scene(root));
+            Scene scene = new Scene(root);
+            applyThemeToScene(scene);
+            dialog.setScene(scene);
             dialog.showAndWait();
         } catch (IOException e) {
             showAlert("error.title", "error.open.dialog");
@@ -1901,8 +1910,22 @@ public class MainController {
         dialog.setTitle(title);
         dialog.initModality(Modality.APPLICATION_MODAL);
         dialog.initOwner(btnHome.getScene().getWindow());
-        dialog.setScene(new Scene(root));
+        Scene scene = new Scene(root);
+        applyThemeToScene(scene);
+        dialog.setScene(scene);
         dialog.showAndWait();
+    }
+
+    private void applyThemeToScene(Scene scene) {
+        ThemeManager tm = ThemeManager.getInstance();
+        String cssFile = "/com/taskmaster/taskmasterfrontend/themes/"
+                + tm.getCssFileNamePublic();
+        String cssUrl = getClass().getResource(cssFile) != null
+                ? getClass().getResource(cssFile).toExternalForm()
+                : null;
+        if (cssUrl != null) {
+            scene.getStylesheets().add(cssUrl);
+        }
     }
 
     private void refreshSidebar() {

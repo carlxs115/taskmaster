@@ -113,6 +113,10 @@ public class ThemeManager {
         };
     }
 
+    public String getCssFileNamePublic() {
+        return getCssFileName(currentTheme.get());
+    }
+
     public void saveThemePreference(Theme theme) {
         try {
             File file = new File(CONFIG_PATH);
