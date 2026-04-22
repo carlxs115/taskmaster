@@ -6,69 +6,62 @@
 
 <VBox xmlns:fx="http://javafx.com/fxml"
       fx:controller="com.taskmaster.taskmasterfrontend.controller.RegisterController"
-      alignment="CENTER"
-      spacing="15"
-      style="-fx-background-color: #ffffff;">
+      spacing="0"
+      styleClass="auth-root">
 
-    <padding>
-        <Insets top="40" right="40" bottom="40" left="40"/>
-    </padding>
-
-    <!-- TÍTULO -->
-    <Label text="TaskMaster"
-           style="-fx-font-size: 32px; -fx-font-weight: bold; -fx-text-fill: #2d2d2d;"/>
-
-    <Label text="%register.subtitle"
-           style="-fx-font-size: 14px; -fx-text-fill: #888888;"/>
-
-    <!-- FORMULARIO -->
-    <VBox spacing="8">
-        <Label text="%common.username" style="-fx-font-size: 13px; -fx-text-fill: #2d2d2d;"/>
-        <TextField fx:id="usernameField"
-                   promptText="%common.username.prompt"
-                   style="-fx-pref-height: 40px; -fx-font-size: 13px;"/>
+    <!-- ENCABEZADO OSCURO -->
+    <VBox styleClass="auth-header" alignment="CENTER" spacing="8">
+        <HBox alignment="CENTER" spacing="0">
+            <Label text="Task"   styleClass="auth-title-task"/>
+            <Label text="Master" styleClass="auth-title-master"/>
+        </HBox>
+        <Label text="%register.subtitle" styleClass="auth-subtitle"/>
     </VBox>
 
-    <VBox spacing="8">
-        <Label text="%common.email" style="-fx-font-size: 13px; -fx-text-fill: #2d2d2d;"/>
-        <TextField fx:id="emailField"
-                   promptText="%register.email.prompt"
-                   style="-fx-pref-height: 40px; -fx-font-size: 13px;"/>
+    <!-- CUERPO BLANCO -->
+    <VBox styleClass="auth-body" spacing="14">
+
+        <VBox spacing="8">
+            <Label text="%common.username" styleClass="auth-field-label"/>
+            <TextField fx:id="usernameField"
+                       promptText="%common.username.prompt"
+                       styleClass="auth-field"/>
+        </VBox>
+        <VBox spacing="8">
+            <Label text="%common.email" styleClass="auth-field-label"/>
+            <TextField fx:id="emailField"
+                       promptText="%register.email.prompt"
+                       styleClass="auth-field"/>
+        </VBox>
+        <VBox spacing="8">
+            <Label text="%common.password" styleClass="auth-field-label"/>
+            <PasswordField fx:id="passwordField"
+                           promptText="%common.password.prompt"
+                           styleClass="auth-field"/>
+        </VBox>
+        <VBox spacing="8">
+            <Label text="%common.birthdate" styleClass="auth-field-label"/>
+            <DatePicker fx:id="birthDatePicker"
+                        promptText="%common.birthdate.prompt"
+                        styleClass="auth-field"
+                        style="-fx-pref-width: 300px;"/>
+        </VBox>
+
+        <!-- ERROR -->
+        <Label fx:id="errorLabel" styleClass="auth-error" visible="false"/>
+
+        <!-- BOTÓN -->
+        <Button text="%register.button"
+                onAction="#handleRegister"
+                styleClass="auth-btn"
+                maxWidth="Infinity"/>
+
+        <!-- ENLACE LOGIN -->
+        <HBox alignment="CENTER" spacing="5">
+            <Label text="%register.has.account" styleClass="auth-link-label"/>
+            <Hyperlink text="%register.login.link"
+                       onAction="#handleGoToLogin"
+                       styleClass="auth-link"/>
+        </HBox>
     </VBox>
-
-    <VBox spacing="8">
-        <Label text="%common.password" style="-fx-font-size: 13px; -fx-text-fill: #2d2d2d;"/>
-        <PasswordField fx:id="passwordField"
-                       promptText="%common.password.prompt"
-                       style="-fx-pref-height: 40px; -fx-font-size: 13px;"/>
-    </VBox>
-
-    <VBox spacing="8">
-        <Label text="%common.birthdate" style="-fx-font-size: 13px; -fx-text-fill: #2d2d2d;"/>
-        <DatePicker fx:id="birthDatePicker"
-                    promptText="%common.birthdate.prompt"
-                    style="-fx-pref-height: 40px; -fx-font-size: 13px; -fx-pref-width: 300px;"/>
-    </VBox>
-
-    <!-- MENSAJE DE ERROR -->
-    <Label fx:id="errorLabel"
-           style="-fx-text-fill: #e74c3c; -fx-font-size: 12px;"
-           visible="false"/>
-
-    <!-- BOTÓN REGISTRO -->
-    <Button text="%register.button"
-            onAction="#handleRegister"
-            style="-fx-background-color: #3498db; -fx-text-fill: white;
-                   -fx-font-size: 14px; -fx-pref-width: 300px; -fx-pref-height: 40px;
-                   -fx-background-radius: 6px; -fx-cursor: hand;"
-            maxWidth="Infinity"/>
-
-    <!-- ENLACE LOGIN -->
-    <HBox alignment="CENTER" spacing="5">
-        <Label text="%register.has.account" style="-fx-text-fill: #888888;"/>
-        <Hyperlink text="%register.login.link"
-                   onAction="#handleGoToLogin"
-                   style="-fx-text-fill: #3498db;"/>
-    </HBox>
-
 </VBox>

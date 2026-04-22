@@ -24,8 +24,15 @@ public class MainApp extends Application {
                 MainApp.class.getResource("/com/taskmaster/taskmasterfrontend/login-view.fxml"),
                 LanguageManager.getInstance().getBundle()
         );
-        Scene scene = new Scene(fxmlLoader.load(), 400, 500);
+        Scene scene = new Scene(fxmlLoader.load(), 400, 520);
 
+        // Tema Amatista fijo para login
+        String css = MainApp.class.getResource(
+                "/com/taskmaster/taskmasterfrontend/themes/theme-amatista.css"
+        ).toExternalForm();
+        scene.getStylesheets().add(css);
+
+        // Registrar scene en ThemeManager (se sobreescribirá al navegar al main)
         ThemeManager.getInstance().setMainScene(scene);
 
         stage.setTitle("TaskMaster");

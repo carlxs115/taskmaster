@@ -171,8 +171,16 @@ public class LoginController {
                     getClass().getResource("/com/taskmaster/taskmasterfrontend/register-view.fxml"),
                     LanguageManager.getInstance().getBundle()
             );
+            Scene scene = new Scene(loader.load(), 400, 660);
+
+            // Tema Amatista fijo para register
+            String css = getClass().getResource(
+                    "/com/taskmaster/taskmasterfrontend/themes/theme-amatista.css"
+            ).toExternalForm();
+            scene.getStylesheets().add(css);
+
             Stage stage = (Stage) usernameField.getScene().getWindow();
-            stage.setScene(new Scene(loader.load(), 400, 600));
+            stage.setScene(scene);
         } catch (IOException e) {
             showError(lm.get("error.open.dialog"));
         }

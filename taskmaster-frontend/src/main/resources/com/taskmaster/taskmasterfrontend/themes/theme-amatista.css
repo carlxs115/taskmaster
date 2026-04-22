@@ -146,3 +146,88 @@
 .text-secondary { -fx-text-fill: -tm-text-secondary; }
 .text-muted     { -fx-text-fill: -tm-text-muted; }
 .text-accent    { -fx-text-fill: -tm-accent-light; }
+
+
+/* =====================================================
+   LOGIN / REGISTER
+   ===================================================== */
+
+.auth-root {
+    -fx-background-color: -tm-bg-surface;
+}
+
+.auth-header {
+    -fx-background-color: #13131f;
+    -fx-padding: 32 40 28 40;
+}
+
+.auth-title-task {
+    -fx-font-size: 32px;
+    -fx-font-weight: bold;
+    -fx-text-fill: white;
+}
+
+.auth-title-master {
+    -fx-font-size: 32px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #a78bfa;
+}
+
+.auth-subtitle {
+    -fx-font-size: 14px;
+    -fx-text-fill: white;
+}
+
+.auth-field-label {
+    -fx-font-size: 13px;
+    -fx-text-fill: -tm-text-header;
+}
+
+.auth-body {
+    -fx-background-color: white;
+    -fx-padding: 32 40 40 40;
+}
+
+.auth-field {
+    -fx-pref-height: 40px;
+    -fx-font-size: 13px;
+    -fx-background-color: -tm-bg-input;
+    -fx-border-color: -tm-border;
+    -fx-border-radius: 6px;
+    -fx-background-radius: 6px;
+    -fx-padding: 0 12 0 12;
+}
+
+.auth-field:focused {
+    -fx-border-color: -tm-accent;
+    -fx-border-width: 1.5px;
+}
+
+.auth-btn {
+    -fx-background-color: -tm-accent;
+    -fx-text-fill: -tm-text-on-accent;
+    -fx-font-size: 14px;
+    -fx-pref-height: 40px;
+    -fx-background-radius: 6px;
+    -fx-cursor: hand;
+    -fx-font-weight: bold;
+}
+
+.auth-btn:hover {
+    -fx-background-color: -tm-accent-dark;
+}
+
+.auth-link-label {
+    -fx-text-fill: -tm-text-secondary;
+}
+
+.auth-link {
+    -fx-text-fill: -tm-accent;
+    -fx-border-color: transparent;
+    -fx-padding: 0;
+}
+
+.auth-error {
+    -fx-text-fill: -tm-status-urgent;
+    -fx-font-size: 12px;
+}
