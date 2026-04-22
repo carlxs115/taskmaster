@@ -4,20 +4,18 @@
 <?import javafx.scene.layout.*?>
 <VBox xmlns:fx="http://javafx.com/fxml"
       fx:controller="com.taskmaster.taskmasterfrontend.controller.AvatarCropController"
-      spacing="16" style="-fx-background-color: white; -fx-padding: 20;">
+      spacing="16" styleClass="dialog-root">
 
-    <Label text="%avatar.crop.title"
-           style="-fx-font-size: 15px; -fx-font-weight: bold; -fx-text-fill: #1e1e2e;"/>
-
+    <Label text="%avatar.crop.title" styleClass="dialog-title"/>
     <Label text="%avatar.crop.description"
-           style="-fx-font-size: 12px; -fx-text-fill: #888888;"
-           wrapText="true"/>
+           styleClass="dialog-field-label" wrapText="true"/>
 
-    <!-- Área de recorte circular (256x256 fijo) -->
+    <!-- Área de recorte circular -->
     <StackPane fx:id="cropContainer"
-               style="-fx-background-color: #f0f0f5; -fx-border-color: #3d2f6e;
-                  -fx-border-width: 2; -fx-border-radius: 128;
-                  -fx-background-radius: 128;"
+               style="-fx-background-color: -tm-bg-app;
+                      -fx-border-color: -tm-topbar-user-border;
+                      -fx-border-width: 2; -fx-border-radius: 128;
+                      -fx-background-radius: 128;"
                minWidth="256" minHeight="256"
                maxWidth="256" maxHeight="256">
         <ImageView fx:id="imageView" fitWidth="256" fitHeight="256"/>
@@ -33,14 +31,8 @@
     <!-- Botones -->
     <HBox spacing="10" alignment="CENTER_RIGHT">
         <Button fx:id="cancelButton" text="%common.cancel"
-                onAction="#handleCancel"
-                style="-fx-background-color: #f0f0f5; -fx-text-fill: #555570;
-                       -fx-font-size: 12px; -fx-background-radius: 6px;
-                       -fx-cursor: hand; -fx-padding: 8 16 8 16;"/>
+                onAction="#handleCancel" styleClass="btn-cancel-soft"/>
         <Button fx:id="saveButton" text="%avatar.crop.save"
-                onAction="#handleSave"
-                style="-fx-background-color: #7c3aed; -fx-text-fill: white;
-                       -fx-font-size: 12px; -fx-background-radius: 6px;
-                       -fx-cursor: hand; -fx-padding: 8 16 8 16;"/>
+                onAction="#handleSave" styleClass="btn-confirm-accent"/>
     </HBox>
 </VBox>

@@ -3,63 +3,41 @@
 <?import javafx.scene.layout.*?>
 <VBox xmlns:fx="http://javafx.com/fxml"
       fx:controller="com.taskmaster.taskmasterfrontend.controller.SecurityController"
-      spacing="16" style="-fx-padding: 24; -fx-background-color: #f0f0f5;">
+      spacing="16" styleClass="security-root">
 
     <!-- Últimos accesos -->
-    <VBox spacing="0"
-          style="-fx-background-color: white; -fx-background-radius: 10px;
-                 -fx-border-color: #e8e8e8; -fx-border-radius: 10px; -fx-border-width: 1;">
-        <HBox style="-fx-padding: 14 20 14 20; -fx-border-color: transparent transparent #f0f0f0 transparent;
-                     -fx-border-width: 0 0 1 0;" alignment="CENTER_LEFT">
-            <Label text="%security.access.log"
-                   style="-fx-font-size: 13px; -fx-font-weight: bold; -fx-text-fill: #1e1e2e;"/>
+    <VBox spacing="0" styleClass="security-card" style="-fx-padding: 0;">
+        <HBox styleClass="security-access-row" alignment="CENTER_LEFT">
+            <Label text="%security.access.log" styleClass="security-section-title"/>
         </HBox>
-        <VBox fx:id="accessLogContainer" spacing="0" style="-fx-padding: 0;">
+        <VBox fx:id="accessLogContainer" spacing="0">
             <Label fx:id="accessLogEmpty" text="%security.access.empty"
-                   style="-fx-text-fill: #aaaaaa; -fx-font-size: 12px; -fx-padding: 14 20 14 20;"/>
+                   styleClass="security-access-empty"/>
         </VBox>
     </VBox>
 
     <!-- Cambiar contraseña -->
-    <VBox spacing="12"
-          style="-fx-background-color: white; -fx-padding: 20;
-                 -fx-background-radius: 10px; -fx-border-color: #e8e8e8;
-                 -fx-border-radius: 10px; -fx-border-width: 1;">
-        <Label text="%security.password.title"
-               style="-fx-font-size: 13px; -fx-font-weight: bold; -fx-text-fill: #1e1e2e;"/>
-        <PasswordField fx:id="currentPasswordField" promptText="%security.password.current"
-                       style="-fx-font-size: 12px; -fx-padding: 8 12 8 12;
-                              -fx-background-radius: 6px; -fx-border-radius: 6px;
-                              -fx-border-color: #e8e8e8; -fx-border-width: 1;"/>
-        <PasswordField fx:id="newPasswordField" promptText="%security.password.new"
-                       style="-fx-font-size: 12px; -fx-padding: 8 12 8 12;
-                              -fx-background-radius: 6px; -fx-border-radius: 6px;
-                              -fx-border-color: #e8e8e8; -fx-border-width: 1;"/>
-        <PasswordField fx:id="confirmPasswordField" promptText="%security.password.confirm"
-                       style="-fx-font-size: 12px; -fx-padding: 8 12 8 12;
-                              -fx-background-radius: 6px; -fx-border-radius: 6px;
-                              -fx-border-color: #e8e8e8; -fx-border-width: 1;"/>
+    <VBox spacing="12" styleClass="security-card">
+        <Label text="%security.password.title" styleClass="security-section-title"/>
+        <PasswordField fx:id="currentPasswordField"
+                       promptText="%security.password.current" styleClass="security-field"/>
+        <PasswordField fx:id="newPasswordField"
+                       promptText="%security.password.new" styleClass="security-field"/>
+        <PasswordField fx:id="confirmPasswordField"
+                       promptText="%security.password.confirm" styleClass="security-field"/>
         <Label fx:id="passwordErrorLabel" text=""
-               style="-fx-text-fill: #e74c3c; -fx-font-size: 11px;"
-               visible="false" managed="false"/>
+               styleClass="security-error" visible="false" managed="false"/>
         <Button text="%security.password.button" onAction="#handleChangePassword"
-                style="-fx-background-color: #7c3aed; -fx-text-fill: white;
-                       -fx-font-size: 12px; -fx-background-radius: 6px;
-                       -fx-cursor: hand; -fx-padding: 7 16 7 16;"/>
+                styleClass="btn-primary"
+                style="-fx-padding: 7 16 7 16; -fx-font-size: 12px;"/>
     </VBox>
 
     <!-- Eliminar cuenta -->
-    <VBox spacing="12"
-          style="-fx-background-color: white; -fx-padding: 20;
-                 -fx-background-radius: 10px; -fx-border-color: #ffcccc;
-                 -fx-border-radius: 10px; -fx-border-width: 1;">
-        <Label text="%security.danger.title"
-               style="-fx-font-size: 13px; -fx-font-weight: bold; -fx-text-fill: #e74c3c;"/>
+    <VBox spacing="12" styleClass="security-card-danger">
+        <Label text="%security.danger.title" styleClass="security-danger-title"/>
         <Label text="%security.danger.description"
-               style="-fx-font-size: 12px; -fx-text-fill: #888888;" wrapText="true"/>
+               styleClass="security-danger-desc" wrapText="true"/>
         <Button text="%common.delete.account" onAction="#handleDeleteAccount"
-                style="-fx-background-color: #e74c3c; -fx-text-fill: white;
-                       -fx-font-size: 12px; -fx-background-radius: 6px;
-                       -fx-cursor: hand; -fx-padding: 7 16 7 16;"/>
+                styleClass="btn-danger"/>
     </VBox>
 </VBox>

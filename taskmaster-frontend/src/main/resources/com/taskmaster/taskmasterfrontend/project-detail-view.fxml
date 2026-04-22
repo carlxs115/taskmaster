@@ -4,34 +4,22 @@
 <?import javafx.scene.layout.*?>
 <VBox xmlns:fx="http://javafx.com/fxml"
       fx:controller="com.taskmaster.taskmasterfrontend.controller.ProjectDetailController"
-      spacing="0" style="-fx-background-color: #f0f0f5;">
+      spacing="0" styleClass="detail-root">
 
-    <!-- Cabecera -->
-    <HBox style="-fx-background-color: white; -fx-padding: 14 20 14 20;
-                 -fx-border-color: #e8e8e8; -fx-border-width: 0 0 1 0;"
-          alignment="CENTER_LEFT" spacing="10">
-        <Label fx:id="projectIdLabel"
-               style="-fx-font-size: 11px; -fx-text-fill: #888888; -fx-padding: 2 8 2 8;
-                      -fx-background-color: #f0f0f5; -fx-background-radius: 4px;"/>
-        <Label fx:id="projectNameLabel"
-               style="-fx-font-size: 16px; -fx-font-weight: bold; -fx-text-fill: #1e1e2e;"/>
+    <HBox styleClass="detail-header" alignment="CENTER_LEFT" spacing="10">
+        <Label fx:id="projectIdLabel" styleClass="detail-id-badge"/>
+        <Label fx:id="projectNameLabel" styleClass="detail-title"/>
         <Region HBox.hgrow="ALWAYS"/>
-        <Button text="%common.menu.edit"
-                onAction="#handleEdit"
-                style="-fx-background-color: #7c3aed; -fx-text-fill: white;
-                   -fx-font-size: 12px; -fx-cursor: hand; -fx-padding: 5 12 5 12;
-                   -fx-background-radius: 6px;"/>
-        <Button text="%common.close"
-                onAction="#handleClose"
-                style="-fx-background-color: transparent; -fx-text-fill: #888888;
-                       -fx-font-size: 12px; -fx-cursor: hand; -fx-padding: 5 12 5 12;"/>
+        <Button text="%common.menu.edit" onAction="#handleEdit" styleClass="btn-primary"
+                style="-fx-padding: 5 12 5 12; -fx-font-size: 12px;"/>
+        <Button text="%common.close" onAction="#handleClose" styleClass="detail-btn-close"/>
     </HBox>
 
     <ScrollPane VBox.vgrow="ALWAYS" fitToWidth="true"
                 style="-fx-background-color: transparent; -fx-border-color: transparent;">
         <VBox spacing="16" style="-fx-padding: 20;">
 
-            <!-- Badges estado/prioridad/categoría -->
+            <!-- Badges -->
             <HBox spacing="8" alignment="CENTER_LEFT">
                 <Label fx:id="statusBadge"
                        style="-fx-font-size: 11px; -fx-padding: 3 10 3 10;
@@ -45,86 +33,60 @@
             </HBox>
 
             <!-- Descripción -->
-            <VBox spacing="6"
-                  style="-fx-background-color: white; -fx-padding: 14 16 14 16;
-                         -fx-background-radius: 8px; -fx-border-color: #e8e8e8;
-                         -fx-border-radius: 8px; -fx-border-width: 1;">
-                <Label text="%common.description"
-                       style="-fx-font-size: 11px; -fx-font-weight: bold; -fx-text-fill: #888888;"/>
-                <Label fx:id="descriptionLabel"
-                       style="-fx-font-size: 13px; -fx-text-fill: #1e1e2e;"
-                       wrapText="true"/>
+            <VBox spacing="6" styleClass="detail-section">
+                <Label text="%common.description" styleClass="detail-section-label"/>
+                <Label fx:id="descriptionLabel" styleClass="detail-description" wrapText="true"/>
             </VBox>
 
             <!-- Estadísticas -->
             <HBox spacing="10">
-                <VBox fx:id="statTotal" alignment="CENTER" spacing="4" HBox.hgrow="ALWAYS"
-                      style="-fx-background-color: white; -fx-padding: 12 8 12 8;
-                             -fx-background-radius: 8px; -fx-border-color: #e8e8e8;
-                             -fx-border-radius: 8px; -fx-border-width: 1;">
-                    <Label fx:id="statTotalNum"
-                           style="-fx-font-size: 22px; -fx-font-weight: bold; -fx-text-fill: #1e1e2e;"/>
-                    <Label text="%project.detail.stat.total" style="-fx-font-size: 11px; -fx-text-fill: #888888;"/>
+                <VBox fx:id="statTotal" alignment="CENTER" spacing="4"
+                      HBox.hgrow="ALWAYS" styleClass="project-stat-card">
+                    <Label fx:id="statTotalNum" styleClass="project-stat-number"/>
+                    <Label text="%project.detail.stat.total" styleClass="project-stat-label"/>
                 </VBox>
-                <VBox alignment="CENTER" spacing="4" HBox.hgrow="ALWAYS"
-                      style="-fx-background-color: white; -fx-padding: 12 8 12 8;
-                             -fx-background-radius: 8px; -fx-border-color: #e8e8e8;
-                             -fx-border-radius: 8px; -fx-border-width: 1;">
+                <VBox alignment="CENTER" spacing="4"
+                      HBox.hgrow="ALWAYS" styleClass="project-stat-card">
                     <Label fx:id="statPendingNum"
                            style="-fx-font-size: 22px; -fx-font-weight: bold; -fx-text-fill: #3b82f6;"/>
-                    <Label text="%profile.stats.pending" style="-fx-font-size: 11px; -fx-text-fill: #888888;"/>
+                    <Label text="%profile.stats.pending" styleClass="project-stat-label"/>
                 </VBox>
-                <VBox alignment="CENTER" spacing="4" HBox.hgrow="ALWAYS"
-                      style="-fx-background-color: white; -fx-padding: 12 8 12 8;
-                             -fx-background-radius: 8px; -fx-border-color: #e8e8e8;
-                             -fx-border-radius: 8px; -fx-border-width: 1;">
+                <VBox alignment="CENTER" spacing="4"
+                      HBox.hgrow="ALWAYS" styleClass="project-stat-card">
                     <Label fx:id="statDoneNum"
                            style="-fx-font-size: 22px; -fx-font-weight: bold; -fx-text-fill: #22c55e;"/>
-                    <Label text="%common.done" style="-fx-font-size: 11px; -fx-text-fill: #888888;"/>
+                    <Label text="%common.done" styleClass="project-stat-label"/>
                 </VBox>
-                <VBox alignment="CENTER" spacing="4" HBox.hgrow="ALWAYS"
-                      style="-fx-background-color: white; -fx-padding: 12 8 12 8;
-                             -fx-background-radius: 8px; -fx-border-color: #e8e8e8;
-                             -fx-border-radius: 8px; -fx-border-width: 1;">
+                <VBox alignment="CENTER" spacing="4"
+                      HBox.hgrow="ALWAYS" styleClass="project-stat-card">
                     <Label fx:id="statOverdueNum"
                            style="-fx-font-size: 22px; -fx-font-weight: bold; -fx-text-fill: #e74c3c;"/>
-                    <Label text="%project.detail.stat.overdue" style="-fx-font-size: 11px; -fx-text-fill: #888888;"/>
+                    <Label text="%project.detail.stat.overdue" styleClass="project-stat-label"/>
                 </VBox>
             </HBox>
 
             <!-- Barra de progreso -->
-            <VBox spacing="6"
-                  style="-fx-background-color: white; -fx-padding: 14 16 14 16;
-                         -fx-background-radius: 8px; -fx-border-color: #e8e8e8;
-                         -fx-border-radius: 8px; -fx-border-width: 1;">
+            <VBox spacing="6" styleClass="detail-section">
                 <HBox alignment="CENTER_LEFT">
-                    <Label text="%project.detail.progress"
-                           style="-fx-font-size: 11px; -fx-font-weight: bold; -fx-text-fill: #888888;"/>
+                    <Label text="%project.detail.progress" styleClass="detail-section-label"/>
                     <Region HBox.hgrow="ALWAYS"/>
-                    <Label fx:id="progressLabel"
-                           style="-fx-font-size: 11px; -fx-text-fill: #888888;"/>
+                    <Label fx:id="progressLabel" styleClass="project-stat-label"/>
                 </HBox>
-                <StackPane fx:id="progressBarBg"
-                           style="-fx-background-color: #f0f0f5; -fx-background-radius: 4px;"
+                <StackPane fx:id="progressBarBg" styleClass="detail-progress-bg"
                            minHeight="8" maxHeight="8">
                     <StackPane fx:id="progressBarFill"
-                               style="-fx-background-color: #7c3aed; -fx-background-radius: 4px;"
+                               style="-fx-background-color: -tm-accent; -fx-background-radius: 4px;"
                                StackPane.alignment="CENTER_LEFT"/>
                 </StackPane>
             </VBox>
 
             <!-- Lista de tareas -->
-            <VBox spacing="0"
-                  style="-fx-background-color: white; -fx-padding: 14 16 14 16;
-                         -fx-background-radius: 8px; -fx-border-color: #e8e8e8;
-                         -fx-border-radius: 8px; -fx-border-width: 1;">
-                <Label text="%common.tasks"
-                       style="-fx-font-size: 13px; -fx-font-weight: bold;
-                              -fx-text-fill: #1e1e2e; -fx-padding: 0 0 10 0;"/>
+            <VBox spacing="0" styleClass="detail-section">
+                <Label text="%common.tasks" styleClass="detail-section-title"
+                       style="-fx-padding: 0 0 10 0;"/>
                 <VBox fx:id="taskListContainer" spacing="0"/>
                 <Label fx:id="emptyTasksLabel"
-                       text="%project.detail.tasks.empty"
-                       style="-fx-text-fill: #aaaaaa; -fx-font-size: 12px; -fx-padding: 8 0 0 0;"/>
+                       text="%project.detail.tasks.empty" styleClass="detail-empty-label"/>
             </VBox>
 
         </VBox>

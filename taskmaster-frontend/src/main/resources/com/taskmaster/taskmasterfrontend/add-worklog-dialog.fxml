@@ -1,59 +1,37 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<?import javafx.geometry.Insets?>
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
 <VBox xmlns:fx="http://javafx.com/fxml"
       fx:controller="com.taskmaster.taskmasterfrontend.controller.AddWorkLogController"
-      spacing="16"
-      style="-fx-background-color: white; -fx-padding: 24;">
+      spacing="16" styleClass="dialog-root">
 
-    <Label text="%common.worklog.add.title"
-           style="-fx-font-size: 18px; -fx-font-weight: bold; -fx-text-fill: #1e1e2e;"/>
+    <Label text="%common.worklog.add.title" styleClass="dialog-title"/>
 
     <HBox spacing="12">
         <VBox spacing="6" HBox.hgrow="ALWAYS">
-            <Label text="%worklog.date" style="-fx-font-size: 13px; -fx-text-fill: #555555;"/>
-            <DatePicker fx:id="datePicker"
-                        maxWidth="Infinity"
-                        style="-fx-pref-height: 38px;"/>
+            <Label text="%worklog.date" styleClass="dialog-field-label"/>
+            <DatePicker fx:id="datePicker" maxWidth="Infinity" styleClass="dialog-combo"/>
         </VBox>
         <VBox spacing="6" HBox.hgrow="ALWAYS">
-            <Label text="%worklog.hours" style="-fx-font-size: 13px; -fx-text-fill: #555555;"/>
-            <TextField fx:id="hoursField"
-                       promptText="ej. 1.5"
-                       style="-fx-pref-height: 38px;"/>
+            <Label text="%worklog.hours" styleClass="dialog-field-label"/>
+            <TextField fx:id="hoursField" promptText="ej. 1.5" styleClass="dialog-field"/>
         </VBox>
     </HBox>
-
     <VBox spacing="6">
-        <Label text="%worklog.activity.type" style="-fx-font-size: 13px; -fx-text-fill: #555555;"/>
-        <ComboBox fx:id="activityTypeCombo"
-                  maxWidth="Infinity"
-                  style="-fx-pref-height: 38px;"/>
+        <Label text="%worklog.activity.type" styleClass="dialog-field-label"/>
+        <ComboBox fx:id="activityTypeCombo" maxWidth="Infinity" styleClass="dialog-combo"/>
+    </VBox>
+    <VBox spacing="6">
+        <Label text="%worklog.note" styleClass="dialog-field-label"/>
+        <TextArea fx:id="noteField" promptText="%worklog.note.prompt"
+                  styleClass="dialog-textarea" wrapText="true"
+                  style="-fx-pref-height: 120px;"/>
     </VBox>
 
-    <VBox spacing="6">
-        <Label text="%worklog.note" style="-fx-font-size: 13px; -fx-text-fill: #555555;"/>
-        <TextArea fx:id="noteField"
-                  promptText="%worklog.note.prompt"
-                  style="-fx-pref-height: 120px;"
-                  wrapText="true"/>
-    </VBox>
-
-    <Label fx:id="errorLabel"
-           style="-fx-text-fill: #e74c3c; -fx-font-size: 12px;"
-           visible="false" managed="false"/>
+    <Label fx:id="errorLabel" styleClass="dialog-error" visible="false" managed="false"/>
 
     <HBox spacing="10" alignment="CENTER_RIGHT">
-        <Button text="%common.cancel"
-                onAction="#handleCancel"
-                style="-fx-background-color: #f0f0f5; -fx-text-fill: #555555;
-                       -fx-background-radius: 6px; -fx-cursor: hand;
-                       -fx-padding: 8 16 8 16;"/>
-        <Button text="%worklog.save"
-                onAction="#handleSave"
-                style="-fx-background-color: #7c3aed; -fx-text-fill: white;
-                       -fx-background-radius: 6px; -fx-cursor: hand;
-                       -fx-padding: 8 16 8 16;"/>
+        <Button text="%common.cancel" onAction="#handleCancel" styleClass="btn-cancel-soft"/>
+        <Button text="%worklog.save" onAction="#handleSave" styleClass="btn-confirm-accent"/>
     </HBox>
 </VBox>

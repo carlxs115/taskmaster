@@ -2,20 +2,17 @@
 <?import javafx.scene.layout.*?>
 <?import javafx.scene.control.*?>
 <?import javafx.geometry.Insets?>
-
 <VBox xmlns:fx="http://javafx.com/fxml"
       fx:controller="com.taskmaster.taskmasterfrontend.controller.ActivityLogSectionController"
       spacing="8" styleClass="activity-log-section">
-
     <padding><Insets top="16" bottom="8" left="0" right="0"/></padding>
-
     <Label text="%actlog.title" styleClass="section-title"
-            maxWidth="Infinity" alignment="CENTER"/>
-
-    <TableView fx:id="activityTable" prefHeight="200" maxHeight="200" >
+           maxWidth="Infinity" alignment="CENTER"/>
+    <TableView fx:id="activityTable" prefHeight="200" maxHeight="200"
+               styleClass="activity-table">
         <columns>
             <TableColumn fx:id="colDate"   text="%actlog.col.date"   prefWidth="130"/>
-            <TableColumn fx:id="colAction" text="%actlog.col.action"  prefWidth="170"/>
+            <TableColumn fx:id="colAction" text="%actlog.col.action" prefWidth="170"/>
             <TableColumn fx:id="colEntity" text="%actlog.col.entity" prefWidth="90"/>
             <TableColumn fx:id="colDetail" text="%actlog.col.detail" prefWidth="370"/>
         </columns>

@@ -4,20 +4,16 @@
 <?import javafx.scene.layout.*?>
 <VBox xmlns:fx="http://javafx.com/fxml"
       fx:controller="com.taskmaster.taskmasterfrontend.controller.ProfileController"
-      spacing="0" style="-fx-background-color: #f0f0f5;">
+      spacing="0" styleClass="profile-root">
 
     <!-- Cabecera -->
-    <HBox style="-fx-background-color: white; -fx-padding: 14 20 14 20;
-                 -fx-border-color: #e8e8e8; -fx-border-width: 0 0 1 0;"
-          alignment="CENTER_LEFT" spacing="10">
-        <Label text="%profile.title"
-               style="-fx-font-size: 15px; -fx-font-weight: bold; -fx-text-fill: #1e1e2e;"/>
+    <HBox styleClass="profile-header" alignment="CENTER_LEFT" spacing="10">
+        <Label text="%profile.title" styleClass="profile-header-title"/>
         <Region HBox.hgrow="ALWAYS"/>
         <Button text="%profile.edit.button"
                 onAction="#handleEditProfile"
-                style="-fx-background-color: #7c3aed; -fx-text-fill: white;
-                       -fx-font-size: 12px; -fx-background-radius: 6px;
-                       -fx-cursor: hand; -fx-padding: 6 14 6 14;"/>
+                styleClass="btn-primary"
+                style="-fx-padding: 6 14 6 14; -fx-font-size: 12px;"/>
     </HBox>
 
     <ScrollPane VBox.vgrow="ALWAYS" fitToWidth="true"
@@ -25,38 +21,25 @@
         <VBox spacing="16" style="-fx-padding: 24;">
 
             <!-- Avatar + nombre -->
-            <HBox spacing="16" alignment="CENTER_LEFT"
-                  style="-fx-background-color: white; -fx-padding: 20;
-                         -fx-background-radius: 10px; -fx-border-color: #e8e8e8;
-                         -fx-border-radius: 10px; -fx-border-width: 1;">
+            <HBox spacing="16" alignment="CENTER_LEFT" styleClass="profile-card">
                 <StackPane fx:id="avatarContainer"/>
                 <VBox spacing="4" alignment="CENTER_LEFT" VBox.vgrow="ALWAYS">
-                    <Label fx:id="usernameLabel"
-                           style="-fx-font-size: 20px; -fx-font-weight: bold; -fx-text-fill: #1e1e2e;"/>
+                    <Label fx:id="usernameLabel" styleClass="profile-username-label"/>
                 </VBox>
             </HBox>
 
             <!-- Estadísticas -->
-            <VBox spacing="10"
-                  style="-fx-background-color: white; -fx-padding: 16 20 16 20;
-                         -fx-background-radius: 10px; -fx-border-color: #e8e8e8;
-                         -fx-border-radius: 10px; -fx-border-width: 1;">
-                <Label text="%profile.stats.title"
-                       style="-fx-font-size: 13px; -fx-font-weight: bold; -fx-text-fill: #1e1e2e;"/>
+            <VBox spacing="10" styleClass="profile-card">
+                <Label text="%profile.stats.title" styleClass="profile-section-title"/>
                 <HBox fx:id="statsRow" spacing="8"/>
-
                 <!-- Barra de progreso global -->
                 <VBox spacing="6" style="-fx-padding: 8 0 0 0;">
                     <HBox alignment="CENTER_LEFT">
-                        <Label text="%profile.stats.rate"
-                               style="-fx-font-size: 11px; -fx-text-fill: #888888;"/>
+                        <Label text="%profile.stats.rate" styleClass="profile-rate-label"/>
                         <Region HBox.hgrow="ALWAYS"/>
-                        <Label fx:id="completionRateLabel"
-                               style="-fx-font-size: 11px; -fx-font-weight: bold; -fx-text-fill: #22c55e;"/>
+                        <Label fx:id="completionRateLabel" styleClass="profile-rate-value"/>
                     </HBox>
-                    <!-- Barra -->
-                    <StackPane style="-fx-background-color: #f0f0f5; -fx-background-radius: 4px;
-                                      -fx-min-height: 8px; -fx-max-height: 8px;">
+                    <StackPane styleClass="profile-progress-bg">
                         <StackPane fx:id="completionBarFill"
                                    style="-fx-background-color: #22c55e; -fx-background-radius: 4px;"
                                    StackPane.alignment="CENTER_LEFT"/>
@@ -65,51 +48,33 @@
             </VBox>
 
             <!-- Datos del perfil -->
-            <VBox spacing="0"
-                  style="-fx-background-color: white; -fx-padding: 0;
-                         -fx-background-radius: 10px; -fx-border-color: #e8e8e8;
-                         -fx-border-radius: 10px; -fx-border-width: 1;">
-                <HBox style="-fx-padding: 14 20 14 20; -fx-border-color: transparent transparent #f0f0f0 transparent;
-                             -fx-border-width: 0 0 1 0;" alignment="CENTER_LEFT" spacing="16">
-                    <Label text="%common.username"
-                           style="-fx-font-size: 12px; -fx-text-fill: #888888; -fx-min-width: 140px;"/>
-                    <Label fx:id="usernameValueLabel"
-                           style="-fx-font-size: 13px; -fx-text-fill: #1e1e2e;"/>
+            <VBox spacing="0" styleClass="profile-card" style="-fx-padding: 0;">
+                <HBox styleClass="profile-field-row" alignment="CENTER_LEFT" spacing="16">
+                    <Label text="%common.username" styleClass="profile-field-label"/>
+                    <Label fx:id="usernameValueLabel" styleClass="profile-field-value"/>
                 </HBox>
-                <HBox style="-fx-padding: 14 20 14 20; -fx-border-color: transparent transparent #f0f0f0 transparent;
-                             -fx-border-width: 0 0 1 0;" alignment="CENTER_LEFT" spacing="16">
-                    <Label text="%common.email"
-                           style="-fx-font-size: 12px; -fx-text-fill: #888888; -fx-min-width: 140px;"/>
-                    <Label fx:id="emailLabel"
-                           style="-fx-font-size: 13px; -fx-text-fill: #1e1e2e;"/>
+                <HBox styleClass="profile-field-row" alignment="CENTER_LEFT" spacing="16">
+                    <Label text="%common.email" styleClass="profile-field-label"/>
+                    <Label fx:id="emailLabel" styleClass="profile-field-value"/>
                 </HBox>
-                <HBox style="-fx-padding: 14 20 14 20; -fx-border-color: transparent transparent #f0f0f0 transparent;
-                             -fx-border-width: 0 0 1 0;" alignment="CENTER_LEFT" spacing="16">
-                    <Label text="%common.birthdate"
-                           style="-fx-font-size: 12px; -fx-text-fill: #888888; -fx-min-width: 140px;"/>
-                    <Label fx:id="birthDateLabel"
-                           style="-fx-font-size: 13px; -fx-text-fill: #1e1e2e;"/>
+                <HBox styleClass="profile-field-row" alignment="CENTER_LEFT" spacing="16">
+                    <Label text="%common.birthdate" styleClass="profile-field-label"/>
+                    <Label fx:id="birthDateLabel" styleClass="profile-field-value"/>
                 </HBox>
-                <HBox style="-fx-padding: 14 20 14 20;" alignment="CENTER_LEFT" spacing="16">
-                    <Label text="%profile.field.member.since"
-                           style="-fx-font-size: 12px; -fx-text-fill: #888888; -fx-min-width: 140px;"/>
-                    <Label fx:id="createdAtLabel"
-                           style="-fx-font-size: 13px; -fx-text-fill: #1e1e2e;"/>
+                <HBox styleClass="profile-field-row-last" alignment="CENTER_LEFT" spacing="16">
+                    <Label text="%profile.field.member.since" styleClass="profile-field-label"/>
+                    <Label fx:id="createdAtLabel" styleClass="profile-field-value"/>
                 </HBox>
             </VBox>
 
             <!-- Historial de actividad -->
-            <VBox spacing="0"
-                  style="-fx-background-color: white; -fx-background-radius: 10px;
-             -fx-border-color: #e8e8e8; -fx-border-radius: 10px; -fx-border-width: 1;">
-                <HBox style="-fx-padding: 14 20 14 20; -fx-border-color: transparent transparent #f0f0f0 transparent;
-                 -fx-border-width: 0 0 1 0;" alignment="CENTER_LEFT">
-                    <Label text="%profile.activity.title"
-                           style="-fx-font-size: 13px; -fx-font-weight: bold; -fx-text-fill: #1e1e2e;"/>
+            <VBox spacing="0" styleClass="profile-card" style="-fx-padding: 0;">
+                <HBox styleClass="profile-field-row" alignment="CENTER_LEFT">
+                    <Label text="%profile.activity.title" styleClass="profile-section-title"/>
                 </HBox>
                 <VBox fx:id="activityLogContainer" spacing="0">
                     <Label fx:id="activityLogEmpty" text="%profile.activity.empty"
-                           style="-fx-text-fill: #aaaaaa; -fx-font-size: 12px; -fx-padding: 14 20 14 20;"/>
+                           styleClass="profile-activity-empty"/>
                 </VBox>
             </VBox>
 

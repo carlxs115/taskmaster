@@ -1,62 +1,38 @@
 <?xml version="1.0" encoding="UTF-8"?>
-
 <?import javafx.geometry.Insets?>
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
-
 <VBox xmlns:fx="http://javafx.com/fxml"
       fx:controller="com.taskmaster.taskmasterfrontend.controller.TrashController"
-      HBox.hgrow="ALWAYS"
-      style="-fx-background-color: #f5f5f5;">
+      HBox.hgrow="ALWAYS" styleClass="trash-root">
 
-    <!-- Cabecera -->
-    <HBox style="-fx-background-color: white; -fx-padding: 16 20 16 20;
-                 -fx-border-color: #e0e0e0; -fx-border-width: 0 0 1 0;"
-          alignment="CENTER_LEFT" spacing="12">
-
-        <Label text="%trash.title"
-               style="-fx-font-size: 18px; -fx-font-weight: bold; -fx-text-fill: #2d2d2d;"/>
-
+    <HBox styleClass="trash-header" alignment="CENTER_LEFT" spacing="12">
+        <Label text="%trash.title" styleClass="trash-title"/>
         <Region HBox.hgrow="ALWAYS"/>
-
-        <Label fx:id="retentionLabel"
-               style="-fx-font-size: 12px; -fx-text-fill: #aaaaaa;"/>
+        <Label fx:id="retentionLabel" styleClass="trash-retention-label"/>
     </HBox>
 
-    <!-- Pestañas -->
     <TabPane fx:id="tabPane" VBox.vgrow="ALWAYS"
-             style="-fx-background-color: #f5f5f5;">
-
-        <!-- Pestaña Tareas -->
+             style="-fx-background-color: transparent;">
         <Tab text="%common.tasks" closable="false">
             <ScrollPane fitToWidth="true"
                         style="-fx-background-color: transparent; -fx-border-color: transparent;">
                 <VBox fx:id="trashTaskContainer" spacing="8">
-                    <padding>
-                        <Insets top="16" right="20" bottom="16" left="20"/>
-                    </padding>
+                    <padding><Insets top="16" right="20" bottom="16" left="20"/></padding>
                     <Label fx:id="emptyTasksLabel"
-                           text="%trash.tasks.empty"
-                           style="-fx-text-fill: #aaaaaa; -fx-font-size: 14px;"/>
+                           text="%trash.tasks.empty" styleClass="trash-empty-label"/>
                 </VBox>
             </ScrollPane>
         </Tab>
-
-        <!-- Pestaña Proyectos -->
         <Tab text="%common.projects" closable="false">
             <ScrollPane fitToWidth="true"
                         style="-fx-background-color: transparent; -fx-border-color: transparent;">
                 <VBox fx:id="trashProjectContainer" spacing="8">
-                    <padding>
-                        <Insets top="16" right="20" bottom="16" left="20"/>
-                    </padding>
+                    <padding><Insets top="16" right="20" bottom="16" left="20"/></padding>
                     <Label fx:id="emptyProjectsLabel"
-                           text="%trash.projects.empty"
-                           style="-fx-text-fill: #aaaaaa; -fx-font-size: 14px;"/>
+                           text="%trash.projects.empty" styleClass="trash-empty-label"/>
                 </VBox>
             </ScrollPane>
         </Tab>
-
     </TabPane>
-
 </VBox>

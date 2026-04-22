@@ -1,66 +1,40 @@
 <?xml version="1.0" encoding="UTF-8"?>
-
-<?import javafx.geometry.Insets?>
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
-
 <VBox xmlns:fx="http://javafx.com/fxml"
       fx:controller="com.taskmaster.taskmasterfrontend.controller.EditProjectController"
-      spacing="16"
-      style="-fx-background-color: white; -fx-padding: 24;">
+      spacing="16" styleClass="dialog-root">
 
-    <Label text="%edit.project.title"
-           style="-fx-font-size: 18px; -fx-font-weight: bold; -fx-text-fill: #2d2d2d;"/>
+    <Label text="%edit.project.title" styleClass="dialog-title"/>
 
     <VBox spacing="6">
-        <Label text="%new.project.name" style="-fx-font-size: 13px; -fx-text-fill: #2d2d2d;"/>
-        <TextField fx:id="nameField"
-                   style="-fx-pref-height: 38px;"/>
+        <Label text="%new.project.name" styleClass="dialog-field-label"/>
+        <TextField fx:id="nameField" styleClass="dialog-field"/>
     </VBox>
-
     <VBox spacing="6">
-        <Label text="%common.description" style="-fx-font-size: 13px; -fx-text-fill: #2d2d2d;"/>
+        <Label text="%common.description" styleClass="dialog-field-label"/>
         <TextArea fx:id="descriptionField"
-                  style="-fx-pref-height: 80px;"
-                  wrapText="true"/>
+                  styleClass="dialog-textarea" wrapText="true"/>
     </VBox>
-
     <VBox spacing="6">
-        <Label text="%common.new.category" style="-fx-font-size: 13px; -fx-text-fill: #2d2d2d;"/>
-        <ComboBox fx:id="categoryCombo"
-                  maxWidth="Infinity"
-                  style="-fx-pref-height: 38px;"/>
+        <Label text="%common.new.category" styleClass="dialog-field-label"/>
+        <ComboBox fx:id="categoryCombo" maxWidth="Infinity" styleClass="dialog-combo"/>
     </VBox>
-
     <HBox spacing="16">
         <VBox spacing="6" HBox.hgrow="ALWAYS">
-            <Label text="%common.status" style="-fx-font-size: 13px; -fx-text-fill: #2d2d2d;"/>
-            <ComboBox fx:id="statusCombo"
-                      maxWidth="Infinity"
-                      style="-fx-pref-height: 38px;"/>
+            <Label text="%common.status" styleClass="dialog-field-label"/>
+            <ComboBox fx:id="statusCombo" maxWidth="Infinity" styleClass="dialog-combo"/>
         </VBox>
-
         <VBox spacing="6" HBox.hgrow="ALWAYS">
-            <Label text="%common.priority" style="-fx-font-size: 13px; -fx-text-fill: #2d2d2d;"/>
-            <ComboBox fx:id="priorityCombo"
-                      maxWidth="Infinity"
-                      style="-fx-pref-height: 38px;"/>
+            <Label text="%common.priority" styleClass="dialog-field-label"/>
+            <ComboBox fx:id="priorityCombo" maxWidth="Infinity" styleClass="dialog-combo"/>
         </VBox>
     </HBox>
 
-    <Label fx:id="errorLabel"
-           style="-fx-text-fill: #e74c3c; -fx-font-size: 12px;"
-           visible="false"/>
+    <Label fx:id="errorLabel" styleClass="dialog-error" visible="false"/>
 
     <HBox spacing="10" alignment="CENTER_RIGHT">
-        <Button text="%common.cancel"
-                onAction="#handleCancel"
-                style="-fx-background-color: #e0e0e0; -fx-text-fill: #2d2d2d;
-                       -fx-background-radius: 4px; -fx-cursor: hand;"/>
-        <Button text="%settings.save"
-                onAction="#handleSave"
-                style="-fx-background-color: #3498db; -fx-text-fill: white;
-                       -fx-background-radius: 4px; -fx-cursor: hand;"/>
+        <Button text="%common.cancel" onAction="#handleCancel" styleClass="btn-cancel"/>
+        <Button text="%settings.save" onAction="#handleSave" styleClass="btn-confirm"/>
     </HBox>
-
 </VBox>

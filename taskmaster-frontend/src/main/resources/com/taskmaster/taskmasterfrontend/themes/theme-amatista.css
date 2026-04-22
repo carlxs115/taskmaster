@@ -594,3 +594,556 @@
     -fx-background-color: -tm-bg-app;
     -fx-background-radius: 2px;
 }
+
+/* =====================================================
+   PROFILE
+   ===================================================== */
+
+.profile-root {
+    -fx-background-color: -tm-bg-app;
+}
+
+.profile-header {
+    -fx-background-color: -tm-bg-surface;
+    -fx-padding: 14 20 14 20;
+    -fx-border-color: -tm-border;
+    -fx-border-width: 0 0 1 0;
+}
+
+.profile-header-title {
+    -fx-font-size: 15px;
+    -fx-font-weight: bold;
+    -fx-text-fill: -tm-text-primary;
+}
+
+.profile-card {
+    -fx-background-color: -tm-bg-surface;
+    -fx-padding: 20;
+    -fx-background-radius: 10px;
+    -fx-border-color: -tm-border;
+    -fx-border-radius: 10px;
+    -fx-border-width: 1;
+}
+
+.profile-username-label {
+    -fx-font-size: 20px;
+    -fx-font-weight: bold;
+    -fx-text-fill: -tm-text-primary;
+}
+
+.profile-section-title {
+    -fx-font-size: 13px;
+    -fx-font-weight: bold;
+    -fx-text-fill: -tm-text-primary;
+}
+
+.profile-field-label {
+    -fx-font-size: 12px;
+    -fx-text-fill: -tm-text-secondary;
+    -fx-min-width: 140px;
+}
+
+.profile-field-value {
+    -fx-font-size: 13px;
+    -fx-text-fill: -tm-text-primary;
+}
+
+.profile-field-row {
+    -fx-padding: 14 20 14 20;
+    -fx-border-color: transparent transparent -tm-border transparent;
+    -fx-border-width: 0 0 1 0;
+}
+
+.profile-field-row-last {
+    -fx-padding: 14 20 14 20;
+}
+
+.profile-rate-label {
+    -fx-font-size: 11px;
+    -fx-text-fill: -tm-text-secondary;
+}
+
+.profile-rate-value {
+    -fx-font-size: 11px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #22c55e;
+}
+
+.profile-progress-bg {
+    -fx-background-color: -tm-bg-app;
+    -fx-background-radius: 4px;
+    -fx-min-height: 8px;
+    -fx-max-height: 8px;
+}
+
+.profile-activity-empty {
+    -fx-text-fill: -tm-text-muted;
+    -fx-font-size: 12px;
+    -fx-padding: 14 20 14 20;
+}
+
+/* =====================================================
+   DETAIL VIEWS — task-detail, project-detail
+   ===================================================== */
+
+.detail-root {
+    -fx-background-color: -tm-bg-app;
+}
+
+.detail-header {
+    -fx-background-color: -tm-bg-surface;
+    -fx-padding: 14 20 14 20;
+    -fx-border-color: -tm-border;
+    -fx-border-width: 0 0 1 0;
+}
+
+.detail-id-badge {
+    -fx-font-size: 11px;
+    -fx-text-fill: -tm-text-secondary;
+    -fx-padding: 2 8 2 8;
+    -fx-background-color: -tm-bg-app;
+    -fx-background-radius: 4px;
+}
+
+.detail-title {
+    -fx-font-size: 16px;
+    -fx-font-weight: bold;
+    -fx-text-fill: -tm-text-primary;
+}
+
+.detail-btn-edit {
+    -fx-background-color: -tm-bg-app;
+    -fx-text-fill: -tm-text-secondary;
+    -fx-font-size: 12px;
+    -fx-background-radius: 6px;
+    -fx-cursor: hand;
+    -fx-padding: 5 12 5 12;
+}
+
+.detail-btn-close {
+    -fx-background-color: transparent;
+    -fx-text-fill: -tm-text-secondary;
+    -fx-font-size: 12px;
+    -fx-cursor: hand;
+    -fx-padding: 5 12 5 12;
+}
+
+.detail-section {
+    -fx-background-color: -tm-bg-surface;
+    -fx-padding: 14 16 14 16;
+    -fx-background-radius: 8px;
+    -fx-border-color: -tm-border;
+    -fx-border-radius: 8px;
+    -fx-border-width: 1;
+}
+
+.detail-section-title {
+    -fx-font-size: 13px;
+    -fx-font-weight: bold;
+    -fx-text-fill: -tm-text-primary;
+}
+
+.detail-section-label {
+    -fx-font-size: 11px;
+    -fx-font-weight: bold;
+    -fx-text-fill: -tm-text-secondary;
+}
+
+.detail-section-count {
+    -fx-font-size: 11px;
+    -fx-text-fill: -tm-text-secondary;
+    -fx-padding: 2 8 2 8;
+    -fx-background-color: -tm-bg-app;
+    -fx-background-radius: 20px;
+}
+
+.detail-description {
+    -fx-font-size: 13px;
+    -fx-text-fill: -tm-text-primary;
+}
+
+.detail-empty-label {
+    -fx-text-fill: -tm-text-muted;
+    -fx-font-size: 12px;
+    -fx-padding: 8 0 0 0;
+}
+
+.detail-due-badge {
+    -fx-font-size: 11px;
+    -fx-padding: 3 10 3 10;
+    -fx-background-radius: 10px;
+    -fx-text-fill: -tm-text-secondary;
+    -fx-background-color: -tm-bg-app;
+}
+
+.detail-progress-bg {
+    -fx-background-color: -tm-bg-app;
+    -fx-background-radius: 4px;
+}
+
+.btn-small-primary {
+    -fx-background-color: -tm-btn-primary;
+    -fx-text-fill: white;
+    -fx-font-size: 11px;
+    -fx-background-radius: 6px;
+    -fx-cursor: hand;
+    -fx-padding: 4 10 4 10;
+}
+
+/* Stat cards en project-detail */
+.project-stat-card {
+    -fx-background-color: -tm-bg-surface;
+    -fx-padding: 12 8 12 8;
+    -fx-background-radius: 8px;
+    -fx-border-color: -tm-border;
+    -fx-border-radius: 8px;
+    -fx-border-width: 1;
+}
+
+.project-stat-number {
+    -fx-font-size: 22px;
+    -fx-font-weight: bold;
+    -fx-text-fill: -tm-text-primary;
+}
+
+.project-stat-label {
+    -fx-font-size: 11px;
+    -fx-text-fill: -tm-text-secondary;
+}
+
+/* =====================================================
+   TRASH
+   ===================================================== */
+
+.trash-root {
+    -fx-background-color: -tm-bg-surface-alt;
+}
+
+.trash-header {
+    -fx-background-color: -tm-bg-surface;
+    -fx-padding: 16 20 16 20;
+    -fx-border-color: -tm-border;
+    -fx-border-width: 0 0 1 0;
+}
+
+.trash-title {
+    -fx-font-size: 18px;
+    -fx-font-weight: bold;
+    -fx-text-fill: -tm-text-header;
+}
+
+.trash-retention-label {
+    -fx-font-size: 12px;
+    -fx-text-fill: -tm-text-muted;
+}
+
+.trash-empty-label {
+    -fx-text-fill: -tm-text-muted;
+    -fx-font-size: 14px;
+}
+
+/* =====================================================
+   SECURITY
+   ===================================================== */
+
+.security-root {
+    -fx-background-color: -tm-bg-app;
+    -fx-padding: 24;
+}
+
+.security-card {
+    -fx-background-color: -tm-bg-surface;
+    -fx-padding: 20;
+    -fx-background-radius: 10px;
+    -fx-border-color: -tm-border;
+    -fx-border-radius: 10px;
+    -fx-border-width: 1;
+}
+
+.security-card-danger {
+    -fx-background-color: -tm-bg-surface;
+    -fx-padding: 20;
+    -fx-background-radius: 10px;
+    -fx-border-color: #ffcccc;
+    -fx-border-radius: 10px;
+    -fx-border-width: 1;
+}
+
+.security-section-title {
+    -fx-font-size: 13px;
+    -fx-font-weight: bold;
+    -fx-text-fill: -tm-text-primary;
+}
+
+.security-danger-title {
+    -fx-font-size: 13px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #e74c3c;
+}
+
+.security-danger-desc {
+    -fx-font-size: 12px;
+    -fx-text-fill: -tm-text-secondary;
+}
+
+.security-field {
+    -fx-font-size: 12px;
+    -fx-padding: 8 12 8 12;
+    -fx-background-radius: 6px;
+    -fx-border-radius: 6px;
+    -fx-border-color: -tm-border;
+    -fx-border-width: 1;
+    -fx-background-color: -tm-bg-input;
+}
+
+.security-field:focused {
+    -fx-border-color: -tm-accent;
+    -fx-border-width: 1.5px;
+}
+
+.security-error {
+    -fx-text-fill: #e74c3c;
+    -fx-font-size: 11px;
+}
+
+.btn-danger {
+    -fx-background-color: #e74c3c;
+    -fx-text-fill: white;
+    -fx-font-size: 12px;
+    -fx-background-radius: 6px;
+    -fx-cursor: hand;
+    -fx-padding: 7 16 7 16;
+}
+
+.security-access-row {
+    -fx-padding: 14 20 14 20;
+    -fx-border-color: transparent transparent -tm-border transparent;
+    -fx-border-width: 0 0 1 0;
+}
+
+.security-access-empty {
+    -fx-text-fill: -tm-text-muted;
+    -fx-font-size: 12px;
+    -fx-padding: 14 20 14 20;
+}
+
+/* =====================================================
+   DIÁLOGOS — new/edit project, new/edit task, new subtask
+   ===================================================== */
+
+.dialog-root {
+    -fx-background-color: -tm-bg-surface;
+    -fx-padding: 24;
+}
+
+.dialog-title {
+    -fx-font-size: 18px;
+    -fx-font-weight: bold;
+    -fx-text-fill: -tm-text-header;
+}
+
+.dialog-field-label {
+    -fx-font-size: 13px;
+    -fx-text-fill: -tm-text-header;
+}
+
+.dialog-field {
+    -fx-pref-height: 38px;
+    -fx-background-color: -tm-bg-input;
+    -fx-border-color: -tm-border;
+    -fx-border-radius: 4px;
+    -fx-background-radius: 4px;
+    -fx-font-size: 13px;
+}
+
+.dialog-field:focused {
+    -fx-border-color: -tm-accent;
+    -fx-border-width: 1.5px;
+}
+
+.dialog-textarea {
+    -fx-pref-height: 80px;
+    -fx-background-color: -tm-bg-input;
+    -fx-border-color: -tm-border;
+    -fx-border-radius: 4px;
+    -fx-background-radius: 4px;
+    -fx-font-size: 13px;
+}
+
+.dialog-combo {
+    -fx-pref-height: 38px;
+    -fx-background-color: -tm-bg-input;
+    -fx-border-color: -tm-border;
+    -fx-border-radius: 4px;
+    -fx-background-radius: 4px;
+    -fx-font-size: 13px;
+}
+
+.dialog-error {
+    -fx-text-fill: -tm-status-urgent;
+    -fx-font-size: 12px;
+}
+
+.btn-cancel {
+    -fx-background-color: -tm-border;
+    -fx-text-fill: -tm-text-header;
+    -fx-background-radius: 4px;
+    -fx-cursor: hand;
+}
+
+.btn-cancel:hover {
+    -fx-background-color: #cccccc;
+}
+
+.btn-confirm {
+    -fx-background-color: -tm-btn-secondary;
+    -fx-text-fill: white;
+    -fx-background-radius: 4px;
+    -fx-cursor: hand;
+}
+
+.btn-confirm:hover {
+    -fx-background-color: #2980b9;
+}
+
+.btn-confirm-accent {
+    -fx-background-color: -tm-btn-primary;
+    -fx-text-fill: white;
+    -fx-background-radius: 6px;
+    -fx-cursor: hand;
+    -fx-padding: 8 16 8 16;
+}
+
+.btn-confirm-accent:hover {
+    -fx-background-color: -tm-btn-primary-hover;
+}
+
+.btn-cancel-soft {
+    -fx-background-color: -tm-bg-app;
+    -fx-text-fill: -tm-text-secondary;
+    -fx-background-radius: 6px;
+    -fx-cursor: hand;
+    -fx-padding: 8 16 8 16;
+}
+
+.btn-cancel-soft:hover {
+    -fx-background-color: -tm-border;
+}
+
+/* =====================================================
+   DIÁLOGOS — cabecera con título
+   ===================================================== */
+
+.dialog-header {
+    -fx-background-color: -tm-bg-surface;
+    -fx-padding: 16 20 16 20;
+    -fx-border-color: -tm-border;
+    -fx-border-width: 0 0 1 0;
+}
+
+.dialog-header-title {
+    -fx-font-size: 16px;
+    -fx-font-weight: bold;
+    -fx-text-fill: -tm-text-primary;
+}
+
+.dialog-header-title-danger {
+    -fx-font-size: 16px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #e74c3c;
+}
+
+/* =====================================================
+   DIÁLOGOS — cuerpo con fondo de app
+   ===================================================== */
+
+.dialog-body {
+    -fx-background-color: -tm-bg-app;
+}
+
+/* =====================================================
+   DIÁLOGOS — campos de formulario con label bold
+   ===================================================== */
+
+.dialog-field-label-bold {
+    -fx-font-size: 12px;
+    -fx-font-weight: bold;
+    -fx-text-fill: -tm-text-secondary;
+}
+
+/* =====================================================
+   DIÁLOGOS — aviso de peligro (delete account)
+   ===================================================== */
+
+.dialog-warning-box {
+    -fx-background-color: #fff5f5;
+    -fx-padding: 14 16 14 16;
+    -fx-background-radius: 8px;
+    -fx-border-color: #fecaca;
+    -fx-border-radius: 8px;
+    -fx-border-width: 1;
+}
+
+.dialog-warning-title {
+    -fx-font-size: 13px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #e74c3c;
+}
+
+.dialog-warning-desc {
+    -fx-font-size: 12px;
+    -fx-text-fill: -tm-text-secondary;
+}
+
+/* =====================================================
+   BOTONES — cancelar suave (fondo app)
+   ===================================================== */
+
+.btn-cancel-soft {
+    -fx-background-color: -tm-bg-app;
+    -fx-text-fill: -tm-text-secondary;
+    -fx-background-radius: 6px;
+    -fx-cursor: hand;
+    -fx-padding: 8 16 8 16;
+}
+
+.btn-cancel-soft:hover {
+    -fx-background-color: -tm-border;
+}
+
+/* =====================================================
+   BOTONES — confirmar con acento primario (morado)
+   ===================================================== */
+
+.btn-confirm-accent {
+    -fx-background-color: -tm-btn-primary;
+    -fx-text-fill: white;
+    -fx-background-radius: 6px;
+    -fx-cursor: hand;
+    -fx-padding: 8 16 8 16;
+}
+
+.btn-confirm-accent:hover {
+    -fx-background-color: -tm-btn-primary-hover;
+}
+
+/* =====================================================
+   ACTIVITY LOG — sección embebida en task/project detail
+   ===================================================== */
+
+.activity-log-section {
+    -fx-background-color: transparent;
+}
+
+.section-title {
+    -fx-font-size: 12px;
+    -fx-font-weight: bold;
+    -fx-text-fill: -tm-text-secondary;
+}
+
+.activity-table {
+    -fx-background-color: -tm-bg-surface;
+    -fx-border-color: -tm-border;
+    -fx-border-radius: 6px;
+    -fx-background-radius: 6px;
+}
