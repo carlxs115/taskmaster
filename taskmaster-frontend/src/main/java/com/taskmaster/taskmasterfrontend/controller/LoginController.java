@@ -154,6 +154,10 @@ public class LoginController {
             // ── Registrar el nuevo Scene en ThemeManager y aplicar tema ──
             ThemeManager.getInstance().setMainScene(scene);
 
+            scene.setFill(javafx.scene.paint.Color.web(
+                    com.taskmaster.taskmasterfrontend.util.ThemeManager.getInstance().getBgApp()
+            ));
+
             Stage stage = (Stage) usernameField.getScene().getWindow();
             stage.setScene(scene);
             stage.setTitle("TaskMaster");

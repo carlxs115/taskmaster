@@ -379,14 +379,23 @@ public class ProjectDetailController {
     private void applyThemeToScene(Scene scene) {
         com.taskmaster.taskmasterfrontend.util.ThemeManager tm =
                 com.taskmaster.taskmasterfrontend.util.ThemeManager.getInstance();
+        // Cargar siempre el CSS base primero
+        String baseUrl = getClass().getResource(
+                "/com/taskmaster/taskmasterfrontend/themes/theme-amatista.css") != null
+                ? getClass().getResource(
+                "/com/taskmaster/taskmasterfrontend/themes/theme-amatista.css").toExternalForm()
+                : null;
+        if (baseUrl != null) scene.getStylesheets().add(baseUrl);
+        // Luego el tema activo si no es Amatista
         String cssFile = "/com/taskmaster/taskmasterfrontend/themes/"
                 + tm.getCssFileNamePublic();
-        String cssUrl = getClass().getResource(cssFile) != null
+        String themeUrl = getClass().getResource(cssFile) != null
                 ? getClass().getResource(cssFile).toExternalForm()
                 : null;
-        if (cssUrl != null) {
-            scene.getStylesheets().add(cssUrl);
-        }
+        if (themeUrl != null && !themeUrl.equals(baseUrl))
+            scene.getStylesheets().add(themeUrl);
+        // Fondo del Scene
+        scene.setFill(javafx.scene.paint.Color.web(tm.getBgApp()));
     }
 
     // ── Colores ───────────────────────────────────────────────────────────────

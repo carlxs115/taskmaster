@@ -37,7 +37,7 @@
     <Label fx:id="errorLabel" styleClass="dialog-error" visible="false"/>
 
     <HBox spacing="10" alignment="CENTER_RIGHT">
-        <Button text="%common.cancel" onAction="#handleCancel" styleClass="btn-cancel"/>
-        <Button text="%new.project.button" onAction="#handleCreate" styleClass="btn-confirm"/>
+        <Button text="%common.cancel" onAction="#handleCancel" styleClass="btn-cancel-soft"/>
+        <Button text="%new.project.button" onAction="#handleCreate" styleClass="btn-confirm-accent"/>
     </HBox>
 </VBox>

@@ -60,18 +60,15 @@ public class SecurityController {
 
     private void renderAccessLog(JsonNode entries) {
         accessLogContainer.getChildren().clear();
-
         if (entries.isEmpty()) {
             accessLogContainer.getChildren().add(accessLogEmpty);
             return;
         }
-
         int max = Math.min(entries.size(), 10);
         for (int i = 0; i < max; i++) {
             JsonNode entry = entries.get(i);
             String actionType = entry.get("actionType").asText();
             String createdAt  = entry.get("createdAt").asText();
-
             boolean isLogin = "LOGIN".equals(actionType);
             String icon  = isLogin ? "→" : "←";
             String label = isLogin ? lm.get("security.access.login") : lm.get("security.access.logout");
@@ -83,21 +80,19 @@ public class SecurityController {
 
             HBox row = new HBox(12);
             row.setAlignment(Pos.CENTER_LEFT);
-            row.setStyle("-fx-padding: 10 20 10 20;" +
-                    (i < max - 1 ? "-fx-border-color: transparent transparent #f0f0f0 transparent;" +
-                            "-fx-border-width: 0 0 1 0;" : ""));
+            row.getStyleClass().add("security-access-row");
 
             Label iconLabel = new Label(icon);
             iconLabel.setStyle("-fx-font-size: 14px; -fx-font-weight: bold; -fx-text-fill: " + color + ";");
 
             Label actionLabel = new Label(label);
-            actionLabel.setStyle("-fx-font-size: 12px; -fx-text-fill: #1e1e2e;");
+            actionLabel.getStyleClass().add("profile-field-value");
 
             Region spacer = new Region();
             HBox.setHgrow(spacer, Priority.ALWAYS);
 
             Label dateLabel = new Label(dateStr);
-            dateLabel.setStyle("-fx-font-size: 11px; -fx-text-fill: #888888;");
+            dateLabel.getStyleClass().add("profile-field-label");
 
             row.getChildren().addAll(iconLabel, actionLabel, spacer, dateLabel);
             accessLogContainer.getChildren().add(row);

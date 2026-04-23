@@ -379,8 +379,7 @@ public class ProfileController {
 
             // Cabecera del grupo
             Label groupLabel = new Label(group.getKey());
-            groupLabel.setStyle("-fx-font-size: 11px; -fx-font-weight: bold; " +
-                    "-fx-text-fill: #888888; -fx-padding: 10 20 4 20;");
+            groupLabel.getStyleClass().add("sidebar-section-label");
             activityLogContainer.getChildren().add(groupLabel);
 
             // Entradas del grupo
@@ -413,7 +412,7 @@ public class ProfileController {
                 iconLabel.setStyle("-fx-font-size: 13px; -fx-min-width: 20px; -fx-text-fill: " + color + ";");
 
                 Label descLabel = new Label(desc);
-                descLabel.setStyle("-fx-font-size: 12px; -fx-text-fill: #1e1e2e;");
+                descLabel.getStyleClass().add("profile-field-value");
                 descLabel.setWrapText(true);
                 HBox.setHgrow(descLabel, javafx.scene.layout.Priority.ALWAYS);
 
@@ -429,9 +428,8 @@ public class ProfileController {
     private VBox createStatCard(String number, String label, String color) {
         VBox card = new VBox(4);
         card.setAlignment(Pos.CENTER);
-        card.setStyle("-fx-background-color: white; -fx-padding: 14 10 14 10; " +
-                "-fx-background-radius: 8px; -fx-border-color: #e8e8e8; " +
-                "-fx-border-radius: 8px; -fx-border-width: 1;");
+        card.getStyleClass().add("stat-card");
+        card.setAlignment(Pos.CENTER);
         Label num = new Label(number);
         num.setStyle("-fx-font-size: 22px; -fx-font-weight: bold; -fx-text-fill: " + color + ";");
         Label lbl = new Label(label);
@@ -476,14 +474,23 @@ public class ProfileController {
     private void applyThemeToScene(Scene scene) {
         com.taskmaster.taskmasterfrontend.util.ThemeManager tm =
                 com.taskmaster.taskmasterfrontend.util.ThemeManager.getInstance();
+        // Cargar siempre el CSS base primero
+        String baseUrl = getClass().getResource(
+                "/com/taskmaster/taskmasterfrontend/themes/theme-amatista.css") != null
+                ? getClass().getResource(
+                "/com/taskmaster/taskmasterfrontend/themes/theme-amatista.css").toExternalForm()
+                : null;
+        if (baseUrl != null) scene.getStylesheets().add(baseUrl);
+        // Luego el tema activo si no es Amatista
         String cssFile = "/com/taskmaster/taskmasterfrontend/themes/"
                 + tm.getCssFileNamePublic();
-        String cssUrl = getClass().getResource(cssFile) != null
+        String themeUrl = getClass().getResource(cssFile) != null
                 ? getClass().getResource(cssFile).toExternalForm()
                 : null;
-        if (cssUrl != null) {
-            scene.getStylesheets().add(cssUrl);
-        }
+        if (themeUrl != null && !themeUrl.equals(baseUrl))
+            scene.getStylesheets().add(themeUrl);
+        // Fondo del Scene
+        scene.setFill(javafx.scene.paint.Color.web(tm.getBgApp()));
     }
 
     private String getActivityIcon(String actionType) {

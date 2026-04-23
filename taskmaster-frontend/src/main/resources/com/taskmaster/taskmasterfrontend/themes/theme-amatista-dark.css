@@ -1,21 +1,21 @@
-@import "theme-amatista.css";
-
 /* =====================================================
    THEME: AMATISTA DARK
    TaskMaster — Tema oscuro con acentos morado/amatista
    ===================================================== */
 
+/* ── Variables globales ── */
 .root {
     /* Fondos */
-    -tm-bg-app:          #0d0d1a;
-    -tm-bg-topbar:       #080810;
-    -tm-bg-sidebar:      #080810;
-    -tm-bg-surface:      #13131f;
-    -tm-bg-surface-alt:  #1a1a2e;
-    -tm-bg-input:        #1e1e30;
+    -tm-bg-app:          #0d0b1a;
+    -tm-bg-topbar:       #080610;
+    -tm-bg-sidebar:      #080610;
+    -tm-bg-surface:      #13101f;
+    -tm-bg-surface-alt:  #1a1628;
+    -tm-bg-input:        #1e1a2e;
     -tm-bg-hover:        #2a1f4e;
     -tm-bg-active:       #2a1f4e;
     -tm-bg-badge:        #2a1f4e;
+    -tm-bg-scroll:       #1e1e2e;
 
     /* Acentos */
     -tm-accent:          #7c3aed;
@@ -24,23 +24,23 @@
     -tm-accent-subtle:   #2a1f4e;
 
     /* Textos */
-    -tm-text-primary:    #e8e8f0;
-    -tm-text-secondary:  #9999bb;
-    -tm-text-muted:      #555570;
-    -tm-text-sidebar:    #9999bb;
+    -tm-text-primary:    #e8e0ff;
+    -tm-text-secondary:  #c4b8f0;
+    -tm-text-muted:      #4a3a6e;
+    -tm-text-sidebar:    #9988cc;
     -tm-text-on-accent:  white;
-    -tm-text-label:      #555570;
-    -tm-text-header:     #e8e8f0;
+    -tm-text-label:      #4a3a6e;
+    -tm-text-header:     #e8e0ff;
 
     /* Bordes */
-    -tm-border:          #2a2a3e;
-    -tm-border-topbar:   #2a2a3e;
-    -tm-border-sidebar:  #2a2a3e;
+    -tm-border:          #3d2f6e;
+    -tm-border-topbar:   #3d2f6e;
+    -tm-border-sidebar:  #3d2f6e;
 
-    /* Botón acción principal */
-    -tm-btn-primary:     #7c3aed;
+    /* Botones */
+    -tm-btn-primary:       #7c3aed;
     -tm-btn-primary-hover: #5b21b6;
-    -tm-btn-secondary:   #2980b9;
+    -tm-btn-secondary:     #5b21b6;
 
     /* Estados de tarea */
     -tm-status-done:     #2ecc71;
@@ -48,11 +48,49 @@
     -tm-status-pending:  #f59e0b;
     -tm-status-urgent:   #e74c3c;
 
-    /* Sidebar activo */
+    /* Sidebar */
     -tm-sidebar-active-bg:    #2a1f4e;
     -tm-sidebar-active-text:  #a78bfa;
-    -tm-sidebar-section-text: #555570;
+    -tm-sidebar-section-text: #4a3a6e;
     -tm-topbar-user-bg:       #2a1f4e;
-    -tm-topbar-user-border:   #3d2f6e;
-    -tm-bg-hover-sidebar:     #1e1e35;
+    -tm-topbar-user-border:   #5b3fa0;
+    -tm-bg-hover-sidebar:     #1e1a2e;
+}
+
+/* ── Overrides específicos del tema oscuro ── */
+
+.btn-clear-filters {
+    -fx-text-fill: -tm-text-secondary;
+}
+
+.tab-pane,
+.tab-pane > .tab-content-area {
+    -fx-background-color: -tm-bg-app;
+}
+
+.tab-pane .tab-header-background,
+.tab-pane .tab-header-area {
+    -fx-background-color: -tm-bg-surface;
+}
+
+.tab-pane .tab {
+    -fx-background-color: -tm-bg-surface;
+    -fx-border-color: -tm-border;
+}
+
+.tab-pane .tab .tab-label {
+    -fx-text-fill: -tm-text-secondary;
+}
+
+.tab-pane .tab:selected {
+    -fx-background-color: -tm-bg-active;
+}
+
+.tab-pane .tab:selected .tab-label {
+    -fx-text-fill: -tm-accent-light;
+}
+
+.btn-cancel-soft:hover {
+    -fx-background-color: -tm-bg-active;
+    -fx-text-fill: -tm-accent-light;
 }

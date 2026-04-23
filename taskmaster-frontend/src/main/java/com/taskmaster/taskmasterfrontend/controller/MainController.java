@@ -123,6 +123,10 @@ public class MainController {
         LanguageManager.getInstance().bundleProperty().addListener((obs, oldBundle, newBundle) -> {
             refreshSidebar();
         });
+
+        Platform.runLater(() ->
+                System.out.println("Stylesheets: " + btnHome.getScene().getStylesheets())
+        );
     }
 
     // =========================================================================
@@ -453,7 +457,7 @@ public class MainController {
 
         if (projects == null || !projects.isArray() || projects.isEmpty()) {
             Label empty = new Label(lm.get("home.no.projects"));
-            empty.setStyle("-fx-text-fill: #aaaaaa; -fx-font-size: 12px; -fx-padding: 8 0 0 0;");
+            empty.getStyleClass().add("detail-empty-label");
             panel.getChildren().add(empty);
             return panel;
         }
@@ -480,11 +484,11 @@ public class MainController {
             nameRow.setMaxWidth(Double.MAX_VALUE);
             nameRow.setAlignment(Pos.CENTER_LEFT);
             Label nameLabel = new Label(pName);
-            nameLabel.setStyle("-fx-font-size: 13px; -fx-text-fill: #1e1e2e;");
+            nameLabel.getStyleClass().add("home-panel-title");
             Region spacer = new Region();
             HBox.setHgrow(spacer, Priority.ALWAYS);
             Label pctLabel = new Label(Math.round(pct) + "%");
-            pctLabel.setStyle("-fx-font-size: 11px; -fx-text-fill: #888888;");
+            pctLabel.getStyleClass().add("project-stat-label");
             nameRow.getChildren().addAll(nameLabel, spacer, pctLabel);
 
             StackPane barBg = new StackPane();
@@ -515,8 +519,8 @@ public class MainController {
                             "-fx-background-radius: 10px; -fx-text-fill: white; " +
                             "-fx-background-color: " + getPriorityColor(pPriority) + ";"),
                     createBadge(pCategory, getCategoryBadgeStyle(pCategory)),
-                    createBadge(total + " " + lm.get("common.tasks").toLowerCase(), "-fx-background-color: #f0f0f5; " +
-                            "-fx-text-fill: #666666; -fx-background-radius: 10px; " +
+                    createBadge(total + " " + lm.get("common.tasks").toLowerCase(), "-fx-background-color: -tm-bg-app; " +
+                            "-fx-text-fill: -tm-text-secondary; -fx-background-radius: 10px; " +
                             "-fx-font-size: 10px; -fx-padding: 2 7 2 7;"));
 
             item.getChildren().addAll(nameRow, barBg, metaRow);
@@ -609,7 +613,7 @@ public class MainController {
             }).start());
 
             Label titleLabel = new Label(title);
-            titleLabel.setStyle("-fx-font-size: 13px; -fx-text-fill: #1e1e2e;");
+            titleLabel.getStyleClass().add("profile-field-value");
 
             HBox badges = new HBox(6);
             badges.setAlignment(Pos.CENTER_LEFT);
@@ -1720,7 +1724,11 @@ public class MainController {
                     LanguageManager.getInstance().getBundle()
             );
             Stage stage = (Stage) mainArea.getScene().getWindow();
-            stage.setScene(new Scene(loader.load(), 400, 500));
+            Scene scene = new Scene(loader.load(), 400, 520);
+            scene.getStylesheets().add(getClass().getResource(
+                            "/com/taskmaster/taskmasterfrontend/themes/theme-amatista.css")
+                    .toExternalForm());
+            stage.setScene(scene);
             stage.setTitle("TaskMaster");
         } catch (IOException e) {
             showAlert("error.title", "error.logout");
@@ -1917,15 +1925,25 @@ public class MainController {
     }
 
     private void applyThemeToScene(Scene scene) {
-        ThemeManager tm = ThemeManager.getInstance();
+        com.taskmaster.taskmasterfrontend.util.ThemeManager tm =
+                com.taskmaster.taskmasterfrontend.util.ThemeManager.getInstance();
+        // Cargar siempre el CSS base primero
+        String baseUrl = getClass().getResource(
+                "/com/taskmaster/taskmasterfrontend/themes/theme-amatista.css") != null
+                ? getClass().getResource(
+                "/com/taskmaster/taskmasterfrontend/themes/theme-amatista.css").toExternalForm()
+                : null;
+        if (baseUrl != null) scene.getStylesheets().add(baseUrl);
+        // Luego el tema activo si no es Amatista
         String cssFile = "/com/taskmaster/taskmasterfrontend/themes/"
                 + tm.getCssFileNamePublic();
-        String cssUrl = getClass().getResource(cssFile) != null
+        String themeUrl = getClass().getResource(cssFile) != null
                 ? getClass().getResource(cssFile).toExternalForm()
                 : null;
-        if (cssUrl != null) {
-            scene.getStylesheets().add(cssUrl);
-        }
+        if (themeUrl != null && !themeUrl.equals(baseUrl))
+            scene.getStylesheets().add(themeUrl);
+        // Fondo del Scene
+        scene.setFill(javafx.scene.paint.Color.web(tm.getBgApp()));
     }
 
     private void refreshSidebar() {

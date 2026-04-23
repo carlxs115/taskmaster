@@ -135,31 +135,25 @@ public class TrashController {
         HBox card = new HBox();
         card.setSpacing(12);
         card.setAlignment(Pos.CENTER_LEFT);
-        card.setStyle("-fx-background-color: white; -fx-padding: 12 16 12 16; " +
-                "-fx-background-radius: 6px; -fx-border-color: #e0e0e0; " +
-                "-fx-border-radius: 6px;");
+        card.getStyleClass().add("task-card");
 
         Long taskId = task.get("id").asLong();
         String title = task.get("title").asText();
         String priority = task.get("priority").asText();
 
         Label titleLabel = new Label(title);
-        titleLabel.setStyle("-fx-font-size: 13px; -fx-text-fill: #aaaaaa; -fx-strikethrough: true;");
+        titleLabel.getStyleClass().add("task-title-done");
         HBox.setHgrow(titleLabel, Priority.ALWAYS);
 
         Label priorityBadge = new Label(translatePriority(priority));
-        priorityBadge.setStyle("-fx-font-size: 11px; -fx-padding: 2 8 2 8; " +
-                "-fx-background-radius: 10px; -fx-text-fill: white; " +
-                "-fx-background-color: #aaaaaa;");
+        priorityBadge.getStyleClass().add("detail-section-count");
 
         Button restoreBtn = new Button(lm.get("trash.restore"));
-        restoreBtn.setStyle("-fx-background-color: #2ecc71; -fx-text-fill: white; " +
-                "-fx-background-radius: 4px; -fx-cursor: hand; -fx-font-size: 12px;");
+        restoreBtn.getStyleClass().add("btn-small-primary");
         restoreBtn.setOnAction(e -> restoreTask(taskId));
 
         Button deleteBtn = new Button(lm.get("trash.delete"));
-        deleteBtn.setStyle("-fx-background-color: #e74c3c; -fx-text-fill: white; " +
-                "-fx-background-radius: 4px; -fx-cursor: hand; -fx-font-size: 12px;");
+        deleteBtn.getStyleClass().add("btn-danger");
         deleteBtn.setOnAction(e -> permanentlyDeleteTask(taskId));
 
         card.getChildren().addAll(titleLabel, priorityBadge, restoreBtn, deleteBtn);
@@ -170,31 +164,25 @@ public class TrashController {
         HBox card = new HBox();
         card.setSpacing(12);
         card.setAlignment(Pos.CENTER_LEFT);
-        card.setStyle("-fx-background-color: white; -fx-padding: 12 16 12 16; " +
-                "-fx-background-radius: 6px; -fx-border-color: #e0e0e0; " +
-                "-fx-border-radius: 6px;");
+        card.getStyleClass().add("task-card");
 
         Long projectId = project.get("id").asLong();
         String name = project.get("name").asText();
         String category = project.get("category").asText();
 
         Label nameLabel = new Label("📁 " + name);
-        nameLabel.setStyle("-fx-font-size: 13px; -fx-text-fill: #aaaaaa; -fx-strikethrough: true;");
+        nameLabel.getStyleClass().add("task-title-done");
         HBox.setHgrow(nameLabel, Priority.ALWAYS);
 
         Label categoryBadge = new Label(translateCategory(category));
-        categoryBadge.setStyle("-fx-font-size: 11px; -fx-padding: 2 8 2 8; " +
-                "-fx-background-radius: 10px; -fx-text-fill: white; " +
-                "-fx-background-color: #aaaaaa;");
+        categoryBadge.getStyleClass().add("detail-section-count");
 
         Button restoreBtn = new Button(lm.get("trash.restore"));
-        restoreBtn.setStyle("-fx-background-color: #2ecc71; -fx-text-fill: white; " +
-                "-fx-background-radius: 4px; -fx-cursor: hand; -fx-font-size: 12px;");
+        restoreBtn.getStyleClass().add("btn-small-primary");
         restoreBtn.setOnAction(e -> restoreProject(projectId));
 
         Button deleteBtn = new Button(lm.get("trash.delete"));
-        deleteBtn.setStyle("-fx-background-color: #e74c3c; -fx-text-fill: white; " +
-                "-fx-background-radius: 4px; -fx-cursor: hand; -fx-font-size: 12px;");
+        deleteBtn.getStyleClass().add("btn-danger");
         deleteBtn.setOnAction(e -> permanentlyDeleteProject(projectId));
 
         card.getChildren().addAll(nameLabel, categoryBadge, restoreBtn, deleteBtn);

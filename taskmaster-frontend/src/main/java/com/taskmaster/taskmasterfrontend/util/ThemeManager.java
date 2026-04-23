@@ -69,13 +69,28 @@ public class ThemeManager {
         if (mainScene == null) return;
 
         mainScene.getStylesheets().clear();
-        String cssFile = CSS_BASE + getCssFileName(theme);
-        String cssUrl = getClass().getResource(cssFile) != null
-                ? getClass().getResource(cssFile).toExternalForm()
+
+        String baseUrl = getClass().getResource(CSS_BASE + "theme-amatista.css") != null
+                ? getClass().getResource(CSS_BASE + "theme-amatista.css").toExternalForm()
                 : null;
-        if (cssUrl != null) {
-            mainScene.getStylesheets().add(cssUrl);
+        if (baseUrl != null) {
+            mainScene.getStylesheets().add(baseUrl);
+            System.out.println("Base CSS cargado: " + baseUrl);
         }
+
+        if (theme != Theme.AMATISTA) {
+            String themeUrl = getClass().getResource(CSS_BASE + getCssFileName(theme)) != null
+                    ? getClass().getResource(CSS_BASE + getCssFileName(theme)).toExternalForm()
+                    : null;
+            if (themeUrl != null) {
+                mainScene.getStylesheets().add(themeUrl);
+                System.out.println("Tema CSS cargado: " + themeUrl);
+            } else {
+                System.out.println("ERROR: no se encontró el CSS para " + theme);
+            }
+        }
+
+        System.out.println("Stylesheets activos: " + mainScene.getStylesheets());
     }
 
     public Theme getCurrentTheme() {
@@ -93,6 +108,18 @@ public class ThemeManager {
                 || currentTheme.get() == Theme.NOCHE
                 || currentTheme.get() == Theme.VIGILANTE
                 || currentTheme.get() == Theme.HACKER;
+    }
+
+    public String getBgApp() {
+        return switch (currentTheme.get()) {
+            case AMATISTA_DARK   -> "#0d0b1a";
+            case AURORA_BOREALIS -> "#0d1520";
+            case OCEANO          -> "#0a1628";
+            case NOCHE           -> "#080808";
+            case VIGILANTE       -> "#0a0a00";
+            case HACKER          -> "#020b02";
+            default              -> "#f0f0f5";
+        };
     }
 
     private String getCssFileName(Theme theme) {

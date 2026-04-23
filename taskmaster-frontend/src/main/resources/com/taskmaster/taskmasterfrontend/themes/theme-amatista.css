@@ -11,10 +11,11 @@
     -tm-bg-sidebar:      #13131f;
     -tm-bg-surface:      white;
     -tm-bg-surface-alt:  #f5f5f5;
-    -tm-bg-input:        white;
+    -tm-bg-input:        #f5f5f5;
     -tm-bg-hover:        #f5f3ff;
     -tm-bg-active:       #2a1f4e;
     -tm-bg-badge:        #ede9fe;
+    -tm-bg-scroll:       #f0f0f5;
 
     /* Acentos */
     -tm-accent:          #7c3aed;
@@ -36,10 +37,10 @@
     -tm-border-topbar:   #2a2a3e;
     -tm-border-sidebar:  #2a2a3e;
 
-    /* Botón acción principal */
-    -tm-btn-primary:     #7c3aed;
+    /* Botones */
+    -tm-btn-primary:       #7c3aed;
     -tm-btn-primary-hover: #5b21b6;
-    -tm-btn-secondary:   #3498db;
+    -tm-btn-secondary:     #3498db;
 
     /* Estados de tarea */
     -tm-status-done:     #2ecc71;
@@ -47,7 +48,7 @@
     -tm-status-pending:  #f59e0b;
     -tm-status-urgent:   #e74c3c;
 
-    /* Sidebar activo */
+    /* Sidebar */
     -tm-sidebar-active-bg:    #2a1f4e;
     -tm-sidebar-active-text:  #a78bfa;
     -tm-sidebar-section-text: #555570;
@@ -56,98 +57,136 @@
     -tm-bg-hover-sidebar:     #1e1e30;
 }
 
-/* ── Topbar ── */
-.topbar {
-    -fx-background-color: -tm-bg-topbar;
-    -fx-border-color: -tm-border-topbar;
-    -fx-border-width: 0 0 1 0;
-}
+/* =====================================================
+   UTILIDADES — textos y scroll
+   ===================================================== */
 
-
-/* ── Sidebar ── */
-.sidebar {
-    -fx-background-color: -tm-bg-sidebar;
-    -fx-border-color: -tm-border-sidebar;
-    -fx-border-width: 0 1 0 0;
-}
-
-.sidebar-btn {
-    -fx-background-color: transparent;
-    -fx-text-fill: -tm-text-sidebar;
-    -fx-font-size: 13px;
-    -fx-cursor: hand;
-    -fx-alignment: CENTER-LEFT;
-    -fx-padding: 7 16 7 16;
-}
-
-.sidebar-btn:hover {
-    -fx-background-color: #1e1e30;
-}
-
-.sidebar-btn-active {
-    -fx-background-color: -tm-sidebar-active-bg;
-    -fx-text-fill: -tm-sidebar-active-text;
-}
-
-.sidebar-section-label {
-    -fx-text-fill: -tm-sidebar-section-text;
-    -fx-font-size: 10px;
-    -fx-font-weight: bold;
-    -fx-padding: 12 16 4 16;
-}
-
-/* ── Área principal ── */
-.main-area {
-    -fx-background-color: -tm-bg-app;
-}
-
-.area-topbar {
-    -fx-background-color: -tm-bg-surface;
-    -fx-border-color: -tm-border;
-    -fx-border-width: 0 0 1 0;
-}
-
-/* ── Cards / superficies ── */
-.card {
-    -fx-background-color: -tm-bg-surface;
-    -fx-border-color: -tm-border;
-    -fx-background-radius: 8px;
-    -fx-border-radius: 8px;
-}
-
-/* ── Botón primario ── */
-.btn-primary {
-    -fx-background-color: -tm-btn-primary;
-    -fx-text-fill: -tm-text-on-accent;
-    -fx-background-radius: 6px;
-    -fx-cursor: hand;
-}
-
-.btn-primary:hover {
-    -fx-background-color: -tm-btn-primary-hover;
-}
-
-/* ── Botón secundario (guardar en settings, etc.) ── */
-.btn-secondary {
-    -fx-background-color: -tm-btn-secondary;
-    -fx-text-fill: white;
-    -fx-background-radius: 4px;
-    -fx-cursor: hand;
-    -fx-font-size: 13px;
-}
-
-/* ── ScrollPane transparente ── */
-.scroll-transparent {
-    -fx-background-color: transparent;
-    -fx-border-color: transparent;
-}
-
-/* ── Textos generales ── */
 .text-primary   { -fx-text-fill: -tm-text-primary; }
 .text-secondary { -fx-text-fill: -tm-text-secondary; }
 .text-muted     { -fx-text-fill: -tm-text-muted; }
 .text-accent    { -fx-text-fill: -tm-accent-light; }
 
+.scroll-pane {
+    -fx-background-color: -tm-bg-scroll;
+    -fx-background: -tm-bg-scroll;
+}
+
+.scroll-pane .viewport {
+    -fx-background-color: -tm-bg-scroll;
+    -fx-background: -tm-bg-scroll;
+}
+
+.scroll-bar {
+    -fx-background-color: -tm-bg-surface;
+}
+
+.scroll-bar .thumb {
+    -fx-background-color: -tm-border;
+    -fx-background-radius: 4px;
+}
+
+.scroll-bar .thumb:hover {
+    -fx-background-color: -tm-accent;
+}
+
+.scroll-bar .track {
+    -fx-background-color: -tm-bg-scroll;
+}
+
+.scroll-bar .increment-button,
+.scroll-bar .decrement-button {
+    -fx-background-color: -tm-bg-surface;
+}
+
+/* =====================================================
+   CAMPOS DE FORMULARIO — text-field, text-area, combo
+   ===================================================== */
+
+.text-field,
+.text-area,
+.password-field {
+    -fx-background-color: -tm-bg-input;
+    -fx-text-fill: -tm-text-primary;
+    -fx-prompt-text-fill: -tm-text-muted;
+    -fx-border-color: -tm-border;
+    -fx-border-radius: 4px;
+    -fx-background-radius: 4px;
+}
+
+.text-field:focused,
+.text-area:focused,
+.password-field:focused {
+    -fx-border-color: -tm-accent;
+    -fx-border-width: 1.5px;
+}
+
+.text-area .content {
+    -fx-background-color: -tm-bg-input;
+}
+
+.combo-box {
+    -fx-background-color: -tm-bg-input;
+    -fx-border-color: -tm-border;
+    -fx-border-radius: 4px;
+    -fx-background-radius: 4px;
+}
+
+.combo-box .list-cell {
+    -fx-text-fill: -tm-text-primary;
+    -fx-background-color: -tm-bg-input;
+}
+
+.combo-box-popup .list-view {
+    -fx-background-color: -tm-bg-surface;
+    -fx-border-color: -tm-border;
+}
+
+.combo-box-popup .list-view .list-cell {
+    -fx-text-fill: -tm-text-primary;
+    -fx-background-color: -tm-bg-surface;
+}
+
+.combo-box-popup .list-view .list-cell:hover {
+    -fx-background-color: -tm-bg-active;
+    -fx-text-fill: -tm-accent-light;
+}
+
+/* =====================================================
+   TAB PANE
+   ===================================================== */
+
+.tab-pane {
+    -fx-background-color: -tm-bg-app;
+}
+
+.tab-pane .tab-header-background {
+    -fx-background-color: -tm-bg-surface;
+}
+
+.tab-pane .tab-header-area {
+    -fx-background-color: -tm-bg-surface;
+}
+
+.tab-pane > .tab-content-area {
+    -fx-background-color: -tm-bg-app;
+}
+
+.tab-pane .tab {
+    -fx-background-color: -tm-bg-surface;
+    -fx-border-color: -tm-border;
+}
+
+.tab-pane .tab .tab-label {
+    -fx-text-fill: -tm-text-secondary;
+}
+
+.tab-pane .tab:selected {
+    -fx-background-color: -tm-bg-active;
+}
+
+.tab-pane .tab:selected .tab-label {
+    -fx-text-fill: -tm-accent-light;
+}
 
 /* =====================================================
    LOGIN / REGISTER
@@ -179,14 +218,14 @@
     -fx-text-fill: white;
 }
 
-.auth-field-label {
-    -fx-font-size: 13px;
-    -fx-text-fill: -tm-text-header;
-}
-
 .auth-body {
     -fx-background-color: white;
     -fx-padding: 32 40 40 40;
+}
+
+.auth-field-label {
+    -fx-font-size: 13px;
+    -fx-text-fill: -tm-text-header;
 }
 
 .auth-field {
@@ -295,7 +334,7 @@
 }
 
 .sidebar-section-label {
-    -fx-text-fill: -tm-text-label;
+    -fx-text-fill: -tm-text-secondary;
     -fx-font-size: 10px;
     -fx-font-weight: bold;
     -fx-padding: 12 16 4 16;
@@ -453,7 +492,7 @@
 }
 
 .btn-clear-filters {
-    -fx-background-color: transparent;
+    -fx-background-color: -tm-bg-input;
     -fx-text-fill: -tm-text-muted;
     -fx-font-size: 11px;
     -fx-cursor: hand;
@@ -462,6 +501,11 @@
     -fx-border-radius: 6px;
     -fx-border-width: 1;
     -fx-background-radius: 6px;
+}
+
+.btn-clear-filters:hover {
+    -fx-text-fill: -tm-text-primary;
+    -fx-border-color: -tm-text-muted;
 }
 
 /* =====================================================
@@ -520,7 +564,7 @@
 }
 
 /* =====================================================
-   MAIN — Home cards / panels
+   MAIN — Home panels y stat cards
    ===================================================== */
 
 .home-greeting-box {
@@ -585,7 +629,7 @@
 }
 
 .empty-label {
-    -fx-text-fill: -tm-text-muted;
+    -fx-text-fill: -tm-text-secondary;
     -fx-font-size: 14px;
     -fx-padding: 24 20 0 20;
 }
@@ -622,6 +666,15 @@
     -fx-background-radius: 10px;
     -fx-border-color: -tm-border;
     -fx-border-radius: 10px;
+    -fx-border-width: 1;
+}
+
+.card {
+    -fx-background-color: -tm-bg-surface;
+    -fx-padding: 20;
+    -fx-background-radius: 8px;
+    -fx-border-color: -tm-border;
+    -fx-border-radius: 8px;
     -fx-border-width: 1;
 }
 
@@ -725,16 +778,20 @@
 }
 
 .detail-btn-close {
-    -fx-background-color: -tm-bg-app;
+    -fx-background-color: transparent;
     -fx-text-fill: -tm-text-secondary;
     -fx-font-size: 12px;
     -fx-background-radius: 6px;
+    -fx-border-color: -tm-accent-light;
+    -fx-border-width: 1;
+    -fx-border-radius: 6px;
     -fx-cursor: hand;
     -fx-padding: 5 12 5 12;
 }
 
 .detail-btn-close:hover {
-    -fx-background-color: -tm-border;
+    -fx-background-color: -tm-bg-active;
+    -fx-text-fill: -tm-accent-light;
 }
 
 .detail-section {
@@ -799,7 +856,6 @@
     -fx-padding: 4 10 4 10;
 }
 
-/* Stat cards en project-detail */
 .project-stat-card {
     -fx-background-color: -tm-bg-surface;
     -fx-padding: 12 8 12 8;
@@ -843,11 +899,11 @@
 
 .trash-retention-label {
     -fx-font-size: 12px;
-    -fx-text-fill: -tm-text-muted;
+    -fx-text-fill: -tm-text-secondary;
 }
 
 .trash-empty-label {
-    -fx-text-fill: -tm-text-muted;
+    -fx-text-fill: -tm-text-secondary;
     -fx-font-size: 14px;
 }
 
@@ -937,7 +993,7 @@
 }
 
 /* =====================================================
-   DIÁLOGOS — new/edit project, new/edit task, new subtask
+   DIÁLOGOS — new/edit project, new/edit task, subtareas
    ===================================================== */
 
 .dialog-root {
@@ -993,41 +1049,6 @@
     -fx-font-size: 12px;
 }
 
-.btn-cancel {
-    -fx-background-color: -tm-border;
-    -fx-text-fill: -tm-text-header;
-    -fx-background-radius: 4px;
-    -fx-cursor: hand;
-}
-
-.btn-cancel:hover {
-    -fx-background-color: #cccccc;
-}
-
-.btn-confirm {
-    -fx-background-color: -tm-btn-primary;
-    -fx-text-fill: white;
-    -fx-background-radius: 6px;
-    -fx-cursor: hand;
-    -fx-padding: 8 16 8 16;
-}
-
-.btn-confirm:hover {
-    -fx-background-color: -tm-btn-primary-hover;
-}
-
-.btn-cancel-soft {
-    -fx-background-color: -tm-bg-app;
-    -fx-text-fill: -tm-text-secondary;
-    -fx-background-radius: 6px;
-    -fx-cursor: hand;
-    -fx-padding: 8 16 8 16;
-}
-
-.btn-cancel-soft:hover {
-    -fx-background-color: -tm-border;
-}
-
 /* =====================================================
    DIÁLOGOS — cabecera con título
    ===================================================== */
@@ -1060,7 +1081,7 @@
 }
 
 /* =====================================================
-   DIÁLOGOS — campos de formulario con label bold
+   DIÁLOGOS — campos con label bold
    ===================================================== */
 
 .dialog-field-label-bold {
@@ -1094,24 +1115,40 @@
 }
 
 /* =====================================================
-   BOTONES — cancelar suave (fondo app)
+   BOTONES — primario, secundario, peligro
    ===================================================== */
 
-.btn-cancel-soft {
-    -fx-background-color: -tm-bg-app;
-    -fx-text-fill: -tm-text-secondary;
+.btn-primary {
+    -fx-background-color: -tm-btn-primary;
+    -fx-text-fill: -tm-text-on-accent;
     -fx-background-radius: 6px;
     -fx-cursor: hand;
-    -fx-padding: 8 16 8 16;
 }
 
-.btn-cancel-soft:hover {
-    -fx-background-color: -tm-border;
+.btn-primary:hover {
+    -fx-background-color: -tm-btn-primary-hover;
 }
 
-/* =====================================================
-   BOTONES — confirmar con acento primario (morado)
-   ===================================================== */
+.btn-secondary {
+    -fx-background-color: -tm-btn-secondary;
+    -fx-text-fill: white;
+    -fx-background-radius: 4px;
+    -fx-cursor: hand;
+    -fx-font-size: 13px;
+}
+
+.btn-create {
+    -fx-background-color: -tm-btn-primary;
+    -fx-text-fill: white;
+    -fx-font-size: 12px;
+    -fx-background-radius: 6px;
+    -fx-cursor: hand;
+    -fx-padding: 6 14 6 14;
+}
+
+.btn-create:hover {
+    -fx-background-color: -tm-btn-primary-hover;
+}
 
 .btn-confirm-accent {
     -fx-background-color: -tm-btn-primary;
@@ -1125,8 +1162,42 @@
     -fx-background-color: -tm-btn-primary-hover;
 }
 
+.btn-cancel-soft {
+    -fx-background-color: transparent;
+    -fx-text-fill: -tm-text-secondary;
+    -fx-background-radius: 6px;
+    -fx-border-color: -tm-accent-light;
+    -fx-border-width: 1;
+    -fx-border-radius: 6px;
+    -fx-cursor: hand;
+    -fx-padding: 8 16 8 16;
+}
+
+.btn-cancel-soft:hover {
+    -fx-background-color: -tm-bg-active;
+    -fx-text-fill: -tm-accent-light;
+}
+
+.btn-small-primary {
+    -fx-background-color: -tm-btn-primary;
+    -fx-text-fill: white;
+    -fx-font-size: 11px;
+    -fx-background-radius: 6px;
+    -fx-cursor: hand;
+    -fx-padding: 4 10 4 10;
+}
+
+.btn-danger {
+    -fx-background-color: #e74c3c;
+    -fx-text-fill: white;
+    -fx-font-size: 12px;
+    -fx-background-radius: 6px;
+    -fx-cursor: hand;
+    -fx-padding: 7 16 7 16;
+}
+
 /* =====================================================
-   ACTIVITY LOG — sección embebida en task/project detail
+   ACTIVITY LOG — tabla embebida en task/project detail
    ===================================================== */
 
 .activity-log-section {
@@ -1144,4 +1215,77 @@
     -fx-border-color: -tm-border;
     -fx-border-radius: 6px;
     -fx-background-radius: 6px;
+}
+
+.table-view {
+    -fx-background-color: -tm-bg-surface;
+    -fx-border-color: -tm-border;
+}
+
+.table-view .column-header-background {
+    -fx-background-color: -tm-bg-app;
+}
+
+.table-view .column-header {
+    -fx-background-color: -tm-bg-app;
+    -fx-border-color: -tm-border;
+    -fx-border-width: 0 1 1 0;
+}
+
+.table-view .column-header .label {
+    -fx-text-fill: -tm-text-secondary;
+    -fx-font-weight: bold;
+}
+
+.table-view .table-cell {
+    -fx-text-fill: -tm-text-primary;
+    -fx-border-color: -tm-border;
+    -fx-border-width: 0 1 0 0;
+    -fx-padding: 6 8 6 8;
+}
+
+.table-view .table-row-cell {
+    -fx-background-color: -tm-bg-surface;
+    -fx-border-color: -tm-border;
+}
+
+.table-view .table-row-cell:odd {
+    -fx-background-color: -tm-bg-surface-alt;
+}
+
+.table-view .table-row-cell:selected {
+    -fx-background-color: -tm-bg-active;
+}
+
+.table-view .table-row-cell:selected .table-cell {
+    -fx-text-fill: -tm-accent-light;
+}
+
+.dialog-root .btn-confirm-accent {
+    -fx-background-color: -tm-btn-primary;
+    -fx-text-fill: white;
+}
+
+.dialog-root .btn-cancel-soft {
+    -fx-background-color: transparent;
+    -fx-text-fill: -tm-text-secondary;
+    -fx-border-color: -tm-accent-light;
+    -fx-border-width: 1;
+}
+
+.dialog-root .combo-box {
+    -fx-background-color: -tm-bg-input;
+    -fx-border-color: -tm-border;
+}
+
+.dialog-body .btn-confirm-accent {
+    -fx-background-color: -tm-btn-primary;
+    -fx-text-fill: white;
+}
+
+.dialog-body .btn-cancel-soft {
+    -fx-background-color: transparent;
+    -fx-text-fill: -tm-text-secondary;
+    -fx-border-color: -tm-accent-light;
+    -fx-border-width: 1;
 }

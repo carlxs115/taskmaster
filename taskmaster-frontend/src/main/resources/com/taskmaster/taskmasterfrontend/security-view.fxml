@@ -10,10 +10,13 @@
         <HBox styleClass="security-access-row" alignment="CENTER_LEFT">
             <Label text="%security.access.log" styleClass="security-section-title"/>
         </HBox>
-        <VBox fx:id="accessLogContainer" spacing="0">
-            <Label fx:id="accessLogEmpty" text="%security.access.empty"
-                   styleClass="security-access-empty"/>
-        </VBox>
+        <ScrollPane fitToWidth="true" maxHeight="220"
+                    style="-fx-background-color: transparent; -fx-border-color: transparent;">
+            <VBox fx:id="accessLogContainer" spacing="0">
+                <Label fx:id="accessLogEmpty" text="%security.access.empty"
+                       styleClass="security-access-empty"/>
+            </VBox>
+        </ScrollPane>
     </VBox>
 
     <!-- Cambiar contraseña -->

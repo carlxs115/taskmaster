@@ -31,7 +31,7 @@
     <!-- Botones -->
     <HBox spacing="10" alignment="CENTER_RIGHT">
         <Button fx:id="cancelButton" text="%common.cancel"
-                onAction="#handleCancel" styleClass="btn-cancel-soft"/>
+                onAction="#handleCancel" styleClass="button, btn-cancel-soft"/>
         <Button fx:id="saveButton" text="%avatar.crop.save"
                 onAction="#handleSave" styleClass="btn-confirm-accent"/>
     </HBox>

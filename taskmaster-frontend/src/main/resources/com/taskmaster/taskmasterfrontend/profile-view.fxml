@@ -16,8 +16,7 @@
                 style="-fx-padding: 6 14 6 14; -fx-font-size: 12px;"/>
     </HBox>
 
-    <ScrollPane VBox.vgrow="ALWAYS" fitToWidth="true"
-                style="-fx-background-color: transparent; -fx-border-color: transparent;">
+    <VBox VBox.vgrow="ALWAYS" style="-fx-padding: 24;" spacing="16">
         <VBox spacing="16" style="-fx-padding: 24;">
 
             <!-- Avatar + nombre -->
@@ -72,12 +71,15 @@
                 <HBox styleClass="profile-field-row" alignment="CENTER_LEFT">
                     <Label text="%profile.activity.title" styleClass="profile-section-title"/>
                 </HBox>
-                <VBox fx:id="activityLogContainer" spacing="0">
-                    <Label fx:id="activityLogEmpty" text="%profile.activity.empty"
-                           styleClass="profile-activity-empty"/>
-                </VBox>
+                <ScrollPane fitToWidth="true" maxHeight="180"
+                            style="-fx-background-color: transparent; -fx-border-color: transparent;">
+                    <VBox fx:id="activityLogContainer" spacing="0">
+                        <Label fx:id="activityLogEmpty" text="%profile.activity.empty"
+                               styleClass="profile-activity-empty"/>
+                    </VBox>
+                </ScrollPane>
             </VBox>
 
         </VBox>
-    </ScrollPane>
+    </VBox>
 </VBox>
