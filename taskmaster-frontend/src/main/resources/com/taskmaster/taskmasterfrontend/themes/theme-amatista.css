@@ -1289,3 +1289,23 @@
     -fx-border-color: -tm-accent-light;
     -fx-border-width: 1;
 }
+
+/* =====================================================
+   AVATAR — icono cámara
+   ===================================================== */
+
+.btn-camera-icon {
+    -fx-background-color: -tm-accent;
+    -fx-text-fill: -tm-text-on-accent;
+    -fx-font-size: 12px;
+    -fx-min-width: 26px;
+    -fx-min-height: 26px;
+    -fx-max-width: 26px;
+    -fx-max-height: 26px;
+    -fx-alignment: CENTER;
+    -fx-background-radius: 13px;
+    -fx-border-color: -tm-bg-surface;
+    -fx-border-width: 2;
+    -fx-border-radius: 13px;
+    -fx-cursor: hand;
+}

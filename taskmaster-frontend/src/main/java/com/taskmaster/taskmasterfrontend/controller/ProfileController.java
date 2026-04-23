@@ -78,11 +78,7 @@ public class ProfileController {
 
         // Icono de cámara sobre el avatar (esquina inferior derecha)
         Label cameraIcon = new Label("📷");
-        cameraIcon.setStyle("-fx-background-color: #7c3aed; -fx-text-fill: white; " +
-                "-fx-font-size: 12px; -fx-min-width: 26px; -fx-min-height: 26px; " +
-                "-fx-max-width: 26px; -fx-max-height: 26px; -fx-alignment: CENTER; " +
-                "-fx-background-radius: 13px; -fx-border-color: white; " +
-                "-fx-border-width: 2; -fx-border-radius: 13px; -fx-cursor: hand;");
+        cameraIcon.getStyleClass().add("btn-camera-icon");
         StackPane.setAlignment(cameraIcon, Pos.BOTTOM_RIGHT);
         cameraIcon.setOnMouseClicked(e -> showAvatarMenu(cameraIcon));
 
