@@ -370,8 +370,23 @@ public class ProjectDetailController {
         dialog.setTitle(title);
         dialog.initModality(Modality.APPLICATION_MODAL);
         dialog.initOwner(projectNameLabel.getScene().getWindow());
-        dialog.setScene(new Scene(root));
+        Scene scene = new Scene(root);
+        applyThemeToScene(scene);
+        dialog.setScene(scene);
         dialog.showAndWait();
+    }
+
+    private void applyThemeToScene(Scene scene) {
+        com.taskmaster.taskmasterfrontend.util.ThemeManager tm =
+                com.taskmaster.taskmasterfrontend.util.ThemeManager.getInstance();
+        String cssFile = "/com/taskmaster/taskmasterfrontend/themes/"
+                + tm.getCssFileNamePublic();
+        String cssUrl = getClass().getResource(cssFile) != null
+                ? getClass().getResource(cssFile).toExternalForm()
+                : null;
+        if (cssUrl != null) {
+            scene.getStylesheets().add(cssUrl);
+        }
     }
 
     // ── Colores ───────────────────────────────────────────────────────────────

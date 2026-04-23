@@ -712,6 +712,19 @@
 }
 
 .detail-btn-edit {
+    -fx-background-color: -tm-btn-primary;
+    -fx-text-fill: white;
+    -fx-font-size: 12px;
+    -fx-background-radius: 6px;
+    -fx-cursor: hand;
+    -fx-padding: 5 12 5 12;
+}
+
+.detail-btn-edit:hover {
+    -fx-background-color: -tm-btn-primary-hover;
+}
+
+.detail-btn-close {
     -fx-background-color: -tm-bg-app;
     -fx-text-fill: -tm-text-secondary;
     -fx-font-size: 12px;
@@ -720,12 +733,8 @@
     -fx-padding: 5 12 5 12;
 }
 
-.detail-btn-close {
-    -fx-background-color: transparent;
-    -fx-text-fill: -tm-text-secondary;
-    -fx-font-size: 12px;
-    -fx-cursor: hand;
-    -fx-padding: 5 12 5 12;
+.detail-btn-close:hover {
+    -fx-background-color: -tm-border;
 }
 
 .detail-section {
@@ -996,17 +1005,6 @@
 }
 
 .btn-confirm {
-    -fx-background-color: -tm-btn-secondary;
-    -fx-text-fill: white;
-    -fx-background-radius: 4px;
-    -fx-cursor: hand;
-}
-
-.btn-confirm:hover {
-    -fx-background-color: #2980b9;
-}
-
-.btn-confirm-accent {
     -fx-background-color: -tm-btn-primary;
     -fx-text-fill: white;
     -fx-background-radius: 6px;
@@ -1014,7 +1012,7 @@
     -fx-padding: 8 16 8 16;
 }
 
-.btn-confirm-accent:hover {
+.btn-confirm:hover {
     -fx-background-color: -tm-btn-primary-hover;
 }
 

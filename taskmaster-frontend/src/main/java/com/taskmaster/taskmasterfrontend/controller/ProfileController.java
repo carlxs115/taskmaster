@@ -157,7 +157,11 @@ public class ProfileController {
             dialog.setTitle(lm.get("profile.avatar.crop.title"));
             dialog.initModality(Modality.APPLICATION_MODAL);
             dialog.initOwner(avatarContainer.getScene().getWindow());
-            dialog.setScene(new Scene(root));
+
+            Scene scene = new Scene(root);
+            applyThemeToScene(scene);
+            dialog.setScene(scene);
+
             dialog.setResizable(false);
             dialog.showAndWait();
 
@@ -457,11 +461,28 @@ public class ProfileController {
 
             Stage dialog = new Stage();
             dialog.setTitle(lm.get("profile.edit.dialog.title"));
-            dialog.setScene(new Scene(root, 400, 380));
+
+            Scene scene = new Scene(root, 400, 380);
+            applyThemeToScene(scene);
+            dialog.setScene(scene);
+
             dialog.initModality(Modality.APPLICATION_MODAL);
             dialog.showAndWait();
         } catch (Exception e) {
             showAlert(lm.get("error.title"), lm.get("error.open.dialog"));
+        }
+    }
+
+    private void applyThemeToScene(Scene scene) {
+        com.taskmaster.taskmasterfrontend.util.ThemeManager tm =
+                com.taskmaster.taskmasterfrontend.util.ThemeManager.getInstance();
+        String cssFile = "/com/taskmaster/taskmasterfrontend/themes/"
+                + tm.getCssFileNamePublic();
+        String cssUrl = getClass().getResource(cssFile) != null
+                ? getClass().getResource(cssFile).toExternalForm()
+                : null;
+        if (cssUrl != null) {
+            scene.getStylesheets().add(cssUrl);
         }
     }
 

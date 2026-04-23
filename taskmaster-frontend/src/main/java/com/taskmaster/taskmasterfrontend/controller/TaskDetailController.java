@@ -314,7 +314,11 @@ public class TaskDetailController {
             dialog.setTitle(lm.get("task.detail.subtask.detail"));
             dialog.initModality(Modality.APPLICATION_MODAL);
             dialog.initOwner(taskTitleLabel.getScene().getWindow());
-            dialog.setScene(new Scene(root));
+
+            Scene scene = new Scene(root);
+            applyThemeToScene(scene);
+            dialog.setScene(scene);
+
             dialog.showAndWait();
             Long parentTaskId = taskData.get("id").asLong();
             loadSubtasks(parentTaskId);
@@ -651,8 +655,23 @@ public class TaskDetailController {
         dialog.setTitle(title);
         dialog.initModality(Modality.APPLICATION_MODAL);
         dialog.initOwner(taskTitleLabel.getScene().getWindow());
-        dialog.setScene(new Scene(root));
+        Scene scene = new Scene(root);
+        applyThemeToScene(scene);
+        dialog.setScene(scene);
         dialog.showAndWait();
+    }
+
+    private void applyThemeToScene(Scene scene) {
+        com.taskmaster.taskmasterfrontend.util.ThemeManager tm =
+                com.taskmaster.taskmasterfrontend.util.ThemeManager.getInstance();
+        String cssFile = "/com/taskmaster/taskmasterfrontend/themes/"
+                + tm.getCssFileNamePublic();
+        String cssUrl = getClass().getResource(cssFile) != null
+                ? getClass().getResource(cssFile).toExternalForm()
+                : null;
+        if (cssUrl != null) {
+            scene.getStylesheets().add(cssUrl);
+        }
     }
 
     // ── Colores ───────────────────────────────────────────────────────────────

@@ -66,9 +66,7 @@
                       style="-fx-font-size: 13px; -fx-pref-width: 220px;"/>
             <Button text="%settings.save"
                     onAction="#handleSaveDateFormat"
-                    style="-fx-background-color: #3498db; -fx-text-fill: white;
-                       -fx-background-radius: 4px; -fx-cursor: hand;
-                       -fx-font-size: 13px;"/>
+                    styleClass="btn-confirm"/>
             <Label fx:id="dateFormatStatusLabel"
                    style="-fx-font-size: 12px; -fx-text-fill: #2ecc71;"
                    visible="false"/>
@@ -95,9 +93,7 @@
             </HBox>
             <Button text="%settings.save"
                     onAction="#handleSaveTimeFormat"
-                    style="-fx-background-color: #3498db; -fx-text-fill: white;
-                       -fx-background-radius: 4px; -fx-cursor: hand;
-                       -fx-font-size: 13px;"/>
+                    styleClass="btn-confirm"/>
             <Label fx:id="timeFormatStatusLabel"
                    style="-fx-font-size: 12px; -fx-text-fill: #2ecc71;"
                    visible="false"/>
@@ -129,9 +125,7 @@
             </HBox>
             <Button text="%settings.language.apply"
                     onAction="#handleSaveLanguage"
-                    style="-fx-background-color: #3498db; -fx-text-fill: white;
-                       -fx-background-radius: 4px; -fx-cursor: hand;
-                       -fx-font-size: 13px;"/>
+                    styleClass="btn-confirm"/>
             <Label fx:id="languageStatusLabel"
                    style="-fx-font-size: 12px; -fx-text-fill: #2ecc71;"
                    visible="false"/>
@@ -168,9 +162,7 @@
             </HBox>
             <Button text="%settings.save"
                     onAction="#handleSaveRetention"
-                    style="-fx-background-color: #3498db; -fx-text-fill: white;
-                       -fx-background-radius: 4px; -fx-cursor: hand;
-                       -fx-font-size: 13px;"/>
+                    styleClass="btn-confirm"/>
             <Label fx:id="retentionStatusLabel"
                    style="-fx-font-size: 12px; -fx-text-fill: #2ecc71;"
                    visible="false"/>
