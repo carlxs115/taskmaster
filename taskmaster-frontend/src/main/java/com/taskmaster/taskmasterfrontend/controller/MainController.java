@@ -1308,103 +1308,30 @@ public class MainController {
 
         MenuItem aboutItem = new MenuItem(lm.get("help.about"));
         aboutItem.setStyle("-fx-font-size: 13px; -fx-padding: 8 16 8 16; -fx-text-fill: #9999bb;");
-        aboutItem.setOnAction(e -> showAboutDialog());
+        aboutItem.setOnAction(e -> showAboutView());
 
         menu.getItems().addAll(manualItem, new SeparatorMenuItem(), aboutItem);
         menu.show(btnHelp, javafx.geometry.Side.RIGHT, 4, 0);
     }
 
-    private void showAboutDialog() {
-        Stage dialog = new Stage();
-        dialog.setTitle(lm.get("help.about"));
-        dialog.initModality(Modality.APPLICATION_MODAL);
-        dialog.initOwner(btnHome.getScene().getWindow());
-        dialog.setResizable(false);
-
-        // ── Logo placeholder (sustituir por ImageView cuando haya icono) ──
-        StackPane logoContainer = new StackPane();
-        logoContainer.setMinSize(72, 72);
-        logoContainer.setMaxSize(72, 72);
-        logoContainer.setStyle("-fx-background-color: #2a1f4e; -fx-background-radius: 16px;");
-        Label logoLabel = new Label("TM");
-        logoLabel.setStyle("-fx-font-size: 22px; -fx-font-weight: bold; " +
-                "-fx-text-fill: #a78bfa;");
-        logoContainer.getChildren().add(logoLabel);
-
-        // ── Nombre y versión ──
-        Label appName = new Label("TaskMaster");
-        appName.setStyle("-fx-font-size: 20px; -fx-font-weight: bold; -fx-text-fill: #1e1e2e;");
-
-        Label version = new Label(lm.get("about.version"));
-        version.setStyle("-fx-font-size: 12px; -fx-text-fill: #888888;");
-
-        Label description = new Label(lm.get("about.description"));
-        description.setStyle("-fx-font-size: 12px; -fx-text-fill: #555555; -fx-text-alignment: center;");
-        description.setTextAlignment(javafx.scene.text.TextAlignment.CENTER);
-
-        Separator sep1 = new Separator();
-        sep1.setStyle("-fx-background-color: #e8e8e8;");
-
-        // ── Autor ──
-        Label authorTitle = new Label(lm.get("about.author.label"));
-        authorTitle.setStyle("-fx-font-size: 10px; -fx-font-weight: bold; -fx-text-fill: #aaaaaa;");
-
-        Label authorName = new Label("Carlos Riera");
-        authorName.setStyle("-fx-font-size: 13px; -fx-font-weight: bold; -fx-text-fill: #1e1e2e;");
-
-        Separator sep2 = new Separator();
-        sep2.setStyle("-fx-background-color: #e8e8e8;");
-
-        // ── Stack tecnológico ──
-        Label stackTitle = new Label(lm.get("about.tech.label"));
-        stackTitle.setStyle("-fx-font-size: 10px; -fx-font-weight: bold; -fx-text-fill: #aaaaaa;");
-
-        HBox stackBadges = new HBox(8);
-        stackBadges.setAlignment(Pos.CENTER);
-        for (String[] tech : new String[][]{
-                {"JavaFX 21", "#dbeafe", "#1e40af"},
-                {"Spring Boot 3", "#dcfce7", "#166534"},
-                {"JDK 25",        "#f3e8ff", "#6b21a8"},
-                {"H2 Database",   "#fef3c7", "#92400e"}
-        }) {
-            Label badge = new Label(tech[0]);
-            badge.setStyle("-fx-font-size: 10px; -fx-padding: 3 9 3 9; " +
-                    "-fx-background-radius: 10px; " +
-                    "-fx-background-color: " + tech[1] + "; " +
-                    "-fx-text-fill: " + tech[2] + ";");
-            stackBadges.getChildren().add(badge);
+    private void showAboutView() {
+        try {
+            FXMLLoader loader = new FXMLLoader(
+                    getClass().getResource(
+                            "/com/taskmaster/taskmasterfrontend/about-view.fxml"),
+                    lm.getBundle()
+            );
+            VBox view = loader.load();
+            HBox.setHgrow(view, Priority.ALWAYS);
+            view.setUserData("settings"); // reutilizamos "settings" para que swapMainAreaWith lo limpie
+            clearSidebarSelection();
+            swapMainAreaWith(view);
+        } catch (Exception e) {
+            e.printStackTrace();
+            showAlert("error.title", "error.open.dialog");
         }
-
-        // ── Botón cerrar ──
-        Button closeBtn = new Button(lm.get("common.close"));
-        closeBtn.setStyle("-fx-background-color: #7c3aed; -fx-text-fill: white; " +
-                "-fx-font-size: 13px; -fx-background-radius: 6px; " +
-                "-fx-cursor: hand; -fx-padding: 7 24 7 24;");
-        closeBtn.setOnAction(e -> dialog.close());
-
-        // ── Layout ──
-        VBox content = new VBox(14);
-        content.setAlignment(Pos.CENTER);
-        content.setStyle("-fx-background-color: white; -fx-padding: 32 36 28 36;");
-        content.getChildren().addAll(
-                logoContainer,
-                appName,
-                version,
-                description,
-                sep1,
-                authorTitle,
-                authorName,
-                sep2,
-                stackTitle,
-                stackBadges,
-                closeBtn
-        );
-
-        Scene scene = new Scene(content, 360, 500);
-        applyThemeToScene(scene);
-        dialog.setScene(scene);
-        dialog.showAndWait();
     }
+
 
     /** Oculta el mainArea y añade el overlay al HBox central */
     private void swapMainAreaWith(javafx.scene.Node overlay) {

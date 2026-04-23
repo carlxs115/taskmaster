@@ -1324,3 +1324,105 @@
     -fx-border-radius: 13px;
     -fx-cursor: hand;
 }
+
+/* =====================================================
+   ABOUT — pantalla "Acerca de TaskMaster"
+   Añadir al final de theme-amatista.css
+   ===================================================== */
+
+/* Logo circular con acento del tema */
+.about-logo-container {
+    -fx-background-color: -tm-bg-active;
+    -fx-background-radius: 16px;
+}
+
+.about-logo-label {
+    -fx-font-size: 22px;
+    -fx-font-weight: bold;
+    -fx-text-fill: -tm-accent-light;
+}
+
+/* Nombre y versión */
+.about-app-name {
+    -fx-font-size: 22px;
+    -fx-font-weight: bold;
+    -fx-text-fill: -tm-text-primary;
+}
+
+.about-version {
+    -fx-font-size: 12px;
+    -fx-text-fill: -tm-text-muted;
+}
+
+.about-description {
+    -fx-font-size: 12px;
+    -fx-text-fill: -tm-text-secondary;
+    -fx-text-alignment: center;
+}
+
+/* Chip de sección (AUTOR, TECNOLOGÍAS, etc.) */
+.about-section-chip {
+    -fx-font-size: 10px;
+    -fx-font-weight: bold;
+    -fx-text-fill: -tm-text-muted;
+    -fx-letter-spacing: 0.05em;
+}
+
+/* Valor del campo autor */
+.about-field-value {
+    -fx-font-size: 14px;
+    -fx-font-weight: bold;
+    -fx-text-fill: -tm-text-primary;
+}
+
+.about-field-sub {
+    -fx-font-size: 11px;
+    -fx-text-fill: -tm-text-secondary;
+}
+
+/* Separador dentro de la tarjeta */
+.about-separator {
+    -fx-background-color: -tm-border;
+}
+
+/* Botones de información legal */
+.about-link-btn {
+    -fx-background-color: -tm-accent-subtle;
+    -fx-text-fill: -tm-accent;
+    -fx-font-size: 12px;
+    -fx-font-weight: bold;
+    -fx-background-radius: 6px;
+    -fx-border-color: transparent;
+    -fx-cursor: hand;
+    -fx-padding: 7 14 7 14;
+}
+
+.about-link-btn:hover {
+    -fx-background-color: -tm-accent;
+    -fx-text-fill: -tm-text-on-accent;
+}
+
+/* Pie de página */
+.about-copyright {
+    -fx-font-size: 11px;
+    -fx-text-fill: -tm-text-muted;
+}
+
+/* TextArea de los diálogos de texto legal — sin borde de foco extraño */
+.about-text-area {
+    -fx-background-color: -tm-bg-app;
+    -fx-text-fill: -tm-text-primary;
+    -fx-border-color: transparent;
+    -fx-background-radius: 0;
+    -fx-font-size: 12px;
+    -fx-padding: 12 20 12 20;
+}
+
+.about-text-area .content {
+    -fx-background-color: -tm-bg-app;
+}
+
+.about-text-area:focused {
+    -fx-border-color: transparent;
+    -fx-border-width: 0;
+}

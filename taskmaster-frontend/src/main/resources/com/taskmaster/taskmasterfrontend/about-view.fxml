@@ -1,0 +1,94 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.control.Separator?>
+<?import javafx.scene.layout.*?>
+<VBox xmlns:fx="http://javafx.com/fxml"
+      fx:id="aboutRoot"
+      fx:controller="com.taskmaster.taskmasterfrontend.controller.AboutController"
+      HBox.hgrow="ALWAYS"
+      styleClass="profile-root">
+
+    <!-- Cabecera -->
+    <HBox styleClass="profile-header" alignment="CENTER_LEFT">
+        <Label text="%about.title" styleClass="profile-header-title"/>
+    </HBox>
+
+    <ScrollPane VBox.vgrow="ALWAYS" fitToWidth="true"
+                style="-fx-background-color: transparent; -fx-border-color: transparent;">
+        <HBox alignment="CENTER">
+            <VBox spacing="20" alignment="CENTER" style="-fx-padding: 32 40 32 40;">
+
+                <!-- Logo + nombre + versión + descripción -->
+                <VBox spacing="8" alignment="CENTER" fillWidth="true">
+                    <StackPane fx:id="logoContainer" minWidth="72" minHeight="72"
+                               maxWidth="72" maxHeight="72"
+                               styleClass="about-logo-container">
+                        <Label text="TM" styleClass="about-logo-label"
+                               alignment="CENTER" maxWidth="Infinity"/>
+                    </StackPane>
+                    <Label text="TaskMaster" styleClass="about-app-name"
+                           alignment="CENTER" maxWidth="Infinity"/>
+                    <Label fx:id="versionLabel" styleClass="about-version"
+                           alignment="CENTER" maxWidth="Infinity"/>
+                    <Label fx:id="descriptionLabel" styleClass="about-description"
+                           wrapText="true" textAlignment="CENTER" alignment="CENTER"
+                           maxWidth="400"/>
+                </VBox>
+
+                <!-- Tarjeta principal -->
+                <VBox spacing="0" styleClass="card"
+                      style="-fx-min-width: 400px; -fx-max-width: 480px;">
+
+                    <!-- Autor -->
+                    <VBox spacing="4" alignment="CENTER_LEFT"
+                          style="-fx-padding: 16 20 16 20;">
+                        <Label text="%about.author.label" styleClass="about-section-chip"
+                               maxWidth="Infinity"/>
+                        <Label text="Carlos Riera" styleClass="about-field-value"
+                               maxWidth="Infinity"/>
+                        <Label text="%about.author.degree" styleClass="about-field-sub"
+                               maxWidth="Infinity"/>
+                    </VBox>
+
+                    <Separator/>
+
+                    <!-- Tecnologías -->
+                    <VBox spacing="10" alignment="CENTER_LEFT"
+                          style="-fx-padding: 16 20 16 20;">
+                        <Label text="%about.tech.label" styleClass="about-section-chip"
+                               maxWidth="Infinity"/>
+                        <FlowPane fx:id="techBadges" hgap="8" vgap="8"
+                                  alignment="CENTER_LEFT"/>
+                    </VBox>
+
+                    <Separator/>
+
+                    <!-- Botones legales -->
+                    <VBox spacing="8" alignment="CENTER_LEFT"
+                          style="-fx-padding: 16 20 16 20;">
+                        <Label text="%about.legal.label" styleClass="about-section-chip"
+                               maxWidth="Infinity"/>
+                        <HBox spacing="8" alignment="CENTER_LEFT">
+                            <Button text="%about.btn.terms"   onAction="#handleTerms"
+                                    styleClass="about-link-btn"/>
+                            <Button text="%about.btn.privacy" onAction="#handlePrivacy"
+                                    styleClass="about-link-btn"/>
+                        </HBox>
+                        <HBox spacing="8" alignment="CENTER_LEFT">
+                            <Button text="%about.btn.licenses"         onAction="#handleLicenses"
+                                    styleClass="about-link-btn"/>
+                            <Button text="%about.btn.acknowledgements" onAction="#handleAcknowledgements"
+                                    styleClass="about-link-btn"/>
+                        </HBox>
+                    </VBox>
+                </VBox>
+
+                <!-- Pie -->
+                <Label fx:id="copyrightLabel" styleClass="about-copyright"
+                       alignment="CENTER" maxWidth="Infinity"/>
+
+            </VBox>
+        </HBox>
+    </ScrollPane>
+</VBox>
