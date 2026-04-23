@@ -10,13 +10,12 @@ import javafx.scene.control.ComboBox;
 import javafx.scene.control.Label;
 import javafx.scene.control.RadioButton;
 import javafx.scene.layout.FlowPane;
-import javafx.scene.layout.StackPane;
+import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import javafx.scene.shape.Circle;
 
 import java.net.http.HttpResponse;
 import java.util.Locale;
-import java.util.ResourceBundle;
 
 /**
  * SETTINGSCONTROLLER
@@ -55,19 +54,19 @@ public class SettingsController {
 
     // Datos de cada tema: enum, nombre visible, color primario, color fondo
     private static final Object[][] THEME_DATA = {
-            { ThemeManager.Theme.AMATISTA,        "Amatista",      "#7c3aed", "#ffffff" },
-            { ThemeManager.Theme.AMATISTA_DARK,   "Amatista Dark", "#a78bfa", "#13131f" },
-            { ThemeManager.Theme.AURORA_BOREALIS, "Aurora Boreal", "#64FFDA", "#0B1426" },
-            { ThemeManager.Theme.OCEANO,          "Océano",        "#3b82f6", "#0f2447" },
-            { ThemeManager.Theme.PRADERA,         "Pradera",       "#10b981", "#ffffff" },
-            { ThemeManager.Theme.AMBAR,           "Ámbar",         "#f59e0b", "#ffffff" },
-            { ThemeManager.Theme.SAKURA,          "Sakura",        "#ec4899", "#ffffff" },
-            { ThemeManager.Theme.PERLA,           "Perla",         "#3b82f6", "#f0f4ff" },
-            { ThemeManager.Theme.ARTICO,          "Ártico",        "#67e8f9", "#f0f9ff" },
-            { ThemeManager.Theme.NOCHE,           "Noche",         "#22d3ee", "#000000" },
-            { ThemeManager.Theme.VIGILANTE,       "Vigilante",     "#facc15", "#0a0a0a" },
-            { ThemeManager.Theme.HACKER,          "Hacker",        "#00ff41", "#000000" },
-            { ThemeManager.Theme.LUZ,             "Luz",           "#f472b6", "#ffffff" },
+            { ThemeManager.Theme.AMATISTA,        "Amatista",      "#7c3aed", "#ffffff", "#a78bfa" },
+            { ThemeManager.Theme.AMATISTA_DARK,   "Amatista Dark", "#a78bfa", "#13131f", "#7c3aed" },
+            { ThemeManager.Theme.AURORA_BOREALIS, "Aurora Boreal", "#64FFDA", "#0B1426", "#82B1FF" },
+            { ThemeManager.Theme.OCEANO,          "Océano",        "#3b82f6", "#0f2447", "#60a5fa" },
+            { ThemeManager.Theme.PRADERA,         "Pradera",       "#10b981", "#ffffff", "#34d399" },
+            { ThemeManager.Theme.AMBAR,           "Ámbar",         "#f59e0b", "#ffffff", "#fbbf24" },
+            { ThemeManager.Theme.SAKURA,          "Sakura",        "#ec4899", "#ffffff", "#f472b6" },
+            { ThemeManager.Theme.PERLA,           "Perla",         "#3b82f6", "#f0f4ff", "#60a5fa" },
+            { ThemeManager.Theme.ARTICO,          "Ártico",        "#0ea5e9", "#f0f9ff", "#38bdf8" },
+            { ThemeManager.Theme.NOCHE,           "Noche",         "#22d3ee", "#000000", "#67e8f9" },
+            { ThemeManager.Theme.VIGILANTE,       "Vigilante",     "#facc15", "#080808", "#fde047" },
+            { ThemeManager.Theme.HACKER,          "Hacker",        "#00ff41", "#000000", "#39ff6e" },
+            { ThemeManager.Theme.LUZ,             "Luz",           "#f472b6", "#ffffff", "#ec4899" },
     };
 
     @FXML
@@ -116,14 +115,14 @@ public class SettingsController {
         themesContainer.getChildren().clear();
 
         for (Object[] data : THEME_DATA) {
-            ThemeManager.Theme theme = (ThemeManager.Theme) data[0];
-            String name    = (String) data[1];
-            String accent  = (String) data[2];
-            String bg      = (String) data[3];
+            ThemeManager.Theme theme      = (ThemeManager.Theme) data[0];
+            String name                   = (String) data[1];
+            String accent                 = (String) data[2];
+            String bg                     = (String) data[3];
+            String accentLight            = data.length > 4 ? (String) data[4] : accent;
+            boolean isSelected            = theme == current;
+            boolean isLuz                 = theme == ThemeManager.Theme.LUZ;
 
-            boolean isSelected = theme == current;
-
-            // Tarjeta contenedora
             VBox card = new VBox(6);
             card.setAlignment(javafx.geometry.Pos.CENTER);
             card.setPrefWidth(90);
@@ -132,18 +131,23 @@ public class SettingsController {
             card.setUserData(theme);
             card.setCursor(javafx.scene.Cursor.HAND);
 
-            // Preview: dos círculos (fondo + acento)
-            StackPane preview = new StackPane();
-            preview.setPrefSize(40, 40);
-            preview.setStyle("-fx-background-radius: 20px; -fx-background-color: " + bg + ";" +
-                    "-fx-border-radius: 20px; -fx-border-color: " + accent + "; -fx-border-width: 2;");
+            // Preview: tres puntos o tres corazones para Luz
+            HBox dots = new HBox(4);
+            dots.setAlignment(javafx.geometry.Pos.CENTER);
+            String[] dotColors = { accent, accentLight };
 
-            Circle accentDot = new Circle(8);
-            accentDot.setFill(javafx.scene.paint.Color.web(accent));
+            for (String dotColor : dotColors) {
+                if (isLuz) {
+                    Label heart = new Label("♥");
+                    heart.setStyle("-fx-text-fill: " + dotColor + "; -fx-font-size: 14px;");
+                    dots.getChildren().add(heart);
+                } else {
+                    Circle dot = new Circle(7);
+                    dot.setFill(javafx.scene.paint.Color.web(dotColor));
+                    dots.getChildren().add(dot);
+                }
+            }
 
-            preview.getChildren().add(accentDot);
-
-            // Nombre del tema
             Label nameLabel = new Label(name);
             nameLabel.setStyle("-fx-font-size: 11px; -fx-font-weight: bold; " +
                     "-fx-text-fill: " + (isDarkBg(bg) ? "#ffffff" : "#2d2d2d") + "; " +
@@ -151,11 +155,8 @@ public class SettingsController {
             nameLabel.setMaxWidth(80);
             nameLabel.setAlignment(javafx.geometry.Pos.CENTER);
 
-            card.getChildren().addAll(preview, nameLabel);
-
-            // Click — aplicar tema inmediatamente
+            card.getChildren().addAll(dots, nameLabel);
             card.setOnMouseClicked(e -> handleThemeSelected(theme, card));
-
             themesContainer.getChildren().add(card);
         }
     }

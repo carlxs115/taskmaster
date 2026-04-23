@@ -1,5 +1,3 @@
-@import "theme-amatista.css";
-
 /* =====================================================
    THEME: OCÉANO
    TaskMaster — Azul marino profundo
@@ -16,6 +14,7 @@
     -tm-bg-hover:        #1a3060;
     -tm-bg-active:       #1a3060;
     -tm-bg-badge:        #1a3060;
+    -tm-bg-scroll:       #0d1a35;
 
     /* Acentos */
     -tm-accent:          #3b82f6;
@@ -55,4 +54,9 @@
     -tm-topbar-user-bg:       #1a3060;
     -tm-topbar-user-border:   #2a4a80;
     -tm-bg-hover-sidebar:     #132550;
+}
+
+/* Radiobuttons */
+.radio-button {
+    -fx-text-fill: -tm-text-primary;
 }

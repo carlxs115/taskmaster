@@ -1,5 +1,3 @@
-@import "theme-amatista.css";
-
 /* =====================================================
    THEME: NOCHE
    TaskMaster — Negro puro con acentos cyan/amatista
@@ -16,6 +14,7 @@
     -tm-bg-hover:        #1a1a1a;
     -tm-bg-active:       #1a1a1a;
     -tm-bg-badge:        #1a1a1a;
+    -tm-bg-scroll:       #141414;
 
     /* Acentos */
     -tm-accent:          #22d3ee;
@@ -33,9 +32,9 @@
     -tm-text-header:     #f0f0f0;
 
     /* Bordes */
-    -tm-border:          #222222;
-    -tm-border-topbar:   #222222;
-    -tm-border-sidebar:  #222222;
+    -tm-border:         #0e4a52;
+    -tm-border-topbar:  #0e4a52;
+    -tm-border-sidebar: #0e4a52;
 
     /* Botón acción principal */
     -tm-btn-primary:     #22d3ee;
@@ -55,4 +54,20 @@
     -tm-topbar-user-bg:       #1a1a1a;
     -tm-topbar-user-border:   #333333;
     -tm-bg-hover-sidebar:     #141414;
+}
+
+.radio-button {
+    -fx-text-fill: -tm-text-primary;
+}
+
+.btn-clear-filters {
+    -fx-text-fill: -tm-text-secondary;
+}
+
+.area-search-field {
+    -fx-text-fill: -tm-text-primary;
+}
+
+.btn-primary {
+    -fx-text-fill: white;
 }

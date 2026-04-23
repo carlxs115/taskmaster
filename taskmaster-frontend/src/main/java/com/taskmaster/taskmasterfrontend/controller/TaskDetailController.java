@@ -197,31 +197,22 @@ public class TaskDetailController {
     }
 
     private HBox createSubtaskRow(JsonNode subtask, Long parentTaskId) {
-        String status  = subtask.get("status").asText();
-        String title   = subtask.get("title").asText();
+        String status   = subtask.get("status").asText();
+        String title    = subtask.get("title").asText();
         String priority = subtask.has("priority") ? subtask.get("priority").asText() : "MEDIUM";
-        Long   stId    = subtask.get("id").asLong();
-        boolean isDone = "DONE".equals(status);
+        Long   stId     = subtask.get("id").asLong();
+        boolean isDone  = "DONE".equals(status);
 
         HBox row = new HBox(10);
         row.setAlignment(Pos.CENTER_LEFT);
-        row.setStyle("-fx-padding: 8 0 8 0; -fx-border-color: transparent transparent #f0f0f0 transparent; " +
-                "-fx-border-width: 0 0 1 0;");
+        row.getStyleClass().add("profile-field-row");
 
         CheckBox check = new CheckBox();
         check.setSelected(isDone);
 
         Label titleLabel = new Label(title);
-        titleLabel.setStyle(isDone
-                ? "-fx-font-size: 13px; -fx-text-fill: #aaaaaa; -fx-strikethrough: true;"
-                : "-fx-font-size: 13px; -fx-text-fill: #1e1e2e;");
-
+        titleLabel.getStyleClass().add(isDone ? "task-title-done" : "task-title");
         titleLabel.setOnMouseClicked(e -> openSubtaskDetail(stId));
-        titleLabel.setStyle(isDone
-                ? "-fx-font-size: 13px; -fx-text-fill: #aaaaaa; -fx-strikethrough: true; -fx-cursor: hand;"
-                : "-fx-font-size: 13px; -fx-text-fill: #1e1e2e; -fx-cursor: hand;");
-
-
         HBox.setHgrow(titleLabel, Priority.ALWAYS);
 
         Label priBadge = new Label(translatePriority(priority));
@@ -230,21 +221,9 @@ public class TaskDetailController {
                 "-fx-background-color: " + getPriorityColor(priority) + ";");
 
         Button menuBtn = new Button("•••");
-        menuBtn.setStyle("-fx-background-color: transparent; -fx-text-fill: #666688; " +
-                "-fx-font-size: 16px; -fx-font-weight: bold; -fx-cursor: hand; " +
-                "-fx-padding: 2 8 2 8; -fx-background-radius: 6px;");
-        menuBtn.setOnMouseEntered(e -> menuBtn.setStyle(
-                "-fx-background-color: #f0f0f5; -fx-text-fill: #1e1e2e; " +
-                        "-fx-font-size: 16px; -fx-font-weight: bold; -fx-cursor: hand; " +
-                        "-fx-padding: 2 8 2 8; -fx-background-radius: 6px;"));
-        menuBtn.setOnMouseExited(e -> menuBtn.setStyle(
-                "-fx-background-color: transparent; -fx-text-fill: #666688; " +
-                        "-fx-font-size: 16px; -fx-font-weight: bold; -fx-cursor: hand; " +
-                        "-fx-padding: 2 8 2 8; -fx-background-radius: 6px;"));
+        menuBtn.getStyleClass().add("task-menu-btn");
         menuBtn.setOnAction(e -> {
             ContextMenu menu = new ContextMenu();
-            menu.setStyle("-fx-background-color: white; -fx-border-color: #e8e8e8; " +
-                    "-fx-border-width: 1; -fx-background-radius: 8; -fx-border-radius: 8;");
             MenuItem edit   = new MenuItem(lm.get("common.menu.edit"));
             edit.setStyle("-fx-font-size: 13px; -fx-padding: 2 10 2 10;");
             edit.setOnAction(ev -> openEditSubtask(stId, parentTaskId));
@@ -266,11 +245,9 @@ public class TaskDetailController {
                     Platform.runLater(() -> {
                         if (resp.statusCode() == 200) {
                             updating[0] = true;
-                            titleLabel.setStyle(is
-                                    ? "-fx-font-size: 13px; -fx-text-fill: #aaaaaa; -fx-strikethrough: true;"
-                                    : "-fx-font-size: 13px; -fx-text-fill: #1e1e2e;");
+                            titleLabel.getStyleClass().removeAll("task-title", "task-title-done");
+                            titleLabel.getStyleClass().add(is ? "task-title-done" : "task-title");
                             updating[0] = false;
-                            // Recargar para actualizar progreso
                             loadSubtasks(parentTaskId);
                             if (onTaskChanged != null) onTaskChanged.run();
                         } else {
@@ -284,6 +261,7 @@ public class TaskDetailController {
                 }
             }).start();
         });
+
         Region spacer = new Region();
         HBox.setHgrow(spacer, Priority.ALWAYS);
         row.getChildren().addAll(check, titleLabel, priBadge, spacer, menuBtn);
@@ -417,28 +395,29 @@ public class TaskDetailController {
 
             HBox row = new HBox(10);
             row.setAlignment(javafx.geometry.Pos.CENTER_LEFT);
-            row.setStyle("-fx-padding: 7 0 7 0; -fx-border-color: transparent transparent #f0f0f0 transparent; " +
-                    "-fx-border-width: 0 0 1 0;");
+            row.getStyleClass().add("profile-field-row");
 
             Label dateLbl = new Label(date);
-            dateLbl.setStyle("-fx-font-size: 11px; -fx-text-fill: #888888; -fx-min-width: 85px;");
+            dateLbl.getStyleClass().add("profile-field-label");
+            dateLbl.setStyle("-fx-min-width: 85px;");
 
             Label typeLbl = new Label(activityType);
             typeLbl.setStyle("-fx-font-size: 11px; -fx-padding: 2 8 2 8; " +
-                    "-fx-background-radius: 10px; -fx-background-color: #ede9fe; -fx-text-fill: #5b21b6;");
+                    "-fx-background-radius: 10px; " +
+                    "-fx-background-color: -tm-bg-active; " +
+                    "-fx-text-fill: -tm-accent-light;");
 
             Label hoursLbl = new Label(hours + "h");
-            hoursLbl.setStyle("-fx-font-size: 12px; -fx-font-weight: bold; -fx-text-fill: #1e1e2e; " +
-                    "-fx-min-width: 40px; -fx-alignment: CENTER_RIGHT;");
+            hoursLbl.getStyleClass().add("profile-field-value");
+            hoursLbl.setStyle("-fx-font-weight: bold; -fx-min-width: 40px; -fx-alignment: CENTER_RIGHT;");
 
             Label noteLbl = new Label(note);
-            noteLbl.setStyle("-fx-font-size: 12px; -fx-text-fill: #555555;");
+            noteLbl.getStyleClass().add("profile-field-value");
             noteLbl.setWrapText(true);
 
             Button menuBtn = new Button("•••");
-            menuBtn.setStyle("-fx-background-color: transparent; -fx-text-fill: #666688; " +
-                    "-fx-font-size: 14px; -fx-font-weight: bold; -fx-cursor: hand; " +
-                    "-fx-padding: 2 8 2 8; -fx-background-radius: 6px;");
+            menuBtn.getStyleClass().add("task-menu-btn");
+
             menuBtn.setOnMouseEntered(e -> menuBtn.setStyle(
                     "-fx-background-color: #f0f0f5; -fx-text-fill: #1e1e2e; " +
                             "-fx-font-size: 14px; -fx-font-weight: bold; -fx-cursor: hand; " +

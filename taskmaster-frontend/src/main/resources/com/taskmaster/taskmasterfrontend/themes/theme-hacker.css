@@ -1,46 +1,45 @@
-@import "theme-amatista.css";
-
 /* =====================================================
    THEME: HACKER
    TaskMaster — Negro con acentos verde terminal
    ===================================================== */
 
 .root {
-    /* Fondos */
-    -tm-bg-app:          #020b02;
+    /* Fondos — negro puro sin verde */
+    -tm-bg-app:          #080808;
     -tm-bg-topbar:       #000000;
     -tm-bg-sidebar:      #000000;
-    -tm-bg-surface:      #040f04;
-    -tm-bg-surface-alt:  #030c03;
-    -tm-bg-input:        #071407;
-    -tm-bg-hover:        #0a1e0a;
+    -tm-bg-surface:      #0f0f0f;
+    -tm-bg-surface-alt:  #0a0a0a;
+    -tm-bg-input:        #141414;
+    -tm-bg-hover:        #1a1a1a;
     -tm-bg-active:       #0a1e0a;
     -tm-bg-badge:        #0a1e0a;
+    -tm-bg-scroll:       #141414;
 
-    /* Acentos */
+    /* Acentos — verde terminal */
     -tm-accent:          #00ff41;
     -tm-accent-light:    #39ff6e;
     -tm-accent-dark:     #00cc33;
     -tm-accent-subtle:   #0a1e0a;
 
     /* Textos */
-    -tm-text-primary:    #ccffcc;
-    -tm-text-secondary:  #44aa44;
+    -tm-text-primary:    #00ff41;
+    -tm-text-secondary:  #39ff6e;
     -tm-text-muted:      #1a441a;
-    -tm-text-sidebar:    #44aa44;
+    -tm-text-sidebar:    #39ff6e;
     -tm-text-on-accent:  #000000;
     -tm-text-label:      #1a441a;
-    -tm-text-header:     #ccffcc;
+    -tm-text-header:     #00ff41;
 
-    /* Bordes */
+    /* Bordes — verde oscuro */
     -tm-border:          #0a2a0a;
     -tm-border-topbar:   #0a2a0a;
     -tm-border-sidebar:  #0a2a0a;
 
-    /* Botón acción principal */
-    -tm-btn-primary:     #00ff41;
+    /* Botones */
+    -tm-btn-primary:       #00ff41;
     -tm-btn-primary-hover: #00cc33;
-    -tm-btn-secondary:   #00cc33;
+    -tm-btn-secondary:     #00cc33;
 
     /* Estados de tarea */
     -tm-status-done:     #00ff41;
@@ -48,11 +47,74 @@
     -tm-status-pending:  #aaff00;
     -tm-status-urgent:   #ff4444;
 
-    /* Sidebar activo */
+    /* Sidebar */
     -tm-sidebar-active-bg:    #0a1e0a;
     -tm-sidebar-active-text:  #00ff41;
     -tm-sidebar-section-text: #1a441a;
     -tm-topbar-user-bg:       #0a1e0a;
     -tm-topbar-user-border:   #1a441a;
-    -tm-bg-hover-sidebar:     #071407;
+    -tm-bg-hover-sidebar:     #0f0f0f;
+}
+
+/* ── Overrides específicos ── */
+
+.btn-clear-filters {
+    -fx-text-fill: -tm-text-secondary;
+}
+
+.radio-button {
+    -fx-text-fill: -tm-text-primary;
+}
+
+.tab-pane,
+.tab-pane > .tab-content-area {
+    -fx-background-color: -tm-bg-app;
+}
+
+.tab-pane .tab-header-background,
+.tab-pane .tab-header-area {
+    -fx-background-color: -tm-bg-surface;
+}
+
+.tab-pane .tab {
+    -fx-background-color: -tm-bg-surface;
+    -fx-border-color: -tm-border;
+}
+
+.tab-pane .tab .tab-label {
+    -fx-text-fill: -tm-text-secondary;
+}
+
+.tab-pane .tab:selected {
+    -fx-background-color: -tm-bg-active;
+}
+
+.tab-pane .tab:selected .tab-label {
+    -fx-text-fill: -tm-accent-light;
+}
+
+.btn-cancel-soft:hover {
+    -fx-background-color: -tm-bg-active;
+    -fx-text-fill: -tm-accent-light;
+}
+
+.dialog-root .btn-confirm-accent,
+.dialog-root .btn-confirm-accent:hover,
+.detail-header .detail-btn-edit,
+.detail-header .detail-btn-edit:hover,
+.detail-section .btn-small-primary,
+.detail-section .btn-small-primary:hover,
+.area-topbar .btn-create,
+.area-topbar .btn-create:hover,
+.profile-header .btn-primary,
+.profile-header .btn-primary:hover {
+    -fx-text-fill: #000000;
+}
+
+.detail-section-title,
+.detail-section-count,
+.detail-section-label,
+.detail-description,
+.detail-empty-label {
+    -fx-text-fill: -tm-text-primary;
 }
