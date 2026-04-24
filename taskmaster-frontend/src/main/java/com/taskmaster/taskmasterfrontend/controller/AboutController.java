@@ -1,6 +1,7 @@
 package com.taskmaster.taskmasterfrontend.controller;
 
 import com.taskmaster.taskmasterfrontend.util.LanguageManager;
+import com.taskmaster.taskmasterfrontend.util.ThemeManager;
 import javafx.fxml.FXML;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
@@ -47,6 +48,11 @@ public class AboutController {
         versionLabel.setText(lm.get("about.version"));
         descriptionLabel.setText(lm.get("about.description"));
         copyrightLabel.setText("© " + Year.now().getValue() + " Carlos Riera · TaskMaster TFG DAM");
+
+        boolean dark = ThemeManager.getInstance().isDark();
+        String mutedColor = dark ? "#6b6b8a" : "#aaaaaa";
+        versionLabel.setStyle("-fx-text-fill: " + mutedColor + ";");
+        copyrightLabel.setStyle("-fx-text-fill: " + mutedColor + ";");
 
         buildTechBadges();
     }

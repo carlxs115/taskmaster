@@ -38,7 +38,7 @@
 
                 <!-- Tarjeta principal -->
                 <VBox spacing="0" styleClass="card"
-                      style="-fx-min-width: 400px; -fx-max-width: 480px;">
+                      style="-fx-min-width: 560px; -fx-max-width: 640px;">
 
                     <!-- Autor -->
                     <VBox spacing="4" alignment="CENTER_LEFT"
@@ -70,12 +70,10 @@
                         <Label text="%about.legal.label" styleClass="about-section-chip"
                                maxWidth="Infinity"/>
                         <HBox spacing="8" alignment="CENTER_LEFT">
-                            <Button text="%about.btn.terms"   onAction="#handleTerms"
+                            <Button text="%about.btn.terms"            onAction="#handleTerms"
                                     styleClass="about-link-btn"/>
-                            <Button text="%about.btn.privacy" onAction="#handlePrivacy"
+                            <Button text="%about.btn.privacy"          onAction="#handlePrivacy"
                                     styleClass="about-link-btn"/>
-                        </HBox>
-                        <HBox spacing="8" alignment="CENTER_LEFT">
                             <Button text="%about.btn.licenses"         onAction="#handleLicenses"
                                     styleClass="about-link-btn"/>
                             <Button text="%about.btn.acknowledgements" onAction="#handleAcknowledgements"
