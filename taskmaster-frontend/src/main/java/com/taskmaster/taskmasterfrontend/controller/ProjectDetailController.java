@@ -365,6 +365,27 @@ public class ProjectDetailController {
         }
     }
 
+    @FXML
+    private void handleNewTask() {
+        try {
+            FXMLLoader loader = new FXMLLoader(
+                    getClass().getResource("/com/taskmaster/taskmasterfrontend/new-task-dialog.fxml"),
+                    LanguageManager.getInstance().getBundle()
+            );
+            VBox root = loader.load();
+            NewTaskController controller = loader.getController();
+            Long projectId = projectData.path("id").asLong();
+            controller.initData(projectId);
+            controller.setOnTaskCreated(() -> {
+                loadTasks(projectId);
+                activityLogSectionController.loadForEntity("PROJECT", projectId, "TASK");
+            });
+            showAsDialog(root, lm.get("new.task.title"));
+        } catch (IOException e) {
+            showAlert(lm.get("error.title"), lm.get("error.open.dialog"));
+        }
+    }
+
     private void showAsDialog(VBox root, String title) {
         Stage dialog = new Stage();
         dialog.setTitle(title);

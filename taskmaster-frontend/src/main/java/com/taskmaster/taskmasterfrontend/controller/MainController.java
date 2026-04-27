@@ -361,9 +361,10 @@ public class MainController {
         // ── Saludo + fecha ────────────────────────────────────────────────────
         String username = AppContext.getInstance().getCurrentUsername();
         LocalDate today = LocalDate.now();
-        String dayName  = today.getDayOfWeek().getDisplayName(TextStyle.FULL, new Locale("es", "ES"));
-        String dateStr  = dayName.substring(0, 1).toUpperCase() + dayName.substring(1)
-                + ", " + today.format(DateTimeFormatter.ofPattern("d 'de' MMMM", new Locale("es", "ES")));
+        Locale locale = LanguageManager.getInstance().getBundle().getLocale();
+        String dayName = today.getDayOfWeek().getDisplayName(TextStyle.FULL, locale);
+        String dateStr = dayName.substring(0, 1).toUpperCase() + dayName.substring(1)
+                + ", " + today.format(DateTimeFormatter.ofPattern(lm.get("home.date.pattern"), locale));
         int pending = countPendingTasks(home);
         String pendingStr = pending > 1
                 ? java.text.MessageFormat.format(lm.get("home.pending.tasks.plural"), pending)

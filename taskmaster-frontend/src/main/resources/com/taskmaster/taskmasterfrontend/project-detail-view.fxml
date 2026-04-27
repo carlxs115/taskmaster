@@ -82,8 +82,12 @@
 
             <!-- Lista de tareas -->
             <VBox spacing="0" styleClass="detail-section">
-                <Label text="%common.tasks" styleClass="detail-section-title"
-                       style="-fx-padding: 0 0 10 0;"/>
+                <HBox alignment="CENTER_LEFT" style="-fx-padding: 0 0 10 0;">
+                    <Label text="%common.tasks" styleClass="detail-section-title"/>
+                    <Region HBox.hgrow="ALWAYS"/>
+                    <Button text="%project.detail.tasks.new"
+                            onAction="#handleNewTask" styleClass="btn-small-primary"/>
+                </HBox>
                 <VBox fx:id="taskListContainer" spacing="0"/>
                 <Label fx:id="emptyTasksLabel"
                        text="%project.detail.tasks.empty" styleClass="detail-empty-label"/>

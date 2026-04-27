@@ -68,13 +68,14 @@ public class DateFormatManager {
 
     /** Etiquetas visibles para el ComboBox, con ejemplo dinámico */
     public static String getLabel(DateFormat format) {
+        LanguageManager lm = LanguageManager.getInstance();
         return switch (format) {
-            case DD_MM_YYYY  -> "dd/mm/aaaa";
-            case DD_MM_YY    -> "dd/mm/aa";
-            case MM_DD_YYYY  -> "mm/dd/aaaa";
-            case MM_DD_YY    -> "mm/dd/aa";
-            case YYYY_MM_DD  -> "aaaa-mm-dd";
-            case DD_MMM_YYYY -> "dd mmm aaaa";
+            case DD_MM_YYYY  -> lm.get("dateformat.dd_mm_yyyy");
+            case DD_MM_YY    -> lm.get("dateformat.dd_mm_yy");
+            case MM_DD_YYYY  -> lm.get("dateformat.mm_dd_yyyy");
+            case MM_DD_YY    -> lm.get("dateformat.mm_dd_yy");
+            case YYYY_MM_DD  -> lm.get("dateformat.yyyy_mm_dd");
+            case DD_MMM_YYYY -> lm.get("dateformat.dd_mmm_yyyy");
         };
     }
 }
