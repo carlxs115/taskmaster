@@ -16,14 +16,12 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 /**
- * PROJECTCONTROLLER
+ * Controlador REST que gestiona el CRUD de proyectos y su papelera.
  *
- * Gestiona el CRUD de proyectos y la papelera.
- * Todos los endpoints requieren autenticación.
+ * <p>Todos los endpoints requieren autenticación. El usuario autenticado
+ * solo puede acceder y modificar sus propios proyectos.</p>
  *
- * @AuthenticationPrincipal UserDetails -> Spring Security inyecta automáticamente
- * el usuario autenticado en cada petición. Así sabemos quién está haciendo
- * la petición sin necesidad de que el frontend envíe el userId manualmente.
+ * @author Carlos
  */
 @RestController
 @RequestMapping("/api/projects")
@@ -36,6 +34,9 @@ public class ProjectController {
     /**
      * GET /api/projects
      * Devuelve todos los proyectos activos del usuario autenticado.
+     *
+     * @param userDetails usuario autenticado inyectado por Spring Security
+     * @return lista de proyectos activos
      */
     @GetMapping
     public ResponseEntity<List<Project>> getProjects(
@@ -48,6 +49,9 @@ public class ProjectController {
     /**
      * GET /api/projects/trash
      * Devuelve los proyectos en la papelera del usuario autenticado.
+     *
+     * @param userDetails usuario autenticado inyectado por Spring Security
+     * @return lista de proyectos eliminados
      */
     @GetMapping("/trash")
     public ResponseEntity<List<Project>> getDeletedProjects(
@@ -60,6 +64,10 @@ public class ProjectController {
     /**
      * GET /api/projects/{id}
      * Devuelve un proyecto concreto del usuario autenticado.
+     *
+     * @param id          identificador del proyecto
+     * @param userDetails usuario autenticado inyectado por Spring Security
+     * @return proyecto encontrado
      */
     @GetMapping("/{id}")
     public ResponseEntity<Project> getProject(
@@ -73,6 +81,14 @@ public class ProjectController {
     /**
      * POST /api/projects
      * Crea un nuevo proyecto para el usuario autenticado.
+     *
+     * @param name        nombre del proyecto
+     * @param description descripción opcional
+     * @param category    categoría del proyecto
+     * @param status      estado inicial opcional
+     * @param priority    prioridad inicial opcional
+     * @param userDetails usuario autenticado inyectado por Spring Security
+     * @return proyecto creado con código 201 Created
      */
     @PostMapping
     public ResponseEntity<Project> createProject(
@@ -90,7 +106,16 @@ public class ProjectController {
 
     /**
      * PUT /api/projects/{id}
-     * Actualiza un proyecto del usuario autenticado.
+     * Actualiza los datos de un proyecto del usuario autenticado.
+     *
+     * @param id          identificador del proyecto
+     * @param name        nuevo nombre
+     * @param description nueva descripción opcional
+     * @param category    nueva categoría
+     * @param status      nuevo estado opcional
+     * @param priority    nueva prioridad opcional
+     * @param userDetails usuario autenticado inyectado por Spring Security
+     * @return proyecto actualizado
      */
     @PutMapping("/{id}")
     public ResponseEntity<Project> updateProject(
@@ -110,6 +135,10 @@ public class ProjectController {
     /**
      * DELETE /api/projects/{id}
      * Envía un proyecto a la papelera (soft delete).
+     *
+     * @param id          identificador del proyecto
+     * @param userDetails usuario autenticado inyectado por Spring Security
+     * @return 204 No Content
      */
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteProject(
@@ -123,7 +152,11 @@ public class ProjectController {
 
     /**
      * PUT /api/projects/{id}/restore
-     * Restaura un proyecto de la papelera.
+     * Restaura un proyecto desde la papelera.
+     *
+     * @param id          identificador del proyecto
+     * @param userDetails usuario autenticado inyectado por Spring Security
+     * @return proyecto restaurado
      */
     @PutMapping("/{id}/restore")
     public ResponseEntity<Project> restoreProject(
@@ -135,8 +168,12 @@ public class ProjectController {
     }
 
     /**
-     * PUT /api/projects/{id}/permanent
-     * Elimina un proyecto de la papelera.
+     * DELETE /api/projects/{id}/permanent
+     * Elimina definitivamente un proyecto de la base de datos.
+     *
+     * @param id          identificador del proyecto
+     * @param userDetails usuario autenticado inyectado por Spring Security
+     * @return 204 No Content
      */
     @DeleteMapping("/{id}/permanent")
     public ResponseEntity<Void> permanentlyDeleteProject(
@@ -149,9 +186,10 @@ public class ProjectController {
     }
 
     /**
-     * Obtiene el userId del usuario autenticado a partir de su username.
+     * Extrae el identificador del usuario autenticado.
      *
-     * NOTA: más adelante refactorizaremos esto a un método en un helper compartido entre controladores.
+     * @param userDetails usuario autenticado inyectado por Spring Security
+     * @return identificador del usuario
      */
     private Long getUserId(UserDetails userDetails) {
         return securityUtils.getUserId(userDetails);

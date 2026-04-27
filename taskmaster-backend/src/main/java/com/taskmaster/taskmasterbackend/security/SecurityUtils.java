@@ -8,12 +8,13 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Component;
 
 /**
- * SECURITYUTILS
+ * Utilidad de seguridad para obtener el identificador del usuario autenticado.
  *
- * Clase de utilidad para obtener el usuario autenticado en los controladores.
- * Evita repetir el mismo código en cada controlador.
+ * <p>Centraliza la lógica de resolución del {@code userId} a partir del
+ * {@link UserDetails} inyectado por Spring Security, evitando duplicar
+ * este código en cada controlador.</p>
  *
- * @Component -> Spring la gestiona como un Bean pero sin ser @Service ni @Controller
+ * @author Carlos
  */
 @Component
 @RequiredArgsConstructor
@@ -22,9 +23,11 @@ public class SecurityUtils {
     private final UserRepository userRepository;
 
     /**
-     * Obtiene el userId del usuario autenticado.
-     * Spring Security nos da el UserDetails con el username,
-     * y desde ahí buscamos el id en la BD.
+     * Obtiene el identificador del usuario autenticado a partir de su {@link UserDetails}.
+     *
+     * @param userDetails usuario autenticado inyectado por Spring Security
+     * @return identificador del usuario
+     * @throws UsernameNotFoundException si no existe ningún usuario con ese username
      */
     public Long getUserId(UserDetails userDetails) {
         return userRepository.findByUsername(userDetails.getUsername())

@@ -16,6 +16,14 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 
+/**
+ * Controlador REST que gestiona el perfil y el avatar del usuario autenticado.
+ *
+ * <p>Todos los endpoints requieren autenticación. El usuario autenticado
+ * solo puede acceder y modificar sus propios datos y avatar.</p>
+ *
+ * @author Carlos
+ */
 @RestController
 @RequestMapping("/api/users")
 @RequiredArgsConstructor
@@ -25,6 +33,13 @@ public class UserController {
     private final AvatarService avatarService;
     private final SecurityUtils securityUtils;
 
+    /**
+     * GET /api/users/me
+     * Devuelve los datos del usuario autenticado.
+     *
+     * @param userDetails usuario autenticado inyectado por Spring Security
+     * @return datos del usuario
+     */
     @GetMapping("/me")
     public ResponseEntity<UserResponse> getProfile(
             @AuthenticationPrincipal UserDetails userDetails) {
@@ -40,6 +55,13 @@ public class UserController {
                 .build());
     }
 
+    /**
+     * GET /api/users/stats
+     * Devuelve las estadísticas de actividad del usuario autenticado.
+     *
+     * @param userDetails usuario autenticado inyectado por Spring Security
+     * @return estadísticas del usuario
+     */
     @GetMapping("/stats")
     public ResponseEntity<UserStatsResponse> getStats(
             @AuthenticationPrincipal UserDetails userDetails) {
@@ -47,11 +69,15 @@ public class UserController {
         return ResponseEntity.ok(userService.getStats(userId));
     }
 
-    // ---------- AVATAR ----------
-
     /**
-     * Sube o reemplaza el avatar del usuario autenticado.
-     * Espera un fichero multipart con la clave "file".
+     * POST /api/users/me/avatar
+     * Sube o reemplaza la foto de perfil del usuario autenticado.
+     * Espera un fichero multipart con la clave {@code "file"}.
+     *
+     * @param userDetails usuario autenticado inyectado por Spring Security
+     * @param file        fichero de imagen (PNG o JPEG, máximo 2 MB)
+     * @return datos del usuario actualizados
+     * @throws IOException si ocurre un error al guardar el fichero
      */
     @PostMapping(value = "/me/avatar", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<UserResponse> uploadMyAvatar(
@@ -70,8 +96,12 @@ public class UserController {
     }
 
     /**
-     * Devuelve el avatar del usuario autenticado como bytes (image/png o image/jpeg).
-     * 404 si no tiene avatar configurado.
+     * GET /api/users/me/avatar
+     * Devuelve la foto de perfil del usuario autenticado como bytes.
+     *
+     * @param userDetails usuario autenticado inyectado por Spring Security
+     * @return imagen en formato PNG o JPEG, o 404 si no tiene avatar
+     * @throws IOException si ocurre un error al leer el fichero
      */
     @GetMapping("/me/avatar")
     public ResponseEntity<byte[]> getMyAvatar(
@@ -81,8 +111,13 @@ public class UserController {
     }
 
     /**
-     * Devuelve el avatar de cualquier usuario (para mostrarlo en la UI cuando se asigna una tarea, etc.).
-     * Requiere autenticación pero no que seas tú mismo.
+     * GET /api/users/{id}/avatar
+     * Devuelve la foto de perfil de cualquier usuario.
+     * Requiere autenticación pero no necesariamente ser el propio usuario.
+     *
+     * @param id identificador del usuario
+     * @return imagen en formato PNG o JPEG, o 404 si no tiene avatar
+     * @throws IOException si ocurre un error al leer el fichero
      */
     @GetMapping("/{id}/avatar")
     public ResponseEntity<byte[]> getUserAvatar(@PathVariable Long id) throws IOException {
@@ -90,7 +125,12 @@ public class UserController {
     }
 
     /**
-     * Elimina el avatar del usuario autenticado (vuelve a iniciales/placeholder).
+     * DELETE /api/users/me/avatar
+     * Elimina la foto de perfil del usuario autenticado.
+     * El usuario volverá a mostrar sus iniciales como placeholder.
+     *
+     * @param userDetails usuario autenticado inyectado por Spring Security
+     * @return 204 No Content
      */
     @DeleteMapping("/me/avatar")
     public ResponseEntity<Void> deleteMyAvatar(
@@ -100,7 +140,13 @@ public class UserController {
         return ResponseEntity.noContent().build();
     }
 
-    /** Helper para construir la respuesta HTTP con los bytes del avatar o 404 si no existe. */
+    /**
+     * Construye la respuesta HTTP con los bytes del avatar del usuario indicado.
+     *
+     * @param userId identificador del usuario
+     * @return respuesta con la imagen y su Content-Type, o 404 si no tiene avatar
+     * @throws IOException si ocurre un error al leer el fichero
+     */
     private ResponseEntity<byte[]> buildAvatarResponse(Long userId) throws IOException {
         AvatarService.AvatarData data = avatarService.getAvatar(userId);
         if (data == null) {

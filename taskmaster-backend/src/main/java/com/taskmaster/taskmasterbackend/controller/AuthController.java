@@ -23,18 +23,12 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
 /**
- * AUTHCONTROLLER
+ * Controlador REST que gestiona la autenticación y el perfil de usuario.
  *
- * Gestiona el registro y login de usuarios.
- * Estos endpoints son públicos - no requieren autenticación previa
- * (configurado en SecurityConfig con .permitAll())
+ * <p>Los endpoints de registro y login son públicos. El resto requieren
+ * autenticación previa mediante Basic Auth.</p>
  *
- * @RestController -> Combina @Controller y @ResponseBody.
- *                   Indica que esta clase maneja peticiones HTTP
- *                   y devuelve JSON automáticamente.
- *
- * @RequestMapping -> Prefijo de todas las rutas de este controlador.
- *                   Todas las rutas empezarán por /api/auth/
+ * @author Carlos
  */
 @RestController
 @RequestMapping("/api/auth")
@@ -47,18 +41,11 @@ public class AuthController {
     private final ActivityLogService activityLogService;
 
     /**
-     * REGISTRO - POST /api/auth/register
+     * POST /api/auth/register
+     * Registra un nuevo usuario en el sistema.
      *
-     * Recibe los datos del formulario de registro y crea un nuevo usuario.
-     *
-     * @Valid -> Activa las validaciones del DTO (@NotBlank, @Email, @NotNull...)
-     *          Si alguna falla, Spring devuelve automáticamente un 400 Bad Request.
-     *
-     * @RequestBody -> Le dice a Spring que el cuerpo de la petición HTTP
-     *                es un JSON y lo convierte al DTO automáticamente.
-     *
-     * ResponseEntity -> Permite controlar el código HTTP de la respuesta.
-     *                  201 Created es el código correcto para creación de recursos.
+     * @param request datos del nuevo usuario validados
+     * @return usuario creado con código 201 Created
      */
     @PostMapping("/register")
     public ResponseEntity<UserResponse> register(@Valid @RequestBody RegisterRequest request) {
@@ -72,11 +59,12 @@ public class AuthController {
     }
 
     /**
-     * LOGIN — POST /api/auth/login
-     *
+     * POST /api/auth/login
      * Autentica al usuario con username y password.
-     * Si las credenciales son correctas devuelve los datos del usuario.
-     * Si son incorrectas devuelve 401 Unauthorized.
+     * Registra el evento de login en el historial de actividad.
+     *
+     * @param request credenciales del usuario
+     * @return datos del usuario autenticado, o 401 si las credenciales son incorrectas
      */
     @PostMapping("/login")
     public ResponseEntity<?> login(@Valid @RequestBody LoginRequest request) {
@@ -107,6 +95,13 @@ public class AuthController {
         }
     }
 
+    /**
+     * POST /api/auth/logout
+     * Registra el evento de logout en el historial de actividad.
+     *
+     * @param userDetails usuario autenticado inyectado por Spring Security
+     * @return 200 OK
+     */
     @PostMapping("/logout")
     public ResponseEntity<Void> logout(@AuthenticationPrincipal UserDetails userDetails) {
         Long userId = securityUtils.getUserId(userDetails);
@@ -117,6 +112,9 @@ public class AuthController {
     /**
      * GET /api/auth/profile
      * Devuelve los datos del usuario autenticado.
+     *
+     * @param userDetails usuario autenticado inyectado por Spring Security
+     * @return datos del usuario
      */
     @GetMapping("/profile")
     public ResponseEntity<UserResponse> getProfile(
@@ -130,7 +128,11 @@ public class AuthController {
 
     /**
      * PUT /api/auth/profile
-     * Actualiza username, email y fecha de nacimiento.
+     * Actualiza el username, email y fecha de nacimiento del usuario autenticado.
+     *
+     * @param request     nuevos datos del perfil validados
+     * @param userDetails usuario autenticado inyectado por Spring Security
+     * @return usuario actualizado, o 400 si los datos ya están en uso
      */
     @PutMapping("/profile")
     public ResponseEntity<?> updateProfile(
@@ -155,6 +157,10 @@ public class AuthController {
     /**
      * PATCH /api/auth/password
      * Cambia la contraseña del usuario autenticado.
+     *
+     * @param request     contraseña actual y nueva contraseña validadas
+     * @param userDetails usuario autenticado inyectado por Spring Security
+     * @return 200 OK, o 400 si la contraseña actual es incorrecta
      */
     @PatchMapping("/password")
     public ResponseEntity<?> changePassword(
@@ -173,7 +179,11 @@ public class AuthController {
     /**
      * DELETE /api/auth/account
      * Elimina permanentemente la cuenta del usuario autenticado.
-     * Requiere confirmación con contraseña.
+     * Requiere confirmación con la contraseña actual.
+     *
+     * @param password    contraseña actual para confirmar la operación
+     * @param userDetails usuario autenticado inyectado por Spring Security
+     * @return 204 No Content, o 400 si la contraseña es incorrecta
      */
     @RequestMapping(value = "/account", method = RequestMethod.DELETE)
     public ResponseEntity<?> deleteAccount(
@@ -189,6 +199,12 @@ public class AuthController {
         }
     }
 
+    /**
+     * Convierte una entidad {@link User} a su DTO de respuesta.
+     *
+     * @param user entidad a convertir
+     * @return DTO con los datos del usuario
+     */
     private UserResponse toResponse(User user) {
         return UserResponse.builder()
                 .id(user.getId())

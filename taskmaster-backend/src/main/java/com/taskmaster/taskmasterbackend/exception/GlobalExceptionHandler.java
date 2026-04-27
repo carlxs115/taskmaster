@@ -12,21 +12,23 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * GLOBALEXCEPTIONHANDLER
+ * Manejador global de excepciones de la aplicación.
  *
- * Captura todas las excepciones de la app y devuelve respuestas JSON claras y consistentes al frontend.
+ * <p>Intercepta todas las excepciones lanzadas en cualquier controlador
+ * y las convierte en respuestas JSON estructuradas y consistentes,
+ * evitando que el frontend reciba errores genéricos o sin formato.</p>
  *
- * @RestControllerAdvice -> Intercepta las excepciones lanzadas en
- *                         cualquier controlador antes de que lleguen
- *                         al cliente. Es como una red de seguridad global.
+ * @author Carlos
  */
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
     /**
-     * Captura errores de validación - cuando @Valid falla.
-     * Por ejemplo: campo obligatorio vacío, email inválido, etc.
-     * Devuelve 400 Bad Request con los mensajes de cada campo.
+     * Captura errores de validación producidos cuando falla {@code @Valid}.
+     * Devuelve un mapa con los mensajes de error agrupados por campo.
+     *
+     * @param exception excepción de validación lanzada por Spring
+     * @return 400 Bad Request con los errores de cada campo
      */
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<Map<String, Object>> handleValidationErrors(
@@ -49,8 +51,10 @@ public class GlobalExceptionHandler {
     }
 
     /**
-     * Captura ResourceNotFoundException.
-     * Devuelve 404 Not Found con el mensaje del error.
+     * Captura excepciones de tipo {@link ResourceNotFoundException}.
+     *
+     * @param exception excepción lanzada cuando no se encuentra un recurso
+     * @return 404 Not Found con el mensaje del error
      */
     @ExceptionHandler(ResourceNotFoundException.class)
     public ResponseEntity<Map<String, Object>> handleNotFound(
@@ -65,9 +69,11 @@ public class GlobalExceptionHandler {
     }
 
     /**
-     * Captura cualquier RuntimeException no controlada.
-     * Devuelve 400 Bad Request con el mensaje del error.
-     * Por ejemplo: "No puedes completar esta tarea porque tiene subtareas pendientes"
+     * Captura excepciones de tipo {@link RuntimeException} no controladas específicamente.
+     * Por ejemplo: reglas de negocio como intentar completar una tarea con subtareas pendientes.
+     *
+     * @param exception excepción de tiempo de ejecución
+     * @return 400 Bad Request con el mensaje del error
      */
     @ExceptionHandler(RuntimeException.class)
     public ResponseEntity<Map<String, Object>> handleRunTimeException(
@@ -82,9 +88,11 @@ public class GlobalExceptionHandler {
     }
 
     /**
-     * Captura cualquier excepción inesperada no controlada.
-     * Devuelve 500 Internal Server Error.
-     * Nunca debería ocurrir si el código está bien, pero es una red de seguridad final.
+     * Captura cualquier excepción inesperada no controlada por los demás manejadores.
+     * Actúa como red de seguridad final para evitar que el servidor exponga información interna.
+     *
+     * @param exception excepción genérica no controlada
+     * @return 500 Internal Server Error
      */
     @ExceptionHandler(Exception.class)
     public ResponseEntity<Map<String, Object>> handleGenericException(

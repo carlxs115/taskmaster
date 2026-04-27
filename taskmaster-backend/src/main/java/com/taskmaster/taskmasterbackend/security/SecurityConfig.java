@@ -17,12 +17,14 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 
 /**
- * SECURITYCONFIG
+ * Configuración central de Spring Security para la aplicación.
  *
- * Clase central de configuración de Spring Security.
+ * <p>Define qué endpoints son públicos y cuáles requieren autenticación,
+ * establece la política de sesiones sin estado (stateless) apropiada para
+ * una API REST consumida desde un cliente JavaFX, y configura la autenticación
+ * mediante HTTP Basic con BCrypt.</p>
  *
- * @Configuration -> Esta clase define Beans de Spring
- * @EnableWebSecurity -> Activa la seguridad web de Spring Security
+ * @author Carlos
  */
 @Configuration
 @EnableWebSecurity
@@ -32,49 +34,28 @@ public class SecurityConfig {
     private final UserDetailsServiceImpl userDetailsService;
 
     /**
-     * SECURITYFILTERCHAIN
+     * Define la cadena de filtros de seguridad que procesa cada petición HTTP.
      *
-     * Define qué endpoints están protegidos y cuáles son públicos.
-     * Cada petición HTTP pasa por esta cadena de filtros antes de
-     * llegar al controlador.
+     * <p>Endpoints públicos: {@code /api/auth/**} y {@code /h2-console/**}.<br>
+     * El resto de endpoints requieren autenticación Basic Auth.</p>
+     *
+     * @param http configurador de seguridad HTTP de Spring
+     * @return cadena de filtros configurada
+     * @throws Exception si ocurre un error durante la configuración
      */
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
-                /**
-                 * Desactivamos CSRF (Cross-Site Request Forgery).
-                 * CSRF protege aplicaciones web con formularios HTML.
-                 * En una app de escritorio JavaFX que consume una API REST
-                 * no es necesario - no hay navegador ni cookies de sesión.
-                 */
-                .csrf(AbstractHttpConfigurer::disable)
 
-                /**
-                 * Configuración de endpoints:
-                 *      - /api/auth/** -> público (login y registro no requieren autenticación)
-                 *      - /h2-console/** -> público (consola de BD para desarrollo)
-                 *      - cualquier otra ruta -> requiere autenticación
-                 */
+                .csrf(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/api/auth/**").permitAll()
                         .requestMatchers("/h2-console/**").permitAll()
                         .anyRequest().authenticated()
                 )
-
-                /**
-                 * Política de sesión STATELESS.
-                 * No guardamos sesiones en el servidor - cada petición
-                 * debe incluir las credenciales del usuario.
-                 * Apropiado para APIs REST consumidas desde JavaFX.
-                 */
                 .sessionManagement(session -> session
                         .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
                 )
-
-                /**
-                 * Necesario para que la consola H2 se muestre correctamente.
-                 * H2 usa iframes internamente y Spring Security los bloquea por defecto.
-                 */
                 .headers(headers -> headers
                         .frameOptions(frame -> frame.sameOrigin())
                 )
@@ -90,11 +71,10 @@ public class SecurityConfig {
     }
 
     /**
-     * AUTHENTICATIONPROVIDER
+     * Configura el proveedor de autenticación con nuestro servicio de usuarios
+     * y el codificador de contraseñas BCrypt.
      *
-     * Le dice a Spring Security cómo autenticar usuarios:
-     * - Usando nuestro UserDetailsServiceImpl para cargarlos de la BD
-     * - Usando BCrypt para comparar contraseñas
+     * @return proveedor de autenticación configurado
      */
     @Bean
     public AuthenticationProvider authenticationProvider() {
@@ -105,14 +85,11 @@ public class SecurityConfig {
     }
 
     /**
-     * PASSWORDENCODER
-     *
      * Bean de BCrypt para cifrar y verificar contraseñas.
-     * Se inyecta automáticamente en UserService para cifrar la contraseña al registrar un usuario.
+     * Se inyecta en {@link com.taskmaster.taskmasterbackend.service.UserService}
+     * para cifrar la contraseña al registrar un usuario.
      *
-     * BCrypt es un algoritmo de hash diseñado específicamente
-     * para contraseñas - es lento a propósito para dificultar
-     * ataques de fuerza bruta.
+     * @return codificador de contraseñas BCrypt
      */
     @Bean
     public PasswordEncoder passwordEncoder() {
@@ -120,10 +97,13 @@ public class SecurityConfig {
     }
 
     /**
-     * AUTHENTICATIONMANAGER
+     * Expone el {@link AuthenticationManager} como Bean para poder usarlo
+     * en {@link com.taskmaster.taskmasterbackend.controller.AuthController}
+     * durante el proceso de login.
      *
-     * Componente de Spring Security que coordina el proceso de login.
-     * Lo exponemos como Bean para poder usarlo en AuthController cuando el usuario haga login.
+     * @param config configuración de autenticación de Spring
+     * @return gestor de autenticación
+     * @throws Exception si ocurre un error al obtenerlo
      */
     @Bean
     public AuthenticationManager authenticationManager(AuthenticationConfiguration config) throws Exception {

@@ -5,14 +5,15 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Configuration;
 
 /**
- * PROPIEDADES DE ALMACENAMIENTO DE AVATARES
+ * Propiedades de configuración para el almacenamiento de avatares.
  *
- * Lee las propiedades del application.properties que empiezan por "taskmaster.storage".
- * Usamos @ConfigurationProperties (en vez de @Value) porque es más tipado,
- * se documenta mejor y escala si añadimos más rutas en el futuro.
+ * <p>Lee las propiedades del {@code application.properties} con el prefijo
+ * {@code taskmaster.storage}. Ejemplo:</p>
+ * <pre>
+ * taskmaster.storage.avatars-dir=${user.home}/.taskmaster/avatars
+ * </pre>
  *
- * Ejemplo en application.properties:
- *   taskmaster.storage.avatars-dir=${user.home}/.taskmaster/avatars
+ * @author Carlos
  */
 @Configuration
 @ConfigurationProperties(prefix = "taskmaster.storage")
@@ -20,8 +21,8 @@ import org.springframework.context.annotation.Configuration;
 public class AvatarStorageProperties {
 
     /**
-     * Directorio donde se guardan las imágenes de perfil.
-     * Por defecto: ~/.taskmaster/avatars
+     * Directorio donde se almacenan las imágenes de perfil de los usuarios.
+     * Por defecto: {@code ~/.taskmaster/avatars}.
      */
     private String avatarsDir;
 }

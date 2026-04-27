@@ -8,11 +8,13 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
 /**
- * TRASHSCHEDULER
+ * Componente que ejecuta el vaciado automático de la papelera de forma programada.
  *
- * Ejecuta el vaciado automático de la papelera cada día a medianoche.
- * Para cada usuario obtiene su periodo de retención configurado
- * y borra físicamente los elementos que lo superan.
+ * <p>Cada día a medianoche recorre la configuración de todos los usuarios y elimina
+ * físicamente las tareas y proyectos en papelera cuya antigüedad supera el periodo
+ * de retención configurado por cada usuario (7, 15 o 30 días).</p>
+ *
+ * @author Carlos
  */
 @Component
 @RequiredArgsConstructor
@@ -23,8 +25,8 @@ public class TrashScheduler {
     private final UserSettingsRepository userSettingsRepository;
 
     /**
-     * Se ejecuta cada día a medianoche.
-     * cron = "0 0 0 * * *" significa: segundo 0, minuto 0, hora 0, cualquier día/mes/año
+     * Vacía la papelera de todos los usuarios eliminando los elementos expirados.
+     * Se ejecuta automáticamente cada día a medianoche ({@code cron = "0 0 0 * * *"}).
      */
     @Scheduled(cron = "0 0 0 * * *")
     public void purgeExpiredItems() {
