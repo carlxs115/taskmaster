@@ -14,11 +14,14 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 /**
- * SERVICIO DE PROJECT
+ * Servicio que gestiona la lógica de negocio de los proyectos.
  *
- * Gestiona toda la lógica de negocio de proyectos.
- * Incluye soft delete — los proyectos eliminados van a la papelera
- * en vez de borrarse físicamente de la BD.
+ * <p>Implementa el ciclo de vida completo de un proyecto: creación, edición,
+ * borrado lógico (soft delete), restauración desde la papelera y eliminación
+ * definitiva. Todos los eventos relevantes quedan registrados en el historial
+ * de actividad mediante {@link ActivityLogService}.</p>
+ *
+ * @author Carlos
  */
 @Service
 @RequiredArgsConstructor
@@ -29,7 +32,10 @@ public class ProjectService {
     private final ActivityLogService activityLogService;
 
     /**
-     * Devuelve todos los proyectos de un usuario (no eliminados).
+     * Devuelve todos los proyectos activos de un usuario.
+     *
+     * @param userId identificador del usuario
+     * @return lista de proyectos no eliminados
      */
     public List<Project> getProjectByUser(Long userId) {
         return projectRepository.findByUserIdAndDeletedFalse(userId);
@@ -37,14 +43,20 @@ public class ProjectService {
 
     /**
      * Devuelve los proyectos en la papelera de un usuario.
+     *
+     * @param userId identificador del usuario
+     * @return lista de proyectos eliminados
      */
     public List<Project> getDeletedProjectsByUser(Long userId) {
         return projectRepository.findByUserIdAndDeletedTrue(userId);
     }
 
     /**
-     * Busca un proyecto activo por id validando que pertenece al usuario.
+     * Busca un proyecto activo por su identificador, validando que pertenece al usuario.
      *
+     * @param projectId identificador del proyecto
+     * @param userId    identificador del usuario
+     * @return proyecto encontrado
      * @throws RuntimeException si no existe, está en la papelera o no pertenece al usuario
      */
     public Project getProjectByIdAndUser(Long projectId, Long userId) {
@@ -54,7 +66,15 @@ public class ProjectService {
     }
 
     /**
-     * Crea un nuevo proyecto para un usuario.
+     * Crea un nuevo proyecto para un usuario y registra el evento en el historial.
+     *
+     * @param name        nombre del proyecto
+     * @param description descripción opcional
+     * @param category    categoría del proyecto
+     * @param status      estado inicial; si es {@code null} se usa {@code TODO}
+     * @param priority    prioridad inicial; si es {@code null} se usa {@code MEDIUM}
+     * @param userId      identificador del usuario propietario
+     * @return proyecto creado y persistido
      */
     public Project createProject(String name, String description,
                                  TaskCategory category, TaskStatus status,
@@ -83,8 +103,17 @@ public class ProjectService {
     }
 
     /**
-     * Actualiza el nombre y descripción de un proyecto.
-     * Valida que el proyecto pertenece al usuario antes de modificarlo.
+     * Actualiza los datos de un proyecto y registra el evento en el historial.
+     * Si el estado cambia, registra un evento {@code PROJECT_STATUS_CHANGED} en lugar de {@code PROJECT_EDITED}.
+     *
+     * @param projectId   identificador del proyecto
+     * @param name        nuevo nombre
+     * @param description nueva descripción
+     * @param category    nueva categoría
+     * @param status      nuevo estado
+     * @param priority    nueva prioridad
+     * @param userId      identificador del usuario propietario
+     * @return proyecto actualizado
      */
     public Project updateProject(Long projectId, String name, String description,
                                  TaskCategory category, TaskStatus status,
@@ -112,10 +141,11 @@ public class ProjectService {
     }
 
     /**
-     * SOFT DELETE - Envía un proyecto a la papelera.
+     * Envía un proyecto a la papelera (soft delete).
+     * El proyecto no se elimina físicamente; se marca como eliminado con la fecha actual.
      *
-     * En vez de borrar físicamente, marcamos deleted = true
-     * y guardamos la fecha de eliminación para el vaciado automático.
+     * @param projectId identificador del proyecto
+     * @param userId    identificador del usuario propietario
      */
     public void deleteProject(Long projectId, Long userId) {
         Project project = getProjectByIdAndUser(projectId, userId);
@@ -132,7 +162,12 @@ public class ProjectService {
     }
 
     /**
-     * RESTAURAR - Saca un proyecto de la papelera.
+     * Restaura un proyecto desde la papelera.
+     *
+     * @param projectId identificador del proyecto
+     * @param userId    identificador del usuario propietario
+     * @return proyecto restaurado
+     * @throws RuntimeException si el proyecto no se encuentra en la papelera
      */
     public Project restoreProject(Long projectId, Long userId) {
         Project project = projectRepository.findById(projectId)
@@ -154,9 +189,11 @@ public class ProjectService {
     }
 
     /**
-     * BORRADO FÍSICO — Elimina definitivamente un proyecto de la BD.
-     * Se llama desde el vaciado automático de la papelera o si el
-     * usuario decide vaciarla manualmente.
+     * Elimina definitivamente un proyecto de la base de datos.
+     * Se usa desde el vaciado manual o automático de la papelera.
+     *
+     * @param projectId identificador del proyecto
+     * @param userId    identificador del usuario, usado para registrar el evento
      */
     public void deletePermanently(Long projectId, Long userId) {
         Project project = projectRepository.findById(projectId)
@@ -173,10 +210,9 @@ public class ProjectService {
     }
 
     /**
-     * VACIADO AUTOMÁTICO — Borra físicamente los proyectos cuya fecha
-     * de eliminación supera el periodo de retención configurado por el usuario.
+     * Elimina físicamente los proyectos en papelera cuya antigüedad supera el periodo de retención.
      *
-     * @param retentionDays días configurados en UserSettings (7, 15 o 30)
+     * @param retentionDays días de retención configurados en {@link com.taskmaster.taskmasterbackend.model.UserSettings}
      */
     public void purgeExpiredProjects(int retentionDays) {
         LocalDateTime cutoff = LocalDateTime.now().minusDays(retentionDays);

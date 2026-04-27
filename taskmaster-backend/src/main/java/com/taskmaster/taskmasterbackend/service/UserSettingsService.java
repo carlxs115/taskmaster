@@ -8,12 +8,12 @@ import org.springframework.stereotype.Service;
 
 
 /**
- * SERVICIO DE USERSETTINGS
+ * Servicio que gestiona las preferencias personales de cada usuario.
  *
- * Gestiona las preferencias del usuario.
- * Por ahora gestiona el periodo de retención de la papelera,
- * pero está preparado para añadir más ajustes en el futuro
- * (tema visual, idioma, notificaciones, etc.)
+ * <p>Proporciona operaciones para consultar y actualizar los ajustes del usuario,
+ * como el periodo de retención de la papelera o el tema visual seleccionado.</p>
+ *
+ * @author Carlos
  */
 @Service
 @RequiredArgsConstructor
@@ -22,8 +22,10 @@ public class UserSettingsService {
     private final UserSettingsRepository userSettingsRepository;
 
     /**
-     * Obtiene la configuración de un usuario.
+     * Obtiene la configuración de un usuario por su identificador.
      *
+     * @param userId identificador del usuario
+     * @return configuración del usuario
      * @throws RuntimeException si no existe configuración para ese usuario
      */
     public UserSettings getSettingsByUserId(Long userId) {
@@ -31,9 +33,17 @@ public class UserSettingsService {
                 .orElseThrow(() -> new RuntimeException("Configuración no encontrada para el usuario: " + userId));
     }
 
+    /**
+     * Actualiza el periodo de retención de elementos en la papelera.
+     * Solo se aceptan los valores 7, 15 o 30 días.
+     *
+     * @param userId        identificador del usuario
+     * @param retentionDays nuevo periodo de retención en días (7, 15 o 30)
+     * @return configuración actualizada
+     * @throws RuntimeException si el valor no es 7, 15 ni 30
+     */
     public UserSettings updateTrashRetention(Long userId, int retentionDays) {
 
-        // Validamos que el valor sea uno de los permitidos
         if (retentionDays != 7 && retentionDays != 15 && retentionDays != 30) {
             throw new RuntimeException("El periodo de retención debe ser 7, 15 o 30 días");
         }
@@ -43,6 +53,13 @@ public class UserSettingsService {
         return userSettingsRepository.save(settings);
     }
 
+    /**
+     * Actualiza el tema visual del usuario.
+     *
+     * @param userId identificador del usuario
+     * @param theme  nuevo tema a aplicar
+     * @return configuración actualizada
+     */
     public UserSettings updateTheme(Long userId, ThemeType theme) {
         UserSettings settings = getSettingsByUserId(userId);
         settings.setTheme(theme);

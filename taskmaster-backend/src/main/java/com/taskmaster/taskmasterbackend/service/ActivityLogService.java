@@ -14,6 +14,15 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDateTime;
 import java.util.List;
 
+/**
+ * Servicio que gestiona el registro de actividad de los usuarios.
+ *
+ * <p>Proporciona métodos sobrecargados para registrar eventos con distintos
+ * niveles de detalle, así como consultas para recuperar el historial de
+ * actividad y accesos. Incluye una tarea programada de limpieza automática.</p>
+ *
+ * @author Carlos
+ */
 @Service
 @RequiredArgsConstructor
 @Slf4j
@@ -22,7 +31,17 @@ public class ActivityLogService {
     private final ActivityLogRepository activityLogRepository;
     private final UserRepository userRepository;
 
-    // Método principal para registrar cualquier evento
+    /**
+     * Registra un evento de actividad con todos sus detalles.
+     *
+     * @param userId     identificador del usuario que realizó la acción
+     * @param actionType tipo de acción realizada
+     * @param entityType tipo de entidad afectada ({@code "TASK"}, {@code "PROJECT"}, etc.)
+     * @param entityId   identificador de la entidad afectada
+     * @param entityName nombre de la entidad en el momento de la acción (snapshot)
+     * @param oldValue   valor anterior del campo modificado, o {@code null} si no aplica
+     * @param newValue   nuevo valor del campo modificado, o {@code null} si no aplica
+     */
     public void log(Long userId, ActionType actionType, String entityType, Long entityId,
                     String entityName, String oldValue, String newValue) {
 
@@ -41,18 +60,38 @@ public class ActivityLogService {
         activityLogRepository.save(entry);
     }
 
-    // Sobrecarga simplificada para eventos sin valores old/new
+    /**
+     * Registra un evento de actividad sin valores anterior ni nuevo.
+     * Útil para acciones que no implican cambio de estado (crear, editar, eliminar).
+     *
+     * @param userId     identificador del usuario
+     * @param actionType tipo de acción realizada
+     * @param entityType tipo de entidad afectada
+     * @param entityId   identificador de la entidad afectada
+     * @param entityName nombre de la entidad en el momento de la acción
+     */
     public void log(Long userId, ActionType actionType,
                     String entityType, Long entityId, String entityName) {
         log(userId, actionType, entityType, entityId, entityName, null, null);
     }
 
-    // Sobrecarga para eventos de perfil/auth sin entidad concreta
+    /**
+     * Registra un evento de actividad sin entidad asociada.
+     * Útil para acciones de perfil o autenticación (login, logout, cambio de contraseña).
+     *
+     * @param userId     identificador del usuario
+     * @param actionType tipo de acción realizada
+     */
     public void log(Long userId, ActionType actionType) {
         log(userId, actionType, null, null, null, null, null);
     }
 
-    // Obtener historial de actividad (excluye LOGIN/LOGOUT)
+    /**
+     * Devuelve el historial de actividad de un usuario, excluyendo eventos de autenticación.
+     *
+     * @param userId identificador del usuario
+     * @return lista de registros ordenada del más reciente al más antiguo
+     */
     public List<ActivityLog> getActivityHistory(Long userId) {
         return activityLogRepository.findByUserIdAndActionTypeInOrderByCreatedAtDesc(
                 userId,
@@ -70,7 +109,13 @@ public class ActivityLogService {
         );
     }
 
-    // Obtener solo accesos (LOGIN/LOGOUT) para la sección Seguridad
+    /**
+     * Devuelve el historial de accesos de un usuario (solo eventos LOGIN y LOGOUT).
+     * Se usa en la sección de seguridad del perfil.
+     *
+     * @param userId identificador del usuario
+     * @return lista de registros de acceso ordenada del más reciente al más antiguo
+     */
     public List<ActivityLog> getAccessHistory(Long userId) {
         return activityLogRepository.findByUserIdAndActionTypeInOrderByCreatedAtDesc(
                 userId,
@@ -78,12 +123,23 @@ public class ActivityLogService {
         );
     }
 
+    /**
+     * Devuelve el historial de actividad de una entidad concreta.
+     *
+     * @param userId     identificador del usuario
+     * @param entityType tipo de entidad ({@code "TASK"}, {@code "PROJECT"}, etc.)
+     * @param entityId   identificador de la entidad
+     * @return lista de registros de esa entidad ordenada por fecha descendente
+     */
     public List<ActivityLog> getEntityHistory(Long userId, String entityType, Long entityId) {
         return activityLogRepository
                 .findByUserIdAndEntityTypeAndEntityIdOrderByCreatedAtDesc(userId, entityType, entityId);
     }
 
-    // Limpieza automática: corre cada día a las 3:00 AM
+    /**
+     * Elimina automáticamente los registros de actividad con más de 7 días de antigüedad.
+     * Se ejecuta cada día a las 3:00 AM.
+     */
     @Scheduled(cron = "0 0 3 * * *")
     @Transactional
     public void deleteOldEntries() {

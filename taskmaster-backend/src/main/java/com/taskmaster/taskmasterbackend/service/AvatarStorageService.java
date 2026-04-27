@@ -17,18 +17,15 @@ import java.util.UUID;
 import java.util.stream.Stream;
 
 /**
- * SERVICIO DE ALMACENAMIENTO DE AVATARES
+ * Servicio de bajo nivel que encapsula toda la gestión del sistema de ficheros
+ * para las fotos de perfil de los usuarios.
  *
- * Encapsula toda la gestión del sistema de ficheros para las fotos de perfil.
- * El resto de la aplicación (controladores, otros servicios) no debería saber
- * NADA de rutas, extensiones o ficheros: solo llaman a estos métodos.
+ * <p>El resto de la aplicación no debe conocer rutas, extensiones ni operaciones
+ * de fichero directamente: debe delegar en este servicio. Al arrancar la aplicación,
+ * crea el directorio de avatares si no existe y elimina los ficheros huérfanos
+ * (imágenes sin usuario asociado en la base de datos).</p>
  *
- * Responsabilidades:
- *   - Crear el directorio de avatares si no existe (al arrancar la app).
- *   - Reconciliar filesystem con BD al arrancar (borra huérfanos).
- *   - Guardar una nueva imagen generando un nombre único (UUID).
- *   - Leer una imagen existente.
- *   - Borrar una imagen cuando el usuario cambia o elimina su foto.
+ * @author Carlos
  */
 @Service
 @RequiredArgsConstructor
@@ -37,11 +34,15 @@ public class AvatarStorageService {
 
     private final AvatarStorageProperties properties;
     private final UserRepository userRepository;
+
+    /** Ruta absoluta del directorio donde se almacenan los avatares. */
     private Path avatarsDirectory;
 
     /**
-     * @PostConstruct -> Se ejecuta UNA vez al arrancar la app, después de inyectar dependencias.
-     * Resolvemos la ruta, creamos el directorio si no existe, y limpiamos ficheros huérfanos.
+     * Inicializa el directorio de avatares y ejecuta la reconciliación con la base de datos.
+     * Se ejecuta automáticamente una vez al arrancar la aplicación.
+     *
+     * @throws IllegalStateException si no se puede crear el directorio
      */
     @PostConstruct
     public void init() {
@@ -57,13 +58,11 @@ public class AvatarStorageService {
     }
 
     /**
-     * Reconciliación entre BD y filesystem.
+     * Elimina los ficheros de avatar que no tienen ningún usuario asociado en la base de datos.
+     * Evita acumular imágenes huérfanas, especialmente al usar H2 en memoria donde la base
+     * de datos se vacía en cada reinicio.
      *
-     * Recorre todos los ficheros de la carpeta de avatares y borra los que no tengan
-     * un usuario asociado en la BD. Evita acumular basura cuando:
-     *   - Se usa H2 en memoria (BD vacía tras reinicio → todos los ficheros son huérfanos).
-     *   - Un usuario se borró directamente por SQL sin pasar por el servicio.
-     *   - Cualquier incoherencia entre BD y filesystem.
+     * @throws IOException si ocurre un error al listar o eliminar ficheros
      */
     private void cleanupOrphans() throws IOException {
         Set<String> registeredAvatars = new HashSet<>(userRepository.findAllAvatarPaths());
@@ -84,11 +83,12 @@ public class AvatarStorageService {
     }
 
     /**
-     * Guarda los bytes de una imagen en el directorio de avatares con un nombre único.
+     * Guarda los bytes de una imagen en el directorio de avatares con un nombre único generado por UUID.
      *
-     * @param imageBytes contenido binario de la imagen (ya procesada y redimensionada por el cliente)
-     * @param extension  extensión sin punto: "png" o "jpg"
-     * @return nombre del fichero guardado (path relativo al directorio de avatares)
+     * @param imageBytes contenido binario de la imagen
+     * @param extension  extensión del fichero sin punto ({@code "png"} o {@code "jpg"})
+     * @return nombre del fichero guardado (ruta relativa al directorio de avatares)
+     * @throws IOException si ocurre un error al escribir el fichero
      */
     public String save(byte[] imageBytes, String extension) throws IOException {
         String filename = UUID.randomUUID() + "." + extension.toLowerCase();
@@ -100,9 +100,12 @@ public class AvatarStorageService {
 
     /**
      * Lee los bytes de un avatar existente.
+     * Incluye protección contra ataques de path traversal.
      *
-     * @param filename nombre devuelto por save() (p. ej. "uuid.png")
+     * @param filename nombre del fichero devuelto por {@link #save}
      * @return contenido binario de la imagen
+     * @throws IOException       si ocurre un error al leer el fichero
+     * @throws SecurityException si la ruta resuelta apunta fuera del directorio de avatares
      */
     public byte[] load(String filename) throws IOException {
         Path file = avatarsDirectory.resolve(filename).normalize();
@@ -116,7 +119,11 @@ public class AvatarStorageService {
     }
 
     /**
-     * Borra un avatar del filesystem. No falla si el fichero ya no existe.
+     * Elimina un avatar del sistema de ficheros.
+     * No lanza excepción si el fichero ya no existe.
+     * Incluye protección contra path traversal.
+     *
+     * @param filename nombre del fichero a eliminar
      */
     public void delete(String filename) {
         if (filename == null || filename.isBlank()) return;
@@ -135,7 +142,10 @@ public class AvatarStorageService {
     }
 
     /**
-     * Resuelve el tipo MIME a partir del nombre del fichero, para el Content-Type del endpoint GET.
+     * Resuelve el tipo MIME de un fichero de avatar a partir de su extensión.
+     *
+     * @param filename nombre del fichero
+     * @return tipo MIME ({@code "image/png"}, {@code "image/jpeg"} o {@code "application/octet-stream"})
      */
     public String resolveContentType(String filename) {
         String lower = filename.toLowerCase();

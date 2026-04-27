@@ -11,65 +11,125 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 /**
- * REPOSITORIO DE TASK
+ * Repositorio de acceso a datos para la entidad {@link Task}.
+ *
+ * <p>Proporciona consultas para recuperar tareas de proyecto, tareas,
+ * subtareas, elementos en papelera y estadísticas de usuario.</p>
+ *
+ * @author Carlos
  */
 @Repository
 public interface TaskRepository extends JpaRepository<Task, Long> {
 
     // ── Tareas de proyecto ────────────────────────────────────────────────────
 
+    /**
+     * Devuelve las tareas raíz activas de un proyecto (sin tarea padre).
+     *
+     * @param projectId identificador del proyecto
+     * @return lista de tareas raíz activas del proyecto
+     */
     List<Task> findByProjectIdAndParentTaskIsNullAndDeletedFalse(Long projectId);
 
+    /**
+     * Devuelve las subtareas activas de una tarea padre.
+     *
+     * @param parentTaskId identificador de la tarea padre
+     * @return lista de subtareas activas
+     */
     List<Task> findByParentTaskIdAndDeletedFalse(Long parentTaskId);
 
+    /**
+     * Devuelve las tareas activas de un proyecto filtradas por estado.
+     *
+     * @param projectId identificador del proyecto
+     * @param status    estado por el que filtrar
+     * @return lista de tareas activas con ese estado
+     */
     List<Task> findByProjectIdAndStatusAndDeletedFalse(Long projectId, TaskStatus status);
 
+    /**
+     * Devuelve las tareas activas de un proyecto filtradas por prioridad.
+     *
+     * @param projectId identificador del proyecto
+     * @param priority  prioridad por la que filtrar
+     * @return lista de tareas activas con esa prioridad
+     */
     List<Task> findByProjectIdAndPriorityAndDeletedFalse(Long projectId, TaskPriority priority);
 
+    /**
+     * Comprueba si una tarea padre tiene subtareas activas con un estado distinto al indicado.
+     * Se usa para determinar si una tarea padre puede marcarse como completada.
+     *
+     * @param parentTaskId identificador de la tarea padre
+     * @param status       estado a excluir de la comprobación
+     * @return {@code true} si existe alguna subtarea activa con estado distinto
+     */
     boolean existsByParentTaskIdAndStatusNotAndDeletedFalse(Long parentTaskId, TaskStatus status);
 
 
-    // ── Tareas personales (sin proyecto) filtradas por usuario ────────────────
+    // ── Tareas sin proyecto ─────────────────────────────────────────────────────
 
-    /** Reemplaza findByProjectIsNullAndDeletedFalse() — ahora filtra por usuario */
-    List<Task> findByUserIdAndProjectIsNullAndDeletedFalse(Long userId);
-
-    /** Reemplaza findByProjectIsNullAndDeletedTrue() — ahora filtra por usuario */
+    /**
+     * Devuelve las tareas en papelera de un usuario.
+     *
+     * @param userId identificador del usuario
+     * @return lista de tareas personales eliminadas
+     */
     List<Task> findByUserIdAndProjectIsNullAndDeletedTrue(Long userId);
 
-    /** Reemplaza findByCategoryAndProjectIsNullAndDeletedFalse() — ahora filtra por usuario */
-    List<Task> findByUserIdAndCategoryAndProjectIsNullAndDeletedFalse(Long userId, TaskCategory category);
-
+    /**
+     * Devuelve las tareas raíz activas de un usuario (sin proyecto ni tarea padre).
+     *
+     * @param userId identificador del usuario
+     * @return lista de tareas personales raíz activas
+     */
     List<Task> findByUserIdAndProjectIsNullAndParentTaskIsNullAndDeletedFalse(Long userId);
 
+    /**
+     * Devuelve las tareas raíz activas de un usuario filtradas por categoría.
+     *
+     * @param userId   identificador del usuario
+     * @param category categoría por la que filtrar
+     * @return lista de tareas personales raíz activas con esa categoría
+     */
     List<Task> findByUserIdAndCategoryAndProjectIsNullAndParentTaskIsNullAndDeletedFalse(Long userId, TaskCategory category);
 
     // ── Papelera ──────────────────────────────────────────────────────────────
 
-    /** Tareas de proyectos del usuario en papelera */
+    /**
+     * Devuelve las tareas de proyectos del usuario que están en la papelera.
+     *
+     * @param userId identificador del usuario propietario del proyecto
+     * @return lista de tareas de proyecto eliminadas
+     */
     List<Task> findByProjectUserIdAndDeletedTrue(Long userId);
 
-    /** Para el vaciado automático del scheduler */
+    /**
+     * Devuelve las tareas en papelera cuya fecha de eliminación es anterior a la indicada.
+     * Se usa para el vaciado automático por el scheduler.
+     *
+     * @param cutoffDate fecha límite
+     * @return lista de tareas a eliminar definitivamente
+     */
     List<Task> findByDeletedTrueAndDeletedAtBefore(LocalDateTime cutoffDate);
 
-    // ── Stats de User ─────────────────────────────────────────────────────────
+    // ── Estadísticas ──────────────────────────────────────────────────────────
 
+    /**
+     * Cuenta las tareas activas de un usuario.
+     *
+     * @param userId identificador del usuario
+     * @return número de tareas activas
+     */
     long countByUserIdAndDeletedFalse(Long userId);
 
+    /**
+     * Cuenta las tareas activas de un usuario con un estado concreto.
+     *
+     * @param userId identificador del usuario
+     * @param status estado por el que filtrar
+     * @return número de tareas activas con ese estado
+     */
     long countByUserIdAndStatusAndDeletedFalse(Long userId, TaskStatus status);
-
-    // ── Queries que ya no se usan (mantenidas por compatibilidad) ─────────────
-
-    /** @deprecated Usa findByUserIdAndProjectIsNullAndDeletedFalse */
-    @Deprecated
-    List<Task> findByProjectIsNullAndDeletedFalse();
-
-    /** @deprecated Usa findByUserIdAndProjectIsNullAndDeletedTrue */
-    @Deprecated
-    List<Task> findByProjectIsNullAndDeletedTrue();
-
-    /** @deprecated Usa findByUserIdAndCategoryAndProjectIsNullAndDeletedFalse */
-    @Deprecated
-    List<Task> findByCategoryAndProjectIsNullAndDeletedFalse(TaskCategory category);
-
 }

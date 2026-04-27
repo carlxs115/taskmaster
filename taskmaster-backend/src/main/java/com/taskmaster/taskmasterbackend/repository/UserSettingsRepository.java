@@ -7,15 +7,21 @@ import org.springframework.stereotype.Repository;
 import java.util.Optional;
 
 /**
- * REPOSITORIO DE USERSETTINGS
+ * Repositorio de acceso a datos para la entidad {@link UserSettings}.
  *
- * Permite acceder a la configuración del usuario por su userId,
- * navegando la relación UserSettings -> User.
+ * <p>Permite acceder a la configuración de un usuario navegando
+ * la relación {@code UserSettings → User} mediante su identificador.</p>
  *
- * Spring genera: SELECT * FROM user_settings WHERE user_id = ?
+ * @author Carlos
  */
 @Repository
 public interface UserSettingsRepository extends JpaRepository<UserSettings, Long> {
 
+    /**
+     * Busca la configuración de un usuario por su identificador.
+     *
+     * @param userId identificador del usuario
+     * @return {@link Optional} con la configuración si existe, vacío en caso contrario
+     */
     Optional<UserSettings> findByUserId(Long userId);
 }

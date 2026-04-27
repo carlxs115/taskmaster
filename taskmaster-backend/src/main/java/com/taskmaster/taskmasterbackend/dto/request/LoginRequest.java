@@ -4,16 +4,18 @@ import jakarta.validation.constraints.NotBlank;
 import lombok.Data;
 
 /**
- * DTO DE LOGIN
+ * DTO para la solicitud de inicio de sesión.
  *
- * Solo necesita username y password.
+ * @author Carlos
  */
 @Data
 public class LoginRequest {
 
+    /** Nombre de usuario. */
     @NotBlank(message = "El nombre de usuario es obligatorio")
     private String username;
 
+    /** Contraseña del usuario. */
     @NotBlank(message = "La contraseña es obligatoria")
     private String password;
 }

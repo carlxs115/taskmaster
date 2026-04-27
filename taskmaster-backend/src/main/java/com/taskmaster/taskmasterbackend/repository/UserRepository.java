@@ -9,48 +9,49 @@ import java.util.List;
 import java.util.Optional;
 
 /**
- * REPOSITORIO DE USER
+ * Repositorio de acceso a datos para la entidad {@link User}.
  *
- * JpaRepository<User, Long> nos da gratis estos métodos sin escribir nada:
- *   - save(user)          → INSERT o UPDATE
- *   - findById(id)        → SELECT WHERE id = ?
- *   - findAll()           → SELECT * FROM users
- *   - delete(user)        → DELETE
- *   - existsById(id)      → comprueba si existe
+ * <p>Además de las operaciones CRUD heredadas de {@link JpaRepository},
+ * proporciona consultas para buscar usuarios por credenciales, verificar
+ * disponibilidad de username y email, y recuperar rutas de avatares.</p>
  *
- * Nosotros solo añadimos los métodos extra que necesitamos.
- * Spring Data JPA lee el nombre del método y genera el SQL automáticamente.
+ * @author Carlos
  */
 @Repository
 public interface UserRepository extends JpaRepository<User, Long> {
 
     /**
-     * Spring genera: SELECT * FROM users WHERE username = ?
-     * Optional → puede devolver un User o estar vacío (si no existe)
+     * Busca un usuario por su nombre de usuario.
+     *
+     * @param username nombre de usuario a buscar
+     * @return {@link Optional} con el usuario si existe, vacío en caso contrario
      */
     Optional<User> findByUsername(String username);
 
     /**
-     * Spring genera: SELECT * FROM users WHERE email = ?
-     * Optional → puede devolver un Email o estar vacío (si no existe)
-     */
-    Optional<User> findByEmail(String email);
-
-    /**
-     * Spring genera: SELECT COUNT(*) > 0 FROM users WHERE username = ?
-     * Útil para comprobar si un username ya está registrado
+     * Comprueba si ya existe un usuario con el nombre de usuario indicado.
+     * Se usa durante el registro para evitar duplicados.
+     *
+     * @param username nombre de usuario a comprobar
+     * @return {@code true} si ya está registrado, {@code false} en caso contrario
      */
     boolean existsByUsername(String username);
 
     /**
-     * Spring genera: SELECT COUNT(*) > 0 FROM users WHERE email = ?
-     * Útil para comprobar si un email ya está registrado
+     * Comprueba si ya existe un usuario con el correo electrónico indicado.
+     * Se usa durante el registro para evitar duplicados.
+     *
+     * @param email correo electrónico a comprobar
+     * @return {@code true} si ya está registrado, {@code false} en caso contrario
      */
     boolean existsByEmail(String email);
 
     /**
-     * Devuelve todos los avatarPath no nulos registrados en BD.
-     * Lo usa AvatarStorageService para detectar ficheros huérfanos al arrancar.
+     * Devuelve todas las rutas de avatar registradas en la base de datos.
+     * Se usa en {@code AvatarStorageService} al arrancar la aplicación
+     * para detectar y limpiar ficheros de imagen huérfanos.
+     *
+     * @return lista de rutas relativas de avatar no nulas
      */
     @Query("SELECT u.avatarPath FROM User u WHERE u.avatarPath IS NOT NULL")
     List<String> findAllAvatarPaths();

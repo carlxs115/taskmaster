@@ -15,20 +15,12 @@ import org.springframework.stereotype.Service;
 import java.time.LocalDate;
 
 /**
- * SERVICIO DE USER
+ * Servicio que gestiona el registro, autenticación y datos de los usuarios.
  *
- * Gestiona el registro y búsqueda de usuarios.
- * Al registrar un usuario se crea automáticamente su configuración
- * por defecto (UserSettings) con papelera de 30 días.
+ * <p>Al registrar un nuevo usuario se crea automáticamente su configuración
+ * por defecto ({@link UserSettings}) con un periodo de retención de papelera de 30 días.</p>
  *
- * @Service      → Le dice a Spring que esta clase es un servicio.
- *                 Spring la crea automáticamente y la gestiona como un Bean.
- *
- * @RequiredArgsConstructor → Lombok genera un constructor con todos los campos
- *                            marcados como "final". Así Spring inyecta las
- *                            dependencias automáticamente (inyección por constructor).
- *                            Es la forma recomendada en Spring Boot moderno,
- *                            mejor que usar @Autowired.
+ * @author Carlos
  */
 @Service
 @RequiredArgsConstructor
@@ -41,32 +33,29 @@ public class UserService {
     private final ActivityLogService activityLogService;
 
     /**
-     * Registra un nuevo usuario.
+     * Registra un nuevo usuario en el sistema.
+     * Valida que el username y el email no estén ya en uso, cifra la contraseña
+     * con BCrypt y crea la configuración por defecto del usuario.
      *
-     * Pasos:
-     * 1. Comprueba que el username no esté ya en uso
-     * 2. Comprueba que el email no esté ya en uso
-     * 3. Cifra la contraseña con BCrypt
-     * 4. Crea la configuración por defecto (UserSettings)
-     * 5. Guarda el usuario en la BD
+     * @param username  nombre de usuario elegido
+     * @param email     correo electrónico
+     * @param password  contraseña en texto plano (se cifrará antes de persistir)
+     * @param birthDate fecha de nacimiento
+     * @return usuario creado y persistido
+     * @throws RuntimeException si el username o el email ya están en uso
      */
     public User register(String username, String email, String password, LocalDate birthDate) {
 
-        // Validación: username único
         if (userRepository.existsByUsername(username)) {
             throw new RuntimeException("El nombre de usuario ya está en uso");
         }
 
-        // Validación: email único
         if (userRepository.existsByEmail(email)) {
             throw new RuntimeException("El email ya está registrado");
         }
 
-        // Creamos la configuración por defecto del usuario.
-        // trashRetentionDays = 30 por defecto (definido en la entidad con @Builder.Default)
         UserSettings settings = UserSettings.builder().build();
 
-        // Construimos el usuario con el patrón Builder que nos da Lombok
         User user = User.builder()
                 .username(username)
                 .email(email)
@@ -75,16 +64,17 @@ public class UserService {
                 .settings(settings)
                 .build();
 
-        // Vinculamos la configuración al usuario antes de guardar.
         settings.setUser(user);
 
         return userRepository.save(user);
     }
 
     /**
-     * Busca un usuario por su username.
+     * Busca un usuario por su nombre de usuario.
      *
-     * @throws RuntimeException si no existe
+     * @param username nombre de usuario a buscar
+     * @return usuario encontrado
+     * @throws RuntimeException si no existe ningún usuario con ese nombre
      */
     public User findByUsername(String username) {
         return userRepository.findByUsername(username)
@@ -92,9 +82,11 @@ public class UserService {
     }
 
     /**
-     * Busca un usuario por su id.
+     * Busca un usuario por su identificador.
      *
-     * @throws RuntimeException si no existe
+     * @param id identificador del usuario
+     * @return usuario encontrado
+     * @throws RuntimeException si no existe ningún usuario con ese identificador
      */
     public User findById(Long id) {
         return userRepository.findById(id)
@@ -102,8 +94,15 @@ public class UserService {
     }
 
     /**
-     * Actualiza username, email y fecha de nacimiento del usuario.
-     * Valida que el nuevo username/email no estén en uso por otro usuario.
+     * Actualiza el perfil del usuario (username, email y fecha de nacimiento).
+     * Valida que el nuevo username y email no estén en uso por otro usuario.
+     *
+     * @param userId    identificador del usuario
+     * @param username  nuevo nombre de usuario
+     * @param email     nuevo correo electrónico
+     * @param birthDate nueva fecha de nacimiento
+     * @return usuario actualizado
+     * @throws RuntimeException si el username o el email ya están en uso por otro usuario
      */
     public User updateProfile(Long userId, String username, String email, LocalDate birthDate) {
         User user = findById(userId);
@@ -124,6 +123,12 @@ public class UserService {
         return saved;
     }
 
+    /**
+     * Calcula y devuelve las estadísticas de actividad del usuario en tiempo real.
+     *
+     * @param userId identificador del usuario
+     * @return estadísticas del usuario
+     */
     public UserStatsResponse getStats(Long userId) {
         long total      = taskRepository.countByUserIdAndDeletedFalse(userId);
         long completed  = taskRepository.countByUserIdAndStatusAndDeletedFalse(userId, TaskStatus.DONE);
@@ -145,8 +150,12 @@ public class UserService {
     }
 
     /**
-     * Cambia la contraseña del usuario.
-     * Valida que la contraseña actual sea correcta antes de cambiarla.
+     * Cambia la contraseña del usuario tras verificar la contraseña actual.
+     *
+     * @param userId          identificador del usuario
+     * @param currentPassword contraseña actual en texto plano
+     * @param newPassword     nueva contraseña en texto plano
+     * @throws RuntimeException si la contraseña actual no es correcta
      */
     public void changePassword(Long userId, String currentPassword, String newPassword) {
         User user = findById(userId);
@@ -161,9 +170,13 @@ public class UserService {
     }
 
     /**
-     * Elimina permanentemente la cuenta del usuario y todos sus datos.
-     * Gracias al cascade ALL en User, se borran en cascada:
-     * proyectos, tareas y settings.
+     * Elimina permanentemente la cuenta del usuario y todos sus datos asociados.
+     * Gracias al {@code cascade = ALL} en {@link com.taskmaster.taskmasterbackend.model.User},
+     * se eliminan en cascada sus proyectos, tareas y configuración.
+     *
+     * @param userId   identificador del usuario
+     * @param password contraseña actual para confirmar la operación
+     * @throws RuntimeException si la contraseña no es correcta
      */
     public void deleteAccount(Long userId, String password) {
         User user = findById(userId);

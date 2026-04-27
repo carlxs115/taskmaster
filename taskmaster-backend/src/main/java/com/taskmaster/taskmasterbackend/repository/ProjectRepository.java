@@ -8,36 +8,56 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 /**
- * REPOSITORIO DE PROJECT
+ * Repositorio de acceso a datos para la entidad {@link Project}.
+ *
+ * <p>Incluye consultas para gestionar proyectos activos, proyectos en la papelera
+ * y verificaciones de pertenencia para control de acceso.</p>
+ *
+ * @author Carlos
  */
 @Repository
 public interface ProjectRepository extends JpaRepository<Project, Long> {
 
     /**
-     * Devuelve todos los proyectos activos de un usuario concreto (no eliminados).
-     * Spring genera: SELECT * FROM projects WHERE user_id = ? AND deleted = false
+     * Devuelve todos los proyectos activos (no eliminados) de un usuario.
+     *
+     * @param userId identificador del usuario
+     * @return lista de proyectos activos del usuario
      */
     List<Project> findByUserIdAndDeletedFalse(Long userId);
 
     /**
-     * Proyectos en la papelera de un usuario.
-     * Spring genera: SELECT * FROM projects WHERE user_id = ? AND deleted = true
+     * Devuelve los proyectos en la papelera de un usuario.
+     *
+     * @param userId identificador del usuario
+     * @return lista de proyectos eliminados del usuario
      */
     List<Project> findByUserIdAndDeletedTrue(Long userId);
 
     /**
-     * Proyectos en papelera cuya fecha de eliminación es anterior a una fecha dada.
-     * Se usa para el vaciado automático según el periodo configurado por el usuario.
-     * Spring genera: SELECT * FROM projects WHERE deleted = true AND deleted_at < ?
+     * Devuelve los proyectos en papelera cuya fecha de eliminación es anterior a la indicada.
+     * Se usa para el vaciado automático según el periodo de retención configurado por el usuario.
+     *
+     * @param cutoffDate fecha límite; se devuelven los proyectos eliminados antes de esta fecha
+     * @return lista de proyectos a eliminar definitivamente
      */
     List<Project> findByDeletedTrueAndDeletedAtBefore(LocalDateTime cutoffDate);
 
     /**
      * Comprueba si un proyecto pertenece a un usuario concreto.
-     * Útil para seguridad: evitar que un usuario acceda a proyectos ajenos.
-     * Spring genera: SELECT COUNT(*) > 0 FROM projects WHERE id = ? AND user_id = ?
+     * Se usa para evitar que un usuario acceda a proyectos ajenos.
+     *
+     * @param id     identificador del proyecto
+     * @param userId identificador del usuario
+     * @return {@code true} si el proyecto pertenece al usuario, {@code false} en caso contrario
      */
     boolean existsByIdAndUserId(Long id, Long userId);
 
+    /**
+     * Cuenta los proyectos activos de un usuario.
+     *
+     * @param userId identificador del usuario
+     * @return número de proyectos activos
+     */
     long countByUserIdAndDeletedFalse(Long userId);
 }

@@ -18,11 +18,16 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * SERVICIO DE TASK
+ * Servicio que gestiona la lógica de negocio de las tareas.
  *
- * Contiene la lógica de negocio más importante de TaskMaster,
- * incluyendo la regla: "no se puede completar una tarea si tiene subtareas pendientes".
- * Incluye soft delete - las tareas eliminadas van a la papelera única del usuario en vez de borrarse físicamente.
+ * <p>Implementa el ciclo de vida completo de una tarea: creación, edición,
+ * cambio de estado, borrado lógico (soft delete), restauración y eliminación
+ * definitiva. Gestiona también las subtareas de forma recursiva.</p>
+ *
+ * <p>Regla de negocio principal: no se puede marcar una tarea como completada
+ * si tiene subtareas pendientes.</p>
+ *
+ * @author Carlos
  */
 @Service
 @RequiredArgsConstructor
@@ -36,14 +41,21 @@ public class TaskService {
     // ── Lectura ───────────────────────────────────────────────────────────────
 
     /**
-     * Tareas personales activas del usuario (sin proyecto).
+     * Devuelve las tareas personales raíz activas de un usuario (sin proyecto ni tarea padre).
+     *
+     * @param userId identificador del usuario
+     * @return lista de tareas personales activas
      */
     public List<Task> getPersonalTasks(Long userId) {
         return taskRepository.findByUserIdAndProjectIsNullAndParentTaskIsNullAndDeletedFalse(userId);
     }
 
     /**
-     * Tareas raíz de un proyecto (sin tarea padre, no eliminadas).
+     * Devuelve las tareas raíz activas de un proyecto, validando que pertenece al usuario.
+     *
+     * @param projectId identificador del proyecto
+     * @param userId    identificador del usuario
+     * @return lista de tareas raíz activas del proyecto
      */
     public List<Task> getTasksByProject(Long projectId, Long userId) {
         projectService.getProjectByIdAndUser(projectId, userId);
@@ -51,14 +63,21 @@ public class TaskService {
     }
 
     /**
-     * Subtareas activas de una tarea concreta.
+     * Devuelve las subtareas activas de una tarea.
+     *
+     * @param parentTaskId identificador de la tarea padre
+     * @return lista de subtareas activas
      */
     public List<Task> getSubTasks(Long parentTaskId) {
         return taskRepository.findByParentTaskIdAndDeletedFalse(parentTaskId);
     }
 
     /**
-     * Papelera del usuario: tareas de sus proyectos + tareas personales eliminadas.
+     * Devuelve todas las tareas en la papelera del usuario,
+     * tanto tareas de proyectos como tareas personales.
+     *
+     * @param userId identificador del usuario
+     * @return lista combinada de tareas eliminadas
      */
     public List<Task> getDeletedTasksByUser(Long userId) {
         List<Task> projectTasks  = taskRepository.findByProjectUserIdAndDeletedTrue(userId);
@@ -69,7 +88,12 @@ public class TaskService {
     }
 
     /**
-     * Filtra tareas de un proyecto por estado.
+     * Devuelve las tareas activas de un proyecto filtradas por estado.
+     *
+     * @param projectId identificador del proyecto
+     * @param status    estado por el que filtrar
+     * @param userId    identificador del usuario
+     * @return lista de tareas activas con ese estado
      */
     public List<Task> getTasksByStatus(Long projectId, TaskStatus status, Long userId) {
         projectService.getProjectByIdAndUser(projectId, userId);
@@ -77,7 +101,12 @@ public class TaskService {
     }
 
     /**
-     * Filtra tareas de un proyecto por prioridad.
+     * Devuelve las tareas activas de un proyecto filtradas por prioridad.
+     *
+     * @param projectId identificador del proyecto
+     * @param priority  prioridad por la que filtrar
+     * @param userId    identificador del usuario
+     * @return lista de tareas activas con esa prioridad
      */
     public List<Task> getTasksByPriority(Long projectId, TaskPriority priority, Long userId) {
         projectService.getProjectByIdAndUser(projectId, userId);
@@ -85,7 +114,11 @@ public class TaskService {
     }
 
     /**
-     * Tareas activas de una categoría sin proyecto, filtradas por usuario.
+     * Devuelve las tareas personales raíz activas de un usuario filtradas por categoría.
+     *
+     * @param category categoría por la que filtrar
+     * @param userId   identificador del usuario
+     * @return lista de tareas activas con esa categoría
      */
     public List<Task> getTasksByCategory(TaskCategory category, Long userId) {
         return taskRepository.findByUserIdAndCategoryAndProjectIsNullAndParentTaskIsNullAndDeletedFalse(userId, category);
@@ -94,7 +127,18 @@ public class TaskService {
     // ── Escritura ─────────────────────────────────────────────────────────────
 
     /**
-     * Crea una nueva tarea. Siempre asigna el usuario propietario.
+     * Crea una nueva tarea o subtarea y registra el evento en el historial.
+     * Si pertenece a un proyecto, hereda su categoría automáticamente.
+     *
+     * @param title       título de la tarea
+     * @param description descripción opcional
+     * @param priority    prioridad; si es {@code null} se usa {@code MEDIUM}
+     * @param dueDate     fecha límite opcional
+     * @param projectId   proyecto al que pertenece; {@code null} si es tarea personal
+     * @param parentTaskId tarea padre; {@code null} si es tarea raíz
+     * @param category    categoría; ignorada si pertenece a un proyecto
+     * @param userId      identificador del usuario propietario
+     * @return tarea creada y persistida
      */
     public Task createTask(String title, String description, TaskPriority priority,
                            LocalDate dueDate, Long projectId, Long parentTaskId,
@@ -110,7 +154,7 @@ public class TaskService {
                 .status(TaskStatus.TODO)
                 .dueDate(dueDate)
                 .deleted(false)
-                .user(user);  // ← siempre se asigna el propietario
+                .user(user);
 
         if (projectId != null) {
             Project project = projectService.getProjectByIdAndUser(projectId, userId);
@@ -127,7 +171,6 @@ public class TaskService {
 
         Task saved = taskRepository.save(builder.build());
 
-        // determinar si es tarea o subtarea
         boolean isSubtask = parentTaskId != null;
         activityLogService.log(
                 userId,
@@ -140,7 +183,16 @@ public class TaskService {
     }
 
     /**
-     * Actualiza los campos editables de una tarea.
+     * Actualiza los campos editables de una tarea y registra el primer cambio relevante detectado.
+     *
+     * @param taskId      identificador de la tarea
+     * @param title       nuevo título
+     * @param description nueva descripción
+     * @param status      nuevo estado
+     * @param priority    nueva prioridad
+     * @param dueDate     nueva fecha límite
+     * @param userId      identificador del usuario
+     * @return tarea actualizada
      */
     public Task updateTask(Long taskId, String title, String description, TaskStatus status,
                            TaskPriority priority, LocalDate dueDate, Long userId) {
@@ -184,8 +236,14 @@ public class TaskService {
     }
 
     /**
-     * Cambia el estado de una tarea.
-     * Regla: no se puede marcar DONE si tiene subtareas pendientes.
+     * Cambia el estado de una tarea y registra el evento en el historial.
+     * No permite marcar una tarea como completada si tiene subtareas pendientes.
+     *
+     * @param taskId    identificador de la tarea
+     * @param newStatus nuevo estado
+     * @param userId    identificador del usuario
+     * @return tarea actualizada
+     * @throws RuntimeException si se intenta completar una tarea con subtareas pendientes
      */
     public Task changeStatus(Long taskId, TaskStatus newStatus, Long userId) {
         Task task = findById(taskId);
@@ -217,7 +275,10 @@ public class TaskService {
     }
 
     /**
-     * Soft delete: envía la tarea y sus subtareas a la papelera.
+     * Envía una tarea y todas sus subtareas a la papelera (soft delete recursivo).
+     *
+     * @param taskId identificador de la tarea
+     * @param userId identificador del usuario
      */
     public void deleteTask(Long taskId, Long userId) {
         Task task = findById(taskId);
@@ -234,6 +295,11 @@ public class TaskService {
         );
     }
 
+    /**
+     * Marca una tarea y todas sus subtareas como eliminadas de forma recursiva.
+     *
+     * @param task tarea a eliminar
+     */
     private void softDeleteRecursive(Task task) {
         task.setDeleted(true);
         task.setDeletedAt(LocalDateTime.now());
@@ -243,7 +309,12 @@ public class TaskService {
     }
 
     /**
-     * Restaura una tarea de la papelera.
+     * Restaura una tarea desde la papelera.
+     *
+     * @param taskId identificador de la tarea
+     * @param userId identificador del usuario
+     * @return tarea restaurada
+     * @throws RuntimeException si la tarea no se encuentra en la papelera
      */
     public Task restoreTask(Long taskId, Long userId) {
         Task task = taskRepository.findById(taskId)
@@ -264,7 +335,9 @@ public class TaskService {
     }
 
     /**
-     * Vaciado automático: borra físicamente las tareas expiradas.
+     * Elimina físicamente las tareas en papelera cuya antigüedad supera el periodo de retención.
+     *
+     * @param retentionDays días de retención configurados en {@link com.taskmaster.taskmasterbackend.model.UserSettings}
      */
     public void purgeExpiredTasks(int retentionDays) {
         LocalDateTime cutoff = LocalDateTime.now().minusDays(retentionDays);
@@ -272,11 +345,24 @@ public class TaskService {
         taskRepository.deleteAll(expired);
     }
 
+    /**
+     * Busca una tarea por su identificador.
+     *
+     * @param taskId identificador de la tarea
+     * @return tarea encontrada
+     * @throws RuntimeException si no existe ninguna tarea con ese identificador
+     */
     public Task findById(Long taskId) {
         return taskRepository.findById(taskId)
                 .orElseThrow(() -> new RuntimeException("Tarea no encontrada con id: " + taskId));
     }
 
+    /**
+     * Elimina definitivamente una tarea de la base de datos y registra el evento.
+     *
+     * @param taskId identificador de la tarea
+     * @param userId identificador del usuario
+     */
     public void deletePermanently(Long taskId, Long userId) {
         Task task = findById(taskId);
         if (task.getProject() != null) {

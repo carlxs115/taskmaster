@@ -8,26 +8,30 @@ import lombok.Data;
 import java.time.LocalDate;
 
 /**
- * DTO DE REGISTRO
+ * DTO para la solicitud de registro de un nuevo usuario.
  *
- * Contiene los datos que el frontend envía para registrar un usuario.
- * Usamos un DTO en vez de la entidad directamente por dos razones:
- *      1. Seguridad - no exponemos campos internos como id o createdAt
- *      2. Flexibilidad - podemos validar los datos antes de procesarlos
+ * <p>Recibe los datos del frontend sin exponer campos internos de la entidad
+ * como {@code id} o {@code createdAt}, permitiendo validarlos antes de procesarlos.</p>
+ *
+ * @author Carlos
  */
 @Data
 public class RegisterRequest {
 
+    /** Nombre de usuario elegido. */
     @NotBlank(message = "El nombre de usuario es obligatorio")
     private String username;
 
+    /** Correo electrónico del usuario. */
     @Email(message = "El email no es válido")
     @NotBlank(message = "El email es obligatorio")
     private String email;
 
+    /** Contraseña del usuario. */
     @NotBlank(message = "La contraseña es obligatoria")
     private String password;
 
+    /** Fecha de nacimiento del usuario. */
     @NotNull(message = "La fecha de nacimiento es obligatoria")
     private LocalDate birthDate;
 }
