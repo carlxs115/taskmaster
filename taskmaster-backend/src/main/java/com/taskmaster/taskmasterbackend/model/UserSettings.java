@@ -1,14 +1,17 @@
 package com.taskmaster.taskmasterbackend.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.taskmaster.taskmasterbackend.model.enums.ThemeType;
 import jakarta.persistence.*;
 import lombok.*;
 
 /**
- * ENTIDAD USERSETTINGS
+ * Entidad que almacena las preferencias personales de cada usuario.
  *
- * Almacena las preferencias de cada usuario.
- * Relación OneToOne con User — cada usuario tiene exactamente una configuración.
+ * <p>Mantiene una relación uno a uno con {@link User}. Se crea automáticamente
+ * al registrar un nuevo usuario y se elimina en cascada si el usuario es borrado.</p>
+ *
+ * @author Carlos
  */
 @Entity
 @Table(name = "user_settings")
@@ -18,16 +21,12 @@ import lombok.*;
 @AllArgsConstructor
 public class UserSettings {
 
+    /** Identificador único de la configuración, generado automáticamente por la base de datos. */
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    /**
-     * Relación con User.
-     * @OneToOne    → Un usuario tiene una sola configuración y viceversa
-     * @JoinColumn  → Crea la columna "user_id" en la tabla "user_settings"
-     *                que apunta al usuario propietario
-     */
+    /** Usuario propietario de esta configuración. Cada usuario tiene exactamente una configuración. */
     @JsonIgnore
     @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false, unique = true)
@@ -36,15 +35,21 @@ public class UserSettings {
     private User user;
 
     /**
-     * Días que se guardan los elementos en la papelera antes de borrarse.
-     * El usuario puede elegir entre 7, 15 o 30 días desde ajustes.
-     * Por defecto: 30 días.
+     * Número de días que los elementos permanecen en la papelera antes de eliminarse definitivamente.
+     * El usuario puede elegir entre 7, 15 o 30 días desde la pantalla de ajustes.
+     * Valor por defecto: 30 días.
      */
     @Column(nullable = false)
     @Builder.Default
     private int trashRetentionDays = 30;
 
+    /**
+     * Tema visual seleccionado por el usuario.
+     * Se almacena como el nombre del enum {@link com.taskmaster.taskmasterbackend.model.enums.ThemeType}.
+     * Valor por defecto: {@code "AMATISTA"}.
+     */
+    @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     @Builder.Default
-    private String theme = "AMATISTA";
+    private ThemeType theme = ThemeType.AMATISTA;
 }

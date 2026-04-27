@@ -1,8 +1,17 @@
 package com.taskmaster.taskmasterbackend.model.enums;
 
+/**
+ * Enumeración de los niveles de prioridad de una tarea o proyecto.
+ *
+ * @author Carlos
+ */
 public enum TaskPriority {
-    LOW,        // Baja
-    MEDIUM,     // Media
-    HIGH,       // Alta
-    URGENT      // Urgente
+    /** Prioridad baja. */
+    LOW,
+    /** Prioridad media. */
+    MEDIUM,
+    /** Prioridad alta. */
+    HIGH,
+    /** Prioridad urgente. */
+    URGENT
 }

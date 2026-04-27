@@ -12,9 +12,13 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 /**
- * ENTIDAD PROJECT
+ * Entidad que representa un proyecto dentro de la aplicación.
  *
- * Un proyecto pertenece a un usuario y contiene múltiples tareas.
+ * <p>Un proyecto pertenece a un único usuario y puede contener múltiples tareas.
+ * Soporta borrado lógico (soft delete) mediante el campo {@code deleted},
+ * lo que permite enviar proyectos a la papelera antes de eliminarlos definitivamente.</p>
+ *
+ * @author Carlos
  */
 @Entity
 @Table(name = "projects")
@@ -24,52 +28,50 @@ import java.util.List;
 @AllArgsConstructor
 public class Project {
 
-    /**
-     * @Id                  → Es la clave primaria de la tabla
-     * @GeneratedValue      → La BD genera el valor automáticamente (autoincremental)
-     * GenerationType.IDENTITY → Delega la generación al motor de BD (H2, PostgreSQL...)
-     */
+    /** Identificador único del proyecto, generado automáticamente por la base de datos. */
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    /** Nombre del proyecto. No puede estar vacío. */
     @Column(nullable = false)
     @NotBlank(message = "El nombre del proyecto es obligatorio")
     private String name;
 
+    /** Descripción opcional del proyecto. Máximo 500 caracteres. */
     @Column(length = 500)
     private String description;
 
+    /** Fecha y hora de creación. Se asigna automáticamente al persistir y no puede modificarse. */
     @Column(updatable = false)
     private LocalDateTime createdAt;
 
+    /** Estado actual del proyecto (TODO, IN_PROGRESS, DONE, etc.). */
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private TaskStatus status;
 
+    /** Prioridad del proyecto (LOW, MEDIUM, HIGH, URGENT). */
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private TaskPriority priority;
 
+    /** Categoría del proyecto (PERSONAL, ESTUDIOS, TRABAJO). */
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private TaskCategory category;
+
     /**
-     * RELACIÓN CON USER (ManyToOne)
-     *
+     * Usuario propietario del proyecto.
      * Muchos proyectos pueden pertenecer a un mismo usuario.
-     *
-     * @ManyToOne  → Muchos proyectos → Un usuario
-     * @JoinColumn → Define la columna de la clave foránea en la tabla "projects"
-     *               En la BD se creará una columna llamada "user_id"
-     *               que apunta al id de la tabla "users"
      */
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
 
     /**
-     * RELACIÓN CON TASK (OneToMany)
-     *
-     * Un proyecto puede tener múltiples tareas.
-     * Si se borra el proyecto, se borran todas sus tareas (cascade).
+     * Lista de tareas asociadas al proyecto.
+     * Si el proyecto es eliminado, todas sus tareas se eliminan en cascada.
      */
     @JsonIgnore
     @OneToMany(mappedBy = "project", cascade = CascadeType.ALL, orphanRemoval = true)
@@ -78,34 +80,28 @@ public class Project {
     private List<Task> tasks;
 
     /**
-     * @PrePersist → Se ejecuta automáticamente justo antes de guardar en la BD por primera vez
-     * Así no tenemos que asignar la fecha manualmente nunca.
+     * Indica si el proyecto ha sido enviado a la papelera.
+     * Cuando es {@code true}, el proyecto no aparece en las listas normales.
+     */
+    @Column(nullable = false)
+    @Builder.Default
+    private boolean deleted = false;
+
+    /**
+     * Fecha y hora en que el proyecto fue enviado a la papelera.
+     * Se usa junto con las preferencias del usuario para calcular
+     * cuándo debe eliminarse definitivamente.
+     */
+    private LocalDateTime deletedAt;
+
+    /**
+     * Asigna automáticamente la fecha y hora de creación antes de persistir la entidad.
      */
     @PrePersist
     protected void onCreate(){
         this.createdAt = LocalDateTime.now();
     }
 
-    /**
-     * SOFT DELETE — Papelera de reciclaje
-     *
-     * En vez de borrar físicamente el proyecto de la BD,
-     * lo marcamos como eliminado con deleted = true.
-     * deletedAt guarda cuándo fue enviado a la papelera,
-     * para calcular cuándo debe borrarse definitivamente
-     * según las preferencias del usuario.
-     */
-    @Column(nullable = false)
-    @Builder.Default
-    private boolean deleted = false;
 
-    private LocalDateTime deletedAt;
 
-    /**
-     * Categoría del proyecto.
-     * Todas las tareas y subtareas de este proyecto heredarán esta categoría.
-     */
-    @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
-    private TaskCategory category;
 }

@@ -1,6 +1,7 @@
 package com.taskmaster.taskmasterbackend.service;
 
 import com.taskmaster.taskmasterbackend.model.UserSettings;
+import com.taskmaster.taskmasterbackend.model.enums.ThemeType;
 import com.taskmaster.taskmasterbackend.repository.UserSettingsRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -42,7 +43,7 @@ public class UserSettingsService {
         return userSettingsRepository.save(settings);
     }
 
-    public UserSettings updateTheme(Long userId, String theme) {
+    public UserSettings updateTheme(Long userId, ThemeType theme) {
         UserSettings settings = getSettingsByUserId(userId);
         settings.setTheme(theme);
         return userSettingsRepository.save(settings);

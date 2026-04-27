@@ -12,10 +12,16 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 /**
- * ENTIDAD TASK
+ * Entidad central de TaskMaster que representa una tarea.
  *
- * Es la entidad central de TaskMaster.
- * Una tarea puede pertenecer a un proyecto y una tarea puede tener subtareas (que son otras Tasks).
+ * <p>Una tarea puede ser independiente (personal) o pertenecer a un proyecto.
+ * También puede actuar como tarea padre conteniendo subtareas, que son a su vez
+ * instancias de {@code Task} enlazadas mediante una relación recursiva.</p>
+ *
+ * <p>Soporta borrado lógico (soft delete) mediante el campo {@code deleted},
+ * lo que permite enviar tareas a la papelera antes de eliminarlas definitivamente.</p>
+ *
+ * @author Carlos
  */
 @Entity
 @Table(name = "tasks")
@@ -25,47 +31,46 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 public class Task {
 
-    /**
-     * @Id                  → Es la clave primaria de la tabla
-     * @GeneratedValue      → La BD genera el valor automáticamente (autoincremental)
-     * GenerationType.IDENTITY → Delega la generación al motor de BD (H2, PostgreSQL...)
-     */
+    /** Identificador único de la tarea, generado automáticamente por la base de datos. */
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    /** Título de la tarea. No puede estar vacío. */
     @Column(nullable = false)
     @NotBlank(message = "El título de la tarea es obligatorio")
     private String title;
 
+    /** Descripción opcional de la tarea. Máximo 1000 caracteres. */
     @Column(length = 1000)
     private String description;
 
-    /**
-     * @Enumerated(EnumType.STRING)
-     *
-     * Le dice a JPA que guarde el enum como texto en la BD ("TODO", "IN_PROGRESS"...) y no como número (0, 1, 2...).
-     */
+    /** Estado actual de la tarea (TODO, IN_PROGRESS, DONE, etc.). Se almacena como texto en la base de datos. */
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private TaskStatus status;
 
+    /** Prioridad de la tarea (LOW, MEDIUM, HIGH, URGENT). Se almacena como texto en la base de datos. */
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private TaskPriority priority;
 
-    // Fecha límite de la tarea (solo fecha, sin horas)
+    /** Categoría de la tarea (PERSONAL, ESTUDIOS, TRABAJO). Si pertenece a un proyecto, hereda su categoría. */
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private TaskCategory category;
+
+    /** Fecha límite de la tarea. Solo almacena la fecha, sin hora. */
     private LocalDate dueDate;
 
+    /** Fecha y hora de creación. Se asigna automáticamente al persistir y no puede modificarse. */
     @Column(updatable = false)
     private LocalDateTime createdAt;
 
     /**
-     * PROPIETARIO DE LA TAREA
-     *
-     * Siempre se rellena al crear la tarea, independientemente de si
-     * tiene proyecto o no. Es la única forma de saber a quién pertenece
-     * una tarea personal (project = null).
+     * Usuario propietario de la tarea.
+     * Siempre se rellena al crear la tarea, tanto si tiene proyecto asociado como si no.
+     * Es la única forma de identificar al propietario de una tarea ({@code project = null}).
      */
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)
@@ -74,25 +79,18 @@ public class Task {
     private User user;
 
     /**
-     * RELACIÓN CON PROJECT (ManyToOne) - Opcional
-     * Muchas tareas pertenecen a un proyecto.
-     *
-     * Si project es null -> es una tarea personal (sin proyecto).
-     * Si project tiene valor -> pertenece a un proyecto.
-     * nullable = true -> permite tareas sin proyecto en la BD.
+     * Proyecto al que pertenece la tarea. Es opcional.
+     * Si es {@code null}, la tarea no tiene proyecto.
+     * Si tiene valor, la tarea pertenece a ese proyecto.
      */
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "project_id", nullable = true)
     private Project project;
 
     /**
-     * RELACIÓN CON SÍ MISMA — SUBTAREAS (ManyToOne)
-     *
-     * Una tarea puede tener una tarea padre (parentTask).
-     * Si parentTask es null → es una tarea raíz (no es subtarea de nadie).
-     * Si parentTask tiene valor → es subtarea de esa tarea.
-     *
-     * En la BD se crea una columna "parent_task_id" en la tabla "tasks" que apunta a otra fila de la misma tabla.
+     * Tarea padre de esta subtarea. Es opcional.
+     * Si es {@code null}, la tarea es una tarea raíz (no es subtarea de ninguna otra).
+     * Si tiene valor, esta tarea es subtarea de la tarea referenciada.
      */
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "parent_task_id")
@@ -100,18 +98,8 @@ public class Task {
 
     /**
      * Lista de subtareas de esta tarea.
-     * mappedBy = "parentTask" → la relación ya está definida arriba
-     *
-     * @ToString.Exclude → Le dice a Lombok que NO incluya este campo al generar
-     *                     el toString(). Sin esto, al imprimir una Task,
-     *                     Lombok intentaría imprimir sus subTasks, que a su vez
-     *                     intentarían imprimir sus propias subTasks... entrando
-     *                     en un bucle infinito (StackOverflowError).
-     *
-     * @EqualsAndHashCode.Exclude → Le dice a Lombok que NO incluya este campo al
-     *                     generar equals() y hashCode(). Por la misma razón:
-     *                     comparar una Task con sus subTasks que contienen
-     *                     referencias a la Task padre causaría recursión infinita.
+     * Si la tarea padre es eliminada, todas sus subtareas se eliminan en cascada.
+     * Excluida de {@code toString()}, {@code equals()} y {@code hashCode()} para evitar recursión infinita.
      */
     @OneToMany(mappedBy = "parentTask", cascade = CascadeType.ALL, orphanRemoval = true)
     @ToString.Exclude
@@ -119,63 +107,28 @@ public class Task {
     private List<Task> subTasks;
 
     /**
-     * RELACIÓN CON TAG (ManyToMany)
-     *
-     * Una tarea puede tener múltiples etiquetas.
-     * Una etiqueta puede estar en múltiples tareas.
-     *
-     * @JoinTable → JPA crea automáticamente una tabla intermedia llamada "task_tags"
-     *              con dos columnas: task_id y tag_id
-     *
-     * @ToString.Exclude / @EqualsAndHashCode.Exclude → Mismo motivo que en subTasks.
-     *                     Tag también tiene una lista de Tasks, por lo que sin estas
-     *                     anotaciones Lombok generaría: Task → tags → Tag → tasks →
-     *                     Task → tags... bucle infinito.
-     */
-    @ManyToMany
-    @JoinTable(
-            name = "task_tags",
-            joinColumns = @JoinColumn(name = "task_id"),
-            inverseJoinColumns = @JoinColumn(name = "tag_id")
-    )
-    @ToString.Exclude
-    @EqualsAndHashCode.Exclude
-    private List<Tag> tags;
-
-    /**
-     * SOFT DELETE — Papelera de reciclaje
-     *
-     * Mismo mecanismo que en Project.
-     * Si deleted = true → la tarea está en la papelera.
-     * Si deleted = false → la tarea está activa.
+     * Indica si la tarea ha sido enviada a la papelera.
+     * Cuando es {@code true}, la tarea no aparece en las listas normales.
      */
     @Column(nullable = false)
     @Builder.Default
     private boolean deleted = false;
 
+    /**
+     * Fecha y hora en que la tarea fue enviada a la papelera.
+     * Se usa junto con las preferencias del usuario para calcular
+     * cuándo debe eliminarse definitivamente.
+     */
     private LocalDateTime deletedAt;
 
     /**
-     * Categoría de la tarea.
-     * Si la tarea pertenece a un proyecto, hereda su categoría automáticamente.
-     * Si es una tarea sin proyecto, el usuario la asigna manualmente.
-     */
-    @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
-    private TaskCategory category;
-
-    /**
-     * @PrePersist → Se ejecuta automáticamente justo antes de guardar en la BD por primera vez
-     * Así no tenemos que asignar la fecha manualmente nunca
-     * Y si no se especifican los valores Estado u Prioridad se inicializan como:
-     *      - Estado = Pendiente
-     *      - Prioridad = Media
+     * Asigna automáticamente la fecha de creación antes de persistir la entidad.
+     * Si no se especifican estado o prioridad, se inicializan con los valores por defecto:
+     * {@code status = TODO} y {@code priority = MEDIUM}.
      */
     @PrePersist
     protected void onCreate(){
         this.createdAt = LocalDateTime.now();
-
-        // Valores por defecto si no se especifican
         if (this.status == null) this.status = TaskStatus.TODO;
         if (this.priority == null) this.priority = TaskPriority.MEDIUM;
     }

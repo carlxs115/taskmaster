@@ -1,6 +1,7 @@
 package com.taskmaster.taskmasterbackend.controller;
 
 import com.taskmaster.taskmasterbackend.model.UserSettings;
+import com.taskmaster.taskmasterbackend.model.enums.ThemeType;
 import com.taskmaster.taskmasterbackend.security.SecurityUtils;
 import com.taskmaster.taskmasterbackend.service.UserSettingsService;
 import lombok.RequiredArgsConstructor;
@@ -41,7 +42,7 @@ public class UserSettingsController {
 
     @PatchMapping("/theme")
     public ResponseEntity<UserSettings> updateTheme(
-            @RequestParam String theme,
+            @RequestParam ThemeType theme,
             @AuthenticationPrincipal UserDetails userDetails) {
         Long userId = securityUtils.getUserId(userDetails);
         return ResponseEntity.ok(userSettingsService.updateTheme(userId, theme));
