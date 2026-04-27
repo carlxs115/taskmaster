@@ -373,6 +373,8 @@ public class ProjectDetailController {
         Scene scene = new Scene(root);
         applyThemeToScene(scene);
         dialog.setScene(scene);
+        dialog.centerOnScreen();
+        System.out.println("centrado");
         dialog.showAndWait();
     }
 

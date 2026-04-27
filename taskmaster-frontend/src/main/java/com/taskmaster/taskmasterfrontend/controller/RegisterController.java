@@ -125,7 +125,10 @@ public class RegisterController {
             scene.getStylesheets().add(css);
 
             Stage stage = (Stage) usernameField.getScene().getWindow();
+            stage.setWidth(400);
+            stage.setHeight(520);
             stage.setScene(scene);
+            stage.centerOnScreen();
         } catch (Exception e) {
             e.printStackTrace();
         }

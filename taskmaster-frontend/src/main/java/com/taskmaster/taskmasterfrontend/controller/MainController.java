@@ -1656,6 +1656,13 @@ public class MainController {
                             "/com/taskmaster/taskmasterfrontend/themes/theme-amatista.css")
                     .toExternalForm());
             stage.setScene(scene);
+            stage.setMinWidth(400);
+            stage.setMinHeight(520);
+            stage.setMaximized(false);
+            stage.setWidth(400);
+            stage.setHeight(520);
+            stage.setScene(scene);
+            stage.centerOnScreen();
             stage.setTitle("TaskMaster");
         } catch (IOException e) {
             showAlert("error.title", "error.logout");
@@ -1848,6 +1855,8 @@ public class MainController {
         Scene scene = new Scene(root);
         applyThemeToScene(scene);
         dialog.setScene(scene);
+        dialog.centerOnScreen();
+        System.out.println("centrado");
         dialog.showAndWait();
     }
 

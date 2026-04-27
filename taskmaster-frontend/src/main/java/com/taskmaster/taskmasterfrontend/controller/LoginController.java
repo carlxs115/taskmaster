@@ -160,6 +160,9 @@ public class LoginController {
 
             Stage stage = (Stage) usernameField.getScene().getWindow();
             stage.setScene(scene);
+            stage.setMaximized(true);
+            stage.setMinWidth(900);
+            stage.setMinHeight(600);
             stage.setTitle("TaskMaster");
         } catch (Exception e) {
             Platform.runLater(() -> {
@@ -189,7 +192,10 @@ public class LoginController {
             scene.getStylesheets().add(css);
 
             Stage stage = (Stage) usernameField.getScene().getWindow();
+            stage.setWidth(400);
+            stage.setHeight(660);
             stage.setScene(scene);
+            stage.centerOnScreen();
         } catch (IOException e) {
             showError(lm.get("error.open.dialog"));
         }

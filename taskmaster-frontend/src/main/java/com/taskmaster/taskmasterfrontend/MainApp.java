@@ -37,6 +37,11 @@ public class MainApp extends Application {
 
         stage.setTitle("TaskMaster");
         stage.setScene(scene);
+        stage.setWidth(400);
+        stage.setHeight(520);
+        stage.setMinWidth(400);
+        stage.setMinHeight(520);
+        stage.centerOnScreen();
         stage.show();
     }
 
