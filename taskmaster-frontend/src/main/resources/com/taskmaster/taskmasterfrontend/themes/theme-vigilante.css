@@ -3,8 +3,9 @@
    TaskMaster — Negro con acentos amarillo neón
    ===================================================== */
 
+/* ── Variables globales ── */
 .root {
-    /* Fondos — negro puro */
+    /* Fondos */
     -tm-bg-app:          #080808;
     -tm-bg-topbar:       #000000;
     -tm-bg-sidebar:      #000000;
@@ -15,13 +16,11 @@
     -tm-bg-active:       #2a2a00;
     -tm-bg-badge:        #2a2a00;
     -tm-bg-scroll:       #141414;
-
-    /* Acentos — amarillo neón */
+    /* Acentos */
     -tm-accent:          #facc15;
     -tm-accent-light:    #fde047;
     -tm-accent-dark:     #ca8a04;
     -tm-accent-subtle:   #2a2a00;
-
     /* Textos */
     -tm-text-primary:    #f0f0f0;
     -tm-text-secondary:  #aaaaaa;
@@ -30,23 +29,19 @@
     -tm-text-on-accent:  #000000;
     -tm-text-label:      #444444;
     -tm-text-header:     #f0f0f0;
-
-    /* Bordes — amarillo oscuro */
+    /* Bordes */
     -tm-border:          #2a2a00;
     -tm-border-topbar:   #2a2a00;
     -tm-border-sidebar:  #2a2a00;
-
     /* Botones */
     -tm-btn-primary:       #facc15;
     -tm-btn-primary-hover: #ca8a04;
     -tm-btn-secondary:     #ca8a04;
-
     /* Estados de tarea */
     -tm-status-done:     #22c55e;
     -tm-status-progress: #facc15;
     -tm-status-pending:  #fb923c;
     -tm-status-urgent:   #ef4444;
-
     /* Sidebar */
     -tm-sidebar-active-bg:    #2a2a00;
     -tm-sidebar-active-text:  #facc15;
@@ -56,48 +51,44 @@
     -tm-bg-hover-sidebar:     #141414;
 }
 
-/* ── Overrides específicos ── */
-
+/* ── Overrides específicos del tema ── */
 .btn-clear-filters {
     -fx-text-fill: -tm-text-secondary;
 }
-
-.radio-button {
-    -fx-text-fill: -tm-text-primary;
-}
-
-.tab-pane,
-.tab-pane > .tab-content-area {
-    -fx-background-color: -tm-bg-app;
-}
-
-.tab-pane .tab-header-background,
-.tab-pane .tab-header-area {
-    -fx-background-color: -tm-bg-surface;
-}
-
-.tab-pane .tab {
-    -fx-background-color: -tm-bg-surface;
-    -fx-border-color: -tm-border;
-}
-
-.tab-pane .tab .tab-label {
-    -fx-text-fill: -tm-text-secondary;
-}
-
-.tab-pane .tab:selected {
-    -fx-background-color: -tm-bg-active;
-}
-
-.tab-pane .tab:selected .tab-label {
-    -fx-text-fill: -tm-accent-light;
-}
-
 .btn-cancel-soft:hover {
     -fx-background-color: -tm-bg-active;
     -fx-text-fill: -tm-accent-light;
 }
-
+.radio-button {
+    -fx-text-fill: -tm-text-primary;
+}
+.text-field:focused,
+.text-area:focused,
+.password-field:focused {
+    -fx-border-color: -tm-accent;
+}
+.tab-pane,
+.tab-pane > .tab-content-area {
+    -fx-background-color: -tm-bg-app;
+}
+.tab-pane .tab-header-background,
+.tab-pane .tab-header-area {
+    -fx-background-color: -tm-bg-surface;
+}
+.tab-pane .tab {
+    -fx-background-color: -tm-bg-surface;
+    -fx-border-color: -tm-border;
+}
+.tab-pane .tab .tab-label {
+    -fx-text-fill: -tm-text-secondary;
+}
+.tab-pane .tab:selected {
+    -fx-background-color: -tm-bg-active;
+}
+.tab-pane .tab:selected .tab-label {
+    -fx-text-fill: -tm-accent-light;
+}
+/* Texto negro en botones con acento amarillo para legibilidad */
 .btn-primary,
 .btn-primary:hover,
 .btn-confirm-accent,
@@ -119,10 +110,4 @@
 .detail-section .btn-small-primary,
 .detail-section .btn-small-primary:hover {
     -fx-text-fill: #000000;
-}
-
-.text-field:focused,
-.text-area:focused,
-.password-field:focused {
-    -fx-border-color: -tm-accent;
 }

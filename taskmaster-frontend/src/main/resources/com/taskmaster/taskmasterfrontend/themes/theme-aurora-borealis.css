@@ -3,6 +3,7 @@
    TaskMaster — Noche ártica con acentos neón
    ===================================================== */
 
+/* ── Variables globales ── */
 .root {
     /* Fondos */
     -tm-bg-app:          #0d1520;
@@ -15,13 +16,11 @@
     -tm-bg-active:       #1a2d50;
     -tm-bg-badge:        #1a2d50;
     -tm-bg-scroll:       #0f1a2e;
-
     /* Acentos */
     -tm-accent:          #64FFDA;
     -tm-accent-light:    #64FFDA;
     -tm-accent-dark:     #00bfa5;
     -tm-accent-subtle:   #1a2d50;
-
     /* Textos */
     -tm-text-primary:    #64FFDA;
     -tm-text-secondary:  #ff6b35;
@@ -30,24 +29,20 @@
     -tm-text-on-accent:  #0B1426;
     -tm-text-label:      #3d5a8a;
     -tm-text-header:     #64FFDA;
-
     /* Bordes */
     -tm-border:          #1a4a3a;
     -tm-border-topbar:   #1a4a3a;
     -tm-border-sidebar:  #1a4a3a;
-
-    /* Botón acción principal */
+    /* Botones */
     -tm-btn-primary:       #7c3aed;
     -tm-btn-primary-hover: #5b21b6;
-    -tm-btn-secondary:   #82B1FF;
-
+    -tm-btn-secondary:     #82B1FF;
     /* Estados de tarea */
     -tm-status-done:     #64FFDA;
     -tm-status-progress: #82B1FF;
     -tm-status-pending:  #FFE082;
     -tm-status-urgent:   #FF8A80;
-
-    /* Sidebar activo */
+    /* Sidebar */
     -tm-sidebar-active-bg:    #1a2d50;
     -tm-sidebar-active-text:  #64FFDA;
     -tm-sidebar-section-text: #3d5a8a;
@@ -56,52 +51,43 @@
     -tm-bg-hover-sidebar:     #162240;
 }
 
+/* ── Overrides específicos del tema ── */
 .btn-clear-filters {
     -fx-text-fill: -tm-text-secondary;
 }
-
-.tab-pane,
-.tab-pane > .tab-content-area {
-    -fx-background-color: -tm-bg-app;
-}
-
-.tab-pane .tab-header-background,
-.tab-pane .tab-header-area {
-    -fx-background-color: -tm-bg-surface;
-}
-
-.tab-pane .tab {
-    -fx-background-color: -tm-bg-surface;
-    -fx-border-color: -tm-border;
-}
-
-.tab-pane .tab .tab-label {
-    -fx-text-fill: -tm-text-secondary;
-}
-
-.tab-pane .tab:selected {
-    -fx-background-color: -tm-bg-active;
-}
-
-.tab-pane .tab:selected .tab-label {
-    -fx-text-fill: -tm-accent-light;
-}
-
 .btn-cancel-soft:hover {
     -fx-background-color: -tm-bg-active;
     -fx-text-fill: -tm-accent-light;
 }
-
 .radio-button {
     -fx-text-fill: -tm-text-primary;
 }
-
 .text-field,
 .text-area,
 .password-field {
     -fx-text-fill: #ff6b35;
 }
-
 .text-area .content {
     -fx-text-fill: #ff6b35;
+}
+.tab-pane,
+.tab-pane > .tab-content-area {
+    -fx-background-color: -tm-bg-app;
+}
+.tab-pane .tab-header-background,
+.tab-pane .tab-header-area {
+    -fx-background-color: -tm-bg-surface;
+}
+.tab-pane .tab {
+    -fx-background-color: -tm-bg-surface;
+    -fx-border-color: -tm-border;
+}
+.tab-pane .tab .tab-label {
+    -fx-text-fill: -tm-text-secondary;
+}
+.tab-pane .tab:selected {
+    -fx-background-color: -tm-bg-active;
+}
+.tab-pane .tab:selected .tab-label {
+    -fx-text-fill: -tm-accent-light;
 }

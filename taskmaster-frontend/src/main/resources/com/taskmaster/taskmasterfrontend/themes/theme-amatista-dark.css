@@ -16,13 +16,11 @@
     -tm-bg-active:       #2a1f4e;
     -tm-bg-badge:        #2a1f4e;
     -tm-bg-scroll:       #1e1e2e;
-
     /* Acentos */
     -tm-accent:          #7c3aed;
     -tm-accent-light:    #a78bfa;
     -tm-accent-dark:     #5b21b6;
     -tm-accent-subtle:   #2a1f4e;
-
     /* Textos */
     -tm-text-primary:    #e8e0ff;
     -tm-text-secondary:  #c4b8f0;
@@ -31,23 +29,19 @@
     -tm-text-on-accent:  white;
     -tm-text-label:      #4a3a6e;
     -tm-text-header:     #e8e0ff;
-
     /* Bordes */
     -tm-border:          #3d2f6e;
     -tm-border-topbar:   #3d2f6e;
     -tm-border-sidebar:  #3d2f6e;
-
     /* Botones */
     -tm-btn-primary:       #7c3aed;
     -tm-btn-primary-hover: #5b21b6;
     -tm-btn-secondary:     #5b21b6;
-
     /* Estados de tarea */
     -tm-status-done:     #2ecc71;
     -tm-status-progress: #3498db;
     -tm-status-pending:  #f59e0b;
     -tm-status-urgent:   #e74c3c;
-
     /* Sidebar */
     -tm-sidebar-active-bg:    #2a1f4e;
     -tm-sidebar-active-text:  #a78bfa;
@@ -58,39 +52,31 @@
 }
 
 /* ── Overrides específicos del tema oscuro ── */
-
 .btn-clear-filters {
     -fx-text-fill: -tm-text-secondary;
 }
-
+.btn-cancel-soft:hover {
+    -fx-background-color: -tm-bg-active;
+    -fx-text-fill: -tm-accent-light;
+}
 .tab-pane,
 .tab-pane > .tab-content-area {
     -fx-background-color: -tm-bg-app;
 }
-
 .tab-pane .tab-header-background,
 .tab-pane .tab-header-area {
     -fx-background-color: -tm-bg-surface;
 }
-
 .tab-pane .tab {
     -fx-background-color: -tm-bg-surface;
     -fx-border-color: -tm-border;
 }
-
 .tab-pane .tab .tab-label {
     -fx-text-fill: -tm-text-secondary;
 }
-
 .tab-pane .tab:selected {
     -fx-background-color: -tm-bg-active;
 }
-
 .tab-pane .tab:selected .tab-label {
-    -fx-text-fill: -tm-accent-light;
-}
-
-.btn-cancel-soft:hover {
-    -fx-background-color: -tm-bg-active;
     -fx-text-fill: -tm-accent-light;
 }

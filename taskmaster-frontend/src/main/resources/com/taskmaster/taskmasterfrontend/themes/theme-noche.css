@@ -3,6 +3,7 @@
    TaskMaster — Negro puro con acentos cyan/amatista
    ===================================================== */
 
+/* ── Variables globales ── */
 .root {
     /* Fondos */
     -tm-bg-app:          #080808;
@@ -15,13 +16,11 @@
     -tm-bg-active:       #1a1a1a;
     -tm-bg-badge:        #1a1a1a;
     -tm-bg-scroll:       #141414;
-
     /* Acentos */
     -tm-accent:          #22d3ee;
     -tm-accent-light:    #67e8f9;
     -tm-accent-dark:     #0891b2;
     -tm-accent-subtle:   #1a1a1a;
-
     /* Textos */
     -tm-text-primary:    #f0f0f0;
     -tm-text-secondary:  #888888;
@@ -30,24 +29,20 @@
     -tm-text-on-accent:  #000000;
     -tm-text-label:      #444444;
     -tm-text-header:     #f0f0f0;
-
     /* Bordes */
-    -tm-border:         #0e4a52;
-    -tm-border-topbar:  #0e4a52;
-    -tm-border-sidebar: #0e4a52;
-
-    /* Botón acción principal */
-    -tm-btn-primary:     #22d3ee;
+    -tm-border:          #0e4a52;
+    -tm-border-topbar:   #0e4a52;
+    -tm-border-sidebar:  #0e4a52;
+    /* Botones */
+    -tm-btn-primary:       #22d3ee;
     -tm-btn-primary-hover: #0891b2;
-    -tm-btn-secondary:   #6366f1;
-
+    -tm-btn-secondary:     #6366f1;
     /* Estados de tarea */
     -tm-status-done:     #22c55e;
     -tm-status-progress: #22d3ee;
     -tm-status-pending:  #f59e0b;
     -tm-status-urgent:   #ef4444;
-
-    /* Sidebar activo */
+    /* Sidebar */
     -tm-sidebar-active-bg:    #1a1a1a;
     -tm-sidebar-active-text:  #22d3ee;
     -tm-sidebar-section-text: #444444;
@@ -56,18 +51,17 @@
     -tm-bg-hover-sidebar:     #141414;
 }
 
-.radio-button {
-    -fx-text-fill: -tm-text-primary;
-}
-
+/* ── Overrides específicos del tema ── */
 .btn-clear-filters {
     -fx-text-fill: -tm-text-secondary;
 }
-
+.radio-button {
+    -fx-text-fill: -tm-text-primary;
+}
 .area-search-field {
     -fx-text-fill: -tm-text-primary;
 }
-
 .btn-primary {
     -fx-text-fill: white;
 }
+

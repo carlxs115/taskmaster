@@ -3,6 +3,7 @@
    TaskMaster — Azul marino profundo
    ===================================================== */
 
+/* ── Variables globales ── */
 .root {
     /* Fondos */
     -tm-bg-app:          #0a1628;
@@ -15,13 +16,11 @@
     -tm-bg-active:       #1a3060;
     -tm-bg-badge:        #1a3060;
     -tm-bg-scroll:       #0d1a35;
-
     /* Acentos */
     -tm-accent:          #3b82f6;
     -tm-accent-light:    #60a5fa;
     -tm-accent-dark:     #1d4ed8;
     -tm-accent-subtle:   #1a3060;
-
     /* Textos */
     -tm-text-primary:    #e0eaff;
     -tm-text-secondary:  #7ba7d4;
@@ -30,24 +29,20 @@
     -tm-text-on-accent:  white;
     -tm-text-label:      #2a4a6e;
     -tm-text-header:     #e0eaff;
-
     /* Bordes */
     -tm-border:          #1a3060;
     -tm-border-topbar:   #1a3060;
     -tm-border-sidebar:  #1a3060;
-
-    /* Botón acción principal */
-    -tm-btn-primary:     #3b82f6;
+    /* Botones */
+    -tm-btn-primary:       #3b82f6;
     -tm-btn-primary-hover: #1d4ed8;
-    -tm-btn-secondary:   #0ea5e9;
-
+    -tm-btn-secondary:     #0ea5e9;
     /* Estados de tarea */
     -tm-status-done:     #22c55e;
     -tm-status-progress: #3b82f6;
     -tm-status-pending:  #f59e0b;
     -tm-status-urgent:   #ef4444;
-
-    /* Sidebar activo */
+    /* Sidebar */
     -tm-sidebar-active-bg:    #1a3060;
     -tm-sidebar-active-text:  #60a5fa;
     -tm-sidebar-section-text: #2a4a6e;
@@ -56,7 +51,7 @@
     -tm-bg-hover-sidebar:     #132550;
 }
 
-/* Radiobuttons */
+/* ── Overrides específicos del tema ── */
 .radio-button {
     -fx-text-fill: -tm-text-primary;
 }
