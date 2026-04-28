@@ -17,7 +17,6 @@ import java.io.IOException;
  * el tema y el idioma iniciales.</p>
  *
  * @author Carlos
- * @version 1.0
  */
 public class MainApp extends Application {
 

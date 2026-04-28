@@ -13,6 +13,16 @@ import javafx.geometry.Pos;
 
 import java.io.ByteArrayInputStream;
 
+/**
+ * Componente visual reutilizable que muestra el avatar de un usuario.
+ *
+ * <p>Si el usuario tiene una foto subida, la descarga del backend y la
+ * muestra recortada en círculo. Si no, muestra un círculo de color
+ * determinista con las iniciales del nombre de usuario como fallback,
+ * de forma similar a los avatares de Google o Discord.</p>
+ *
+ * @author Carlos
+ */
 public class AvatarView extends StackPane {
 
     private final double size;
@@ -20,12 +30,19 @@ public class AvatarView extends StackPane {
     private final Label initialsLabel;
     private final ImageView imageView;
 
-    /** Paleta de colores para el fallback (estilo Google/Discord). */
+    /** Paleta de colores para el avatar de iniciales. */
     private static final String[] PALETTE = {
             "#7c3aed", "#ec4899", "#f59e0b", "#22c55e", "#3b82f6",
             "#e11d48", "#14b8a6", "#a855f7", "#f97316", "#06b6d4"
     };
 
+    /**
+     * Construye el componente con el tamaño indicado, inicializando
+     * el círculo de fondo, la etiqueta de iniciales y el {@link ImageView}
+     * con clip circular.
+     *
+     * @param size Diámetro del avatar en píxeles.
+     */
     public AvatarView(double size) {
         this.size = size;
 
@@ -51,16 +68,25 @@ public class AvatarView extends StackPane {
         getChildren().addAll(background, initialsLabel, imageView);
     }
 
-    /** Carga el avatar del usuario autenticado (usa AppContext). */
+    /**
+     * Carga el avatar del usuario autenticado actualmente en {@link AppContext}.
+     */
     public void loadForCurrentUser() {
         AppContext ctx = AppContext.getInstance();
         loadForUser(ctx.getCurrentUserId(), ctx.getCurrentUsername(), ctx.hasAvatar());
     }
 
     /**
-     * Carga el avatar de cualquier usuario.
-     * Si hasAvatar es false, muestra directamente las iniciales (evita petición HTTP innecesaria).
-     * Si hasAvatar es true, lanza la petición en background y actualiza al volver.
+     * Carga el avatar del usuario indicado.
+     *
+     * <p>Si {@code hasAvatar} es {@code false} o {@code userId} es {@code null},
+     * muestra el fallback de iniciales directamente sin realizar ninguna
+     * petición HTTP. En caso contrario, descarga la imagen en un hilo
+     * secundario y actualiza el componente al recibirla.</p>
+     *
+     * @param userId    Identificador del usuario.
+     * @param username  Nombre de usuario, usado para el fallback de iniciales.
+     * @param hasAvatar {@code true} si el usuario tiene una foto subida.
      */
     public void loadForUser(Long userId, String username, boolean hasAvatar) {
         // Primero pintamos el fallback para tener algo visible de inmediato
@@ -89,7 +115,12 @@ public class AvatarView extends StackPane {
         }).start();
     }
 
-    /** Dibuja las iniciales sobre un círculo de color determinista. */
+    /**
+     * Muestra el fallback de iniciales: calcula las iniciales del nombre,
+     * asigna un color determinista de la paleta y oculta el {@link ImageView}.
+     *
+     * @param username Nombre de usuario del que se extraen las iniciales.
+     */
     private void renderFallback(String username) {
         if (username == null || username.isBlank()) username = "?";
 
@@ -107,15 +138,20 @@ public class AvatarView extends StackPane {
     }
 
     /**
-     * Devuelve un color determinista a partir del username.
-     * Mismo username -> siempre mismo color. Distintos usernames -> colores (probablemente) distintos.
+     * Devuelve un color de la paleta de forma determinista a partir del username,
+     * de modo que el mismo nombre produce siempre el mismo color.
+     *
+     * @param username Nombre de usuario.
+     * @return Color en formato hex seleccionado de {@link #PALETTE}.
      */
     private static String colorFor(String username) {
         int hash = Math.abs(username.hashCode());
         return PALETTE[hash % PALETTE.length];
     }
 
-    /** Fuerza un refresco (p. ej. tras subir o borrar el avatar propio). */
+    /**
+     * Fuerza la recarga del avatar, útil tras subir o eliminar la foto de perfil.
+     */
     public void refresh() {
         loadForCurrentUser();
     }

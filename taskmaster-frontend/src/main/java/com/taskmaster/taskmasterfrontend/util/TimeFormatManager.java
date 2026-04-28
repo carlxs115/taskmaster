@@ -6,15 +6,27 @@ import java.util.prefs.Preferences;
 
 
 /**
- * TIMEFORMATMANAGER
+ * Singleton que gestiona el formato de hora preferido por el usuario.
  *
- * Singleton que gestiona el formato de horas preferido por el usuario.
- * Las opciones son: SYSTEM (formato del sistema), H24 (24h), H12 (12h AM/PM).
- * La preferencia se persiste en java.util.prefs.Preferences.
+ * <p>Ofrece tres modos: {@link TimeFormat#SYSTEM} detecta automáticamente
+ * si el sistema operativo usa convención de 12 o 24 horas; {@link TimeFormat#H24}
+ * fuerza el formato de 24 horas; {@link TimeFormat#H12} fuerza el formato
+ * de 12 horas con indicador AM/PM. La preferencia se persiste entre sesiones
+ * mediante {@link java.util.prefs.Preferences}.</p>
+ *
+ * @author Carlos
  */
 public class TimeFormatManager {
 
-    public enum TimeFormat { SYSTEM, H24, H12 }
+    /** Formatos de hora disponibles para el usuario. */
+    public enum TimeFormat {
+        /** Detecta automáticamente el convenio del sistema operativo. */
+        SYSTEM,
+        /** Formato de 24 horas (p.ej. {@code 14:30}). */
+        H24,
+        /** Formato de 12 horas con AM/PM (p.ej. {@code 02:30 PM}). */
+        H12
+    }
 
     private static final String PREF_KEY = "timeFormat";
     private static TimeFormatManager instance;
@@ -22,6 +34,10 @@ public class TimeFormatManager {
     private TimeFormat currentFormat;
     private final Preferences prefs = Preferences.userNodeForPackage(TimeFormatManager.class);
 
+    /**
+     * Constructor privado que carga la preferencia guardada o aplica
+     * {@link TimeFormat#SYSTEM} como valor por defecto.
+     */
     private TimeFormatManager() {
         String saved = prefs.get(PREF_KEY, TimeFormat.SYSTEM.name());
         try {
@@ -31,21 +47,39 @@ public class TimeFormatManager {
         }
     }
 
+    /**
+     * Devuelve la instancia única del singleton, creándola si aún no existe.
+     *
+     * @return Instancia global de {@link TimeFormatManager}.
+     */
     public static TimeFormatManager getInstance() {
         if (instance == null) instance = new TimeFormatManager();
         return instance;
     }
 
+    /**
+     * Devuelve el formato de hora actualmente activo.
+     *
+     * @return Formato activo.
+     */
     public TimeFormat getCurrentFormat() { return currentFormat; }
 
+    /**
+     * Establece un nuevo formato de hora y lo persiste en {@link java.util.prefs.Preferences}.
+     *
+     * @param format Formato a aplicar y guardar.
+     */
     public void setFormat(TimeFormat format) {
         this.currentFormat = format;
         prefs.put(PREF_KEY, format.name());
     }
 
     /**
-     * Devuelve un DateTimeFormatter según la preferencia activa.
-     * SYSTEM detecta si el locale del sistema usa 12h o 24h.
+     * Devuelve el {@link DateTimeFormatter} correspondiente al formato activo.
+     * En modo {@link TimeFormat#SYSTEM}, detecta si el sistema usa convenio
+     * de 12 o 24 horas y aplica el patrón correspondiente.
+     *
+     * @return Formateador de hora listo para usar.
      */
     public DateTimeFormatter getFormatter() {
         return switch (currentFormat) {
@@ -58,14 +92,23 @@ public class TimeFormatManager {
     }
 
     /**
-     * Formatea un LocalTime directamente con la preferencia activa.
+     * Formatea una hora según el formato activo.
+     *
+     * @param time Hora a formatear, o {@code null}.
+     * @return Cadena con la hora formateada, o cadena vacía si la hora es {@code null}.
      */
     public String format(LocalTime time) {
         if (time == null) return "";
         return time.format(getFormatter());
     }
 
-    /** Detecta si el sistema operativo usa convención 12h */
+    /**
+     * Detecta si el sistema operativo usa la convención de 12 horas
+     * inspeccionando el patrón del {@link java.text.SimpleDateFormat} por defecto.
+     * En caso de error devuelve {@code false} (24 horas como valor seguro).
+     *
+     * @return {@code true} si el sistema usa convenio de 12 horas.
+     */
     private boolean isSystemUsing12h() {
         try {
             java.text.DateFormat df = java.text.DateFormat.getTimeInstance(

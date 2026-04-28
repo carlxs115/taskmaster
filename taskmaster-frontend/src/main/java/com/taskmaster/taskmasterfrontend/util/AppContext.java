@@ -5,17 +5,14 @@ import com.taskmaster.taskmasterfrontend.service.ApiService;
 import java.time.LocalDate;
 
 /**
- * APPCONTEXT
+ * Singleton que mantiene el estado global de la sesión activa en TaskMaster.
  *
- * Clase singleton que mantiene el estado global de la aplicación.
+ * <p>Proporciona acceso centralizado al {@link ApiService} y a los datos del
+ * usuario autenticado (identificador, nombre, contraseña, fecha de nacimiento
+ * y estado del avatar). Todos los controladores acceden a esta instancia
+ * mediante {@link #getInstance()}.</p>
  *
- * Singleton -> solo existe una instancia de esta clase en toda la app.
- * Todos los controladores acceden a la misma instancia de ApiService
- * y a los datos del usuario autenticado.
- *
- * Se usa así desde cualquier controlador:
- *   AppContext.getInstance().getApiService()
- *   AppContext.getInstance().getCurrentUserId()
+ * @author Carlos
  */
 public class AppContext {
 
@@ -34,27 +31,17 @@ public class AppContext {
     private boolean hasAvatar;
 
     /**
-     * Constructor privado - nadie puede crear instancias desde fuera.
+     * Constructor privado que inicializa el {@link ApiService}.
+     * El acceso externo se realiza exclusivamente mediante {@link #getInstance()}.
      */
     public AppContext() {
         this.apiService = new ApiService();
     }
 
-    public String getCurrentPassword() { return currentPassword; }
-
-    public void setCurrentPassword(String currentPassword) { this.currentPassword = currentPassword; }
-
-    public LocalDate getCurrentBirthDate() {
-        return currentBirthDate;
-    }
-
-    public void setCurrentBirthDate(LocalDate birthDate) {
-        this.currentBirthDate = birthDate;
-    }
-
     /**
-     * Devuelve la instancia única del AppContext.
-     * Si no existe todavía, la crea.
+     * Devuelve la instancia única del singleton, creándola si aún no existe.
+     *
+     * @return Instancia global de {@link AppContext}.
      */
     public static AppContext getInstance() {
         if (instance == null) {
@@ -63,29 +50,81 @@ public class AppContext {
         return instance;
     }
 
+    /**
+     * Devuelve el {@link ApiService} para realizar peticiones al backend.
+     *
+     * @return Instancia del servicio HTTP.
+     */
     public ApiService getApiService() {
         return apiService;
     }
 
+    /**
+     * Devuelve el identificador del usuario autenticado.
+     *
+     * @return Identificador del usuario, o {@code null} si no hay sesión activa.
+     */
     public Long getCurrentUserId() {
         return currentUserId;
     }
+
+    /** @param currentUserId Identificador del usuario autenticado. */
     public void setCurrentUserId(Long currentUserId) {
         this.currentUserId = currentUserId;
     }
 
+    /**
+     * Devuelve el nombre de usuario del usuario autenticado.
+     *
+     * @return Nombre de usuario, o {@code null} si no hay sesión activa.
+     */
     public String getCurrentUsername() {
         return currentUsername;
     }
+
+    /** @param currentUsername Nombre de usuario autenticado. */
     public void setCurrentUsername(String currentUsername) {
         this.currentUsername = currentUsername;
     }
 
+    /**
+     * Devuelve la contraseña en texto plano del usuario autenticado,
+     * necesaria para renovar las credenciales HTTP Basic tras un cambio de datos.
+     *
+     * @return Contraseña actual, o {@code null} si no hay sesión activa.
+     */
+    public String getCurrentPassword() { return currentPassword; }
+
+    /** @param currentPassword Contraseña actual del usuario autenticado. */
+    public void setCurrentPassword(String currentPassword) { this.currentPassword = currentPassword; }
+
+    /**
+     * Devuelve la fecha de nacimiento del usuario autenticado.
+     *
+     * @return Fecha de nacimiento, o {@code null} si no se ha cargado.
+     */
+    public LocalDate getCurrentBirthDate() {
+        return currentBirthDate;
+    }
+
+    /** @param birthDate Fecha de nacimiento del usuario autenticado. */
+    public void setCurrentBirthDate(LocalDate birthDate) {
+        this.currentBirthDate = birthDate;
+    }
+
+    /**
+     * Indica si el usuario autenticado tiene una foto de avatar subida.
+     *
+     * @return {@code true} si el usuario tiene avatar.
+     */
     public boolean hasAvatar() { return hasAvatar; }
+
+    /** @param hasAvatar {@code true} si el usuario tiene avatar subido. */
     public void setHasAvatar(boolean hasAvatar) { this.hasAvatar = hasAvatar; }
 
     /**
-     * Limpia los datos del usuario al cerrar sesión.
+     * Limpia todos los datos de la sesión activa al cerrar sesión,
+     * incluyendo credenciales y datos del usuario.
      */
     public void logout() {
         this.currentUserId = null;

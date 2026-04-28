@@ -21,6 +21,9 @@ import java.util.Properties;
  */
 public class ThemeManager {
 
+    /**
+     * Enumeración de los temas visuales disponibles en la aplicación.
+     */
     public enum Theme {
         AMATISTA,
         AMATISTA_DARK,
@@ -53,6 +56,9 @@ public class ThemeManager {
     /** Scene principal de la aplicación sobre el que se aplican los estilos. */
     private Scene mainScene;
 
+    /**
+     * Constructor privado que carga la preferencia de tema guardada localmente.
+     */
     private ThemeManager() {
         currentTheme.set(loadThemePreference());
     }
@@ -190,10 +196,10 @@ public class ThemeManager {
     }
 
     /**
-     * Devuelve el nombre del fichero CSS del tema actualmente activo.
-     * Versión pública de {@link #getCssFileName(Theme)}.
+     * Devuelve el nombre del fichero CSS del tema activo, para uso externo
+     * desde los controladores que necesitan aplicar el tema a sus escenas.
      *
-     * @return nombre del fichero CSS del tema actual
+     * @return Nombre del fichero CSS del tema actualmente activo.
      */
     public String getCssFileNamePublic() {
         return getCssFileName(currentTheme.get());

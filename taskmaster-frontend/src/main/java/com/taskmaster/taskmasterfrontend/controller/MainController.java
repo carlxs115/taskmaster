@@ -28,6 +28,20 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 
+/**
+ * Controlador principal de la aplicación TaskMaster.
+ *
+ * <p>Gestiona la navegación entre todas las vistas (home, tareas, proyectos,
+ * ajustes, seguridad, papelera y ayuda), el sidebar con los proyectos del usuario,
+ * los filtros y el orden de las tareas, la búsqueda en tiempo real, y la apertura
+ * de diálogos modales para crear, editar y eliminar tareas y proyectos.</p>
+ *
+ * <p>Actúa como coordinador central: instancia los controladores de cada vista,
+ * les inyecta sus callbacks y gestiona la pila de navegación para permitir
+ * volver a la vista anterior.</p>
+ *
+ * @author Carlos
+ */
 public class MainController {
 
     // ── FXML refs ─────────────────────────────────────────────────────────────
@@ -78,13 +92,20 @@ public class MainController {
             .registerModule(new JavaTimeModule());
 
     // ── Colores de categoría ──────────────────────────────────────────────────
+    /** Color de acento de la categoría Personal. */
     private static final String COLOR_PERSONAL = "#a78bfa";
+
+    /** Color de acento de la categoría Estudios. */
     private static final String COLOR_ESTUDIOS = "#34d399";
+
+    /** Color de acento de la categoría Trabajo. */
     private static final String COLOR_TRABAJO  = "#fb923c";
 
-    // =========================================================================
-    //  INICIALIZACIÓN
-    // =========================================================================
+    /**
+     * Inicializa la pantalla principal: configura el avatar del sidebar,
+     * el menú de usuario, los combos de filtros y orden, carga los proyectos
+     * del sidebar y navega a la vista home.
+     */
     @FXML
     public void initialize() {
         sidebarAvatar = new AvatarView(32);
@@ -129,9 +150,12 @@ public class MainController {
         );
     }
 
-    // =========================================================================
-    //  MENÚ DE USUARIO
-    // =========================================================================
+    // ── Menú de usuario ───────────────────────────────────────────────────────
+
+    /**
+     * Muestra el menú contextual del usuario con las opciones
+     * "Ver perfil" y "Cerrar sesión".
+     */
     @FXML
     private void handleUserMenu() {
         ContextMenu menu = new ContextMenu();
@@ -151,6 +175,11 @@ public class MainController {
         menu.show(userMenuButton, javafx.geometry.Side.BOTTOM, 0, 4);
     }
 
+    /**
+     * Navega a la vista de perfil del usuario, limpia la selección
+     * del sidebar y registra el callback para refrescar el username
+     * y el avatar al actualizar el perfil.
+     */
     private void handleViewProfile() {
         clearSidebarSelection();
         try {
@@ -214,9 +243,13 @@ public class MainController {
     }
      */
 
-    // =========================================================================
-    //  BOTÓN CREAR — desplegable Proyecto / Tarea
-    // =========================================================================
+    // ── Botón crear ───────────────────────────────────────────────────────────
+
+    /**
+     * Gestiona el botón de creación. En la vista home muestra un menú
+     * contextual con las opciones "Nuevo proyecto" y "Nueva tarea";
+     * en el resto de vistas abre directamente el diálogo de nueva tarea.
+     */
     @FXML
     private void handleCreateMenu() {
         boolean isHome = selectedProjectId == null && selectedCategory == null && !viewingAllTasks;
@@ -242,9 +275,13 @@ public class MainController {
         menu.show(createButton, javafx.geometry.Side.BOTTOM, 0, 4);
     }
 
-    // =========================================================================
-    //  PROYECTOS — sidebar
-    // =========================================================================
+    // ── Proyectos — sidebar ───────────────────────────────────────────────────
+
+    /**
+     * Obtiene los proyectos del usuario desde el backend y los renderiza
+     * en el sidebar. Puede llamarse desde otros controladores para forzar
+     * una actualización.
+     */
     public void loadProjects() {
         new Thread(() -> {
             try {
@@ -268,6 +305,15 @@ public class MainController {
         }).start();
     }
 
+    /**
+     * Construye las filas del sidebar de proyectos con el indicador de color,
+     * el botón de nombre y el botón de menú contextual (editar/eliminar).
+     * Configura también los efectos de hover y la selección activa.
+     *
+     * @param names Nombres de los proyectos.
+     * @param ids   Identificadores de los proyectos.
+     * @param nodes Nodos JSON de cada proyecto, usados al abrir el detalle.
+     */
     private void renderSidebar(List<String> names, List<Long> ids, List<JsonNode> nodes) {
         projectListContainer.getChildren().clear();
         for (int i = 0; i < names.size(); i++) {
@@ -336,9 +382,11 @@ public class MainController {
         }
     }
 
-    // =========================================================================
-    //  HOME
-    // =========================================================================
+    // ── Home ──────────────────────────────────────────────────────────────────
+
+    /**
+     * Obtiene los datos de la vista home desde el backend y los renderiza.
+     */
     private void loadHome() {
         new Thread(() -> {
             try {
@@ -354,6 +402,13 @@ public class MainController {
         }).start();
     }
 
+    /**
+     * Construye y renderiza la vista home: saludo con fecha, banner de
+     * cumpleaños si aplica, tarjetas de estadísticas y las dos columnas
+     * de proyectos activos y tareas próximas.
+     *
+     * @param home Nodo JSON con los datos de la vista home.
+     */
     private void renderHome(JsonNode home) {
         taskContainer.getChildren().clear();
         hideFilters();
@@ -432,6 +487,15 @@ public class MainController {
         emptyLabel.setManaged(false);
     }
 
+    /**
+     * Crea una tarjeta de estadística con un número, una etiqueta y un
+     * punto de color indicador.
+     *
+     * @param number   Valor numérico a mostrar.
+     * @param label    Etiqueta descriptiva del valor.
+     * @param dotColor Color del punto indicador en formato hex.
+     * @return {@link VBox} con el contenido visual de la tarjeta.
+     */
     private VBox createStatCard(String number, String label, String dotColor) {
         VBox card = new VBox(4);
         card.getStyleClass().add("stat-card");
@@ -451,6 +515,14 @@ public class MainController {
         return card;
     }
 
+    /**
+     * Construye la columna de proyectos activos de la vista home, mostrando
+     * el nombre, barra de progreso, badges de estado/prioridad/categoría y
+     * el contador de tareas de cada proyecto.
+     *
+     * @param projects Array JSON con los proyectos activos del usuario.
+     * @return {@link VBox} con el panel de proyectos.
+     */
     private VBox buildProjectsColumn(JsonNode projects) {
         VBox panel = createPanel();
         panel.getChildren().add(createPanelHeader(lm.get("common.active.projects"),
@@ -532,6 +604,14 @@ public class MainController {
         return panel;
     }
 
+    /**
+     * Construye la columna de tareas próximas de la vista home, mostrando
+     * las 6 tareas pendientes más cercanas a su fecha límite ordenadas
+     * por fecha ascendente.
+     *
+     * @param home Nodo JSON con todos los datos de la vista home.
+     * @return {@link VBox} con el panel de tareas próximas.
+     */
     private VBox buildUpcomingTasksColumn(JsonNode home) {
         List<JsonNode> allTasks = new ArrayList<>();
         JsonNode projects = home.get("projects");
@@ -657,9 +737,14 @@ public class MainController {
         return panel;
     }
 
-    // =========================================================================
-    //  LISTA DE TAREAS (vistas que no son home)
-    // =========================================================================
+    // ── Lista de tareas ───────────────────────────────────────────────────────
+
+    /**
+     * Renderiza la lista de tareas en el área principal y guarda los datos
+     * originales para que los filtros y el orden puedan operar sobre ellos.
+     *
+     * @param tasks Array JSON con las tareas a mostrar.
+     */
     private void renderTasks(JsonNode tasks) {
         taskContainer.getChildren().clear();
         taskContainer.getChildren().add(emptyLabel);
@@ -688,6 +773,10 @@ public class MainController {
         applyFiltersAndSort(); // renderizar con filtros/orden actuales
     }
 
+    /**
+     * Aplica los filtros de estado y prioridad y el criterio de orden
+     * seleccionados sobre los datos originales y vuelve a renderizar la lista.
+     */
     private void applyFiltersAndSort() {
         String statusVal   = statusFilter.getValue();
         String priorityVal = priorityFilter.getValue();
@@ -749,6 +838,14 @@ public class MainController {
         }
     }
 
+    /**
+     * Comprueba si el código de estado de una tarea coincide con la
+     * etiqueta localizada seleccionada en el filtro.
+     *
+     * @param enumVal Código de estado (p.ej. {@code "IN_PROGRESS"}).
+     * @param label   Etiqueta localizada del filtro.
+     * @return {@code true} si coinciden.
+     */
     private boolean matchesStatusLabel(String enumVal, String label) {
         return switch (enumVal) {
             case "TODO"        -> label.equals(lm.get("status.todo"));
@@ -759,6 +856,14 @@ public class MainController {
         };
     }
 
+    /**
+     * Comprueba si el código de prioridad de una tarea coincide con la
+     * etiqueta localizada seleccionada en el filtro.
+     *
+     * @param enumVal Código de prioridad (p.ej. {@code "HIGH"}).
+     * @param label   Etiqueta localizada del filtro.
+     * @return {@code true} si coinciden.
+     */
     private boolean matchesPriorityLabel(String enumVal, String label) {
         return switch (enumVal) {
             case "LOW"    -> label.equals(lm.get("priority.low"));
@@ -769,6 +874,10 @@ public class MainController {
         };
     }
 
+    /**
+     * Restablece todos los filtros y el orden a sus valores por defecto
+     * y vuelve a renderizar la lista de tareas sin filtros.
+     */
     @FXML
     private void handleClearFilters() {
         resetComboBox(statusFilter,   lm.get("common.status"));
@@ -779,6 +888,14 @@ public class MainController {
         applyFiltersAndSort();
     }
 
+    /**
+     * Construye la tarjeta visual de una tarea con checkbox de estado,
+     * identificador, título, badges de estado y prioridad, indicador de
+     * vencimiento y menú de acciones (editar/eliminar).
+     *
+     * @param task Nodo JSON con los datos de la tarea.
+     * @return {@link HBox} con el contenido visual de la tarjeta.
+     */
     private HBox createTaskCard(JsonNode task) {
         HBox card = new HBox(12);
         card.setAlignment(Pos.CENTER_LEFT);
@@ -886,6 +1003,12 @@ public class MainController {
         return card;
     }
 
+    /**
+     * Abre la vista de detalle de un proyecto en el área principal,
+     * configurando los callbacks de cierre, actualización y apertura de tareas.
+     *
+     * @param project Nodo JSON con los datos del proyecto a mostrar.
+     */
     private void openProjectDetail(JsonNode project) {
         try {
             FXMLLoader loader = new FXMLLoader(
@@ -934,6 +1057,12 @@ public class MainController {
         }
     }
 
+    /**
+     * Abre la vista de detalle de una tarea en el área principal,
+     * configurando los callbacks de cierre y apertura de subtareas.
+     *
+     * @param task Nodo JSON con los datos de la tarea a mostrar.
+     */
     private void openTaskDetail(JsonNode task) {
         try {
             FXMLLoader loader = new FXMLLoader(
@@ -959,6 +1088,12 @@ public class MainController {
         }
     }
 
+    /**
+     * Abre la vista de detalle de una subtarea en el área principal,
+     * configurando el callback de cierre.
+     *
+     * @param subtask Nodo JSON con los datos de la subtarea a mostrar.
+     */
     private void openSubtaskDetail(JsonNode subtask) {
         try {
             FXMLLoader loader = new FXMLLoader(
@@ -979,14 +1114,23 @@ public class MainController {
         }
     }
 
+    /**
+     * Actualiza el estilo CSS del título de una tarjeta de tarea
+     * según si está completada o no.
+     *
+     * @param l    Etiqueta de título a actualizar.
+     * @param done {@code true} si la tarea está completada.
+     */
     private void updateTitleStyle(Label l, boolean done) {
         l.getStyleClass().removeAll("task-title", "task-title-done");
         l.getStyleClass().add(done ? "task-title-done" : "task-title");
     }
 
-    // =========================================================================
-    //  NAVEGACIÓN
-    // =========================================================================
+    // ── Navegación ────────────────────────────────────────────────────────────
+
+    /**
+     * Navega a la vista home, limpia el estado de selección y oculta los filtros.
+     */
     @FXML
     private void handleGoHome() {
         selectedProjectId = null;
@@ -1001,6 +1145,9 @@ public class MainController {
         loadHome();
     }
 
+    /**
+     * Navega a la vista de todas las tareas personales del usuario y muestra los filtros.
+     */
     @FXML
     private void handleAllTasks() {
         activeProjectDetailController = null;
@@ -1026,6 +1173,9 @@ public class MainController {
         }).start();
     }
 
+    /**
+     * Navega a la vista de tareas de la categoría Personal.
+     */
     @FXML private void handleCategoryPersonal() {
         activeProjectDetailController = null;
         viewingAllTasks = false;
@@ -1034,6 +1184,10 @@ public class MainController {
         loadTasksByCategory("PERSONAL", LanguageManager.getInstance().get("sidebar.personal"));
         setSidebarActive(btnPersonal);
     }
+
+    /**
+     * Navega a la vista de tareas de la categoría Estudios.
+     */
     @FXML private void handleCategoryEstudios() {
         activeProjectDetailController = null;
         viewingAllTasks = false;
@@ -1042,6 +1196,10 @@ public class MainController {
         loadTasksByCategory("ESTUDIOS", LanguageManager.getInstance().get("sidebar.estudios"));
         setSidebarActive(btnEstudios);
     }
+
+    /**
+     * Navega a la vista de tareas de la categoría Trabajo.
+     */
     @FXML private void handleCategoryTrabajo()  {
         activeProjectDetailController = null;
         viewingAllTasks = false;
@@ -1051,6 +1209,13 @@ public class MainController {
         setSidebarActive(btnTrabajo);
     }
 
+    /**
+     * Carga las tareas de la categoría indicada desde el backend y las
+     * renderiza en el área principal con los filtros visibles.
+     *
+     * @param category Código de categoría ({@code "PERSONAL"}, {@code "ESTUDIOS"} o {@code "TRABAJO"}).
+     * @param title    Título a mostrar en la cabecera del área principal.
+     */
     private void loadTasksByCategory(String category, String title) {
         removeOverlayPanels();
         showMainArea();
@@ -1072,6 +1237,12 @@ public class MainController {
         }).start();
     }
 
+    /**
+     * Carga las tareas del proyecto indicado desde el backend y las
+     * renderiza en el área principal con los filtros visibles.
+     *
+     * @param projectId Identificador del proyecto.
+     */
     private void loadTasksForProject(Long projectId) {
         removeOverlayPanels();
         showMainArea();
@@ -1090,9 +1261,13 @@ public class MainController {
         }).start();
     }
 
-    // =========================================================================
-    //  FILTROS
-    // =========================================================================
+    // ── Filtros ───────────────────────────────────────────────────────────────
+
+    /**
+     * Aplica el filtro de estado seleccionado sobre la lista de tareas actual.
+     * Si hay un proyecto activo, consulta el backend; si no, filtra las tarjetas
+     * ya renderizadas en el contenedor.
+     */
     @FXML
     private void handleStatusFilter() {
         String selected = statusFilter.getValue();
@@ -1113,6 +1288,11 @@ public class MainController {
         } else filterTaskCardsByStatus(selected);
     }
 
+    /**
+     * Aplica el filtro de prioridad seleccionado sobre la lista de tareas actual.
+     * Si hay un proyecto activo, consulta el backend; si no, filtra las tarjetas
+     * ya renderizadas en el contenedor.
+     */
     @FXML
     private void handlePriorityFilter() {
         String selected = priorityFilter.getValue();
@@ -1133,6 +1313,11 @@ public class MainController {
         } else filterTaskCardsByPriority(selected);
     }
 
+    /**
+     * Filtra las tarjetas visibles del contenedor de tareas según el estado indicado.
+     *
+     * @param status Código de estado a mostrar.
+     */
     private void filterTaskCardsByStatus(String status) {
         taskContainer.getChildren().forEach(node -> {
             if (node instanceof VBox wrapper && !wrapper.getChildren().isEmpty()
@@ -1143,6 +1328,11 @@ public class MainController {
         });
     }
 
+    /**
+     * Filtra las tarjetas visibles del contenedor de tareas según la prioridad indicada.
+     *
+     * @param priority Código de prioridad a mostrar.
+     */
     private void filterTaskCardsByPriority(String priority) {
         taskContainer.getChildren().forEach(node -> {
             if (node instanceof VBox wrapper && !wrapper.getChildren().isEmpty()
@@ -1153,6 +1343,10 @@ public class MainController {
         });
     }
 
+    /**
+     * Ordena las tarjetas del contenedor según el criterio seleccionado en el combo
+     * de orden (título, ID, fecha límite o prioridad).
+     */
     private void handleSortFilter() {
         String sort = sortFilter.getValue();
         if (sort == null || sort.equals("Ordenar por")) return;
@@ -1189,6 +1383,10 @@ public class MainController {
         taskContainer.getChildren().setAll(wrappers);
     }
 
+    /**
+     * Alterna la dirección de orden (ascendente/descendente) y vuelve a
+     * aplicar los filtros y el orden actuales.
+     */
     @FXML
     private void handleSortDirection() {
         sortAscending = !sortAscending;
@@ -1197,7 +1395,13 @@ public class MainController {
         applyFiltersAndSort();
     }
 
-    /** Orden numérico: URGENT=0 (más urgente primero en asc) */
+    /**
+     * Devuelve el valor numérico de orden de una prioridad para la ordenación,
+     * donde URGENT=0 (mayor prioridad primero en orden ascendente).
+     *
+     * @param p Código de prioridad.
+     * @return Valor numérico de orden.
+     */
     private int priorityOrder(String p) {
         return switch (p) {
             case "URGENT" -> 0;
@@ -1208,6 +1412,11 @@ public class MainController {
         };
     }
 
+    /**
+     * Renderiza una lista de tareas ya filtrada en el contenedor principal.
+     *
+     * @param tasks Lista de nodos JSON de tareas a mostrar.
+     */
     private void renderFilteredTasks(List<JsonNode> tasks) {
         taskContainer.getChildren().clear();
         taskContainer.getChildren().add(emptyLabel);
@@ -1227,6 +1436,13 @@ public class MainController {
         }
     }
 
+    /**
+     * Extrae el texto del título de una tarjeta de tarea buscando el
+     * {@link Label} con {@code HGrow=ALWAYS}.
+     *
+     * @param card Tarjeta de tarea.
+     * @return Texto del título, o cadena vacía si no se encuentra.
+     */
     private String getCardTitle(HBox card) {
         // El título es el Label con HGrow=ALWAYS (segundo hijo tras el checkbox)
         return card.getChildren().stream()
@@ -1235,14 +1451,22 @@ public class MainController {
                 .findFirst().orElse("");
     }
 
+    /**
+     * Extrae el identificador de tarea almacenado en las propiedades de la tarjeta.
+     *
+     * @param card Tarjeta de tarea.
+     * @return Identificador de la tarea, o {@code 0} si no está disponible.
+     */
     private long getCardId(HBox card) {
         Object id = card.getProperties().get("taskId");
         return id instanceof Long l ? l : 0L;
     }
 
-    // =========================================================================
-    //  OVERLAYS — ajustes, seguridad, papelera y ayuda
-    // =========================================================================
+    // ── Overlays ──────────────────────────────────────────────────────────────
+
+    /**
+     * Navega a la vista de ajustes y la muestra en el área principal.
+     */
     @FXML
     private void handleSettings() {
         try {
@@ -1260,6 +1484,9 @@ public class MainController {
         }
     }
 
+    /**
+     * Navega a la vista de seguridad y la muestra en el área principal.
+     */
     @FXML
     private void handleSecurity() {
         try {
@@ -1277,6 +1504,10 @@ public class MainController {
         }
     }
 
+    /**
+     * Navega a la vista de papelera, la muestra en el área principal y
+     * registra el callback para recargar proyectos y tareas al restaurar elementos.
+     */
     @FXML
     private void handleTrash() {
         try {
@@ -1297,6 +1528,10 @@ public class MainController {
         }
     }
 
+    /**
+     * Muestra el menú contextual de ayuda con las opciones "Manual de usuario"
+     * y "Acerca de TaskMaster".
+     */
     @FXML
     private void handleHelp() {
         ContextMenu menu = new ContextMenu();
@@ -1315,6 +1550,9 @@ public class MainController {
         menu.show(btnHelp, javafx.geometry.Side.RIGHT, 4, 0);
     }
 
+    /**
+     * Navega a la vista "Acerca de TaskMaster" y la muestra en el área principal.
+     */
     private void showAboutView() {
         try {
             FXMLLoader loader = new FXMLLoader(
@@ -1333,8 +1571,12 @@ public class MainController {
         }
     }
 
-
-    /** Oculta el mainArea y añade el overlay al HBox central */
+    /**
+     * Oculta el área principal, elimina cualquier overlay activo y añade
+     * el nuevo overlay al {@link HBox} central del layout.
+     *
+     * @param overlay Nodo a mostrar como overlay en el área principal.
+     */
     private void swapMainAreaWith(javafx.scene.Node overlay) {
         mainArea.setVisible(false);
         mainArea.setManaged(false);
@@ -1347,11 +1589,18 @@ public class MainController {
         centerHBox.getChildren().add(overlay);
     }
 
+    /**
+     * Hace visible el área principal.
+     */
     private void showMainArea() {
         mainArea.setVisible(true);
         mainArea.setManaged(true);
     }
 
+    /**
+     * Elimina todos los overlays activos (papelera, ajustes, perfil, detalle)
+     * del {@link HBox} central y muestra el área principal.
+     */
     private void removeOverlayPanels() {
         getCenterHBox().getChildren().removeIf(n -> {
             Object ud = n.getUserData();
@@ -1360,6 +1609,11 @@ public class MainController {
         showMainArea();
     }
 
+    /**
+     * Obtiene el {@link HBox} central del {@link javafx.scene.layout.BorderPane} raíz.
+     *
+     * @return El contenedor central de la escena principal.
+     */
     private HBox getCenterHBox() {
         javafx.scene.layout.BorderPane root =
                 (javafx.scene.layout.BorderPane) btnHome.getScene().getRoot();
@@ -1369,12 +1623,23 @@ public class MainController {
     private static final String SIDEBAR_ACTIVE   = "sidebar-btn-active";
     private static final String SIDEBAR_INACTIVE = "sidebar-btn";
 
+    /**
+     * Marca el botón del sidebar indicado como activo y desactiva el resto.
+     *
+     * @param active Botón del sidebar a marcar como activo.
+     */
     private void setSidebarActive(Button active) {
         clearSidebarSelection();
         active.getStyleClass().removeAll("sidebar-btn");
         active.getStyleClass().add("sidebar-btn-active");
     }
 
+    /**
+     * Marca la fila del sidebar correspondiente al proyecto indicado como activa
+     * y desactiva el resto de botones del sidebar y filas de proyectos.
+     *
+     * @param projectId Identificador del proyecto activo.
+     */
     private void setSidebarProjectActive(Long projectId) {
         for (Button btn : new Button[]{btnHome, btnAllTasks, btnPersonal,
                 btnEstudios, btnTrabajo, btnSettings, btnSecurity, btnTrash}) {
@@ -1402,6 +1667,10 @@ public class MainController {
         }
     }
 
+    /**
+     * Muestra la barra de filtros y el campo de búsqueda,
+     * y actualiza el texto del botón de creación a "Nueva tarea".
+     */
     private void showFilters() {
         resetComboBox(statusFilter,   lm.get("common.status"));
         resetComboBox(priorityFilter, lm.get("common.priority"));
@@ -1413,6 +1682,14 @@ public class MainController {
         showSearch();
         createButton.setText(LanguageManager.getInstance().get("topbar.create.task"));
     }
+
+    /**
+     * Restablece un {@link ComboBox} a su estado sin selección,
+     * mostrando el texto de placeholder indicado.
+     *
+     * @param combo      ComboBox a restablecer.
+     * @param promptText Texto de placeholder a mostrar.
+     */
     private void resetComboBox(ComboBox<String> combo, String promptText) {
         String currentValue = combo.getValue();
         combo.setValue(null);
@@ -1430,23 +1707,41 @@ public class MainController {
             }
         });
     }
+
+    /**
+     * Oculta la barra de filtros y el campo de búsqueda,
+     * y restablece el texto del botón de creación.
+     */
     private void hideFilters() {
         taskFiltersBar.setVisible(false);
         taskFiltersBar.setManaged(false);
         hideSearch();
         createButton.setText(lm.get("topbar.create"));
     }
+
+    /**
+     * Hace visible el campo de búsqueda y lo limpia.
+     */
     private void showSearch() {
         searchField.setVisible(true);
         searchField.setManaged(true);
         searchField.clear();
     }
+
+    /**
+     * Oculta el campo de búsqueda y lo limpia.
+     */
     private void hideSearch() {
         searchField.setVisible(false);
         searchField.setManaged(false);
         searchField.clear();
     }
 
+    /**
+     * Filtra las tarjetas visibles del contenedor de tareas en tiempo real
+     * según el texto introducido en el campo de búsqueda, buscando por
+     * título y por identificador numérico de la tarea.
+     */
     @FXML
     private void handleSearch() {
         String query = searchField.getText().trim().toLowerCase();
@@ -1475,9 +1770,12 @@ public class MainController {
         });
     }
 
-    // =========================================================================
-    //  DIALOGS
-    // =========================================================================
+    // ── Diálogos ──────────────────────────────────────────────────────────────
+
+    /**
+     * Abre el diálogo modal de creación de nuevo proyecto y recarga
+     * el sidebar y las tareas al crearlo.
+     */
     @FXML
     private void handleNewProject() {
         try {
@@ -1495,6 +1793,10 @@ public class MainController {
         }
     }
 
+    /**
+     * Abre el diálogo modal de creación de nueva tarea, preseleccionando
+     * el proyecto o la categoría activos, y recarga las tareas al crearla.
+     */
     @FXML
     private void handleNewTask() {
         final Long currentProjectId = selectedProjectId;
@@ -1521,6 +1823,13 @@ public class MainController {
         }
     }
 
+    /**
+     * Abre el diálogo modal de edición de un proyecto y, al guardarlo,
+     * recarga el sidebar y actualiza la vista de detalle si está activa.
+     *
+     * @param projectId   Identificador del proyecto a editar.
+     * @param projectName Nombre actual del proyecto.
+     */
     private void handleEditProject(Long projectId, String projectName) {
         try {
             FXMLLoader loader = new FXMLLoader(
@@ -1553,6 +1862,14 @@ public class MainController {
         }
     }
 
+    /**
+     * Muestra un diálogo de confirmación y, si el usuario acepta, elimina
+     * el proyecto del backend, recarga el sidebar y navega al home si
+     * el proyecto eliminado era el activo.
+     *
+     * @param projectId   Identificador del proyecto a eliminar.
+     * @param projectName Nombre del proyecto, usado en el mensaje de confirmación.
+     */
     private void handleDeleteProject(Long projectId, String projectName) {
         Alert confirm = new Alert(Alert.AlertType.CONFIRMATION);
         confirm.setTitle(lm.get("confirm.delete.title.project"));
@@ -1580,6 +1897,12 @@ public class MainController {
         });
     }
 
+    /**
+     * Abre el diálogo modal de edición de una tarea y recarga la lista al guardar.
+     *
+     * @param taskId Identificador de la tarea a editar.
+     * @param task   Nodo JSON con los datos actuales de la tarea.
+     */
     private void handleEditTask(Long taskId, JsonNode task) {
         try {
             FXMLLoader loader = new FXMLLoader(
@@ -1603,6 +1926,12 @@ public class MainController {
         }
     }
 
+    /**
+     * Muestra un diálogo de confirmación y, si el usuario acepta, elimina
+     * la tarea del backend y recarga la vista activa.
+     *
+     * @param taskId Identificador de la tarea a eliminar.
+     */
     private void handleDeleteTask(Long taskId) {
         final Long   currentProjectId = selectedProjectId;
         final String currentCategory  = selectedCategory;
@@ -1638,6 +1967,10 @@ public class MainController {
         });
     }
 
+    /**
+     * Registra el logout en el backend, limpia la sesión en {@link AppContext}
+     * y navega a la pantalla de login.
+     */
     @FXML
     private void handleLogout() {
         try {
@@ -1670,9 +2003,12 @@ public class MainController {
         }
     }
 
-    // =========================================================================
-    //  HELPERS
-    // =========================================================================
+    // ── Helpers ───────────────────────────────────────────────────────────────
+
+    /**
+     * Recarga la vista activa (proyecto, categoría, todas las tareas o home)
+     * según el estado de navegación actual.
+     */
     private void reloadTasks() {
         if (selectedProjectId != null) loadTasksForProject(selectedProjectId);
         else if (selectedCategory != null) loadTasksByCategory(selectedCategory, areaTitle.getText());
@@ -1680,6 +2016,13 @@ public class MainController {
         else loadHome();
     }
 
+    /**
+     * Calcula las estadísticas globales de tareas del usuario a partir
+     * de los datos de la vista home.
+     *
+     * @param home Nodo JSON con todos los datos de la vista home.
+     * @return Array de enteros con {@code [pendientes, en progreso, completadas, proyectos activos]}.
+     */
     private int[] computeStats(JsonNode home) {
         int pending = 0, inProgress = 0, done = 0, activeProjects = 0;
         JsonNode projects = home.get("projects");
@@ -1709,16 +2052,34 @@ public class MainController {
         return new int[]{pending, inProgress, done, activeProjects};
     }
 
+    /**
+     * Calcula el número total de tareas pendientes (en estado TODO o IN_PROGRESS).
+     *
+     * @param home Nodo JSON con los datos de la vista home.
+     * @return Número de tareas pendientes.
+     */
     private int countPendingTasks(JsonNode home) {
         int[] s = computeStats(home); return s[0] + s[1];
     }
 
+    /**
+     * Crea un panel {@link VBox} con el estilo CSS {@code home-panel}.
+     *
+     * @return Panel vacío con el estilo aplicado.
+     */
     private VBox createPanel() {
         VBox panel = new VBox(0);
         panel.getStyleClass().add("home-panel");
         return panel;
     }
 
+    /**
+     * Crea la cabecera de un panel con un título y un contador alineados.
+     *
+     * @param title Título del panel.
+     * @param count Texto del contador a mostrar en el extremo derecho.
+     * @return {@link HBox} con el contenido de la cabecera.
+     */
     private HBox createPanelHeader(String title, String count) {
         HBox header = new HBox();
         header.setAlignment(Pos.CENTER_LEFT);
@@ -1735,6 +2096,10 @@ public class MainController {
         return header;
     }
 
+    /**
+     * Elimina la selección activa de todos los botones del sidebar
+     * y de todas las filas de proyectos.
+     */
     private void clearSidebarSelection() {
         for (Button btn : new Button[]{btnHome, btnAllTasks, btnPersonal,
                 btnEstudios, btnTrabajo, btnSettings, btnSecurity, btnTrash, btnHelp}) {
@@ -1758,6 +2123,10 @@ public class MainController {
         }
     }
 
+    /**
+     * Navega hacia atrás en la pila de navegación. Si hay una vista anterior
+     * registrada la restaura; si no, elimina los overlays y muestra el área principal.
+     */
     private void navigateBack() {
         if (!navigationStack.isEmpty()) {
             navigationStack.pop().run();
@@ -1766,10 +2135,23 @@ public class MainController {
         }
     }
 
+    /**
+     * Crea un {@link Label} con el texto y el estilo CSS inline indicados.
+     *
+     * @param text  Texto del badge.
+     * @param style Estilo CSS inline a aplicar.
+     * @return {@link Label} configurado como badge.
+     */
     private Label createBadge(String text, String style) {
         Label badge = new Label(text); badge.setStyle(style); return badge;
     }
 
+    /**
+     * Devuelve el color hex de acento asociado a una categoría.
+     *
+     * @param c Código de categoría.
+     * @return Color en formato hex.
+     */
     private String getCategoryColor(String c) {
         return switch (c) {
             case "PERSONAL" -> COLOR_PERSONAL;
@@ -1779,11 +2161,24 @@ public class MainController {
         };
     }
 
+    /**
+     * Devuelve el color hex de acento para una fila del sidebar de proyectos,
+     * rotando entre los colores disponibles según el índice.
+     *
+     * @param i Índice de la fila en el sidebar.
+     * @return Color en formato hex.
+     */
     private String getCategoryColorForIndex(int i) {
         String[] colors = {COLOR_PERSONAL, COLOR_ESTUDIOS, COLOR_TRABAJO, "#60a5fa", "#f472b6"};
         return colors[i % colors.length];
     }
 
+    /**
+     * Devuelve el estilo CSS inline del badge de categoría.
+     *
+     * @param c Código de categoría.
+     * @return Cadena de estilo CSS con color de fondo y de texto.
+     */
     private String getCategoryBadgeStyle(String c) {
         return switch (c) {
             case "PERSONAL" -> "-fx-background-color: #f3e8ff; -fx-text-fill: #6b21a8; " +
@@ -1797,6 +2192,12 @@ public class MainController {
         };
     }
 
+    /**
+     * Devuelve el color hex asociado a un estado de tarea o proyecto.
+     *
+     * @param s Código de estado.
+     * @return Color en formato hex.
+     */
     private String getStatusColor(String s) {
         return switch (s) {
             case "TODO" -> "#95a5a6";
@@ -1808,6 +2209,12 @@ public class MainController {
         };
     }
 
+    /**
+     * Devuelve el color hex asociado a una prioridad de tarea o proyecto.
+     *
+     * @param p Código de prioridad.
+     * @return Color en formato hex.
+     */
     private String getPriorityColor(String p) {
         return switch (p) {
             case "URGENT" -> "#e74c3c";
@@ -1818,6 +2225,12 @@ public class MainController {
         };
     }
 
+    /**
+     * Traduce un código de estado del backend a su etiqueta localizada.
+     *
+     * @param status Código de estado.
+     * @return Etiqueta localizada correspondiente.
+     */
     private String translateStatus(String status) {
         return switch (status) {
             case "TODO"        -> lm.get("status.TODO");
@@ -1829,7 +2242,12 @@ public class MainController {
         };
     }
 
-
+    /**
+     * Traduce un código de prioridad del backend a su etiqueta localizada.
+     *
+     * @param priority Código de prioridad.
+     * @return Etiqueta localizada correspondiente.
+     */
     private String translatePriority(String priority) {
         return switch (priority) {
             case "LOW"    -> lm.get("priority.LOW");
@@ -1840,6 +2258,13 @@ public class MainController {
         };
     }
 
+    /**
+     * Muestra un diálogo de información con el título y mensaje obtenidos
+     * de las claves de localización indicadas.
+     *
+     * @param titleKey   Clave de localización del título.
+     * @param messageKey Clave de localización del mensaje.
+     */
     private void showAlert(String titleKey, String messageKey) {
         Alert alert = new Alert(Alert.AlertType.INFORMATION);
         alert.setTitle(lm.get(titleKey));
@@ -1848,6 +2273,13 @@ public class MainController {
         alert.showAndWait();
     }
 
+    /**
+     * Crea un diálogo modal con el contenido indicado, aplica el tema activo
+     * y lo muestra de forma bloqueante.
+     *
+     * @param root  Contenido raíz a mostrar en el diálogo.
+     * @param title Título de la ventana del diálogo.
+     */
     private void showAsDialog(VBox root, String title) {
         Stage dialog = new Stage();
         dialog.setTitle(title);
@@ -1861,6 +2293,12 @@ public class MainController {
         dialog.showAndWait();
     }
 
+    /**
+     * Aplica el tema activo del {@link ThemeManager} a la escena indicada,
+     * cargando primero el CSS base y luego el tema seleccionado.
+     *
+     * @param scene Escena a la que aplicar el tema.
+     */
     private void applyThemeToScene(Scene scene) {
         com.taskmaster.taskmasterfrontend.util.ThemeManager tm =
                 com.taskmaster.taskmasterfrontend.util.ThemeManager.getInstance();
@@ -1883,6 +2321,10 @@ public class MainController {
         scene.setFill(javafx.scene.paint.Color.web(tm.getBgApp()));
     }
 
+    /**
+     * Actualiza los textos de todos los elementos del sidebar y de la barra
+     * de filtros con las cadenas del idioma actualmente seleccionado.
+     */
     private void refreshSidebar() {
         btnHome.setText(lm.get("sidebar.home"));
         btnAllTasks.setText(lm.get("sidebar.all.tasks"));

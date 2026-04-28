@@ -10,16 +10,13 @@ import java.net.http.HttpResponse;
 import java.util.Base64;
 
 /**
- * APISERVICE
+ * Servicio central de comunicación HTTP con el backend de TaskMaster.
  *
- * Clase central que gestiona todas las peticiones HTTP al backend.
+ * <p>Gestiona todas las peticiones REST utilizando el {@link HttpClient} nativo
+ * de Java 11+ y autenticación HTTP Basic, codificando las credenciales en
+ * Base64 en la cabecera {@code Authorization} de cada petición protegida.</p>
  *
- * HttpClient -> cliente HTTP integrado en Java 11+, no necesita librerías externas
- * ObjectMapper -> convierte objetos Java a JSON y viceversa
- *
- * Usamos autenticación Basic Auth - en cada petición enviamos
- * username:password codificado en Base64 en la cabecera Authorization.
- * Es el mecanismo más simple compatible con Spring Security STATELESS.
+ * @author Carlos
  */
 public class ApiService {
 
@@ -32,7 +29,8 @@ public class ApiService {
     private String password;
 
     /**
-     * Constructor - inicializa el cliente HTTP y el mapper de JSON.
+     * Inicializa el cliente HTTP y el mapeador de JSON con soporte
+     * para tipos de fecha y hora de {@code java.time}.
      */
     public ApiService() {
         this.httpClient = HttpClient.newHttpClient();
@@ -42,8 +40,12 @@ public class ApiService {
     }
 
     /**
-     * Guarda las credenciales del usuario autenticado.
-     * Se llama desde LoginController tras un login exitoso.
+     * Almacena las credenciales del usuario autenticado para incluirlas
+     * en las siguientes peticiones. Se llama desde {@link com.taskmaster.taskmasterfrontend.controller.LoginController}
+     * tras un login exitoso.
+     *
+     * @param username Nombre de usuario.
+     * @param password Contraseña en texto plano.
      */
     public void setCredentials(String username, String password) {
         this.username = username;
@@ -51,8 +53,9 @@ public class ApiService {
     }
 
     /**
-     * Genera la cabecera de autenticación Basic Auth.
-     * Formato: "Basic " + Base64("username:password")
+     * Genera la cabecera de autenticación HTTP Basic.
+     *
+     * @return Cadena con el formato {@code "Basic <base64(usuario:contraseña)>"}.
      */
     private String getAuthHeader() {
         String credentials = username + ":" + password;
@@ -60,11 +63,13 @@ public class ApiService {
     }
 
     /**
-     * Realiza una petición POST sin autenticación (para login y registro).
+     * Envía una petición POST sin autenticación, usada para los endpoints
+     * públicos de login y registro.
      *
-     * @param endpoint ruta del endpoint, ej: "/api/auth/login"
-     * @param body     objeto Java que se convertirá a JSON
-     * @return HttpResponse con el resultado
+     * @param endpoint Ruta del endpoint (p.ej. {@code "/api/auth/login"}).
+     * @param body     Objeto Java que se serializará a JSON como cuerpo.
+     * @return Respuesta HTTP del servidor.
+     * @throws Exception Si se produce un error de red o de serialización.
      */
     public HttpResponse<String> post(String endpoint, Object body) throws Exception {
         String json = objectMapper.writeValueAsString(body);
@@ -79,7 +84,12 @@ public class ApiService {
     }
 
     /**
-     * Realiza una petición POST con autenticación (para endpoints protegidos).
+     * Envía una petición POST con autenticación y cuerpo JSON.
+     *
+     * @param endpoint Ruta del endpoint.
+     * @param body     Objeto Java que se serializará a JSON como cuerpo.
+     * @return Respuesta HTTP del servidor.
+     * @throws Exception Si se produce un error de red o de serialización.
      */
     public HttpResponse<String> postWithAuth(String endpoint, Object body) throws Exception {
         String json = objectMapper.writeValueAsString(body);
@@ -95,7 +105,12 @@ public class ApiService {
     }
 
     /**
-     * Petición POST con autenticación y sin body (parámetros en la URL).
+     * Envía una petición POST con autenticación y sin cuerpo,
+     * pasando los parámetros directamente en la URL.
+     *
+     * @param endpoint Ruta del endpoint con los parámetros ya codificados.
+     * @return Respuesta HTTP del servidor.
+     * @throws Exception Si se produce un error de red.
      */
     public HttpResponse<String> postWithAuthNoBody(String endpoint) throws Exception {
         HttpRequest request = HttpRequest.newBuilder()
@@ -109,7 +124,11 @@ public class ApiService {
     }
 
     /**
-     * Realiza una petición GET con autenticación.
+     * Envía una petición GET con autenticación.
+     *
+     * @param endpoint Ruta del endpoint.
+     * @return Respuesta HTTP del servidor.
+     * @throws Exception Si se produce un error de red.
      */
     public HttpResponse<String> get(String endpoint) throws Exception {
         HttpRequest request = HttpRequest.newBuilder()
@@ -122,7 +141,12 @@ public class ApiService {
     }
 
     /**
-     * Realiza una petición PUT con autenticación.
+     * Envía una petición PUT con autenticación y cuerpo JSON.
+     *
+     * @param endpoint Ruta del endpoint.
+     * @param body     Objeto Java que se serializará a JSON como cuerpo.
+     * @return Respuesta HTTP del servidor.
+     * @throws Exception Si se produce un error de red o de serialización.
      */
     public HttpResponse<String> put(String endpoint, Object body) throws Exception {
         String json = objectMapper.writeValueAsString(body);
@@ -138,7 +162,11 @@ public class ApiService {
     }
 
     /**
-     * Realiza una petición DELETE con autenticación.
+     * Envía una petición DELETE con autenticación.
+     *
+     * @param endpoint Ruta del endpoint.
+     * @return Respuesta HTTP del servidor.
+     * @throws Exception Si se produce un error de red.
      */
     public HttpResponse<String> delete(String endpoint) throws Exception {
         HttpRequest request = HttpRequest.newBuilder()
@@ -151,7 +179,13 @@ public class ApiService {
     }
 
     /**
-     * Realiza una petición PATCH con autenticación.
+     * Envía una petición PATCH con autenticación. Acepta un cuerpo JSON,
+     * una cadena ya serializada o {@code null} para peticiones sin cuerpo.
+     *
+     * @param endpoint Ruta del endpoint.
+     * @param body     Objeto a serializar, cadena JSON ya preparada, o {@code null}.
+     * @return Respuesta HTTP del servidor.
+     * @throws Exception Si se produce un error de red o de serialización.
      */
     public HttpResponse<String> patch(String endpoint, Object body) throws Exception {
         String json;
@@ -172,6 +206,14 @@ public class ApiService {
         return httpClient.send(request, HttpResponse.BodyHandlers.ofString());
     }
 
+    /**
+     * Envía una petición PUT con autenticación y sin cuerpo,
+     * pasando los parámetros directamente en la URL.
+     *
+     * @param endpoint Ruta del endpoint con los parámetros ya codificados.
+     * @return Respuesta HTTP del servidor.
+     * @throws Exception Si se produce un error de red.
+     */
     public HttpResponse<String> putNoBody(String endpoint) throws Exception {
         HttpRequest request = HttpRequest.newBuilder()
                 .uri(URI.create(BASE_URL + endpoint))
@@ -184,8 +226,14 @@ public class ApiService {
     }
 
     /**
-     * Realiza una petición GET que devuelve bytes (para imágenes u otros binarios).
-     * Devuelve null si el servidor responde 404 (útil para avatares inexistentes).
+     * Envía una petición GET con autenticación y devuelve el cuerpo como array de bytes,
+     * útil para descargar recursos binarios como imágenes de avatar.
+     *
+     * @param endpoint Ruta del endpoint.
+     * @return Array de bytes con el contenido de la respuesta,
+     *         o {@code null} si el servidor responde con 404.
+     * @throws Exception Si el servidor responde con un error distinto de 404,
+     *                   o si se produce un error de red.
      */
     public byte[] getBytes(String endpoint) throws Exception {
         HttpRequest request = HttpRequest.newBuilder()
@@ -202,14 +250,17 @@ public class ApiService {
     }
 
     /**
-     * Sube un fichero como multipart/form-data con autenticación.
-     * Construye el cuerpo multipart manualmente (HttpClient no tiene soporte nativo).
+     * Envía una petición POST con autenticación y un archivo como cuerpo
+     * {@code multipart/form-data}, construyendo el límite y las cabeceras
+     * de la parte manualmente.
      *
-     * @param endpoint    ruta del endpoint
-     * @param fieldName   nombre del campo (ej: "file")
-     * @param filename    nombre del fichero que se anunciará al servidor
-     * @param contentType tipo MIME ("image/png" o "image/jpeg")
-     * @param fileBytes   contenido binario del fichero
+     * @param endpoint    Ruta del endpoint.
+     * @param fieldName   Nombre del campo del formulario (p.ej. {@code "file"}).
+     * @param filename    Nombre del archivo anunciado al servidor.
+     * @param contentType Tipo MIME del archivo (p.ej. {@code "image/png"}).
+     * @param fileBytes   Contenido binario del archivo.
+     * @return Respuesta HTTP del servidor.
+     * @throws Exception Si se produce un error de red o de escritura del cuerpo.
      */
     public HttpResponse<String> postMultipart(String endpoint, String fieldName,
                                               String filename, String contentType,
@@ -238,10 +289,13 @@ public class ApiService {
     }
 
     /**
-     * Deserializa el JSON de una respuesta a un objeto Java.
+     * Deserializa el cuerpo JSON de una respuesta HTTP a un objeto Java.
      *
-     * @param response respuesta HTTP
-     * @param clazz    clase destino
+     * @param response Respuesta HTTP cuyo cuerpo se deserializará.
+     * @param clazz    Clase destino de la deserialización.
+     * @param <T>      Tipo del objeto resultante.
+     * @return Objeto Java deserializado.
+     * @throws Exception Si el JSON no puede deserializarse a la clase indicada.
      */
     public <T> T parseResponse(HttpResponse<String> response, Class<T> clazz) throws Exception {
         return objectMapper.readValue(response.body(), clazz);
