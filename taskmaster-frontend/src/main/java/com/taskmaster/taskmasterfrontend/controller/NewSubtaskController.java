@@ -15,6 +15,15 @@ import java.net.http.HttpResponse;
 import java.util.HashMap;
 import java.util.Map;
 
+/**
+ * Controlador del diálogo de creación de nueva subtarea.
+ *
+ * <p>Hereda el identificador de la tarea padre, el proyecto y la categoría
+ * de la tarea que la contiene. Si la tarea padre pertenece a un proyecto,
+ * la subtarea se asocia al mismo proyecto; si no, hereda la categoría.</p>
+ *
+ * @author Carlos
+ */
 public class NewSubtaskController {
 
     @FXML private TextField titleField;
@@ -30,12 +39,21 @@ public class NewSubtaskController {
     private final ObjectMapper objectMapper = new ObjectMapper();
     private final LanguageManager lm = LanguageManager.getInstance();
 
+    /**
+     * Registra el callback que se ejecutará tras crear la subtarea correctamente.
+     *
+     * @param callback Acción a ejecutar al completar la creación.
+     */
     public void setOnSubtaskCreated(Runnable callback) {
         this.onSubtaskCreated = callback;
     }
 
     /**
-     * Inicializa el diálogo con los datos heredados de la tarea padre.
+     * Establece los datos heredados de la tarea padre.
+     *
+     * @param parentTaskId Identificador de la tarea padre.
+     * @param projectId    Identificador del proyecto asociado, o {@code null} si no tiene.
+     * @param category     Categoría de la tarea padre, usada si no hay proyecto.
      */
     public void initData(Long parentTaskId, Long projectId, String category) {
         this.parentTaskId = parentTaskId;
@@ -43,6 +61,10 @@ public class NewSubtaskController {
         this.category     = category;
     }
 
+    /**
+     * Inicializa el combo de prioridad con sus valores localizados
+     * y configura el envío del formulario con la tecla Enter.
+     */
     @FXML
     public void initialize() {
         priorityCombo.setItems(FXCollections.observableArrayList(
@@ -55,6 +77,10 @@ public class NewSubtaskController {
         });
     }
 
+    /**
+     * Valida el formulario y envía la solicitud de creación de la subtarea
+     * al backend. Si la operación es exitosa, ejecuta el callback y cierra el diálogo.
+     */
     @FXML
     private void handleCreate() {
         String title = titleField.getText().trim();
@@ -102,22 +128,36 @@ public class NewSubtaskController {
         }).start();
     }
 
+    /**
+     * Cierra el diálogo sin crear la subtarea.
+     */
     @FXML
     private void handleCancel() {
         closeDialog();
     }
 
+    /**
+     * Muestra un mensaje de error en la etiqueta de error del formulario.
+     *
+     * @param msg Mensaje de error a mostrar.
+     */
     private void showError(String msg) {
         errorLabel.setText(msg);
         errorLabel.setVisible(true);
         errorLabel.setManaged(true);
     }
 
+    /**
+     * Oculta la etiqueta de error del formulario.
+     */
     private void hideError() {
         errorLabel.setVisible(false);
         errorLabel.setManaged(false);
     }
 
+    /**
+     * Cierra el diálogo actual.
+     */
     private void closeDialog() {
         titleField.getScene().getWindow().hide();
     }

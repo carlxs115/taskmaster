@@ -10,14 +10,26 @@ import javafx.stage.Stage;
 import java.io.IOException;
 
 /**
- * MAINAPP
+ * Clase principal de la aplicación TaskMaster.
  *
- * Punto de entrada de la aplicación JavaFX.
- * Stage -> es la ventana principal de la app.
- * Scene -> es el contenido que se muestra dentro de la ventana.
+ * <p>Punto de entrada de la aplicación JavaFX. Se encarga de inicializar
+ * la ventana principal ({@link Stage}), cargar la vista de login y aplicar
+ * el tema y el idioma iniciales.</p>
+ *
+ * @author Carlos
+ * @version 1.0
  */
 public class MainApp extends Application {
 
+    /**
+     * Inicializa y muestra la ventana principal de la aplicación.
+     *
+     * <p>Carga la vista de login desde su FXML, aplica el tema Amatista por defecto
+     * y registra la escena en el {@link ThemeManager} para su gestión posterior.</p>
+     *
+     * @param stage El {@link Stage} principal proporcionado por JavaFX.
+     * @throws IOException Si no se puede cargar el archivo FXML de la vista de login.
+     */
     @Override
     public void start(Stage stage) throws IOException {
         FXMLLoader fxmlLoader = new FXMLLoader(
@@ -45,6 +57,11 @@ public class MainApp extends Application {
         stage.show();
     }
 
+    /**
+     * Método principal. Lanza la aplicación JavaFX.
+     *
+     * @param args Argumentos de línea de comandos (no utilizados).
+     */
     public static void main(String[] args) {
         launch();
     }

@@ -18,6 +18,16 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * Controlador del componente de historial de actividad.
+ *
+ * <p>Muestra en una {@link TableView} los registros de actividad asociados
+ * a una entidad (tarea, subtarea o proyecto). Soporta la carga encadenada
+ * de logs de subtareas cuando se visualiza el detalle de una tarea,
+ * y de tareas y sus subtareas cuando se visualiza el detalle de un proyecto.</p>
+ *
+ * @author Carlos
+ */
 public class ActivityLogSectionController {
 
     @FXML
@@ -29,6 +39,12 @@ public class ActivityLogSectionController {
 
     private final LanguageManager lm = LanguageManager.getInstance();
 
+    /**
+     * Traduce un código de acción del backend a su etiqueta localizada.
+     *
+     * @param actionType Código de acción (p.ej. {@code "TASK_CREATED"}).
+     * @return Etiqueta localizada correspondiente, o el propio código si no hay traducción.
+     */
     private String getActionLabel(String actionType) {
         return switch (actionType) {
             case "TASK_CREATED"             -> lm.get("common.task.created");
@@ -51,6 +67,12 @@ public class ActivityLogSectionController {
         };
     }
 
+    /**
+     * Traduce un tipo de entidad del backend a su etiqueta localizada.
+     *
+     * @param entityType Tipo de entidad (p.ej. {@code "TASK"}, {@code "PROJECT"}).
+     * @return Etiqueta localizada correspondiente, o el propio tipo si no hay traducción.
+     */
     private String getEntityLabel(String entityType) {
         return switch (entityType) {
             case "TASK"    -> lm.get("common.task");
@@ -61,6 +83,10 @@ public class ActivityLogSectionController {
         };
     }
 
+    /**
+     * Inicializa la tabla configurando la política de redimensionado
+     * y los {@code cellValueFactory} de cada columna.
+     */
     @FXML
     public void initialize() {
         activityTable.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
@@ -70,6 +96,18 @@ public class ActivityLogSectionController {
         colDetail.setCellValueFactory(c -> new SimpleStringProperty(c.getValue().detail()));
     }
 
+    /**
+     * Carga los registros de actividad para una entidad concreta.
+     *
+     * <p>Si {@code extraTypes} contiene {@code "SUBTASK"}, carga además los logs
+     * de todas las subtareas de la tarea indicada. Si contiene {@code "TASK"},
+     * carga los logs de todas las tareas del proyecto y sus respectivas subtareas.
+     * Los registros se ordenan por fecha descendente.</p>
+     *
+     * @param entityType Tipo de entidad principal (p.ej. {@code "TASK"}).
+     * @param entityId   Identificador de la entidad principal.
+     * @param extraTypes Tipos adicionales para carga encadenada (opcional).
+     */
     public void loadForEntity(String entityType, Long entityId, String... extraTypes) {
         try {
             var apiService = AppContext.getInstance().getApiService();
@@ -127,11 +165,25 @@ public class ActivityLogSectionController {
         }
     }
 
-    // Sobrecarga sin extraTypes — ProjectDetailController sigue igual
+    /**
+     * Sobrecarga de {@link #loadForEntity(String, Long, String...)} sin tipos adicionales.
+     *
+     * @param entityType Tipo de entidad.
+     * @param entityId   Identificador de la entidad.
+     */
     public void loadForEntity(String entityType, Long entityId) {
         loadForEntity(entityType, entityId, new String[0]);
     }
 
+    /**
+     * Consulta la API y convierte la respuesta en una lista de {@link ActivityRow}.
+     *
+     * @param apiService Servicio HTTP del cliente.
+     * @param entityType Tipo de entidad a consultar.
+     * @param entityId   Identificador de la entidad.
+     * @return Lista de filas de actividad obtenidas, o lista vacía si la llamada falla.
+     * @throws Exception Si se produce un error al parsear la respuesta JSON.
+     */
     private List<ActivityRow> fetchRows(
             com.taskmaster.taskmasterfrontend.service.ApiService apiService,
             String entityType, Long entityId) throws Exception {
@@ -168,6 +220,16 @@ public class ActivityLogSectionController {
         return rows;
     }
 
+    /**
+     * Construye el texto de detalle de un registro a partir de los valores
+     * anterior y posterior al cambio.
+     *
+     * @param actionType Tipo de acción realizada.
+     * @param oldVal     Valor anterior al cambio.
+     * @param newVal     Valor posterior al cambio.
+     * @param entityName Nombre de la entidad, usado como fallback.
+     * @return Cadena descriptiva del cambio realizado.
+     */
     private String buildDetail(String actionType, String oldVal, String newVal, String entityName) {
         if (!oldVal.isBlank() && !newVal.isBlank()) {
             String old = translateValue(oldVal);
@@ -187,14 +249,33 @@ public class ActivityLogSectionController {
         return entityName;
     }
 
+    /**
+     * Indica si el valor dado corresponde a un estado de tarea.
+     *
+     * @param v Valor a comprobar.
+     * @return {@code true} si es un valor de estado reconocido.
+     */
     private boolean isStatusValue(String v) {
         return switch (v) { case "TODO","IN_PROGRESS","DONE","CANCELLED" -> true; default -> false; };
     }
 
+    /**
+     * Indica si el valor dado corresponde a una prioridad de tarea.
+     *
+     * @param v Valor a comprobar.
+     * @return {@code true} si es un valor de prioridad reconocido.
+     */
     private boolean isPriorityValue(String v) {
         return switch (v) { case "LOW","MEDIUM","HIGH","URGENT" -> true; default -> false; };
     }
 
+    /**
+     * Formatea una cadena de fecha ISO a la representación configurada
+     * por el usuario (formato de fecha + formato de hora).
+     *
+     * @param raw Cadena de fecha en formato ISO ({@code LocalDateTime}).
+     * @return Cadena formateada, o el valor original si el parseo falla.
+     */
     private String formatDate(String raw) {
         try {
             LocalDateTime dt = LocalDateTime.parse(raw);
@@ -206,6 +287,13 @@ public class ActivityLogSectionController {
         }
     }
 
+    /**
+     * Traduce un valor de enum del backend (estado o prioridad) a su
+     * etiqueta localizada.
+     *
+     * @param value Valor del enum (p.ej. {@code "TODO"}, {@code "HIGH"}).
+     * @return Etiqueta localizada, o el valor original si no hay traducción.
+     */
     private String translateValue(String value) {
         return switch (value) {
             case "TODO"        -> lm.get("status.todo");
@@ -220,5 +308,14 @@ public class ActivityLogSectionController {
         };
     }
 
+    /**
+     * Registro que representa una fila de la tabla de historial de actividad.
+     *
+     * @param date    Fecha formateada para mostrar.
+     * @param action  Etiqueta localizada de la acción realizada.
+     * @param entity  Tipo e identificador de la entidad afectada.
+     * @param detail  Descripción del cambio realizado.
+     * @param rawDate Fecha en formato ISO, usada para ordenación.
+     */
     public record ActivityRow(String date, String action, String entity, String detail, String rawDate) {}
 }

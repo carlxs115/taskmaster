@@ -17,6 +17,16 @@ import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.Map;
 
+/**
+ * Controlador del diálogo de edición del perfil de usuario.
+ *
+ * <p>Carga los datos actuales del perfil desde el backend al inicializarse
+ * y permite modificar el nombre de usuario, el correo electrónico y la fecha
+ * de nacimiento. Tras guardar correctamente, actualiza las credenciales en
+ * {@link AppContext} y ejecuta el callback registrado.</p>
+ *
+ * @author Carlos
+ */
 public class EditProfileController {
 
     @FXML private TextField usernameField;
@@ -29,15 +39,27 @@ public class EditProfileController {
             .registerModule(new JavaTimeModule());
     private final LanguageManager lm = LanguageManager.getInstance();
 
+    /**
+     * Registra el callback que se ejecutará tras actualizar el perfil correctamente.
+     *
+     * @param callback Acción a ejecutar al completar la actualización.
+     */
     public void setOnProfileUpdated(Runnable callback) {
         this.onProfileUpdated = callback;
     }
 
+    /**
+     * Inicializa el diálogo cargando los datos actuales del perfil.
+     */
     @FXML
     public void initialize() {
         loadProfile();
     }
 
+    /**
+     * Obtiene el perfil del usuario autenticado desde el backend y rellena
+     * los campos del formulario con los datos recibidos.
+     */
     private void loadProfile() {
         new Thread(() -> {
             try {
@@ -63,6 +85,11 @@ public class EditProfileController {
         }).start();
     }
 
+    /**
+     * Valida los campos del formulario y envía los datos actualizados al backend.
+     * Si la operación es exitosa, actualiza el username en {@link AppContext},
+     * refresca las credenciales del servicio API y cierra el diálogo.
+     */
     @FXML
     private void handleSave() {
         String username  = usernameField.getText().trim();
@@ -125,22 +152,36 @@ public class EditProfileController {
         }).start();
     }
 
+    /**
+     * Cierra el diálogo sin guardar cambios.
+     */
     @FXML
     private void handleCancel() {
         closeDialog();
     }
 
+    /**
+     * Muestra un mensaje de error en la etiqueta de error del formulario.
+     *
+     * @param msg Mensaje de error a mostrar.
+     */
     private void showError(String msg) {
         errorLabel.setText(msg);
         errorLabel.setVisible(true);
         errorLabel.setManaged(true);
     }
 
+    /**
+     * Oculta la etiqueta de error del formulario.
+     */
     private void hideError() {
         errorLabel.setVisible(false);
         errorLabel.setManaged(false);
     }
 
+    /**
+     * Cierra el diálogo actual.
+     */
     private void closeDialog() {
         ((Stage) usernameField.getScene().getWindow()).close();
     }

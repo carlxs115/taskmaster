@@ -19,15 +19,15 @@ import java.awt.image.BufferedImage;
 import java.io.ByteArrayOutputStream;
 
 /**
- * AVATARCROPCONTROLLER
+ * Controlador del diálogo de recorte circular de avatar.
  *
- * Diálogo modal para recortar una imagen en círculo antes de subirla como avatar.
+ * <p>Permite al usuario ajustar y recortar una imagen en forma circular
+ * antes de subirla como foto de perfil. El recorte se gestiona mediante
+ * el viewport del {@link ImageView}: el arrastre desplaza la región visible
+ * y el slider de zoom reduce el tamaño del viewport, ampliando la imagen.
+ * Al guardar, se renderiza el resultado a un PNG de {@value #OUTPUT_SIZE}x{@value #OUTPUT_SIZE} píxeles.</p>
  *
- * Implementación basada en viewport del ImageView:
- *   - El ImageView siempre ocupa 256x256 fijos en la UI.
- *   - El viewport define qué región de la imagen original se muestra dentro.
- *   - Arrastrar/zoom modifican el viewport (x, y, width, height en coordenadas de la imagen original).
- *   - Al guardar, se renderiza el ImageView (ya con el viewport aplicado) a PNG.
+ * @author Carlos
  */
 public class AvatarCropController {
 
@@ -37,7 +37,7 @@ public class AvatarCropController {
     @FXML private Button saveButton;
     @FXML private Button cancelButton;
 
-    /** Tamaño final del avatar guardado, en píxeles. */
+    /** Tamaño en píxeles del avatar resultante (ancho y alto). */
     private static final int OUTPUT_SIZE = 256;
 
     private Image sourceImage;
@@ -51,6 +51,10 @@ public class AvatarCropController {
     private double dragAnchorX, dragAnchorY;
     private double vpAnchorX, vpAnchorY;
 
+    /**
+     * Inicializa el diálogo configurando la máscara circular, el listener
+     * del slider de zoom y los manejadores de arrastre sobre el {@link ImageView}.
+     */
     @FXML
     public void initialize() {
         // Máscara circular visual sobre el contenedor
@@ -77,7 +81,13 @@ public class AvatarCropController {
         });
     }
 
-    /** Inyecta la imagen a recortar (llamar antes de showAndWait). */
+    /**
+     * Establece la imagen a recortar e inicializa el viewport centrado
+     * sobre el cuadrado central de la imagen.
+     * Debe llamarse antes de mostrar el diálogo.
+     *
+     * @param image Imagen fuente a recortar.
+     */
     public void setImage(Image image) {
         this.sourceImage = image;
         imageView.setImage(image);
@@ -92,7 +102,12 @@ public class AvatarCropController {
         zoomSlider.setValue(1.0);
     }
 
-    /** Aplica un valor de zoom (1.0 = cuadrado completo, 3.0 = solo 1/3 del lado). */
+    /**
+     * Actualiza el tamaño del viewport según el nivel de zoom indicado,
+     * manteniendo el punto central del recorte actual.
+     *
+     * @param zoom Factor de zoom (1.0 = sin zoom, 3.0 = zoom máximo).
+     */
     private void updateZoom(double zoom) {
         double minSide = Math.min(sourceImage.getWidth(), sourceImage.getHeight());
         double newSize = minSide / zoom;
@@ -103,7 +118,14 @@ public class AvatarCropController {
         setViewport(centerX - newSize / 2.0, centerY - newSize / 2.0, newSize);
     }
 
-    /** Aplica un viewport clampeado para que no se salga de la imagen. */
+    /**
+     * Aplica un nuevo viewport sobre la imagen, clampeando las coordenadas
+     * para que no se salgan de los límites de la imagen original.
+     *
+     * @param x    Coordenada X del vértice superior izquierdo del viewport.
+     * @param y    Coordenada Y del vértice superior izquierdo del viewport.
+     * @param size Tamaño del lado del viewport cuadrado en píxeles de la imagen original.
+     */
     private void setViewport(double x, double y, double size) {
         double maxX = sourceImage.getWidth()  - size;
         double maxY = sourceImage.getHeight() - size;
@@ -113,6 +135,9 @@ public class AvatarCropController {
         imageView.setViewport(new Rectangle2D(vpX, vpY, vpSize, vpSize));
     }
 
+    /**
+     * Guarda el recorte actual como PNG y cierra el diálogo.
+     */
     @FXML
     private void handleSave() {
         try {
@@ -124,6 +149,9 @@ public class AvatarCropController {
         }
     }
 
+    /**
+     * Cancela la operación y cierra el diálogo sin guardar.
+     */
     @FXML
     private void handleCancel() {
         saved = false;
@@ -134,12 +162,22 @@ public class AvatarCropController {
         ((Stage) cancelButton.getScene().getWindow()).close();
     }
 
-    /** Devuelve los bytes PNG del recorte, o null si se canceló. */
+    /**
+     * Devuelve los bytes PNG del avatar recortado.
+     *
+     * @return Array de bytes con el PNG resultante, o {@code null} si se canceló.
+     */
     public byte[] getCroppedImageBytes() {
         return saved ? resultBytes : null;
     }
 
-    /** Renderiza el cropContainer (ImageView + clip circular) a un PNG de 256x256. */
+    /**
+     * Renderiza el contenedor de recorte con la máscara circular aplicada
+     * a un PNG de {@value #OUTPUT_SIZE}x{@value #OUTPUT_SIZE} píxeles.
+     *
+     * @return Array de bytes con la imagen renderizada en formato PNG.
+     * @throws Exception Si se produce un error durante el renderizado o la codificación.
+     */
     private byte[] renderToPng() throws Exception {
         SnapshotParameters params = new SnapshotParameters();
         params.setFill(Color.TRANSPARENT);

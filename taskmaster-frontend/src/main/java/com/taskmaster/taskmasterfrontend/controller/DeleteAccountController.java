@@ -10,6 +10,15 @@ import javafx.stage.Stage;
 
 import java.net.http.HttpResponse;
 
+/**
+ * Controlador del diálogo de eliminación de cuenta de usuario.
+ *
+ * <p>Solicita la contraseña actual como confirmación antes de proceder.
+ * Si el backend confirma la eliminación, ejecuta el callback registrado
+ * para que el controlador padre pueda redirigir al usuario a la pantalla de login.</p>
+ *
+ * @author Carlos
+ */
 public class DeleteAccountController {
 
     @FXML private PasswordField passwordField;
@@ -18,10 +27,20 @@ public class DeleteAccountController {
     private Runnable onAccountDeleted;
     private final LanguageManager lm = LanguageManager.getInstance();
 
+    /**
+     * Registra el callback que se ejecutará tras eliminar la cuenta correctamente.
+     *
+     * @param callback Acción a ejecutar al completar la eliminación.
+     */
     public void setOnAccountDeleted(Runnable callback) {
         this.onAccountDeleted = callback;
     }
 
+    /**
+     * Valida que el campo de contraseña no esté vacío y envía la solicitud
+     * de eliminación de cuenta al backend. Si la operación es exitosa,
+     * cierra el diálogo y ejecuta el callback registrado.
+     */
     @FXML
     private void handleDelete() {
         String password = passwordField.getText();
@@ -55,22 +74,36 @@ public class DeleteAccountController {
         }).start();
     }
 
+    /**
+     * Cierra el diálogo sin eliminar la cuenta.
+     */
     @FXML
     private void handleCancel() {
         closeDialog();
     }
 
+    /**
+     * Muestra un mensaje de error en la etiqueta de error del formulario.
+     *
+     * @param msg Mensaje de error a mostrar.
+     */
     private void showError(String msg) {
         errorLabel.setText(msg);
         errorLabel.setVisible(true);
         errorLabel.setManaged(true);
     }
 
+    /**
+     * Oculta la etiqueta de error del formulario.
+     */
     private void hideError() {
         errorLabel.setVisible(false);
         errorLabel.setManaged(false);
     }
 
+    /**
+     * Cierra el diálogo actual.
+     */
     private void closeDialog() {
         ((Stage) passwordField.getScene().getWindow()).close();
     }

@@ -17,11 +17,14 @@ import javafx.stage.Stage;
 import java.time.Year;
 
 /**
- * ABOUTCONTROLLER
- *
  * Controlador de la pantalla "Acerca de TaskMaster".
- * Muestra información de la aplicación, autor, tecnologías y
- * abre sub-diálogos para términos, privacidad, licencias y reconocimientos.
+ *
+ * <p>Muestra información general de la aplicación: versión, descripción,
+ * copyright y badges de tecnologías utilizadas. También gestiona la apertura
+ * de sub-diálogos modales para términos de uso, política de privacidad,
+ * licencias de terceros y reconocimientos.</p>
+ *
+ * @author Carlos
  */
 public class AboutController {
 
@@ -33,7 +36,10 @@ public class AboutController {
 
     private final LanguageManager lm = LanguageManager.getInstance();
 
-    // ── Datos de cada badge tecnológico: nombre, fondo, texto ──
+    /**
+     * Datos de los badges tecnológicos mostrados en la vista.
+     * Cada entrada contiene: nombre, color de fondo (hex) y color de texto (hex).
+     */
     private static final String[][] TECH_DATA = {
             { "JavaFX 21.0.6", "#dbeafe", "#1e40af" },
             { "Spring Boot 3", "#dcfce7", "#166534" },
@@ -43,6 +49,10 @@ public class AboutController {
             { "IntelliJ IDEA", "#e0f2fe", "#0c4a6e" },
     };
 
+    /**
+     * Inicializa la vista con los textos localizados, el año de copyright
+     * y los badges de tecnología.
+     */
     @FXML
     public void initialize() {
         versionLabel.setText(lm.get("about.version"));
@@ -57,9 +67,10 @@ public class AboutController {
         buildTechBadges();
     }
 
-    // ─────────────────────────────────────────────
-    //  Badges de tecnología
-    // ─────────────────────────────────────────────
+    /**
+     * Construye y añade al {@code FlowPane} los badges visuales
+     * de cada tecnología definida en {@link #TECH_DATA}.
+     */
     private void buildTechBadges() {
         techBadges.getChildren().clear();
         for (String[] tech : TECH_DATA) {
@@ -75,9 +86,9 @@ public class AboutController {
         }
     }
 
-    // ─────────────────────────────────────────────
-    //  Handlers de los botones legales
-    // ─────────────────────────────────────────────
+    /**
+     * Abre el diálogo modal con los términos de uso de la aplicación.
+     */
     @FXML
     private void handleTerms() {
         showInfoDialog(
@@ -86,6 +97,9 @@ public class AboutController {
         );
     }
 
+    /**
+     * Abre el diálogo modal con la política de privacidad.
+     */
     @FXML
     private void handlePrivacy() {
         showInfoDialog(
@@ -94,11 +108,17 @@ public class AboutController {
         );
     }
 
+    /**
+     * Abre el diálogo modal con las licencias de las bibliotecas de terceros.
+     */
     @FXML
     private void handleLicenses() {
         showLicensesDialog();
     }
 
+    /**
+     * Abre el diálogo modal con los reconocimientos y créditos.
+     */
     @FXML
     private void handleAcknowledgements() {
         showInfoDialog(
@@ -107,9 +127,12 @@ public class AboutController {
         );
     }
 
-    // ─────────────────────────────────────────────
-    //  Diálogo genérico de texto
-    // ─────────────────────────────────────────────
+    /**
+     * Muestra un diálogo modal genérico con un título y un cuerpo de texto.
+     *
+     * @param title Título del diálogo.
+     * @param body  Contenido de texto que se mostrará en el área de texto.
+     */
     private void showInfoDialog(String title, String body) {
         Stage dialog = buildDialogStage(title, 520, 440);
 
@@ -145,10 +168,10 @@ public class AboutController {
         showDialog(dialog, root, 520, 440);
     }
 
-    // ─────────────────────────────────────────────
-    //  Diálogo de licencias con tabla
-    // ─────────────────────────────────────────────
-
+    /**
+     * Muestra un diálogo modal con una tabla de licencias de las
+     * bibliotecas utilizadas en el proyecto.
+     */
     private void showLicensesDialog() {
         Stage dialog = buildDialogStage(lm.get("about.btn.licenses"), 600, 460);
 
@@ -218,10 +241,14 @@ public class AboutController {
         showDialog(dialog, root, 600, 460);
     }
 
-    // ─────────────────────────────────────────────
-    //  Helpers
-    // ─────────────────────────────────────────────
-
+    /**
+     * Construye y configura un {@link Stage} modal con las dimensiones indicadas.
+     *
+     * @param title Título de la ventana del diálogo.
+     * @param w     Anchura de la ventana en píxeles.
+     * @param h     Altura de la ventana en píxeles.
+     * @return El {@link Stage} configurado, listo para recibir su escena.
+     */
     private Stage buildDialogStage(String title, double w, double h) {
         Stage dialog = new Stage();
         dialog.setTitle(title);
@@ -231,6 +258,15 @@ public class AboutController {
         return dialog;
     }
 
+    /**
+     * Aplica la escena al diálogo, hereda los estilos CSS activos
+     * del scene principal y muestra el diálogo bloqueante.
+     *
+     * @param dialog El {@link Stage} del diálogo.
+     * @param root   Contenido raíz a mostrar.
+     * @param w      Anchura de la escena en píxeles.
+     * @param h      Altura de la escena en píxeles.
+     */
     private void showDialog(Stage dialog, VBox root, double w, double h) {
         Scene scene = new Scene(root, w, h);
         // Inyectar el mismo CSS activo que usa el Scene principal

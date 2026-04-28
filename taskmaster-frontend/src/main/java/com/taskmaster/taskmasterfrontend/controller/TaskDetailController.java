@@ -22,6 +22,17 @@ import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.Locale;
 
+/**
+ * Controlador de la vista de detalle de tarea.
+ *
+ * <p>Muestra la información completa de una tarea o subtarea: título, estado,
+ * prioridad, categoría, fecha límite, descripción, subtareas con barra de
+ * progreso, registros de trabajo (worklogs) y el historial de actividad.
+ * Permite editar la tarea, crear subtareas, gestionar worklogs y abrir el
+ * detalle de una subtarea concreta.</p>
+ *
+ * @author Carlos
+ */
 public class TaskDetailController {
 
     @FXML private Label taskIdLabel;
@@ -51,10 +62,22 @@ public class TaskDetailController {
             .registerModule(new JavaTimeModule());
     private final LanguageManager lm = LanguageManager.getInstance();
 
+    /**
+     * Registra el callback que se ejecutará cuando la tarea o alguna de sus
+     * subtareas cambie de estado, para que el controlador padre pueda refrescar su vista.
+     *
+     * @param callback Acción a ejecutar al detectar un cambio.
+     */
     public void setOnTaskChanged(Runnable callback) {
         this.onTaskChanged = callback;
     }
 
+    /**
+     * Carga los datos de una tarea en la vista e inicializa el historial
+     * de actividad de la tarea y sus subtareas.
+     *
+     * @param task Nodo JSON con los datos de la tarea a mostrar.
+     */
     public void initData(JsonNode task) {
         this.taskData = task;
         loadTaskDetail();
@@ -62,6 +85,13 @@ public class TaskDetailController {
         activityLogSectionController.loadForEntity("TASK", taskId, "SUBTASK");
     }
 
+    /**
+     * Carga los datos de una subtarea en la vista, inicializa su historial
+     * de actividad y oculta la sección de subtareas, ya que las subtareas
+     * no pueden tener subtareas propias.
+     *
+     * @param subtask Nodo JSON con los datos de la subtarea a mostrar.
+     */
     public void initDataAsSubtask(JsonNode subtask) {
         this.taskData = subtask;
         this.isSubtask = true;
@@ -72,15 +102,29 @@ public class TaskDetailController {
         subtasksSection.setManaged(false);
     }
 
+    /**
+     * Registra el callback que se ejecutará al cerrar la vista de detalle.
+     *
+     * @param callback Acción a ejecutar al cerrar.
+     */
     public void setOnClose(Runnable callback) {
         this.onClose = callback;
     }
 
+    /**
+     * Registra el callback que se ejecutará al abrir el detalle de una subtarea,
+     * permitiendo que el controlador padre gestione la navegación.
+     *
+     * @param callback Consumidor que recibe el nodo JSON de la subtarea seleccionada.
+     */
     public void setOnOpenSubtaskDetail(java.util.function.Consumer<JsonNode> callback) {
         this.onOpenSubtaskDetail = callback;
     }
 
-    // ── Carga principal ───────────────────────────────────────────────────────
+    /**
+     * Rellena todos los campos de la vista con los datos del nodo JSON de la tarea
+     * e inicia la carga asíncrona de subtareas, total de horas y worklogs.
+     */
     private void loadTaskDetail() {
         String status = taskData.get("status").asText();
         String priority = taskData.get("priority").asText();
@@ -143,7 +187,11 @@ public class TaskDetailController {
         loadWorkLogs(taskId);
     }
 
-    // ── Subtareas ─────────────────────────────────────────────────────────────
+    /**
+     * Obtiene las subtareas de la tarea desde el backend y las renderiza en la vista.
+     *
+     * @param taskId Identificador de la tarea padre.
+     */
     private void loadSubtasks(Long taskId) {
         new Thread(() -> {
             try {
@@ -159,6 +207,13 @@ public class TaskDetailController {
         }).start();
     }
 
+    /**
+     * Renderiza la lista de subtareas, calcula el progreso completado
+     * y actualiza la barra de progreso y la etiqueta de contador.
+     *
+     * @param subtasks     Array JSON con las subtareas de la tarea.
+     * @param parentTaskId Identificador de la tarea padre.
+     */
     private void renderSubtasks(JsonNode subtasks, Long parentTaskId) {
         subtaskContainer.getChildren().clear();
 
@@ -196,6 +251,17 @@ public class TaskDetailController {
         }
     }
 
+    /**
+     * Construye la fila visual de una subtarea con checkbox de estado,
+     * título, badge de prioridad y menú de acciones (editar/eliminar).
+     *
+     * <p>El checkbox actualiza el estado de la subtarea en el backend al pulsarlo
+     * y recarga la lista de subtareas si la operación es exitosa.</p>
+     *
+     * @param subtask      Nodo JSON con los datos de la subtarea.
+     * @param parentTaskId Identificador de la tarea padre.
+     * @return {@link HBox} con el contenido visual de la fila.
+     */
     private HBox createSubtaskRow(JsonNode subtask, Long parentTaskId) {
         String status   = subtask.get("status").asText();
         String title    = subtask.get("title").asText();
@@ -268,6 +334,12 @@ public class TaskDetailController {
         return row;
     }
 
+    /**
+     * Abre la vista de detalle de una subtarea. Si hay un callback registrado
+     * lo usa para delegar la navegación; si no, abre un diálogo modal.
+     *
+     * @param subtaskId Identificador de la subtarea a mostrar.
+     */
     private void openSubtaskDetail(Long subtaskId) {
         try {
             HttpResponse<String> resp = AppContext.getInstance().getApiService()
@@ -305,6 +377,13 @@ public class TaskDetailController {
         }
     }
 
+    /**
+     * Abre el diálogo modal de edición de una subtarea y recarga la lista
+     * de subtareas y el historial al guardar.
+     *
+     * @param subtaskId    Identificador de la subtarea a editar.
+     * @param parentTaskId Identificador de la tarea padre.
+     */
     private void openEditSubtask(Long subtaskId, Long parentTaskId) {
         try {
             HttpResponse<String> resp = AppContext.getInstance().getApiService()
@@ -336,6 +415,13 @@ public class TaskDetailController {
         }
     }
 
+    /**
+     * Muestra un diálogo de confirmación y, si el usuario acepta, elimina
+     * la subtarea del backend y recarga la lista de subtareas.
+     *
+     * @param subtaskId    Identificador de la subtarea a eliminar.
+     * @param parentTaskId Identificador de la tarea padre.
+     */
     private void deleteSubtask(Long subtaskId, Long parentTaskId) {
         Alert confirm = new Alert(Alert.AlertType.CONFIRMATION);
         confirm.setTitle(lm.get("task.detail.subtask.delete.title"));
@@ -359,8 +445,12 @@ public class TaskDetailController {
         });
     }
 
-    // ── WorkLog ───────────────────────────────────────────────────────────────
-
+    /**
+     * Obtiene los registros de trabajo de la tarea desde el backend
+     * y los renderiza en la vista.
+     *
+     * @param taskId Identificador de la tarea.
+     */
     private void loadWorkLogs(Long taskId) {
         new Thread(() -> {
             try {
@@ -376,6 +466,12 @@ public class TaskDetailController {
         }).start();
     }
 
+    /**
+     * Renderiza la lista de worklogs con fecha, horas, tipo de actividad,
+     * nota y menú de acciones (editar/eliminar) para cada entrada.
+     *
+     * @param logs Array JSON con los registros de trabajo de la tarea.
+     */
     private void renderWorkLogs(JsonNode logs) {
         workLogContainer.getChildren().clear();
         if (!logs.isArray() || logs.isEmpty()) {
@@ -453,6 +549,14 @@ public class TaskDetailController {
         }
     }
 
+    /**
+     * Abre el diálogo modal de edición de un worklog existente y recarga
+     * la lista y el total de horas al guardar.
+     *
+     * @param logId  Identificador del worklog a editar.
+     * @param log    Nodo JSON con los datos actuales del worklog.
+     * @param taskId Identificador de la tarea a la que pertenece el worklog.
+     */
     private void openEditWorkLog(Long logId, JsonNode log, Long taskId) {
         try {
             FXMLLoader loader = new FXMLLoader(
@@ -473,6 +577,13 @@ public class TaskDetailController {
         }
     }
 
+    /**
+     * Muestra un diálogo de confirmación y, si el usuario acepta, elimina
+     * el worklog del backend y recarga la lista y el total de horas.
+     *
+     * @param logId  Identificador del worklog a eliminar.
+     * @param taskId Identificador de la tarea a la que pertenece el worklog.
+     */
     private void deleteWorkLog(Long logId, Long taskId) {
         Alert confirm = new Alert(Alert.AlertType.CONFIRMATION);
         confirm.setTitle(lm.get("task.detail.worklog.delete.title"));
@@ -496,6 +607,12 @@ public class TaskDetailController {
         });
     }
 
+    /**
+     * Obtiene el total de horas registradas para la tarea desde el backend
+     * y actualiza la etiqueta correspondiente.
+     *
+     * @param taskId Identificador de la tarea.
+     */
     private void loadTotalHours(Long taskId) {
         new Thread(() -> {
             try {
@@ -512,6 +629,10 @@ public class TaskDetailController {
         }).start();
     }
 
+    /**
+     * Abre el diálogo modal para añadir un nuevo worklog a la tarea
+     * y recarga la lista y el total de horas al guardarlo.
+     */
     @FXML
     private void handleAddWorkLog() {
         try {
@@ -533,13 +654,22 @@ public class TaskDetailController {
         }
     }
 
+    /**
+     * Traduce un código de tipo de actividad de worklog a su etiqueta localizada.
+     *
+     * @param type Código del tipo de actividad (p.ej. {@code "DEVELOPMENT"}).
+     * @return Etiqueta localizada, o el propio código si no hay traducción.
+     */
     private String translateActivityType(String type) {
         String key = "activity." + type;
         String val = lm.get(key);
         return val.startsWith("?") ? type : val;
     }
 
-    // ── Acciones ──────────────────────────────────────────────────────────────
+    /**
+     * Abre el diálogo modal de creación de nueva subtarea y, al crearla,
+     * recarga la lista de subtareas y el historial de actividad.
+     */
     @FXML
     private void handleNewSubtask() {
         try {
@@ -568,6 +698,11 @@ public class TaskDetailController {
         }
     }
 
+    /**
+     * Abre el diálogo modal de edición de la tarea o subtarea actual y,
+     * tras guardar, recarga los datos desde el backend y actualiza la vista
+     * y el historial de actividad.
+     */
     @FXML
     private void handleEdit() {
         try {
@@ -616,11 +751,19 @@ public class TaskDetailController {
         }
     }
 
+    /**
+     * Cierra la vista de detalle ejecutando el callback de cierre si está
+     * registrado, o cerrando la ventana directamente en caso contrario.
+     */
     @FXML
     private void handleClose() {
         closeDialog();
     }
 
+    /**
+     * Ejecuta el callback de cierre si está registrado,
+     * o cierra la ventana directamente en caso contrario.
+     */
     private void closeDialog() {
         if (onClose != null) {
             onClose.run();
@@ -629,6 +772,13 @@ public class TaskDetailController {
         }
     }
 
+    /**
+     * Crea un diálogo modal con el contenido indicado, aplica el tema activo
+     * y lo muestra de forma bloqueante.
+     *
+     * @param root  Contenido raíz a mostrar en el diálogo.
+     * @param title Título de la ventana del diálogo.
+     */
     private void showAsDialog(VBox root, String title) {
         Stage dialog = new Stage();
         dialog.setTitle(title);
@@ -642,6 +792,12 @@ public class TaskDetailController {
         dialog.showAndWait();
     }
 
+    /**
+     * Aplica el tema activo del {@link com.taskmaster.taskmasterfrontend.util.ThemeManager}
+     * a la escena indicada, cargando primero el CSS base y luego el tema seleccionado.
+     *
+     * @param scene Escena a la que aplicar el tema.
+     */
     private void applyThemeToScene(Scene scene) {
         com.taskmaster.taskmasterfrontend.util.ThemeManager tm =
                 com.taskmaster.taskmasterfrontend.util.ThemeManager.getInstance();
@@ -664,7 +820,12 @@ public class TaskDetailController {
         scene.setFill(javafx.scene.paint.Color.web(tm.getBgApp()));
     }
 
-    // ── Colores ───────────────────────────────────────────────────────────────
+    /**
+     * Devuelve el color hex asociado a un estado de tarea.
+     *
+     * @param s Código de estado (p.ej. {@code "IN_PROGRESS"}).
+     * @return Color en formato hex.
+     */
     private String getStatusColor(String s) {
         return switch (s) {
             case "TODO"        -> "#95a5a6";
@@ -676,6 +837,12 @@ public class TaskDetailController {
         };
     }
 
+    /**
+     * Devuelve el color hex asociado a una prioridad de tarea.
+     *
+     * @param p Código de prioridad (p.ej. {@code "HIGH"}).
+     * @return Color en formato hex.
+     */
     private String getPriorityColor(String p) {
         return switch (p) {
             case "URGENT" -> "#e74c3c";
@@ -686,6 +853,12 @@ public class TaskDetailController {
         };
     }
 
+    /**
+     * Devuelve el estilo CSS inline del badge de categoría.
+     *
+     * @param c Código de categoría (p.ej. {@code "PERSONAL"}).
+     * @return Cadena de estilo CSS con color de fondo y de texto.
+     */
     private String getCategoryBadgeStyle(String c) {
         return switch (c) {
             case "PERSONAL" -> "-fx-background-color: #f3e8ff; -fx-text-fill: #6b21a8;";
@@ -695,6 +868,12 @@ public class TaskDetailController {
         };
     }
 
+    /**
+     * Traduce un código de estado del backend a su etiqueta localizada.
+     *
+     * @param status Código de estado (p.ej. {@code "TODO"}).
+     * @return Etiqueta localizada correspondiente.
+     */
     private String translateStatus(String status) {
         return switch (status) {
             case "TODO"        -> lm.get("status.TODO");
@@ -706,6 +885,12 @@ public class TaskDetailController {
         };
     }
 
+    /**
+     * Traduce un código de prioridad del backend a su etiqueta localizada.
+     *
+     * @param priority Código de prioridad (p.ej. {@code "MEDIUM"}).
+     * @return Etiqueta localizada correspondiente.
+     */
     private String translatePriority(String priority) {
         return switch (priority) {
             case "LOW"    -> lm.get("priority.LOW");
@@ -716,6 +901,12 @@ public class TaskDetailController {
         };
     }
 
+    /**
+     * Muestra un diálogo de información con el título y mensaje indicados.
+     *
+     * @param title   Título del diálogo.
+     * @param message Mensaje a mostrar.
+     */
     private void showAlert(String title, String message) {
         Alert alert = new Alert(Alert.AlertType.INFORMATION);
         alert.setTitle(title);

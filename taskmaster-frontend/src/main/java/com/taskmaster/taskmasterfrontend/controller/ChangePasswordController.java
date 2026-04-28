@@ -12,6 +12,15 @@ import javafx.stage.Stage;
 import java.net.http.HttpResponse;
 import java.util.Map;
 
+/**
+ * Controlador del diálogo para cambiar la contraseña del usuario.
+ *
+ * <p>Valida que los campos no estén vacíos, que la nueva contraseña y su
+ * confirmación coincidan, y que tenga una longitud mínima de 6 caracteres.
+ * Si la validación es correcta, envía la solicitud al backend mediante la API REST.</p>
+ *
+ * @author Carlos
+ */
 public class ChangePasswordController {
 
     @FXML private PasswordField currentPasswordField;
@@ -22,6 +31,10 @@ public class ChangePasswordController {
     private final ObjectMapper objectMapper = new ObjectMapper();
     private final LanguageManager lm = LanguageManager.getInstance();
 
+    /**
+     * Valida los campos del formulario y envía la solicitud de cambio de contraseña
+     * al backend. Cierra el diálogo si la operación es exitosa.
+     */
     @FXML
     private void handleSave() {
         String current = currentPasswordField.getText();
@@ -69,22 +82,36 @@ public class ChangePasswordController {
         }).start();
     }
 
+    /**
+     * Cierra el diálogo sin realizar cambios.
+     */
     @FXML
     private void handleCancel() {
         closeDialog();
     }
 
+    /**
+     * Muestra un mensaje de error en la etiqueta de error del formulario.
+     *
+     * @param msg Mensaje de error a mostrar.
+     */
     private void showError(String msg) {
         errorLabel.setText(msg);
         errorLabel.setVisible(true);
         errorLabel.setManaged(true);
     }
 
+    /**
+     * Oculta la etiqueta de error del formulario.
+     */
     private void hideError() {
         errorLabel.setVisible(false);
         errorLabel.setManaged(false);
     }
 
+    /**
+     * Cierra el diálogo actual.
+     */
     private void closeDialog() {
         ((Stage) currentPasswordField.getScene().getWindow()).close();
     }

@@ -16,6 +16,15 @@ import java.time.LocalDate;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
+/**
+ * Controlador del diálogo para registrar o editar una entrada de trabajo (worklog).
+ *
+ * <p>Permite al usuario indicar la fecha, las horas dedicadas, el tipo de actividad
+ * y una nota opcional. Soporta tanto la creación de nuevos registros como la edición
+ * de registros existentes, enviando los datos al backend mediante la API REST.</p>
+ *
+ * @author Carlos
+ */
 public class AddWorkLogController {
 
     @FXML private DatePicker datePicker;
@@ -31,6 +40,12 @@ public class AddWorkLogController {
     private final ObjectMapper objectMapper = new ObjectMapper();
     private final LanguageManager lm = LanguageManager.getInstance();
 
+    /**
+     * Construye el mapa de tipos de actividad con sus etiquetas localizadas
+     * como clave y el código del backend como valor.
+     *
+     * @return Mapa ordenado de etiqueta localizada → código de actividad.
+     */
     private Map<String, String> getActivityTypes() {
         Map<String, String> map = new LinkedHashMap<>();
         map.put(lm.get("activity.ANALYSIS"),      "ANALYSIS");
@@ -45,14 +60,28 @@ public class AddWorkLogController {
         return map;
     }
 
+    /**
+     * Establece el identificador de la tarea a la que pertenece el worklog.
+     *
+     * @param taskId Identificador de la tarea.
+     */
     public void setTaskId(Long taskId) {
         this.taskId = taskId;
     }
 
+    /**
+     * Registra el callback que se ejecutará tras guardar correctamente el worklog.
+     *
+     * @param callback Acción a ejecutar al completar el guardado.
+     */
     public void setOnWorkLogAdded(Runnable callback) {
         this.onWorkLogAdded = callback;
     }
 
+    /**
+     * Inicializa el formulario con los valores por defecto: fecha actual,
+     * tipo de actividad "Desarrollo" y validación en tiempo real del campo de horas.
+     */
     @FXML
     public void initialize() {
         Map<String, String> types = getActivityTypes();
@@ -67,6 +96,12 @@ public class AddWorkLogController {
         Platform.runLater(() -> datePicker.getParent().requestFocus());
     }
 
+    /**
+     * Precarga el formulario con los datos de un worklog existente para su edición.
+     *
+     * @param logId Identificador del worklog a editar.
+     * @param log   Nodo JSON con los datos actuales del worklog.
+     */
     public void initData(Long logId, JsonNode log) {
         this.editingLogId = logId;
         datePicker.setValue(LocalDate.parse(log.path("date").asText().substring(0, 10)));
@@ -80,6 +115,10 @@ public class AddWorkLogController {
                 .ifPresent(e -> activityTypeCombo.setValue(e.getKey()));
     }
 
+    /**
+     * Valida el formulario y envía los datos al backend para crear o actualizar
+     * el worklog. Cierra el diálogo si la operación es exitosa.
+     */
     @FXML
     private void handleSave() {
         if (!validate()) return;
@@ -118,11 +157,20 @@ public class AddWorkLogController {
         }).start();
     }
 
+    /**
+     * Cierra el diálogo sin guardar cambios.
+     */
     @FXML
     private void handleCancel() {
         closeDialog();
     }
 
+    /**
+     * Valida los campos del formulario y muestra el error correspondiente
+     * si alguno no es válido.
+     *
+     * @return {@code true} si todos los campos son válidos, {@code false} en caso contrario.
+     */
     private boolean validate() {
         if (datePicker.getValue() == null) {
             showError(lm.get("worklog.error.date"));
@@ -150,17 +198,28 @@ public class AddWorkLogController {
         return true;
     }
 
+    /**
+     * Muestra un mensaje de error en la etiqueta de error del formulario.
+     *
+     * @param msg Mensaje de error a mostrar.
+     */
     private void showError(String msg) {
         errorLabel.setText(msg);
         errorLabel.setVisible(true);
         errorLabel.setManaged(true);
     }
 
+    /**
+     * Oculta la etiqueta de error del formulario.
+     */
     private void hideError() {
         errorLabel.setVisible(false);
         errorLabel.setManaged(false);
     }
 
+    /**
+     * Cierra el diálogo actual.
+     */
     private void closeDialog() {
         ((Stage) datePicker.getScene().getWindow()).close();
     }

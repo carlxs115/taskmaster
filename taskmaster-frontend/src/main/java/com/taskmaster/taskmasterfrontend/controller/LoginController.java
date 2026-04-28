@@ -18,10 +18,15 @@ import java.net.http.HttpResponse;
 import java.time.LocalDate;
 
 /**
- * LOGINCONTROLLER
+ * Controlador de la pantalla de inicio de sesión.
  *
- * Controlador de la pantalla de login.
- * Conecta con el backend para autenticar al usuario.
+ * <p>Gestiona la autenticación del usuario contra el backend, almacena
+ * los datos de sesión en {@link AppContext}, aplica el tema guardado en
+ * los ajustes del usuario y navega a la pantalla principal tras un login
+ * exitoso. También muestra un mensaje de felicitación si el día del login
+ * coincide con el cumpleaños del usuario.</p>
+ *
+ * @author Carlos
  */
 public class LoginController {
 
@@ -32,6 +37,10 @@ public class LoginController {
 
     private final LanguageManager lm = LanguageManager.getInstance();
 
+    /**
+     * Inicializa la pantalla configurando el envío del formulario
+     * con la tecla Enter en los campos de usuario y contraseña.
+     */
     @FXML
     private void initialize() {
         usernameField.setOnKeyPressed(e -> {
@@ -47,9 +56,11 @@ public class LoginController {
     }
 
     /**
-     * Se ejecuta cuando el usuario pulsa "Iniciar sesión".
-     * Por ahora validamos que los campos no estén vacíos.
-     * Más adelante conectaremos con el backend.
+     * Autentica al usuario contra el backend con las credenciales introducidas.
+     *
+     * <p>Valida que los campos no estén vacíos, envía la petición en un hilo
+     * secundario y, si el login es exitoso, almacena los datos de sesión,
+     * aplica el tema del usuario y navega a la pantalla principal.</p>
      */
     @FXML
     private void handleLogin(){
@@ -141,7 +152,8 @@ public class LoginController {
     }
 
     /**
-     * Navega a la pantalla principal tras login exitoso.
+     * Carga la vista principal y reemplaza la escena actual con ella,
+     * aplicando el tema activo y maximizando la ventana.
      */
     private void navigateToMain() {
         try {
@@ -173,8 +185,7 @@ public class LoginController {
     }
 
     /**
-     * Se ejecuta cuando el usuario pulsa "Regístrate".
-     * Navega a la pantalla de registro.
+     * Navega a la pantalla de registro manteniendo el tema Amatista.
      */
     @FXML
     private void handleGoToRegister() {
@@ -201,6 +212,10 @@ public class LoginController {
         }
     }
 
+    /**
+     * Comprueba si la fecha de nacimiento del usuario coincide con el día
+     * de hoy y, en ese caso, muestra un diálogo de felicitación.
+     */
     private void checkBirthday() {
         LocalDate birthDate = AppContext.getInstance().getCurrentBirthDate();
 
@@ -223,6 +238,11 @@ public class LoginController {
         }
     }
 
+    /**
+     * Muestra un mensaje de error en la etiqueta de error de la pantalla.
+     *
+     * @param message Mensaje de error a mostrar.
+     */
     private void showError(String message) {
         errorLabel.setText(message);
         errorLabel.setVisible(true);

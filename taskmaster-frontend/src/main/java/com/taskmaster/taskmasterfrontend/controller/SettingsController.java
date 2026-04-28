@@ -18,9 +18,14 @@ import java.net.http.HttpResponse;
 import java.util.Locale;
 
 /**
- * SETTINGSCONTROLLER
- *
  * Controlador de la pantalla de ajustes.
+ *
+ * <p>Permite configurar el tema visual, el idioma, el formato de fecha,
+ * el formato de hora y los días de retención de la papelera. Los ajustes
+ * de tema y retención se persisten en el backend; el idioma y los formatos
+ * de fecha y hora se gestionan localmente mediante sus respectivos managers.</p>
+ *
+ * @author Carlos
  */
 public class SettingsController {
 
@@ -52,7 +57,11 @@ public class SettingsController {
     private final ObjectMapper objectMapper = new ObjectMapper();
     private final LanguageManager lm = LanguageManager.getInstance();
 
-    // Datos de cada tema: enum, nombre visible, color primario, color fondo
+    /**
+     * Datos de cada tema disponible.
+     * Cada entrada contiene: enum del tema, nombre visible, color de acento,
+     * color de fondo y color de acento secundario.
+     */
     private static final Object[][] THEME_DATA = {
             { ThemeManager.Theme.AMATISTA,        "Amatista",      "#7c3aed", "#ffffff", "#a78bfa" },
             { ThemeManager.Theme.AMATISTA_DARK,   "Amatista Dark", "#a78bfa", "#13131f", "#7c3aed" },
@@ -69,6 +78,11 @@ public class SettingsController {
             { ThemeManager.Theme.LUZ,             "Luz",           "#f472b6", "#ffffff", "#ec4899" },
     };
 
+    /**
+     * Inicializa la pantalla cargando los ajustes del backend, preseleccionando
+     * el idioma y el formato de hora actuales, configurando el combo de formato
+     * de fecha y construyendo el selector visual de temas.
+     */
     @FXML
     public void initialize() {
         loadSettings();
@@ -107,8 +121,10 @@ public class SettingsController {
     }
 
     /**
-     * Construye las tarjetas de selección de tema en el FlowPane.
-     * Cada tarjeta muestra el nombre y dos círculos de color (acento + fondo).
+     * Construye las tarjetas de selección de tema en el {@link FlowPane}.
+     * Cada tarjeta muestra el nombre del tema y dos círculos de color
+     * (acento y fondo), o corazones en el caso del tema Luz.
+     * La tarjeta del tema activo aparece resaltada con borde y sombra.
      */
     private void buildThemeSelector() {
         ThemeManager.Theme current = ThemeManager.getInstance().getCurrentTheme();
@@ -161,6 +177,14 @@ public class SettingsController {
         }
     }
 
+    /**
+     * Genera el estilo CSS inline de una tarjeta de tema.
+     *
+     * @param bg       Color de fondo del tema en formato hex.
+     * @param accent   Color de acento del tema en formato hex.
+     * @param selected {@code true} si la tarjeta corresponde al tema activo.
+     * @return Cadena de estilo CSS con borde, radio, fondo y sombra opcional.
+     */
     private String buildCardStyle(String bg, String accent, boolean selected) {
         String border = selected ? accent : "#e0e0e0";
         String borderWidth = selected ? "2.5" : "1";
@@ -174,8 +198,14 @@ public class SettingsController {
                 shadow;
     }
 
+    /**
+     * Determina si un color de fondo es oscuro para elegir el color
+     * del texto de la tarjeta (blanco sobre oscuro, gris sobre claro).
+     *
+     * @param hex Color en formato hex.
+     * @return {@code true} si la luminancia calculada es inferior a 0.5.
+     */
     private boolean isDarkBg(String hex) {
-        // Comprueba si el color de fondo es oscuro para elegir el color del texto
         try {
             javafx.scene.paint.Color c = javafx.scene.paint.Color.web(hex);
             double luminance = 0.299 * c.getRed() + 0.587 * c.getGreen() + 0.114 * c.getBlue();
@@ -185,20 +215,23 @@ public class SettingsController {
         }
     }
 
+    /**
+     * Aplica el tema seleccionado visualmente, actualiza el estilo de todas
+     * las tarjetas y guarda el tema en el backend en un hilo secundario.
+     *
+     * @param theme        Tema seleccionado por el usuario.
+     * @param selectedCard Tarjeta pulsada, usada para actualizar los estilos.
+     */
     private void handleThemeSelected(ThemeManager.Theme theme, VBox selectedCard) {
-        // Aplicar tema visualmente de inmediato
         ThemeManager.getInstance().applyTheme(theme);
 
-        // Actualizar estilos de todas las tarjetas
         for (var node : themesContainer.getChildren()) {
             if (node instanceof VBox card) {
                 ThemeManager.Theme cardTheme = (ThemeManager.Theme) card.getUserData();
-                // Buscar datos de este tema
                 for (Object[] data : THEME_DATA) {
                     if (data[0] == cardTheme) {
                         boolean sel = card == selectedCard;
                         card.setStyle(buildCardStyle((String) data[2], (String) data[2], sel));
-                        // Reconstruir con bg correcto
                         card.setStyle(buildCardStyle((String) data[3], (String) data[2], sel));
                         break;
                     }
@@ -206,7 +239,6 @@ public class SettingsController {
             }
         }
 
-        // Guardar en backend en hilo separado
         new Thread(() -> {
             try {
                 HttpResponse<String> response = AppContext.getInstance()
@@ -229,7 +261,11 @@ public class SettingsController {
         }).start();
     }
 
-
+    /**
+     * Obtiene los ajustes del usuario desde el backend, preselecciona los días
+     * de retención de la papelera y reconstruye el selector de temas con el
+     * tema guardado ya marcado.
+     */
     private void loadSettings() {
         new Thread(() -> {
             try {
@@ -251,17 +287,18 @@ public class SettingsController {
                         else if (days == 15) days15.setSelected(true);
                         else days30.setSelected(true);
 
-                        // Aplicar tema y reconstruir selector con el tema correcto marcado
                         ThemeManager.getInstance().applyTheme(savedTheme);
                         buildThemeSelector();
                     });
                 }
-            } catch (Exception e) {
-                // silencioso
-            }
+            } catch (Exception e) {}
         }).start();
     }
 
+    /**
+     * Aplica el formato de fecha seleccionado en el combo al {@link DateFormatManager}
+     * y muestra la confirmación de guardado.
+     */
     @FXML
     private void handleSaveDateFormat() {
         int idx = dateFormatCombo.getSelectionModel().getSelectedIndex();
@@ -274,6 +311,10 @@ public class SettingsController {
         dateFormatStatusLabel.setVisible(true);
     }
 
+    /**
+     * Aplica el formato de hora seleccionado con los radio buttons al
+     * {@link TimeFormatManager} y muestra la confirmación de guardado.
+     */
     @FXML
     private void handleSaveTimeFormat() {
         TimeFormatManager tfm = TimeFormatManager.getInstance();
@@ -286,6 +327,10 @@ public class SettingsController {
         timeFormatStatusLabel.setVisible(true);
     }
 
+    /**
+     * Envía al backend los días de retención de papelera seleccionados
+     * y muestra el resultado de la operación.
+     */
     @FXML
     private void handleSaveRetention () {
         int days = days7.isSelected() ? 7 : days15.isSelected() ? 15 : 30;
@@ -316,6 +361,11 @@ public class SettingsController {
         }).start();
     }
 
+    /**
+     * Aplica el idioma seleccionado, lo persiste localmente y recarga
+     * la vista de ajustes tras una breve pausa para que el mensaje de
+     * confirmación sea visible.
+     */
     @FXML
     private void handleSaveLanguage() {
         Locale locale = langEs.isSelected() ? new Locale("es") : Locale.ENGLISH;
@@ -334,6 +384,10 @@ public class SettingsController {
         pause.play();
     }
 
+    /**
+     * Recarga la vista de ajustes en el idioma actualizado reemplazando
+     * el nodo actual en el layout del controlador principal.
+     */
     private void reloadThisView() {
         try {
             javafx.scene.Node currentView = retentionStatusLabel.getScene()

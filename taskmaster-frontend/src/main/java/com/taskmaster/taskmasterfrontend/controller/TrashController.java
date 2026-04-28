@@ -18,6 +18,15 @@ import javafx.scene.layout.VBox;
 
 import java.net.http.HttpResponse;
 
+/**
+ * Controlador de la pantalla de papelera.
+ *
+ * <p>Muestra las tareas y proyectos eliminados lógicamente, indicando los días
+ * de retención configurados. Permite restaurar elementos a su estado activo
+ * o eliminarlos permanentemente tras confirmación.</p>
+ *
+ * @author Carlos
+ */
 public class TrashController {
 
     @FXML private VBox trashTaskContainer;
@@ -33,10 +42,20 @@ public class TrashController {
 
     private final LanguageManager lm = LanguageManager.getInstance();
 
+    /**
+     * Registra el callback que se ejecutará al restaurar un elemento,
+     * para que el controlador padre pueda refrescar su vista.
+     *
+     * @param callback Acción a ejecutar al detectar un cambio en la papelera.
+     */
     public void setOnTrashChanged(Runnable callback) {
         this.onTrashChanged = callback;
     }
 
+    /**
+     * Inicializa la pantalla cargando las tareas, los proyectos eliminados
+     * y los días de retención configurados.
+     */
     @FXML
     public void initialize() {
         loadTrashTasks();
@@ -44,6 +63,10 @@ public class TrashController {
         loadRetentionDays();
     }
 
+    /**
+     * Obtiene los días de retención de la papelera desde los ajustes del backend
+     * y actualiza la etiqueta informativa.
+     */
     private void loadRetentionDays() {
         new Thread(() -> {
             try {
@@ -63,6 +86,9 @@ public class TrashController {
         }).start();
     }
 
+    /**
+     * Obtiene las tareas eliminadas del backend y las renderiza en la vista.
+     */
     private void loadTrashTasks() {
         new Thread(() -> {
             try {
@@ -82,6 +108,9 @@ public class TrashController {
         }).start();
     }
 
+    /**
+     * Obtiene los proyectos eliminados del backend y los renderiza en la vista.
+     */
     private void loadTrashProjects() {
         new Thread(() -> {
             try {
@@ -101,6 +130,12 @@ public class TrashController {
         }).start();
     }
 
+    /**
+     * Renderiza la lista de tareas eliminadas o muestra el mensaje de vacío
+     * si no hay ninguna.
+     *
+     * @param tasks Array JSON con las tareas eliminadas.
+     */
     private void renderTrashTasks(JsonNode tasks) {
         trashTaskContainer.getChildren().clear();
         trashTaskContainer.getChildren().add(emptyTasksLabel);
@@ -116,6 +151,12 @@ public class TrashController {
         }
     }
 
+    /**
+     * Renderiza la lista de proyectos eliminados o muestra el mensaje de vacío
+     * si no hay ninguno.
+     *
+     * @param projects Array JSON con los proyectos eliminados.
+     */
     private void renderTrashProjects(JsonNode projects) {
         trashProjectContainer.getChildren().clear();
         trashProjectContainer.getChildren().add(emptyProjectsLabel);
@@ -131,6 +172,13 @@ public class TrashController {
         }
     }
 
+    /**
+     * Construye la tarjeta visual de una tarea eliminada con su título,
+     * badge de prioridad y botones de restaurar y eliminar permanentemente.
+     *
+     * @param task Nodo JSON con los datos de la tarea.
+     * @return {@link HBox} con el contenido visual de la tarjeta.
+     */
     private HBox createTrashTaskCard(JsonNode task) {
         HBox card = new HBox();
         card.setSpacing(12);
@@ -160,6 +208,13 @@ public class TrashController {
         return card;
     }
 
+    /**
+     * Construye la tarjeta visual de un proyecto eliminado con su nombre,
+     * badge de categoría y botones de restaurar y eliminar permanentemente.
+     *
+     * @param project Nodo JSON con los datos del proyecto.
+     * @return {@link HBox} con el contenido visual de la tarjeta.
+     */
     private HBox createTrashProjectCard(JsonNode project) {
         HBox card = new HBox();
         card.setSpacing(12);
@@ -189,6 +244,12 @@ public class TrashController {
         return card;
     }
 
+    /**
+     * Restaura una tarea eliminada enviando la solicitud al backend
+     * y recarga la lista si la operación es exitosa.
+     *
+     * @param taskId Identificador de la tarea a restaurar.
+     */
     private void restoreTask(Long taskId) {
         new Thread(() -> {
             try {
@@ -210,6 +271,12 @@ public class TrashController {
         }).start();
     }
 
+    /**
+     * Muestra un diálogo de confirmación y, si el usuario acepta, elimina
+     * permanentemente una tarea del backend y recarga la lista.
+     *
+     * @param taskId Identificador de la tarea a eliminar permanentemente.
+     */
     private void permanentlyDeleteTask(Long taskId) {
         Alert confirm = new Alert(Alert.AlertType.CONFIRMATION);
         confirm.setTitle(lm.get("trash.delete.confirm.title"));
@@ -239,6 +306,12 @@ public class TrashController {
         });
     }
 
+    /**
+     * Restaura un proyecto eliminado enviando la solicitud al backend
+     * y recarga la lista si la operación es exitosa.
+     *
+     * @param projectId Identificador del proyecto a restaurar.
+     */
     private void restoreProject(Long projectId) {
         new Thread(() -> {
             try {
@@ -260,6 +333,12 @@ public class TrashController {
         }).start();
     }
 
+    /**
+     * Muestra un diálogo de confirmación y, si el usuario acepta, elimina
+     * permanentemente un proyecto del backend y recarga la lista.
+     *
+     * @param projectId Identificador del proyecto a eliminar permanentemente.
+     */
     private void permanentlyDeleteProject(Long projectId) {
         Alert confirm = new Alert(Alert.AlertType.CONFIRMATION);
         confirm.setTitle(lm.get("trash.delete.confirm.title"));
@@ -289,11 +368,21 @@ public class TrashController {
         });
     }
 
+    /**
+     * Recarga tanto las tareas como los proyectos eliminados desde el backend.
+     * Puede llamarse desde el controlador padre para forzar una actualización.
+     */
     public void refresh() {
         loadTrashTasks();
         loadTrashProjects();
     }
 
+    /**
+     * Traduce un código de prioridad del backend a su etiqueta localizada.
+     *
+     * @param priority Código de prioridad (p.ej. {@code "HIGH"}).
+     * @return Etiqueta localizada correspondiente.
+     */
     private String translatePriority(String priority) {
         return switch (priority) {
             case "LOW"    -> lm.get("priority.LOW");
@@ -304,6 +393,12 @@ public class TrashController {
         };
     }
 
+    /**
+     * Traduce un código de categoría del backend a su etiqueta localizada.
+     *
+     * @param category Código de categoría (p.ej. {@code "PERSONAL"}).
+     * @return Etiqueta localizada correspondiente.
+     */
     private String translateCategory(String category) {
         return switch (category) {
             case "PERSONAL" -> lm.get("category.PERSONAL");
@@ -313,6 +408,12 @@ public class TrashController {
         };
     }
 
+    /**
+     * Muestra un diálogo de información con el título y mensaje indicados.
+     *
+     * @param title   Título del diálogo.
+     * @param message Mensaje a mostrar.
+     */
     private void showAlert(String title, String message) {
         Alert alert = new Alert(Alert.AlertType.INFORMATION);
         alert.setTitle(title);

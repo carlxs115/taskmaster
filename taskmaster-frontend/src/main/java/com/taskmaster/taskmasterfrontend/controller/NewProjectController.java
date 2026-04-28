@@ -15,11 +15,14 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * NEWPROJECTCONTROLLER
+ * Controlador del diálogo de creación de nuevo proyecto.
  *
- * Controlador del diálogo de nuevo proyecto.
- * Al crear el proyecto notifica al MainController para
- * que recargue la lista de proyectos automáticamente.
+ * <p>Permite introducir el nombre, la descripción, la categoría, el estado
+ * y la prioridad del proyecto. Al crearlo correctamente, notifica al
+ * controlador padre mediante un callback para que recargue la lista de
+ * proyectos sin acoplamiento directo.</p>
+ *
+ * @author Carlos
  */
 public class NewProjectController {
 
@@ -36,10 +39,19 @@ public class NewProjectController {
 
     private final LanguageManager lm = LanguageManager.getInstance();
 
+    /**
+     * Registra el callback que se ejecutará tras crear el proyecto correctamente.
+     *
+     * @param callback Acción a ejecutar al completar la creación.
+     */
     public void setOnProjectCreated(Runnable callback) {
         this.onProjectCreated = callback;
     }
 
+    /**
+     * Inicializa los combos de categoría, estado y prioridad con sus
+     * valores localizados y sus selecciones por defecto.
+     */
     @FXML
     private void initialize() {
         categoryCombo.setItems(FXCollections.observableArrayList(
@@ -57,6 +69,10 @@ public class NewProjectController {
         priorityCombo.setValue(lm.get("priority.medium"));
     }
 
+    /**
+     * Valida el formulario y envía la solicitud de creación del proyecto
+     * al backend. Si la operación es exitosa, ejecuta el callback y cierra el diálogo.
+     */
     @FXML
     private void handleCreate() {
         String name = nameField.getText().trim();
@@ -96,20 +112,37 @@ public class NewProjectController {
         }).start();
     }
 
+    /**
+     * Cierra el diálogo sin crear el proyecto.
+     */
     @FXML
     private void handleCancel() {
         closeDialog();
     }
 
+    /**
+     * Cierra el diálogo actual.
+     */
     private void closeDialog() {
         nameField.getScene().getWindow().hide();
     }
 
+    /**
+     * Muestra un mensaje de error en la etiqueta de error del formulario.
+     *
+     * @param message Mensaje de error a mostrar.
+     */
     private void showError(String message) {
         errorLabel.setText(message);
         errorLabel.setVisible(true);
     }
 
+    /**
+     * Traduce la etiqueta localizada de categoría al código del backend.
+     *
+     * @param label Etiqueta localizada seleccionada en el combo.
+     * @return Código de categoría ({@code "PERSONAL"}, {@code "ESTUDIOS"} o {@code "TRABAJO"}).
+     */
     private String categoryToEnum(String label) {
         if (label.equals(lm.get("category.PERSONAL"))) return "PERSONAL";
         if (label.equals(lm.get("category.ESTUDIOS"))) return "ESTUDIOS";
@@ -117,6 +150,12 @@ public class NewProjectController {
         return label;
     }
 
+    /**
+     * Traduce la etiqueta localizada de estado al código del backend.
+     *
+     * @param label Etiqueta localizada seleccionada en el combo.
+     * @return Código de estado ({@code "TODO"}, {@code "IN_PROGRESS"}, {@code "DONE"} o {@code "CANCELLED"}).
+     */
     private String statusToEnum(String label) {
         if (label.equals(lm.get("status.todo")))       return "TODO";
         if (label.equals(lm.get("status.inprogress"))) return "IN_PROGRESS";
@@ -125,6 +164,12 @@ public class NewProjectController {
         return label;
     }
 
+    /**
+     * Traduce la etiqueta localizada de prioridad al código del backend.
+     *
+     * @param label Etiqueta localizada seleccionada en el combo.
+     * @return Código de prioridad ({@code "LOW"}, {@code "MEDIUM"}, {@code "HIGH"} o {@code "URGENT"}).
+     */
     private String priorityToEnum(String label) {
         if (label.equals(lm.get("priority.low")))    return "LOW";
         if (label.equals(lm.get("priority.medium"))) return "MEDIUM";

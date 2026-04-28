@@ -18,10 +18,14 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * NEWTASKCONTROLLER
+ * Controlador del diálogo de creación de nueva tarea.
  *
- * Controlador del diálogo de nueva tarea.
- * El proyecto es opcional - si no se selecciona, la tarea es personal.
+ * <p>Permite crear tareas personales o asociadas a un proyecto. Si se abre
+ * desde un proyecto concreto, oculta los combos de proyecto y categoría ya
+ * que ambos se heredan del proyecto. El proyecto es siempre opcional: si no
+ * se selecciona, la tarea se clasifica por categoría.</p>
+ *
+ * @author Carlos
  */
 public class NewTaskController {
 
@@ -45,14 +49,30 @@ public class NewTaskController {
     private final ObjectMapper objectMapper = new ObjectMapper();
     private final LanguageManager lm = LanguageManager.getInstance();
 
+    /**
+     * Establece el proyecto preseleccionado al abrir el diálogo desde
+     * la vista de un proyecto concreto.
+     *
+     * @param projectId Identificador del proyecto a preseleccionar.
+     */
     public void setProjectId(Long projectId) {
         this.preSelectedProjectId = projectId;
     }
 
+    /**
+     * Registra el callback que se ejecutará tras crear la tarea correctamente.
+     *
+     * @param callback Acción a ejecutar al completar la creación.
+     */
     public void setOnTaskCreated(Runnable callback) {
         this.onTaskCreated = callback;
     }
 
+    /**
+     * Inicializa los combos de prioridad y categoría con sus valores localizados,
+     * y configura el listener que oculta el combo de categoría cuando se
+     * selecciona un proyecto.
+     */
     @FXML
     public void initialize() {
         priorityCombo.setItems(FXCollections.observableArrayList(
@@ -76,6 +96,12 @@ public class NewTaskController {
         );
     }
 
+    /**
+     * Carga los proyectos del usuario, aplica el proyecto preseleccionado si existe
+     * y oculta los combos de proyecto y categoría si la tarea tiene proyecto fijo.
+     *
+     * @param projectId Identificador del proyecto preseleccionado, o {@code null} si no hay.
+     */
     public void initData(Long projectId) {
         this.preSelectedProjectId = projectId;
         loadProjects();
@@ -89,17 +115,28 @@ public class NewTaskController {
         }
     }
 
+    /**
+     * Preselecciona una categoría en el combo de categoría.
+     *
+     * @param category Etiqueta localizada de la categoría a seleccionar.
+     */
     public void setPreSelectedCategory(String category) {
         Platform.runLater(() -> categoryCombo.setValue(category));
     }
 
+    /**
+     * Establece el identificador de la tarea padre cuando la nueva tarea
+     * se crea como subtarea.
+     *
+     * @param parentTaskId Identificador de la tarea padre.
+     */
     public void setParentTaskId(Long parentTaskId) {
         this.parentTaskId = parentTaskId;
     }
 
     /**
-     * Carga los proyectos del usuario y los añade al combo.
-     * La primera opción es siempre "Sin proyecto (tarea personal)".
+     * Obtiene los proyectos del usuario desde el backend y rellena el combo
+     * de proyectos. La primera opción siempre es "Sin proyecto (tarea personal)".
      */
     private void loadProjects() {
         new Thread(() -> {
@@ -144,6 +181,11 @@ public class NewTaskController {
         }).start();
     }
 
+    /**
+     * Valida el formulario y envía la solicitud de creación de la tarea al backend,
+     * incluyendo proyecto, categoría, prioridad, fecha límite y tarea padre si aplica.
+     * Cierra el diálogo si la operación es exitosa.
+     */
     @FXML
     private void handleCreate() {
         String title = titleField.getText().trim();
@@ -212,15 +254,26 @@ public class NewTaskController {
         }).start();
     }
 
+    /**
+     * Cierra el diálogo sin crear la tarea.
+     */
     @FXML
     private void handleCancel() {
         closeDialog();
     }
 
+    /**
+     * Cierra el diálogo actual.
+     */
     private void closeDialog() {
         titleField.getScene().getWindow().hide();
     }
 
+    /**
+     * Muestra un mensaje de error en la etiqueta de error del formulario.
+     *
+     * @param message Mensaje de error a mostrar.
+     */
     private void showError(String message) {
         errorLabel.setText(message);
         errorLabel.setVisible(true);

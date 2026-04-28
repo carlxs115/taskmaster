@@ -34,6 +34,16 @@ import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Locale;
 
+/**
+ * Controlador de la pantalla de perfil de usuario.
+ *
+ * <p>Muestra los datos personales del usuario, las estadísticas de tareas y
+ * proyectos, la barra de progreso de completado y el historial de actividad
+ * agrupado por fecha. También gestiona la subida, el recorte y la eliminación
+ * del avatar, y abre el diálogo de edición de perfil.</p>
+ *
+ * @author Carlos
+ */
 public class ProfileController {
 
     @FXML private Label usernameLabel;
@@ -51,6 +61,12 @@ public class ProfileController {
 
     private Runnable onProfileUpdated;
 
+    /**
+     * Registra el callback que se ejecutará tras actualizar el perfil o el avatar,
+     * para que el controlador padre pueda refrescar la UI si es necesario.
+     *
+     * @param callback Acción a ejecutar al completar la actualización.
+     */
     public void setOnProfileUpdated(Runnable callback) {
         this.onProfileUpdated = callback;
     }
@@ -60,6 +76,10 @@ public class ProfileController {
     private final LanguageManager lm = LanguageManager.getInstance();
     Locale locale = LanguageManager.getInstance().getCurrentLocale();
 
+    /**
+     * Inicializa la pantalla configurando el avatar y cargando el perfil,
+     * las estadísticas y el historial de actividad desde el backend.
+     */
     @FXML
     public void initialize() {
         setupAvatar();
@@ -69,8 +89,8 @@ public class ProfileController {
     }
 
     /**
-     * Configura el avatar: lo crea, lo carga y le añade un icono de cámara
-     * superpuesto que al pulsarlo abre un menú con "Cambiar foto" / "Eliminar foto".
+     * Crea el componente {@link AvatarView}, lo carga para el usuario actual
+     * y añade el icono de cámara superpuesto para gestionar la foto de perfil.
      */
     private void setupAvatar() {
         avatarView = new AvatarView(80);
@@ -86,7 +106,12 @@ public class ProfileController {
         avatarContainer.setCursor(Cursor.DEFAULT);
     }
 
-    /** Menú contextual con opciones de cambiar o eliminar la foto. */
+    /**
+     * Muestra un menú contextual con las opciones "Cambiar foto" y,
+     * si el usuario tiene avatar, "Eliminar foto".
+     *
+     * @param anchor Nodo sobre el que se ancla el menú contextual.
+     */
     private void showAvatarMenu(javafx.scene.Node anchor) {
         javafx.scene.control.ContextMenu menu = new javafx.scene.control.ContextMenu();
         menu.setStyle("-fx-background-color: white; -fx-border-color: #e8e8e8; " +
@@ -108,7 +133,10 @@ public class ProfileController {
         menu.show(anchor, javafx.geometry.Side.BOTTOM, 0, 4);
     }
 
-    /** Abre el FileChooser, luego el diálogo de recorte, y sube el resultado. */
+    /**
+     * Abre un {@link FileChooser} para seleccionar una imagen, valida que
+     * no supere los 2 MB y, si es válida, abre el diálogo de recorte.
+     */
     private void handleChangePhoto() {
         FileChooser fileChooser = new FileChooser();
         fileChooser.setTitle(lm.get("profile.avatar.title"));
@@ -137,7 +165,12 @@ public class ProfileController {
         }
     }
 
-    /** Abre el diálogo modal de recorte y, si el usuario confirma, sube la imagen. */
+    /**
+     * Abre el diálogo modal de recorte circular con la imagen seleccionada
+     * y, si el usuario confirma, inicia la subida del avatar al backend.
+     *
+     * @param image Imagen fuente seleccionada por el usuario.
+     */
     private void openCropDialog(Image image) {
         try {
             FXMLLoader loader = new FXMLLoader(
@@ -171,7 +204,12 @@ public class ProfileController {
         }
     }
 
-    /** Sube los bytes del avatar recortado al backend. */
+    /**
+     * Sube los bytes PNG del avatar recortado al backend en un hilo secundario
+     * y refresca el avatar y el historial si la operación es exitosa.
+     *
+     * @param pngBytes Bytes de la imagen recortada en formato PNG.
+     */
     private void uploadAvatar(byte[] pngBytes) {
         new Thread(() -> {
             try {
@@ -197,7 +235,10 @@ public class ProfileController {
         }).start();
     }
 
-    /** Llama al backend para eliminar el avatar y refresca la UI. */
+    /**
+     * Muestra un diálogo de confirmación y, si el usuario acepta, elimina
+     * el avatar del backend y refresca la UI.
+     */
     private void handleRemovePhoto() {
         Alert confirm = new Alert(Alert.AlertType.CONFIRMATION);
         confirm.setTitle(lm.get("profile.avatar.delete.title"));
@@ -227,6 +268,10 @@ public class ProfileController {
         });
     }
 
+    /**
+     * Obtiene los datos del perfil del usuario desde el backend
+     * y los renderiza en la vista.
+     */
     private void loadProfile() {
         new Thread(() -> {
             try {
@@ -242,6 +287,10 @@ public class ProfileController {
         }).start();
     }
 
+    /**
+     * Obtiene las estadísticas de tareas y proyectos del usuario desde
+     * el backend y las renderiza en la vista.
+     */
     private void loadStats() {
         new Thread(() -> {
             try {
@@ -258,6 +307,10 @@ public class ProfileController {
         }).start();
     }
 
+    /**
+     * Obtiene el historial de actividad global del usuario desde el backend
+     * y lo renderiza agrupado por fecha.
+     */
     private void loadActivityLog() {
         new Thread(() -> {
             try {
@@ -273,6 +326,11 @@ public class ProfileController {
         }).start();
     }
 
+    /**
+     * Rellena los campos de la vista con los datos del perfil recibidos del backend.
+     *
+     * @param user Nodo JSON con los datos del usuario.
+     */
     private void renderProfile(JsonNode user) {
         String username = user.get("username").asText();
         String email = user.get("email").asText();
@@ -304,6 +362,12 @@ public class ProfileController {
         }
     }
 
+    /**
+     * Construye las tarjetas de estadísticas y actualiza la barra de progreso
+     * de completado con los datos recibidos del backend.
+     *
+     * @param stats Nodo JSON con las estadísticas del usuario.
+     */
     private void renderStats(JsonNode stats) {
         long total      = stats.get("totalTasks").asLong();
         long completed  = stats.get("completedTasks").asLong();
@@ -337,6 +401,12 @@ public class ProfileController {
                         "-fx-pref-width: " + rate + "%;");
     }
 
+    /**
+     * Construye el historial de actividad agrupado por fecha (Hoy, Ayer,
+     * Esta semana, Anteriores) y lo muestra en el contenedor de la vista.
+     *
+     * @param entries Array JSON con las entradas del historial de actividad.
+     */
     private void renderActivityLog(JsonNode entries) {
         activityLogContainer.getChildren().clear();
 
@@ -421,6 +491,14 @@ public class ProfileController {
         }
     }
 
+    /**
+     * Crea una tarjeta de estadística con un número destacado y una etiqueta descriptiva.
+     *
+     * @param number Valor numérico a mostrar.
+     * @param label  Etiqueta descriptiva del valor.
+     * @param color  Color hex del número destacado.
+     * @return {@link VBox} con el contenido de la tarjeta.
+     */
     private VBox createStatCard(String number, String label, String color) {
         VBox card = new VBox(4);
         card.setAlignment(Pos.CENTER);
@@ -436,6 +514,10 @@ public class ProfileController {
         return card;
     }
 
+    /**
+     * Abre el diálogo modal de edición de perfil y, al cerrarlo,
+     * recarga el perfil y el historial de actividad.
+     */
     @FXML
     private void handleEditProfile() {
         try {
@@ -467,6 +549,12 @@ public class ProfileController {
         }
     }
 
+    /**
+     * Aplica el tema activo del {@link com.taskmaster.taskmasterfrontend.util.ThemeManager}
+     * a la escena indicada, cargando primero el CSS base y luego el tema seleccionado.
+     *
+     * @param scene Escena a la que aplicar el tema.
+     */
     private void applyThemeToScene(Scene scene) {
         com.taskmaster.taskmasterfrontend.util.ThemeManager tm =
                 com.taskmaster.taskmasterfrontend.util.ThemeManager.getInstance();
@@ -489,6 +577,12 @@ public class ProfileController {
         scene.setFill(javafx.scene.paint.Color.web(tm.getBgApp()));
     }
 
+    /**
+     * Devuelve el icono emoji correspondiente al tipo de acción del historial.
+     *
+     * @param actionType Código del tipo de acción (p.ej. {@code "TASK_CREATED"}).
+     * @return Emoji representativo de la acción.
+     */
     private String getActivityIcon(String actionType) {
         return switch (actionType) {
             case "TASK_CREATED", "SUBTASK_CREATED"      -> "✅";
@@ -509,6 +603,12 @@ public class ProfileController {
         };
     }
 
+    /**
+     * Devuelve el color hex asociado al tipo de acción del historial.
+     *
+     * @param actionType Código del tipo de acción.
+     * @return Color en formato hex (p.ej. {@code "#22c55e"}).
+     */
     private String getActivityColor(String actionType) {
         return switch (actionType) {
             case "TASK_CREATED", "SUBTASK_CREATED", "PROJECT_CREATED" -> "#22c55e";
@@ -520,6 +620,16 @@ public class ProfileController {
         };
     }
 
+    /**
+     * Construye el texto descriptivo de una entrada del historial de actividad
+     * a partir del tipo de acción, el nombre de la entidad y los valores de cambio.
+     *
+     * @param actionType Código del tipo de acción.
+     * @param entityName Nombre de la entidad afectada.
+     * @param oldValue   Valor anterior al cambio, o {@code null} si no aplica.
+     * @param newValue   Valor posterior al cambio, o {@code null} si no aplica.
+     * @return Texto descriptivo localizado de la acción.
+     */
     private String getActivityDescription(String actionType, String entityName,
                                           String oldValue, String newValue) {
         String name = entityName.isEmpty() ? "" : " \"" + entityName + "\"";
@@ -546,6 +656,12 @@ public class ProfileController {
         };
     }
 
+    /**
+     * Traduce un código de estado del backend a su etiqueta localizada.
+     *
+     * @param status Código de estado (p.ej. {@code "IN_PROGRESS"}).
+     * @return Etiqueta localizada, o el propio código si no hay traducción.
+     */
     private String translateStatus(String status) {
         if (status == null) return "";
         String key = "status.translate." + status;
@@ -553,6 +669,12 @@ public class ProfileController {
         return val.startsWith("?") ? status : val;
     }
 
+    /**
+     * Muestra un diálogo de información con el título y mensaje indicados.
+     *
+     * @param title   Título del diálogo.
+     * @param message Mensaje a mostrar.
+     */
     private void showAlert(String title, String message) {
         Alert alert = new Alert(Alert.AlertType.INFORMATION);
         alert.setTitle(title);

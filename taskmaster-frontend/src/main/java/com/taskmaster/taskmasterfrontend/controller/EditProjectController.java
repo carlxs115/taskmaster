@@ -12,6 +12,16 @@ import javafx.scene.control.TextField;
 
 import java.net.http.HttpResponse;
 
+/**
+ * Controlador del diálogo de edición de proyecto.
+ *
+ * <p>Carga los datos actuales del proyecto desde el backend al recibir
+ * el identificador, y permite modificar el nombre, la descripción, la
+ * categoría, el estado y la prioridad. Los valores de los combos se
+ * muestran localizados y se traducen al código del backend antes de enviar.</p>
+ *
+ * @author Carlos
+ */
 public class EditProjectController {
 
     @FXML private TextField nameField;
@@ -26,10 +36,19 @@ public class EditProjectController {
 
     private final LanguageManager lm = LanguageManager.getInstance();
 
+    /**
+     * Registra el callback que se ejecutará tras actualizar el proyecto correctamente.
+     *
+     * @param callback Acción a ejecutar al completar la actualización.
+     */
     public void setOnProjectUpdated(Runnable callback) {
         this.onProjectUpdated = callback;
     }
 
+    /**
+     * Inicializa los combos de categoría, estado y prioridad con sus
+     * valores localizados y sus selecciones por defecto.
+     */
     @FXML
     public void initialize() {
         categoryCombo.setItems(FXCollections.observableArrayList(
@@ -47,6 +66,13 @@ public class EditProjectController {
         priorityCombo.setValue(lm.get("priority.medium"));
     }
 
+    /**
+     * Precarga el formulario con el nombre del proyecto e inicia la carga
+     * asíncrona del resto de datos desde el backend.
+     *
+     * @param projectId   Identificador del proyecto a editar.
+     * @param projectName Nombre actual del proyecto.
+     */
     public void initData(Long projectId, String projectName) {
         this.projectId = projectId;
         nameField.setText(projectName);
@@ -104,6 +130,10 @@ public class EditProjectController {
         }).start();
     }
 
+    /**
+     * Valida el formulario y envía los datos actualizados al backend.
+     * Cierra el diálogo si la operación es exitosa.
+     */
     @FXML
     private void handleSave() {
         String name = nameField.getText().trim();
@@ -146,21 +176,39 @@ public class EditProjectController {
         }).start();
     }
 
+    /**
+     * Cierra el diálogo sin guardar cambios.
+     */
     @FXML
     private void handleCancel() {
         closeDialog();
     }
 
+    /**
+     * Cierra el diálogo actual.
+     */
     private void closeDialog() {
         nameField.getScene().getWindow().hide();
     }
 
+    /**
+     * Traduce la etiqueta localizada de categoría al código del backend.
+     *
+     * @param label Etiqueta localizada seleccionada en el combo.
+     * @return Código de categoría ({@code "PERSONAL"}, {@code "ESTUDIOS"} o {@code "TRABAJO"}).
+     */
     private String mapCategory(String label) {
         if (label.equals(lm.get("category.ESTUDIOS")))      return "ESTUDIOS";
         else if (label.equals(lm.get("category.TRABAJO")))  return "TRABAJO";
         else return "PERSONAL";
     }
 
+    /**
+     * Traduce la etiqueta localizada de estado al código del backend.
+     *
+     * @param label Etiqueta localizada seleccionada en el combo.
+     * @return Código de estado ({@code "TODO"}, {@code "IN_PROGRESS"}, {@code "DONE"} o {@code "CANCELLED"}).
+     */
     private String mapStatus(String label) {
         if (label.equals(lm.get("status.inprogress")))           return "IN_PROGRESS";
         else if (label.equals(lm.get("status.done.project")))    return "DONE";
@@ -168,6 +216,12 @@ public class EditProjectController {
         else return "TODO";
     }
 
+    /**
+     * Traduce la etiqueta localizada de prioridad al código del backend.
+     *
+     * @param label Etiqueta localizada seleccionada en el combo.
+     * @return Código de prioridad ({@code "LOW"}, {@code "MEDIUM"}, {@code "HIGH"} o {@code "URGENT"}).
+     */
     private String mapPriority(String label) {
         if (label.equals(lm.get("priority.low")))         return "LOW";
         else if (label.equals(lm.get("priority.high")))   return "HIGH";
@@ -175,6 +229,11 @@ public class EditProjectController {
         else return "MEDIUM";
     }
 
+    /**
+     * Muestra un mensaje de error en la etiqueta de error del formulario.
+     *
+     * @param message Mensaje de error a mostrar.
+     */
     private void showError(String message) {
         errorLabel.setText(message);
         errorLabel.setVisible(true);

@@ -19,6 +19,18 @@ import java.io.IOException;
 import java.net.http.HttpResponse;
 import java.time.LocalDate;
 
+/**
+ * Controlador de la vista de detalle de proyecto.
+ *
+ * <p>Muestra la información del proyecto (nombre, estado, prioridad, categoría
+ * y descripción), las estadísticas de sus tareas (total, pendientes, completadas
+ * y vencidas) con una barra de progreso, la lista de tareas asociadas y el
+ * historial de actividad del proyecto y sus tareas. Permite editar el proyecto,
+ * crear nuevas tareas, editar y eliminar tareas existentes, y abrir el detalle
+ * de una tarea concreta.</p>
+ *
+ * @author Carlos
+ */
 public class ProjectDetailController {
 
     @FXML private Label projectIdLabel;
@@ -46,6 +58,12 @@ public class ProjectDetailController {
             .registerModule(new JavaTimeModule());
     private final LanguageManager lm = LanguageManager.getInstance();
 
+    /**
+     * Carga los datos del proyecto en la vista e inicializa el historial
+     * de actividad del proyecto y sus tareas.
+     *
+     * @param project Nodo JSON con los datos del proyecto a mostrar.
+     */
     public void initData(JsonNode project) {
         this.projectData = project;
         loadProjectDetail();
@@ -53,18 +71,38 @@ public class ProjectDetailController {
         activityLogSectionController.loadForEntity("PROJECT", projectId, "TASK");
     }
 
+    /**
+     * Registra el callback que se ejecutará al cerrar la vista de detalle.
+     *
+     * @param callback Acción a ejecutar al cerrar.
+     */
     public void setOnClose(Runnable callback) {
         this.onClose = callback;
     }
 
+    /**
+     * Registra el callback que se ejecutará tras actualizar el proyecto.
+     *
+     * @param callback Acción a ejecutar al completar la actualización.
+     */
     public void setOnProjectUpdated(Runnable callback) {
         this.onProjectUpdated = callback;
     }
 
+    /**
+     * Registra el callback que se ejecutará al abrir el detalle de una tarea,
+     * permitiendo que el controlador padre gestione la navegación.
+     *
+     * @param callback Consumidor que recibe el nodo JSON de la tarea seleccionada.
+     */
     public void setOnOpenTaskDetail(java.util.function.Consumer<JsonNode> callback) {
         this.onOpenTaskDetail = callback;
     }
 
+    /**
+     * Rellena los campos de cabecera del proyecto con los datos del nodo JSON
+     * e inicia la carga asíncrona de las tareas asociadas.
+     */
     private void loadProjectDetail() {
         Long   id       = projectData.get("id").asLong();
         String name     = projectData.get("name").asText();
@@ -98,6 +136,11 @@ public class ProjectDetailController {
         loadTasks(id);
     }
 
+    /**
+     * Obtiene las tareas del proyecto desde el backend y las renderiza en la vista.
+     *
+     * @param projectId Identificador del proyecto cuyas tareas se cargan.
+     */
     private void loadTasks(Long projectId) {
         new Thread(() -> {
             try {
@@ -113,6 +156,12 @@ public class ProjectDetailController {
         }).start();
     }
 
+    /**
+     * Renderiza la lista de tareas del proyecto, calcula las estadísticas
+     * (total, pendientes, completadas, vencidas) y actualiza la barra de progreso.
+     *
+     * @param tasks Array JSON con las tareas del proyecto.
+     */
     private void renderTasks(JsonNode tasks) {
         taskListContainer.getChildren().clear();
 
@@ -172,6 +221,13 @@ public class ProjectDetailController {
         }
     }
 
+    /**
+     * Construye la fila visual de una tarea con su indicador de estado,
+     * título, badge de prioridad, indicador de vencimiento y menú de acciones.
+     *
+     * @param task Nodo JSON con los datos de la tarea.
+     * @return {@link HBox} con el contenido visual de la fila.
+     */
     private HBox createTaskRow(JsonNode task) {
         String status   = task.has("status")   ? task.get("status").asText()   : "TODO";
         String title    = task.get("title").asText();
@@ -258,6 +314,13 @@ public class ProjectDetailController {
         return row;
     }
 
+    /**
+     * Abre la vista de detalle de una tarea. Si hay un callback registrado
+     * lo usa para delegar la navegación; si no, abre un diálogo modal.
+     *
+     * @param task   Nodo JSON con los datos de la tarea.
+     * @param taskId Identificador de la tarea.
+     */
     private void openTaskDetail(JsonNode task, Long taskId) {
         if (onOpenTaskDetail != null) {
             onOpenTaskDetail.accept(task);
@@ -281,6 +344,13 @@ public class ProjectDetailController {
         }
     }
 
+    /**
+     * Abre el diálogo modal de edición de una tarea y recarga la lista
+     * y el historial al guardar.
+     *
+     * @param task   Nodo JSON con los datos actuales de la tarea.
+     * @param taskId Identificador de la tarea a editar.
+     */
     private void openEditTask(JsonNode task, Long taskId) {
         try {
             FXMLLoader loader = new FXMLLoader(
@@ -301,6 +371,12 @@ public class ProjectDetailController {
         }
     }
 
+    /**
+     * Muestra un diálogo de confirmación y, si el usuario acepta, elimina
+     * la tarea del backend y recarga la lista y el historial.
+     *
+     * @param taskId Identificador de la tarea a eliminar.
+     */
     private void deleteTask(Long taskId) {
         Alert confirm = new Alert(Alert.AlertType.CONFIRMATION);
         confirm.setTitle(lm.get("common.delete.task.title"));
@@ -325,6 +401,10 @@ public class ProjectDetailController {
         });
     }
 
+    /**
+     * Abre el diálogo modal de edición del proyecto y, tras guardar,
+     * recarga los datos del proyecto desde el backend y notifica al controlador padre.
+     */
     @FXML
     private void handleEdit() {
         Long projectId   = projectData.get("id").asLong();
@@ -356,6 +436,10 @@ public class ProjectDetailController {
         }
     }
 
+    /**
+     * Ejecuta el callback de cierre si está registrado, o cierra
+     * la ventana directamente en caso contrario.
+     */
     @FXML
     private void handleClose() {
         if (onClose != null) {
@@ -365,6 +449,10 @@ public class ProjectDetailController {
         }
     }
 
+    /**
+     * Abre el diálogo modal de creación de nueva tarea asociada al proyecto
+     * y recarga la lista y el historial al crearla.
+     */
     @FXML
     private void handleNewTask() {
         try {
@@ -386,6 +474,13 @@ public class ProjectDetailController {
         }
     }
 
+    /**
+     * Crea un diálogo modal con el contenido indicado, aplica el tema activo
+     * y lo muestra de forma bloqueante.
+     *
+     * @param root  Contenido raíz a mostrar en el diálogo.
+     * @param title Título de la ventana del diálogo.
+     */
     private void showAsDialog(VBox root, String title) {
         Stage dialog = new Stage();
         dialog.setTitle(title);
@@ -399,6 +494,12 @@ public class ProjectDetailController {
         dialog.showAndWait();
     }
 
+    /**
+     * Aplica el tema activo del {@link com.taskmaster.taskmasterfrontend.util.ThemeManager}
+     * a la escena indicada, cargando primero el CSS base y luego el tema seleccionado.
+     *
+     * @param scene Escena a la que aplicar el tema.
+     */
     private void applyThemeToScene(Scene scene) {
         com.taskmaster.taskmasterfrontend.util.ThemeManager tm =
                 com.taskmaster.taskmasterfrontend.util.ThemeManager.getInstance();
@@ -421,7 +522,12 @@ public class ProjectDetailController {
         scene.setFill(javafx.scene.paint.Color.web(tm.getBgApp()));
     }
 
-    // ── Colores ───────────────────────────────────────────────────────────────
+    /**
+     * Devuelve el color hex asociado a un estado de proyecto o tarea.
+     *
+     * @param s Código de estado (p.ej. {@code "IN_PROGRESS"}).
+     * @return Color en formato hex.
+     */
     private String getStatusColor(String s) {
         return switch (s) {
             case "TODO"        -> "#95a5a6";
@@ -433,6 +539,12 @@ public class ProjectDetailController {
         };
     }
 
+    /**
+     * Devuelve el color hex asociado a una prioridad de proyecto o tarea.
+     *
+     * @param p Código de prioridad (p.ej. {@code "HIGH"}).
+     * @return Color en formato hex.
+     */
     private String getPriorityColor(String p) {
         return switch (p) {
             case "URGENT" -> "#e74c3c";
@@ -443,6 +555,12 @@ public class ProjectDetailController {
         };
     }
 
+    /**
+     * Devuelve el estilo CSS inline del badge de categoría.
+     *
+     * @param c Código de categoría (p.ej. {@code "PERSONAL"}).
+     * @return Cadena de estilo CSS con color de fondo y de texto.
+     */
     private String getCategoryBadgeStyle(String c) {
         return switch (c) {
             case "PERSONAL" -> "-fx-background-color: #f3e8ff; -fx-text-fill: #6b21a8;";
@@ -452,6 +570,12 @@ public class ProjectDetailController {
         };
     }
 
+    /**
+     * Traduce un código de estado del backend a su etiqueta localizada.
+     *
+     * @param status Código de estado (p.ej. {@code "TODO"}).
+     * @return Etiqueta localizada correspondiente.
+     */
     private String translateStatus(String status) {
         return switch (status) {
             case "TODO"        -> lm.get("status.TODO");
@@ -463,6 +587,12 @@ public class ProjectDetailController {
         };
     }
 
+    /**
+     * Traduce un código de prioridad del backend a su etiqueta localizada.
+     *
+     * @param priority Código de prioridad (p.ej. {@code "MEDIUM"}).
+     * @return Etiqueta localizada correspondiente.
+     */
     private String translatePriority(String priority) {
         return switch (priority) {
             case "LOW"    -> lm.get("priority.LOW");
@@ -473,6 +603,12 @@ public class ProjectDetailController {
         };
     }
 
+    /**
+     * Muestra un diálogo de información con el título y mensaje indicados.
+     *
+     * @param title   Título del diálogo.
+     * @param message Mensaje a mostrar.
+     */
     private void showAlert(String title, String message) {
         Alert alert = new Alert(Alert.AlertType.INFORMATION);
         alert.setTitle(title);

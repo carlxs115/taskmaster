@@ -19,6 +19,15 @@ import java.io.IOException;
 import java.net.http.HttpResponse;
 import java.time.LocalDate;
 
+/**
+ * Controlador de la pantalla de registro de nuevos usuarios.
+ *
+ * <p>Valida los datos introducidos (campos obligatorios, edad mínima de 12 años)
+ * y envía la solicitud de registro al backend. Si el registro es exitoso,
+ * redirige automáticamente a la pantalla de login.</p>
+ *
+ * @author Carlos
+ */
 public class RegisterController {
 
     @FXML private TextField usernameField;
@@ -29,6 +38,10 @@ public class RegisterController {
 
     private final LanguageManager lm = LanguageManager.getInstance();
 
+    /**
+     * Inicializa la pantalla configurando el envío del formulario
+     * con la tecla Enter en los campos de usuario, email y contraseña.
+     */
     @FXML
     private void initialize() {
         usernameField.setOnKeyPressed(e -> {
@@ -49,7 +62,11 @@ public class RegisterController {
     }
 
     /**
-     * Se ejecuta cuando el usuario pulsa "Crear cuenta".
+     * Valida el formulario y envía la solicitud de registro al backend.
+     *
+     * <p>Comprueba que todos los campos estén rellenos, que se haya
+     * seleccionado una fecha de nacimiento y que el usuario tenga al
+     * menos 12 años. Si el registro es exitoso, navega a la pantalla de login.</p>
      */
     @FXML
     private void handleRegister() {
@@ -109,6 +126,9 @@ public class RegisterController {
 
     }
 
+    /**
+     * Navega a la pantalla de login manteniendo el tema Amatista.
+     */
     @FXML
     private void handleGoToLogin() {
         try {
@@ -134,6 +154,11 @@ public class RegisterController {
         }
     }
 
+    /**
+     * Muestra un mensaje de error en la etiqueta de error de la pantalla.
+     *
+     * @param message Mensaje de error a mostrar.
+     */
     private void showError(String message) {
         errorLabel.setText(message);
         errorLabel.setVisible(true);
