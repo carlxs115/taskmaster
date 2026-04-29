@@ -122,6 +122,28 @@
                     </execution>
                 </executions>
             </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-javadoc-plugin</artifactId>
+                <version>3.11.2</version>
+                <configuration>
+                    <source>21</source>
+                    <encoding>UTF-8</encoding>
+                    <charset>UTF-8</charset>
+                    <docencoding>UTF-8</docencoding>
+                    <doclint>none</doclint>
+                    <failOnError>false</failOnError>
+                    <failOnWarnings>false</failOnWarnings>
+                    <release>21</release>
+                    <sourceFileExcludes>
+                        <exclude>module-info.java</exclude>
+                    </sourceFileExcludes>
+                    <additionalOptions>
+                        <additionalOption>--ignore-source-errors</additionalOption>
+                    </additionalOptions>
+                    <outputDirectory>${project.build.directory}/javadoc</outputDirectory>
+                </configuration>
+            </plugin>
         </plugins>
     </build>
 </project>
