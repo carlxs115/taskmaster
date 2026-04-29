@@ -11,6 +11,7 @@ module com.taskmaster.taskmasterfrontend {
     requires java.desktop;
     requires javafx.swing;
     requires java.prefs;
+    requires org.kordamp.ikonli.fontawesome5;
 
     opens com.taskmaster.taskmasterfrontend to javafx.fxml;
     opens com.taskmaster.taskmasterfrontend.controller to javafx.fxml;

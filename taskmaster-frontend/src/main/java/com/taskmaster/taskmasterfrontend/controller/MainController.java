@@ -18,6 +18,7 @@ import javafx.scene.control.*;
 import javafx.scene.layout.*;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
+import org.kordamp.ikonli.javafx.FontIcon;
 
 import java.io.IOException;
 import java.net.http.HttpResponse;
@@ -260,15 +261,13 @@ public class MainController {
         }
 
         ContextMenu menu = new ContextMenu();
-        menu.setStyle("-fx-background-color: white; -fx-border-color: #e8e8e8; " +
-                "-fx-border-width: 1; -fx-background-radius: 8; -fx-border-radius: 8;");
 
         MenuItem newProject = new MenuItem(lm.get("topbar.new.project"));
-        newProject.setStyle("-fx-font-size: 13px; -fx-padding: 8 16 8 16;");
+        newProject.setGraphic(new FontIcon("fas-folder-plus"));
         newProject.setOnAction(e -> handleNewProject());
 
         MenuItem newTask = new MenuItem(lm.get("topbar.new.task"));
-        newTask.setStyle("-fx-font-size: 13px; -fx-padding: 8 16 8 16;");
+        newTask.setGraphic(new FontIcon("fas-plus"));
         newTask.setOnAction(e -> handleNewTask());
 
         menu.getItems().addAll(newProject, newTask);
@@ -335,8 +334,11 @@ public class MainController {
             HBox.setHgrow(btn, Priority.ALWAYS);
             btn.getStyleClass().add("sidebar-project-btn");
 
-            Button menuBtn = new Button("•••");
+            Button menuBtn = new Button();
             menuBtn.getStyleClass().add("sidebar-project-dots");
+            FontIcon dotsIcon = new FontIcon("fas-ellipsis-h");
+            dotsIcon.getStyleClass().add("sidebar-project-dots-icon");
+            menuBtn.setGraphic(dotsIcon);
 
             btn.setOnAction(e -> {
                 selectedProjectId = pid;
@@ -347,12 +349,16 @@ public class MainController {
 
             menuBtn.setOnAction(e -> {
                 ContextMenu cm = new ContextMenu();
-                MenuItem edit   = new MenuItem(lm.get("common.menu.edit"));
+
+                MenuItem edit = new MenuItem(lm.get("common.menu.edit"));
+                edit.setGraphic(new FontIcon("fas-pen"));
+                edit.setOnAction(ev -> handleEditProject(pid, name));
+
                 MenuItem delete = new MenuItem(lm.get("common.menu.delete"));
-                edit.setStyle("-fx-font-size: 13px; -fx-padding: 6 16 6 16;");
-                delete.setStyle("-fx-font-size: 13px; -fx-padding: 6 16 6 16;");
-                edit.setOnAction(ev   -> handleEditProject(pid, name));
+                delete.setGraphic(new FontIcon("fas-trash"));
+                delete.getStyleClass().add("menu-item-danger");
                 delete.setOnAction(ev -> handleDeleteProject(pid, name));
+
                 cm.getItems().addAll(edit, delete);
                 cm.show(menuBtn, javafx.geometry.Side.BOTTOM, 0, 0);
             });

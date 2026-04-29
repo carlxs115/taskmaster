@@ -189,6 +189,20 @@
 .btn-create:hover {
     -fx-background-color: -tm-btn-primary-hover;
 }
+.btn-create-icon {
+    -fx-icon-size: 11;
+    -fx-icon-color: white;
+}
+
+.btn-create-chevron {
+    -fx-icon-size: 9;
+    -fx-icon-color: white;
+}
+
+.btn-create-label {
+    -fx-text-fill: white;
+    -fx-font-size: 12px;
+}
 .btn-confirm-accent {
     -fx-background-color: -tm-btn-primary;
     -fx-text-fill: white;
@@ -426,6 +440,70 @@
     -fx-cursor: hand;
     -fx-padding: 2 6 2 6;
     -fx-background-radius: 6px;
+}
+
+/* ── Iconos del sidebar ── */
+.sidebar-icon {
+    -fx-icon-size: 14;
+    -fx-icon-color: -tm-text-sidebar;
+}
+
+/* Icono cuando el botón normal está en hover */
+.sidebar-btn:hover .sidebar-icon {
+    -fx-icon-color: white;
+}
+
+/* Icono cuando el botón está activo (sección actual) */
+.sidebar-btn-active .sidebar-icon {
+    -fx-icon-color: -tm-accent-light;
+}
+
+/* ── Icono de los tres puntos del menú de proyecto ── */
+.sidebar-project-dots-icon {
+    -fx-icon-size: 12;
+    -fx-icon-color: transparent;  /* Invisible por defecto, igual que el botón */
+}
+.sidebar-project-dots-visible .sidebar-project-dots-icon {
+    -fx-icon-color: -tm-text-sidebar;  /* Visible al hacer hover */
+}
+
+/* =====================================================
+   CONTEXT MENU — items con iconos
+   ===================================================== */
+.context-menu {
+    -fx-background-color: -tm-bg-surface;
+    -fx-border-color: -tm-border;
+    -fx-border-radius: 6px;
+    -fx-background-radius: 6px;
+    -fx-padding: 4 0 4 0;
+}
+
+.context-menu .menu-item {
+    -fx-padding: 6 18 6 14;
+}
+
+.context-menu .menu-item .label {
+    -fx-text-fill: -tm-text-primary;
+    -fx-font-size: 13px;
+    -fx-padding: 0 0 0 10;  /* ← Separación entre icono y texto */
+}
+
+.context-menu .menu-item:focused {
+    -fx-background-color: -tm-bg-hover;
+}
+
+.context-menu .menu-item:focused .label {
+    -fx-text-fill: -tm-text-primary;
+}
+
+/* Icono de "Editar" — usa el color del texto del tema */
+.context-menu .menu-item .ikonli-font-icon {
+    -fx-icon-color: -tm-text-primary;
+}
+
+/* Excepción: el item de "Eliminar" mantiene su rojo */
+.context-menu .menu-item.menu-item-danger .ikonli-font-icon {
+    -fx-icon-color: #e74c3c;
 }
 
 /* =====================================================
