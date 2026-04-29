@@ -108,11 +108,16 @@
                       alignment="CENTER_LEFT" spacing="12">
                     <Label fx:id="areaTitle" text="%sidebar.home" styleClass="area-title"/>
                     <Region HBox.hgrow="ALWAYS"/>
-                    <TextField fx:id="searchField"
-                               promptText="%topbar.search.prompt"
-                               onKeyReleased="#handleSearch"
-                               styleClass="area-search-field"
-                               managed="false" visible="false"/>
+                    <HBox fx:id="searchContainer" styleClass="area-search-container"
+                          alignment="CENTER_LEFT" spacing="6"
+                          managed="false" visible="false">
+                        <FontIcon iconLiteral="fas-search" styleClass="area-search-icon"/>
+                        <TextField fx:id="searchField"
+                                   promptText="%topbar.search.prompt"
+                                   onKeyReleased="#handleSearch"
+                                   styleClass="area-search-field-inner"
+                                   HBox.hgrow="ALWAYS"/>
+                    </HBox>
                     <Button fx:id="createButton"
                             onAction="#handleCreateMenu"
                             styleClass="btn-create"
@@ -136,13 +141,24 @@
                     <Separator orientation="VERTICAL" style="-fx-padding: 0 4 0 4;"/>
                     <Label fx:id="sortLabel" text="%sort.label" styleClass="filter-label"/>
                     <ComboBox fx:id="sortFilter" promptText="%sort.criteria" styleClass="filter-combo" prefWidth="140"/>
-                    <Button fx:id="sortDirectionBtn" text="↑"
+                    <Button fx:id="sortDirectionBtn"
                             onAction="#handleSortDirection"
-                            styleClass="sort-direction-btn"/>
+                            styleClass="sort-direction-btn">
+                        <graphic>
+                            <FontIcon fx:id="sortDirectionIcon"
+                                      iconLiteral="fas-arrow-up"
+                                      styleClass="sort-direction-icon"/>
+                        </graphic>
+                    </Button>
                     <Region HBox.hgrow="ALWAYS"/>
                     <Button fx:id="clearFiltersBtn" text="%filter.clear"
                             onAction="#handleClearFilters"
-                            styleClass="btn-clear-filters"/>
+                            styleClass="btn-clear-filters"
+                            contentDisplay="LEFT" graphicTextGap="6">
+                        <graphic>
+                            <FontIcon iconLiteral="fas-times" styleClass="btn-clear-filters-icon"/>
+                        </graphic>
+                    </Button>
                 </HBox>
 
                 <!-- CONTENIDO -->

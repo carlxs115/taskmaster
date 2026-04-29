@@ -523,15 +523,38 @@
     -fx-font-weight: bold;
     -fx-text-fill: -tm-text-primary;
 }
-.area-search-field {
-    -fx-font-size: 12px;
+.area-search-container {
     -fx-padding: 6 12 6 12;
     -fx-background-radius: 20px;
     -fx-border-radius: 20px;
     -fx-border-color: -tm-border;
     -fx-border-width: 1.5;
-    -fx-pref-width: 200px;
+    -fx-pref-width: 220px;
     -fx-background-color: -tm-bg-input;
+}
+
+.area-search-container:focus-within {
+    -fx-border-color: -tm-accent;
+    -fx-border-width: 2px;
+}
+
+.area-search-icon {
+    -fx-icon-size: 12;
+    -fx-icon-color: -tm-text-muted;
+}
+
+.area-search-field-inner {
+    -fx-background-color: transparent;
+    -fx-border-color: transparent;
+    -fx-padding: 0;
+    -fx-font-size: 12px;
+    -fx-text-fill: -tm-text-primary;
+    -fx-prompt-text-fill: -tm-text-muted;
+}
+
+.area-search-field-inner:focused {
+    -fx-background-color: transparent;
+    -fx-border-color: transparent;
 }
 
 /* =====================================================
@@ -562,6 +585,10 @@
     -fx-border-width: 1.5;
     -fx-padding: 3 10 3 10;
 }
+.sort-direction-icon {
+    -fx-icon-size: 11;
+    -fx-icon-color: -tm-text-label;
+}
 .btn-clear-filters {
     -fx-background-color: -tm-bg-input;
     -fx-text-fill: -tm-text-muted;
@@ -576,6 +603,14 @@
 .btn-clear-filters:hover {
     -fx-text-fill: -tm-text-primary;
     -fx-border-color: -tm-text-muted;
+}
+.btn-clear-filters-icon {
+    -fx-icon-size: 10;
+    -fx-icon-color: -tm-text-muted;
+}
+
+.btn-clear-filters:hover .btn-clear-filters-icon {
+    -fx-icon-color: -tm-text-primary;
 }
 
 /* =====================================================
@@ -624,6 +659,14 @@
 .task-menu-btn:hover {
     -fx-background-color: -tm-bg-app;
     -fx-text-fill: -tm-text-primary;
+}
+.task-menu-btn-icon {
+    -fx-icon-size: 12;
+    -fx-icon-color: #666688;
+}
+
+.task-menu-btn:hover .task-menu-btn-icon {
+    -fx-icon-color: -tm-text-primary;
 }
 
 /* =====================================================

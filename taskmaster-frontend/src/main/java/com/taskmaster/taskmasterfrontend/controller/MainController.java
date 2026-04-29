@@ -72,6 +72,8 @@ public class MainController {
     @FXML private Button btnSecurity;
     @FXML private StackPane sidebarAvatarContainer;
     @FXML private Button btnHelp;
+    @FXML private HBox searchContainer;
+    @FXML private FontIcon sortDirectionIcon;
 
     private AvatarView sidebarAvatar;
 
@@ -890,7 +892,7 @@ public class MainController {
         resetComboBox(priorityFilter, lm.get("common.priority"));
         resetComboBox(sortFilter,     lm.get("sort.criteria"));
         sortAscending = true;
-        sortDirectionBtn.setText("↑");
+        sortDirectionIcon.setIconLiteral("fas-arrow-up");
         applyFiltersAndSort();
     }
 
@@ -964,19 +966,24 @@ public class MainController {
             }).start();
         });
 
-        Button menuBtn = new Button("•••");
+        Button menuBtn = new Button();
         menuBtn.getStyleClass().add("task-menu-btn");
+        FontIcon menuIcon = new FontIcon("fas-ellipsis-h");
+        menuIcon.getStyleClass().add("task-menu-btn-icon");
+        menuBtn.setGraphic(menuIcon);
 
         menuBtn.setOnAction(e -> {
             ContextMenu menu = new ContextMenu();
-            menu.setStyle("-fx-background-color: white; -fx-border-color: #e8e8e8; " +
-                    "-fx-border-width: 1; -fx-background-radius: 8; -fx-border-radius: 8;");
+
             MenuItem edit = new MenuItem(lm.get("common.menu.edit"));
-            edit.setStyle("-fx-font-size: 13px; -fx-padding: 2 10 2 10;");
+            edit.setGraphic(new FontIcon("fas-pen"));
             edit.setOnAction(ev -> handleEditTask(taskId, task));
+
             MenuItem delete = new MenuItem(lm.get("common.menu.delete"));
-            delete.setStyle("-fx-font-size: 13px; -fx-padding: 2 10 2 10; -fx-text-fill: #e74c3c;");
+            delete.setGraphic(new FontIcon("fas-trash"));
+            delete.getStyleClass().add("menu-item-danger");
             delete.setOnAction(ev -> handleDeleteTask(taskId));
+
             menu.getItems().addAll(edit, delete);
             menu.show(menuBtn, javafx.geometry.Side.BOTTOM, 0, 0);
         });
@@ -1397,7 +1404,7 @@ public class MainController {
     private void handleSortDirection() {
         sortAscending = !sortAscending;
         // Actualizar texto del botón (necesitas el @FXML ref)
-        sortDirectionBtn.setText(sortAscending ? "↑" : "↓");
+        sortDirectionIcon.setIconLiteral(sortAscending ? "fas-arrow-up" : "fas-arrow-down");
         applyFiltersAndSort();
     }
 
@@ -1682,7 +1689,7 @@ public class MainController {
         resetComboBox(priorityFilter, lm.get("common.priority"));
         resetComboBox(sortFilter,     lm.get("sort.criteria"));
         sortAscending = true;
-        sortDirectionBtn.setText("↑");
+        sortDirectionIcon.setIconLiteral("fas-arrow-up");
         taskFiltersBar.setVisible(true);
         taskFiltersBar.setManaged(true);
         showSearch();
@@ -1729,8 +1736,8 @@ public class MainController {
      * Hace visible el campo de búsqueda y lo limpia.
      */
     private void showSearch() {
-        searchField.setVisible(true);
-        searchField.setManaged(true);
+        searchContainer.setVisible(true);
+        searchContainer.setManaged(true);
         searchField.clear();
     }
 
@@ -1738,8 +1745,8 @@ public class MainController {
      * Oculta el campo de búsqueda y lo limpia.
      */
     private void hideSearch() {
-        searchField.setVisible(false);
-        searchField.setManaged(false);
+        searchContainer.setVisible(false);
+        searchContainer.setManaged(true);
         searchField.clear();
     }
 
