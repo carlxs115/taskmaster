@@ -163,7 +163,7 @@ public class ActivityLogSectionController {
 
             if (extraTypes.length > 0 && "SUBTASK".equals(extraTypes[0])) {
                 // Llamado desde TaskDetailController — cargar logs de subtareas de la tarea
-                HttpResponse<String> subtasksResp = apiService.get("/api/tasks/" + entityId + "/subtasks");
+                HttpResponse<String> subtasksResp = apiService.get("/api/tasks/" + entityId + "/subtasks/all");
                 if (subtasksResp != null && subtasksResp.statusCode() == 200) {
                     JsonNode subtasks = new com.fasterxml.jackson.databind.ObjectMapper()
                             .registerModule(new com.fasterxml.jackson.datatype.jsr310.JavaTimeModule())
@@ -177,7 +177,7 @@ public class ActivityLogSectionController {
                 }
             } else if (extraTypes.length > 0 && "TASK".equals(extraTypes[0])) {
                 // Llamado desde ProjectDetailController — cargar logs de tareas y sus subtareas
-                HttpResponse<String> tasksResp = apiService.get("/api/tasks?projectId=" + entityId);
+                HttpResponse<String> tasksResp = apiService.get("/api/tasks/project/" + entityId + "/all");
                 if (tasksResp != null && tasksResp.statusCode() == 200) {
                     JsonNode tasks = new com.fasterxml.jackson.databind.ObjectMapper()
                             .registerModule(new com.fasterxml.jackson.datatype.jsr310.JavaTimeModule())
@@ -186,7 +186,7 @@ public class ActivityLogSectionController {
                         for (JsonNode task : tasks) {
                             Long taskId = task.path("id").asLong();
                             rows.addAll(fetchRows(apiService, "TASK", taskId));
-                            HttpResponse<String> subtasksResp = apiService.get("/api/tasks/" + taskId + "/subtasks");
+                            HttpResponse<String> subtasksResp = apiService.get("/api/tasks/" + taskId + "/subtasks/all");
                             if (subtasksResp != null && subtasksResp.statusCode() == 200) {
                                 JsonNode subtasks = new com.fasterxml.jackson.databind.ObjectMapper()
                                         .registerModule(new com.fasterxml.jackson.datatype.jsr310.JavaTimeModule())

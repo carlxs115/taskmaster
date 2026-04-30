@@ -5,12 +5,14 @@ import com.taskmaster.taskmasterbackend.model.enums.ActionType;
 import com.taskmaster.taskmasterbackend.model.enums.TaskStatus;
 import com.taskmaster.taskmasterbackend.model.User;
 import com.taskmaster.taskmasterbackend.model.UserSettings;
+import com.taskmaster.taskmasterbackend.repository.ActivityLogRepository;
 import com.taskmaster.taskmasterbackend.repository.ProjectRepository;
 import com.taskmaster.taskmasterbackend.repository.TaskRepository;
 import com.taskmaster.taskmasterbackend.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 
@@ -30,6 +32,7 @@ public class UserService {
     private final PasswordEncoder passwordEncoder;
     private final TaskRepository taskRepository;
     private final ProjectRepository projectRepository;
+    private final ActivityLogRepository activityLogRepository;
     private final ActivityLogService activityLogService;
 
     /**
@@ -178,13 +181,13 @@ public class UserService {
      * @param password contraseña actual para confirmar la operación
      * @throws RuntimeException si la contraseña no es correcta
      */
+    @Transactional
     public void deleteAccount(Long userId, String password) {
         User user = findById(userId);
-
         if (!passwordEncoder.matches(password, user.getPassword())) {
             throw new RuntimeException("La contraseña no es correcta");
         }
-
+        activityLogRepository.deleteByUserId(userId);
         userRepository.delete(user);
     }
 }

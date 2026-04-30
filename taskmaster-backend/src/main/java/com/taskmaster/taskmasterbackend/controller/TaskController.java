@@ -218,6 +218,31 @@ public class TaskController {
         return ResponseEntity.ok(toResponseList(taskService.getTasksByCategory(category, userId)));
     }
 
+    /**
+     * GET /api/tasks/{id}/subtasks/all
+     * Devuelve todas las subtareas de una tarea, incluidas las eliminadas.
+     *
+     * @param id identificador de la tarea padre
+     * @return lista de todas las subtareas
+     */
+    @GetMapping("/{id}/subtasks/all")
+    public ResponseEntity<List<TaskResponse>> getAllSubTasks(@PathVariable Long id) {
+        return ResponseEntity.ok(toResponseList(taskService.getAllSubTasks(id)));
+    }
+
+    /**
+     * GET /api/tasks/project/{id}/all
+     * Devuelve todas las tareas raíz de un proyecto, incluyendo las eliminadas.
+     * Se usa para cargar el historial de actividad completo del proyecto.
+     *
+     * @param id identificador del proyecto
+     * @return lista de todas las tareas raíz del proyecto
+     */
+    @GetMapping("/project/{id}/all")
+    public ResponseEntity<List<TaskResponse>> getAllTasksByProject(@PathVariable Long id) {
+        return ResponseEntity.ok(toResponseList(taskService.getAllTasksByProject(id)));
+    }
+
     // ── Escritura ─────────────────────────────────────────────────────────────
 
     /**

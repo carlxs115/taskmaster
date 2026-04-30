@@ -97,6 +97,29 @@ public class ActivityLogController {
     }
 
     /**
+     * GET /api/activity-log/entities
+     * Devuelve el historial de actividad de un usuario para una lista de entidades del mismo tipo.
+     *
+     * @param userDetails usuario autenticado
+     * @param entityType  tipo de entidad
+     * @param entityIds   lista de identificadores separados por coma
+     * @return lista de registros de actividad
+     */
+    @GetMapping("/activity-log/entities")
+    public ResponseEntity<List<ActivityLogDTO>> getEntitiesActivityLog(
+            @AuthenticationPrincipal UserDetails userDetails,
+            @RequestParam String entityType,
+            @RequestParam List<Long> entityIds) {
+        Long userId = securityUtils.getUserId(userDetails);
+        List<ActivityLogDTO> log = activityLogService
+                .getHistoryForEntities(userId, entityType, entityIds)
+                .stream()
+                .map(this::toDTO)
+                .toList();
+        return ResponseEntity.ok(log);
+    }
+
+    /**
      * Convierte una entidad {@link ActivityLog} a su DTO correspondiente.
      *
      * @param log entidad a convertir

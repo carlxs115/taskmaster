@@ -281,6 +281,11 @@ public class TaskDetailController {
         titleLabel.setOnMouseClicked(e -> openSubtaskDetail(stId));
         HBox.setHgrow(titleLabel, Priority.ALWAYS);
 
+        Label statusBadge = new Label(translateStatus(status));
+        statusBadge.setStyle("-fx-font-size: 10px; -fx-padding: 2 7 2 7; " +
+                "-fx-background-radius: 10px; -fx-text-fill: white; " +
+                "-fx-background-color: " + getStatusColor(status) + ";");
+
         Label priBadge = new Label(translatePriority(priority));
         priBadge.setStyle("-fx-font-size: 10px; -fx-padding: 2 7 2 7; " +
                 "-fx-background-radius: 10px; -fx-text-fill: white; " +
@@ -315,6 +320,7 @@ public class TaskDetailController {
                             titleLabel.getStyleClass().add(is ? "task-title-done" : "task-title");
                             updating[0] = false;
                             loadSubtasks(parentTaskId);
+                            activityLogSectionController.loadForEntity("TASK", parentTaskId, "SUBTASK");
                             if (onTaskChanged != null) onTaskChanged.run();
                         } else {
                             updating[0] = true;
@@ -330,7 +336,7 @@ public class TaskDetailController {
 
         Region spacer = new Region();
         HBox.setHgrow(spacer, Priority.ALWAYS);
-        row.getChildren().addAll(check, titleLabel, priBadge, spacer, menuBtn);
+        row.getChildren().addAll(check, titleLabel, statusBadge, priBadge, spacer, menuBtn);
         return row;
     }
 
@@ -435,6 +441,7 @@ public class TaskDetailController {
                                 .delete("/api/tasks/" + subtaskId);
                         Platform.runLater(() -> {
                             loadSubtasks(parentTaskId);
+                            activityLogSectionController.loadForEntity("TASK", parentTaskId, "SUBTASK");
                             if (onTaskChanged != null) onTaskChanged.run();
                         });
                     } catch (Exception e) {

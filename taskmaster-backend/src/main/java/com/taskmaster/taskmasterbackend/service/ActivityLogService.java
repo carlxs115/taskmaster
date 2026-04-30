@@ -147,4 +147,19 @@ public class ActivityLogService {
         activityLogRepository.deleteByCreatedAtBefore(cutoff);
         log.info("ActivityLog limpiado: entradas anteriores a {}", cutoff);
     }
+
+    /**
+     * Devuelve todos los registros de actividad de un usuario para una lista de entidades
+     * del mismo tipo, ordenados por fecha descendente.
+     *
+     * @param userId     identificador del usuario
+     * @param entityType tipo de entidad
+     * @param entityIds  lista de identificadores de entidades
+     * @return lista de registros ordenada por fecha
+     */
+    public List<ActivityLog> getHistoryForEntities(Long userId, String entityType, List<Long> entityIds) {
+        if (entityIds.isEmpty()) return List.of();
+        return activityLogRepository
+                .findByUserIdAndEntityTypeAndEntityIdInOrderByCreatedAtDesc(userId, entityType, entityIds);
+    }
 }

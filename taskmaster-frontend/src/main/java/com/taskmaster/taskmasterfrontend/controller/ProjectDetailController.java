@@ -233,25 +233,49 @@ public class ProjectDetailController {
         String title    = task.get("title").asText();
         String priority = task.has("priority") ? task.get("priority").asText() : "MEDIUM";
         boolean isDone  = "DONE".equals(status);
+        Long taskId     = task.path("id").asLong();
+
+        CheckBox check = new CheckBox();
+        check.setSelected(isDone);
+
+        final boolean[] updating = {false};
+        check.selectedProperty().addListener((obs, was, is) -> {
+            if (updating[0]) return;
+            String newStatus = is ? "DONE" : "TODO";
+            new Thread(() -> {
+                try {
+                    HttpResponse<String> resp = AppContext.getInstance().getApiService()
+                            .patch("/api/tasks/" + taskId + "/status?status=" + newStatus, null);
+                    Platform.runLater(() -> {
+                        if (resp.statusCode() == 200) {
+                            Long projectId = projectData.path("id").asLong();
+                            loadTasks(projectId);
+                            activityLogSectionController.loadForEntity("PROJECT", projectId, "TASK");
+                        } else {
+                            updating[0] = true;
+                            check.setSelected(was);
+                            updating[0] = false;
+                        }
+                    });
+                } catch (Exception ex) {
+                    Platform.runLater(() -> {
+                        updating[0] = true;
+                        check.setSelected(was);
+                        updating[0] = false;
+                    });
+                }
+            }).start();
+        });
 
         HBox row = new HBox(10);
         row.setAlignment(Pos.CENTER_LEFT);
         row.setStyle("-fx-padding: 8 0 8 0;");
 
-        // Indicador de estado como círculo de color
-        Label statusDot = new Label("●");
-        statusDot.setStyle("-fx-text-fill: " + getStatusColor(status) + "; -fx-font-size: 10px;");
-
         Label titleLabel = new Label(title);
-        titleLabel.setStyle(isDone
-                ? "-fx-font-size: 13px; -fx-text-fill: #aaaaaa; -fx-strikethrough: true;"
-                : "-fx-font-size: 13px; -fx-text-fill: #1e1e2e;");
-
-        titleLabel.setOnMouseClicked(e -> openTaskDetail(task, task.path("id").asLong()));
+        titleLabel.setOnMouseClicked(e -> openTaskDetail(task, taskId));
         titleLabel.setStyle(isDone
                 ? "-fx-font-size: 13px; -fx-text-fill: #aaaaaa; -fx-strikethrough: true; -fx-cursor: hand;"
                 : "-fx-font-size: 13px; -fx-text-fill: #1e1e2e; -fx-cursor: hand;");
-
 
         // Badge fecha vencida
         boolean isOverdue = false;
@@ -262,12 +286,17 @@ public class ProjectDetailController {
             } catch (Exception ignored) {}
         }
 
+        Label statusBadge = new Label(translateStatus(status));
+        statusBadge.setStyle("-fx-font-size: 10px; -fx-padding: 2 7 2 7; " +
+                "-fx-background-radius: 10px; -fx-text-fill: white; " +
+                "-fx-background-color: " + getStatusColor(status) + ";");
+
         Label priBadge = new Label(translatePriority(priority));
         priBadge.setStyle("-fx-font-size: 10px; -fx-padding: 2 7 2 7; " +
                 "-fx-background-radius: 10px; -fx-text-fill: white; " +
                 "-fx-background-color: " + getPriorityColor(priority) + ";");
 
-        row.getChildren().addAll(statusDot, titleLabel);
+        row.getChildren().addAll(check, titleLabel, statusBadge);
 
         if (isOverdue) {
             Label overdueLabel = new Label(lm.get("date.overdue"));
@@ -276,9 +305,8 @@ public class ProjectDetailController {
                     "-fx-background-color: #fee2e2;");
             row.getChildren().add(overdueLabel);
         }
-        row.getChildren().add(priBadge);
 
-        Long taskId = task.path("id").asLong();
+        row.getChildren().add(priBadge);
 
         Button menuBtn = new Button("•••");
         menuBtn.setStyle("-fx-background-color: transparent; -fx-text-fill: #666688; " +
@@ -310,7 +338,6 @@ public class ProjectDetailController {
         HBox.setHgrow(spacer, Priority.ALWAYS);
         row.getChildren().add(spacer);
         row.getChildren().add(menuBtn);
-
         return row;
     }
 

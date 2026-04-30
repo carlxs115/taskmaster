@@ -4,6 +4,7 @@ import com.taskmaster.taskmasterbackend.model.ActivityLog;
 import com.taskmaster.taskmasterbackend.model.enums.ActionType;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -49,4 +50,25 @@ public interface ActivityLogRepository extends JpaRepository<ActivityLog, Long> 
      * @param cutoff fecha límite; se eliminarán los registros anteriores a esta fecha
      */
     void deleteByCreatedAtBefore(LocalDateTime cutoff);
+
+    /**
+     * Elimina todos los registros de actividad asociados a un usuario.
+     * Se usa al eliminar permanentemente una cuenta de usuario.
+     *
+     * @param userId identificador del usuario cuyos registros se eliminarán
+     */
+    @Transactional
+    void deleteByUserId(Long userId);
+
+    /**
+     * Devuelve los registros de actividad de un usuario para un conjunto de entidades
+     * del mismo tipo, ordenados por fecha descendente.
+     *
+     * @param userId     identificador del usuario
+     * @param entityType tipo de entidad
+     * @param entityIds  lista de identificadores de entidades
+     * @return lista de registros ordenada por fecha
+     */
+    List<ActivityLog> findByUserIdAndEntityTypeAndEntityIdInOrderByCreatedAtDesc(
+            Long userId, String entityType, List<Long> entityIds);
 }

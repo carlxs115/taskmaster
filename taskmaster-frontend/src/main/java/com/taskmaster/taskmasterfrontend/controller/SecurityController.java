@@ -182,18 +182,25 @@ public class SecurityController {
      */
     @FXML
     private void handleDeleteAccount() {
-        // Pedir la contraseña antes de eliminar
-        TextInputDialog dialog = new TextInputDialog();
-        dialog.setTitle(lm.get("common.delete.account"));
-        dialog.setHeaderText(lm.get("security.delete.header"));
-        dialog.setContentText(lm.get("common.password"));
-
-        // Convertir el TextField en PasswordField
+        // Diálogo personalizado con PasswordField
         PasswordField pf = new PasswordField();
         pf.setPromptText(lm.get("common.password"));
-        dialog.getEditor().textProperty().bindBidirectional(pf.textProperty());
 
-        dialog.showAndWait().ifPresent(password -> {
+        VBox content = new VBox(8);
+        content.getChildren().addAll(
+                new Label(lm.get("security.delete.header")), pf
+        );
+
+        Alert dialog = new Alert(Alert.AlertType.CONFIRMATION);
+        dialog.setTitle(lm.get("common.delete.account"));
+        dialog.setHeaderText(null);
+        dialog.getDialogPane().setContent(content);
+        Platform.runLater(pf::requestFocus);
+
+        dialog.showAndWait().ifPresent(result -> {
+            if (result != ButtonType.OK) return;
+
+            String password = pf.getText();
             if (password.isBlank()) {
                 showInfo(lm.get("security.delete.empty"));
                 return;
@@ -203,26 +210,25 @@ public class SecurityController {
             confirm.setTitle(lm.get("common.delete.account"));
             confirm.setHeaderText(lm.get("security.delete.confirm.header"));
             confirm.setContentText(lm.get("security.delete.confirm.content"));
-            confirm.showAndWait().ifPresent(result -> {
-                if (result == ButtonType.OK) {
-                    new Thread(() -> {
-                        try {
-                            String encodedPassword = URLEncoder.encode(password, StandardCharsets.UTF_8);
-                            HttpResponse<String> response = AppContext.getInstance()
-                                    .getApiService().delete("/api/auth/account?password=" + encodedPassword);
-                            Platform.runLater(() -> {
-                                if (response.statusCode() == 200 || response.statusCode() == 204) {
-                                    AppContext.getInstance().logout();
-                                    navigateToLogin();
-                                } else {
-                                    showInfo(lm.get("security.delete.error"));
-                                }
-                            });
-                        } catch (Exception e) {
-                            Platform.runLater(() -> showInfo(lm.get("security.delete.error.generic")));
-                        }
-                    }).start();
-                }
+            confirm.showAndWait().ifPresent(r -> {
+                if (r != ButtonType.OK) return;
+                new Thread(() -> {
+                    try {
+                        String encodedPassword = URLEncoder.encode(password, StandardCharsets.UTF_8);
+                        HttpResponse<String> response = AppContext.getInstance()
+                                .getApiService().delete("/api/auth/account?password=" + encodedPassword);
+                        Platform.runLater(() -> {
+                            if (response.statusCode() == 200 || response.statusCode() == 204) {
+                                AppContext.getInstance().logout();
+                                navigateToLogin();
+                            } else {
+                                showInfo(lm.get("security.delete.error"));
+                            }
+                        });
+                    } catch (Exception e) {
+                        Platform.runLater(() -> showInfo(lm.get("security.delete.error.generic")));
+                    }
+                }).start();
             });
         });
     }

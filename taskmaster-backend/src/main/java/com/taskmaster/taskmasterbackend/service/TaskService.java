@@ -247,7 +247,7 @@ public class TaskService {
      */
     public Task changeStatus(Long taskId, TaskStatus newStatus, Long userId) {
         Task task = findById(taskId);
-        if (task.getProject() != null) {
+        if (task.getProject() != null && task.getParentTask() == null) {
             projectService.getProjectByIdAndUser(task.getProject().getId(), userId);
         }
 
@@ -262,10 +262,11 @@ public class TaskService {
         task.setStatus(newStatus);
         Task saved = taskRepository.save(task);
 
+        boolean isSubtask = task.getParentTask() != null;
         activityLogService.log(
                 userId,
                 ActionType.TASK_STATUS_CHANGED,
-                "TASK",
+                isSubtask ? "SUBTASK" : "TASK",
                 saved.getId(),
                 saved.getTitle(),
                 oldStatus.name(),
@@ -355,6 +356,27 @@ public class TaskService {
     public Task findById(Long taskId) {
         return taskRepository.findById(taskId)
                 .orElseThrow(() -> new RuntimeException("Tarea no encontrada con id: " + taskId));
+    }
+
+    /**
+     * Devuelve todas las subtareas de una tarea, incluidas las eliminadas.
+     *
+     * @param parentTaskId identificador de la tarea padre
+     * @return lista de todas las subtareas
+     */
+    public List<Task> getAllSubTasks(Long parentTaskId) {
+        return taskRepository.findByParentTaskId(parentTaskId);
+    }
+
+    /**
+     * Devuelve todas las tareas raíz de un proyecto, incluyendo las eliminadas.
+     * Se usa para cargar el historial de actividad completo del proyecto.
+     *
+     * @param projectId identificador del proyecto
+     * @return lista de todas las tareas raíz del proyecto
+     */
+    public List<Task> getAllTasksByProject(Long projectId) {
+        return taskRepository.findByProjectIdAndParentTaskIsNull(projectId);
     }
 
     /**

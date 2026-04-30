@@ -132,4 +132,26 @@ public interface TaskRepository extends JpaRepository<Task, Long> {
      * @return número de tareas activas con ese estado
      */
     long countByUserIdAndStatusAndDeletedFalse(Long userId, TaskStatus status);
+
+    // ── Subtareas y tareas incluyendo eliminadas ───────────────────────────────
+
+    /**
+     * Devuelve todas las subtareas de una tarea padre, incluyendo las eliminadas.
+     * Se usa para cargar el historial de actividad completo de una tarea,
+     * ya que las subtareas eliminadas siguen teniendo registros en el log.
+     *
+     * @param parentTaskId identificador de la tarea padre
+     * @return lista de todas las subtareas, activas y eliminadas
+     */
+    List<Task> findByParentTaskId(Long parentTaskId);
+
+    /**
+     * Devuelve todas las tareas raíz de un proyecto, incluyendo las eliminadas.
+     * Se usa para cargar el historial de actividad completo de un proyecto,
+     * ya que las tareas eliminadas siguen teniendo registros en el log.
+     *
+     * @param projectId identificador del proyecto
+     * @return lista de todas las tareas raíz del proyecto, activas y eliminadas
+     */
+    List<Task> findByProjectIdAndParentTaskIsNull(Long projectId);
 }

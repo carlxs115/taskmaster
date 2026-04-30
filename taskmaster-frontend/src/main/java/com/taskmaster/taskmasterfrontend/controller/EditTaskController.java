@@ -178,9 +178,9 @@ public class EditTaskController {
         return switch (s) {
             case "TODO"        -> lm.get("status.todo");
             case "IN_PROGRESS" -> lm.get("status.inprogress");
-            case "DONE"        -> lm.get("status.done.task");
+            case "DONE"        -> lm.get("status.done");
             case "SUBMITTED"   -> lm.get("status.submitted");
-            case "CANCELLED"   -> lm.get("status.cancelled.task");
+            case "CANCELLED"   -> lm.get("status.cancelled");
             default            -> s;
         };
     }
