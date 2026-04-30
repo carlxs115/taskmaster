@@ -5,10 +5,7 @@ import com.taskmaster.taskmasterbackend.model.enums.ActionType;
 import com.taskmaster.taskmasterbackend.model.enums.TaskStatus;
 import com.taskmaster.taskmasterbackend.model.User;
 import com.taskmaster.taskmasterbackend.model.UserSettings;
-import com.taskmaster.taskmasterbackend.repository.ActivityLogRepository;
-import com.taskmaster.taskmasterbackend.repository.ProjectRepository;
-import com.taskmaster.taskmasterbackend.repository.TaskRepository;
-import com.taskmaster.taskmasterbackend.repository.UserRepository;
+import com.taskmaster.taskmasterbackend.repository.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -34,6 +31,7 @@ public class UserService {
     private final ProjectRepository projectRepository;
     private final ActivityLogRepository activityLogRepository;
     private final ActivityLogService activityLogService;
+    private final WorkLogRepository workLogRepository;
 
     /**
      * Registra un nuevo usuario en el sistema.
@@ -187,6 +185,7 @@ public class UserService {
         if (!passwordEncoder.matches(password, user.getPassword())) {
             throw new RuntimeException("La contraseña no es correcta");
         }
+        workLogRepository.deleteByTaskUserId(userId);
         activityLogRepository.deleteByUserId(userId);
         userRepository.delete(user);
     }

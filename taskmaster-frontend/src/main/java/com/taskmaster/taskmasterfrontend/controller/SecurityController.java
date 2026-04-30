@@ -197,6 +197,11 @@ public class SecurityController {
         dialog.getDialogPane().setContent(content);
         Platform.runLater(pf::requestFocus);
 
+        ((Button) dialog.getDialogPane().lookupButton(ButtonType.OK))
+                .setText(lm.get("common.confirm"));
+        ((Button) dialog.getDialogPane().lookupButton(ButtonType.CANCEL))
+                .setText(lm.get("common.cancel"));
+
         dialog.showAndWait().ifPresent(result -> {
             if (result != ButtonType.OK) return;
 
@@ -210,6 +215,12 @@ public class SecurityController {
             confirm.setTitle(lm.get("common.delete.account"));
             confirm.setHeaderText(lm.get("security.delete.confirm.header"));
             confirm.setContentText(lm.get("security.delete.confirm.content"));
+
+            ((Button) confirm.getDialogPane().lookupButton(ButtonType.OK))
+                    .setText(lm.get("common.confirm"));
+            ((Button) confirm.getDialogPane().lookupButton(ButtonType.CANCEL))
+                    .setText(lm.get("common.cancel"));
+
             confirm.showAndWait().ifPresent(r -> {
                 if (r != ButtonType.OK) return;
                 new Thread(() -> {
