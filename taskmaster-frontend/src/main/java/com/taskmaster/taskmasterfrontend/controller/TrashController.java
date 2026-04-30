@@ -14,6 +14,7 @@ import javafx.scene.control.ButtonType;
 import javafx.scene.control.Label;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
+import javafx.scene.layout.Region;
 import javafx.scene.layout.VBox;
 import org.kordamp.ikonli.javafx.FontIcon;
 
@@ -192,7 +193,6 @@ public class TrashController {
 
         Label titleLabel = new Label(title);
         titleLabel.getStyleClass().add("task-title-done");
-        HBox.setHgrow(titleLabel, Priority.ALWAYS);
 
         Label priorityBadge = new Label(translatePriority(priority));
         priorityBadge.getStyleClass().add("detail-section-count");
@@ -201,6 +201,7 @@ public class TrashController {
         restoreBtn.getStyleClass().add("btn-small-primary");
         FontIcon restoreIcon = new FontIcon("fas-undo");
         restoreIcon.getStyleClass().add("btn-small-primary-icon");
+        restoreBtn.setStyle("-fx-padding: 7 16 7 16;");
         restoreBtn.setGraphic(restoreIcon);
         restoreBtn.setContentDisplay(javafx.scene.control.ContentDisplay.LEFT);
         restoreBtn.setGraphicTextGap(6);
@@ -215,7 +216,9 @@ public class TrashController {
         deleteBtn.setGraphicTextGap(6);
         deleteBtn.setOnAction(e -> permanentlyDeleteTask(taskId));
 
-        card.getChildren().addAll(titleLabel, priorityBadge, restoreBtn, deleteBtn);
+        Region spacer = new Region();
+        HBox.setHgrow(spacer, Priority.ALWAYS);
+        card.getChildren().addAll(titleLabel, priorityBadge, spacer, restoreBtn, deleteBtn);
         return card;
     }
 
@@ -253,6 +256,7 @@ public class TrashController {
         restoreBtn.getStyleClass().add("btn-small-primary");
         FontIcon restoreIcon = new FontIcon("fas-undo");
         restoreIcon.getStyleClass().add("btn-small-primary-icon");
+        restoreBtn.setStyle("-fx-padding: 7 16 7 16;");
         restoreBtn.setGraphic(restoreIcon);
         restoreBtn.setContentDisplay(javafx.scene.control.ContentDisplay.LEFT);
         restoreBtn.setGraphicTextGap(6);
@@ -267,7 +271,10 @@ public class TrashController {
         deleteBtn.setGraphicTextGap(6);
         deleteBtn.setOnAction(e -> permanentlyDeleteProject(projectId));
 
-        card.getChildren().addAll(titleBox, categoryBadge, restoreBtn, deleteBtn);
+        Region spacer = new Region();
+        HBox.setHgrow(spacer, Priority.ALWAYS);
+        HBox.setHgrow(titleBox, Priority.NEVER);
+        card.getChildren().addAll(titleBox, categoryBadge, spacer, restoreBtn, deleteBtn);
         return card;
     }
 

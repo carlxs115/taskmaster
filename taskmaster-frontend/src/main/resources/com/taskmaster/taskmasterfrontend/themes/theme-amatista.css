@@ -84,6 +84,9 @@
 .scroll-bar .decrement-button {
     -fx-background-color: -tm-bg-surface;
 }
+.profile-root > .scroll-pane > .viewport {
+    -fx-background-color: transparent;
+}
 
 /* =====================================================
    CAMPOS DE FORMULARIO — text-field, text-area, combo
@@ -234,7 +237,7 @@
 .btn-small-primary {
     -fx-background-color: -tm-btn-primary;
     -fx-text-fill: white;
-    -fx-font-size: 11px;
+    -fx-font-size: 12px;
     -fx-background-radius: 6px;
     -fx-cursor: hand;
     -fx-padding: 4 10 4 10;

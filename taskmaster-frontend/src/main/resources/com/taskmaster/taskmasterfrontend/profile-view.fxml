@@ -22,70 +22,68 @@
         </Button>
     </HBox>
 
-    <VBox VBox.vgrow="ALWAYS" style="-fx-padding: 24;" spacing="16">
-        <VBox spacing="16" style="-fx-padding: 24;">
-
-            <!-- Avatar + nombre -->
-            <HBox spacing="16" alignment="CENTER_LEFT" styleClass="profile-card">
-                <StackPane fx:id="avatarContainer"/>
-                <VBox spacing="4" alignment="CENTER_LEFT" VBox.vgrow="ALWAYS">
-                    <Label fx:id="usernameLabel" styleClass="profile-username-label"/>
-                </VBox>
-            </HBox>
-
-            <!-- Estadísticas -->
-            <VBox spacing="10" styleClass="profile-card">
-                <Label text="%profile.stats.title" styleClass="profile-section-title"/>
-                <HBox fx:id="statsRow" spacing="8"/>
-                <!-- Barra de progreso global -->
-                <VBox spacing="6" style="-fx-padding: 8 0 0 0;">
-                    <HBox alignment="CENTER_LEFT">
-                        <Label text="%profile.stats.rate" styleClass="profile-rate-label"/>
-                        <Region HBox.hgrow="ALWAYS"/>
-                        <Label fx:id="completionRateLabel" styleClass="profile-rate-value"/>
-                    </HBox>
-                    <StackPane styleClass="profile-progress-bg">
-                        <StackPane fx:id="completionBarFill"
-                                   style="-fx-background-color: #22c55e; -fx-background-radius: 4px;"
-                                   StackPane.alignment="CENTER_LEFT"/>
-                    </StackPane>
-                </VBox>
-            </VBox>
-
-            <!-- Datos del perfil -->
-            <VBox spacing="0" styleClass="profile-card" style="-fx-padding: 0;">
-                <HBox styleClass="profile-field-row" alignment="CENTER_LEFT" spacing="16">
-                    <Label text="%common.username" styleClass="profile-field-label"/>
-                    <Label fx:id="usernameValueLabel" styleClass="profile-field-value"/>
-                </HBox>
-                <HBox styleClass="profile-field-row" alignment="CENTER_LEFT" spacing="16">
-                    <Label text="%common.email" styleClass="profile-field-label"/>
-                    <Label fx:id="emailLabel" styleClass="profile-field-value"/>
-                </HBox>
-                <HBox styleClass="profile-field-row" alignment="CENTER_LEFT" spacing="16">
-                    <Label text="%common.birthdate" styleClass="profile-field-label"/>
-                    <Label fx:id="birthDateLabel" styleClass="profile-field-value"/>
-                </HBox>
-                <HBox styleClass="profile-field-row-last" alignment="CENTER_LEFT" spacing="16">
-                    <Label text="%profile.field.member.since" styleClass="profile-field-label"/>
-                    <Label fx:id="createdAtLabel" styleClass="profile-field-value"/>
-                </HBox>
-            </VBox>
-
-            <!-- Historial de actividad -->
-            <VBox spacing="0" styleClass="profile-card" style="-fx-padding: 0;">
-                <HBox styleClass="profile-field-row" alignment="CENTER_LEFT">
-                    <Label text="%profile.activity.title" styleClass="profile-section-title"/>
-                </HBox>
-                <ScrollPane fitToWidth="true" maxHeight="180"
-                            style="-fx-background-color: transparent; -fx-border-color: transparent;">
-                    <VBox fx:id="activityLogContainer" spacing="0">
-                        <Label fx:id="activityLogEmpty" text="%profile.activity.empty"
-                               styleClass="profile-activity-empty"/>
+    <ScrollPane VBox.vgrow="ALWAYS" fitToWidth="true"
+                style="-fx-background-color: transparent; -fx-border-color: transparent; -fx-background: transparent;">
+        <VBox style="-fx-padding: 24;" spacing="16">
+            <VBox spacing="16" style="-fx-padding: 24;">
+                <!-- Avatar + nombre -->
+                <HBox spacing="16" alignment="CENTER_LEFT" styleClass="profile-card">
+                    <StackPane fx:id="avatarContainer"/>
+                    <VBox spacing="4" alignment="CENTER_LEFT" VBox.vgrow="ALWAYS">
+                        <Label fx:id="usernameLabel" styleClass="profile-username-label"/>
                     </VBox>
-                </ScrollPane>
+                </HBox>
+                <!-- Estadísticas -->
+                <VBox spacing="10" styleClass="profile-card">
+                    <Label text="%profile.stats.title" styleClass="profile-section-title"/>
+                    <HBox fx:id="statsRow" spacing="8"/>
+                    <!-- Barra de progreso global -->
+                    <VBox spacing="6" style="-fx-padding: 8 0 0 0;">
+                        <HBox alignment="CENTER_LEFT">
+                            <Label text="%profile.stats.rate" styleClass="profile-rate-label"/>
+                            <Region HBox.hgrow="ALWAYS"/>
+                            <Label fx:id="completionRateLabel" styleClass="profile-rate-value"/>
+                        </HBox>
+                        <StackPane styleClass="profile-progress-bg">
+                            <StackPane fx:id="completionBarFill"
+                                       style="-fx-background-color: #22c55e; -fx-background-radius: 4px;"
+                                       StackPane.alignment="CENTER_LEFT"/>
+                        </StackPane>
+                    </VBox>
+                </VBox>
+                <!-- Datos del perfil -->
+                <VBox spacing="0" styleClass="profile-card" style="-fx-padding: 0;">
+                    <HBox styleClass="profile-field-row" alignment="CENTER_LEFT" spacing="16">
+                        <Label text="%common.username" styleClass="profile-field-label"/>
+                        <Label fx:id="usernameValueLabel" styleClass="profile-field-value"/>
+                    </HBox>
+                    <HBox styleClass="profile-field-row" alignment="CENTER_LEFT" spacing="16">
+                        <Label text="%common.email" styleClass="profile-field-label"/>
+                        <Label fx:id="emailLabel" styleClass="profile-field-value"/>
+                    </HBox>
+                    <HBox styleClass="profile-field-row" alignment="CENTER_LEFT" spacing="16">
+                        <Label text="%common.birthdate" styleClass="profile-field-label"/>
+                        <Label fx:id="birthDateLabel" styleClass="profile-field-value"/>
+                    </HBox>
+                    <HBox styleClass="profile-field-row-last" alignment="CENTER_LEFT" spacing="16">
+                        <Label text="%profile.field.member.since" styleClass="profile-field-label"/>
+                        <Label fx:id="createdAtLabel" styleClass="profile-field-value"/>
+                    </HBox>
+                </VBox>
+                <!-- Historial de actividad -->
+                <VBox spacing="0" styleClass="profile-card" style="-fx-padding: 0;">
+                    <HBox styleClass="profile-field-row" alignment="CENTER_LEFT">
+                        <Label text="%profile.activity.title" styleClass="profile-section-title"/>
+                    </HBox>
+                    <ScrollPane fitToWidth="true" maxHeight="180"
+                                style="-fx-background-color: transparent; -fx-border-color: transparent;">
+                        <VBox fx:id="activityLogContainer" spacing="0">
+                            <Label fx:id="activityLogEmpty" text="%profile.activity.empty"
+                                   styleClass="profile-activity-empty"/>
+                        </VBox>
+                    </ScrollPane>
+                </VBox>
             </VBox>
-
         </VBox>
-    </VBox>
+    </ScrollPane>
 </VBox>
