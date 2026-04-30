@@ -2,13 +2,16 @@
 <?import javafx.geometry.Insets?>
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
+<?import org.kordamp.ikonli.javafx.FontIcon?>
 <VBox xmlns:fx="http://javafx.com/fxml"
       fx:controller="com.taskmaster.taskmasterfrontend.controller.TrashController"
       HBox.hgrow="ALWAYS" styleClass="trash-root">
 
-    <HBox styleClass="trash-header" alignment="CENTER_LEFT" spacing="12">
+    <HBox styleClass="trash-header" alignment="CENTER_LEFT" spacing="10">
+        <FontIcon iconLiteral="fas-trash" styleClass="trash-title-icon"/>
         <Label text="%trash.title" styleClass="trash-title"/>
         <Region HBox.hgrow="ALWAYS"/>
+        <FontIcon iconLiteral="fas-clock" styleClass="trash-retention-icon"/>
         <Label fx:id="retentionLabel" styleClass="trash-retention-label"/>
     </HBox>
 

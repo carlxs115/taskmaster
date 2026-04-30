@@ -1,13 +1,16 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
+<?import org.kordamp.ikonli.javafx.FontIcon?>
+
 <VBox xmlns:fx="http://javafx.com/fxml"
       fx:controller="com.taskmaster.taskmasterfrontend.controller.SecurityController"
       spacing="16" styleClass="security-root">
 
     <!-- Últimos accesos -->
     <VBox spacing="0" styleClass="security-card" style="-fx-padding: 0;">
-        <HBox styleClass="security-access-row" alignment="CENTER_LEFT">
+        <HBox styleClass="security-access-row" alignment="CENTER_LEFT" spacing="8">
+            <FontIcon iconLiteral="fas-history" styleClass="security-section-icon"/>
             <Label text="%security.access.log" styleClass="security-section-title"/>
         </HBox>
         <ScrollPane fitToWidth="true" maxHeight="220"
@@ -21,7 +24,10 @@
 
     <!-- Cambiar contraseña -->
     <VBox spacing="12" styleClass="security-card">
-        <Label text="%security.password.title" styleClass="security-section-title"/>
+        <HBox alignment="CENTER_LEFT" spacing="8">
+            <FontIcon iconLiteral="fas-key" styleClass="security-section-icon"/>
+            <Label text="%security.password.title" styleClass="security-section-title"/>
+        </HBox>
         <PasswordField fx:id="currentPasswordField"
                        promptText="%security.password.current" styleClass="security-field"/>
         <PasswordField fx:id="newPasswordField"
@@ -37,10 +43,18 @@
 
     <!-- Eliminar cuenta -->
     <VBox spacing="12" styleClass="security-card-danger">
-        <Label text="%security.danger.title" styleClass="security-danger-title"/>
+        <HBox alignment="CENTER_LEFT" spacing="8">
+            <FontIcon iconLiteral="fas-exclamation-triangle" styleClass="security-danger-icon"/>
+            <Label text="%security.danger.title" styleClass="security-danger-title"/>
+        </HBox>
         <Label text="%security.danger.description"
                styleClass="security-danger-desc" wrapText="true"/>
         <Button text="%common.delete.account" onAction="#handleDeleteAccount"
-                styleClass="btn-danger"/>
+                styleClass="btn-danger"
+                contentDisplay="LEFT" graphicTextGap="8">
+            <graphic>
+                <FontIcon iconLiteral="fas-user-times" styleClass="btn-danger-icon"/>
+            </graphic>
+        </Button>
     </VBox>
 </VBox>

@@ -15,6 +15,7 @@ import javafx.scene.control.Label;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
+import org.kordamp.ikonli.javafx.FontIcon;
 
 import java.net.http.HttpResponse;
 
@@ -198,10 +199,20 @@ public class TrashController {
 
         Button restoreBtn = new Button(lm.get("trash.restore"));
         restoreBtn.getStyleClass().add("btn-small-primary");
+        FontIcon restoreIcon = new FontIcon("fas-undo");
+        restoreIcon.getStyleClass().add("btn-small-primary-icon");
+        restoreBtn.setGraphic(restoreIcon);
+        restoreBtn.setContentDisplay(javafx.scene.control.ContentDisplay.LEFT);
+        restoreBtn.setGraphicTextGap(6);
         restoreBtn.setOnAction(e -> restoreTask(taskId));
 
         Button deleteBtn = new Button(lm.get("trash.delete"));
         deleteBtn.getStyleClass().add("btn-danger");
+        FontIcon deleteIcon = new FontIcon("fas-times");
+        deleteIcon.getStyleClass().add("btn-danger-icon");
+        deleteBtn.setGraphic(deleteIcon);
+        deleteBtn.setContentDisplay(javafx.scene.control.ContentDisplay.LEFT);
+        deleteBtn.setGraphicTextGap(6);
         deleteBtn.setOnAction(e -> permanentlyDeleteTask(taskId));
 
         card.getChildren().addAll(titleLabel, priorityBadge, restoreBtn, deleteBtn);
@@ -225,22 +236,38 @@ public class TrashController {
         String name = project.get("name").asText();
         String category = project.get("category").asText();
 
-        Label nameLabel = new Label("📁 " + name);
+        FontIcon folderIcon = new FontIcon("fas-folder");
+        folderIcon.getStyleClass().add("trash-project-icon");
+
+        Label nameLabel = new Label(name);
         nameLabel.getStyleClass().add("task-title-done");
-        HBox.setHgrow(nameLabel, Priority.ALWAYS);
+
+        HBox titleBox = new HBox(8, folderIcon, nameLabel);
+        titleBox.setAlignment(Pos.CENTER_LEFT);
+        HBox.setHgrow(titleBox, Priority.ALWAYS);
 
         Label categoryBadge = new Label(translateCategory(category));
         categoryBadge.getStyleClass().add("detail-section-count");
 
         Button restoreBtn = new Button(lm.get("trash.restore"));
         restoreBtn.getStyleClass().add("btn-small-primary");
+        FontIcon restoreIcon = new FontIcon("fas-undo");
+        restoreIcon.getStyleClass().add("btn-small-primary-icon");
+        restoreBtn.setGraphic(restoreIcon);
+        restoreBtn.setContentDisplay(javafx.scene.control.ContentDisplay.LEFT);
+        restoreBtn.setGraphicTextGap(6);
         restoreBtn.setOnAction(e -> restoreProject(projectId));
 
         Button deleteBtn = new Button(lm.get("trash.delete"));
         deleteBtn.getStyleClass().add("btn-danger");
+        FontIcon deleteIcon = new FontIcon("fas-times");
+        deleteIcon.getStyleClass().add("btn-danger-icon");
+        deleteBtn.setGraphic(deleteIcon);
+        deleteBtn.setContentDisplay(javafx.scene.control.ContentDisplay.LEFT);
+        deleteBtn.setGraphicTextGap(6);
         deleteBtn.setOnAction(e -> permanentlyDeleteProject(projectId));
 
-        card.getChildren().addAll(nameLabel, categoryBadge, restoreBtn, deleteBtn);
+        card.getChildren().addAll(titleBox, categoryBadge, restoreBtn, deleteBtn);
         return card;
     }
 

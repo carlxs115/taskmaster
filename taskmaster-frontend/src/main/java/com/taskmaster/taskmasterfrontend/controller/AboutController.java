@@ -276,5 +276,4 @@ public class AboutController {
         dialog.setScene(scene);
         dialog.showAndWait();
     }
-
 }

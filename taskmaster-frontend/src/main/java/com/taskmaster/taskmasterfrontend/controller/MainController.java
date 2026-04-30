@@ -120,7 +120,7 @@ public class MainController {
         String initials = username.length() >= 2
                 ? username.substring(0, 2).toUpperCase()
                 : username.toUpperCase();
-        userMenuButton.setText(username + "  ▾");
+        userMenuButton.setText(username);
 
         statusFilter.setItems(FXCollections.observableArrayList(
                 lm.get("common.all"), lm.get("status.todo"), lm.get("status.inprogress"),
@@ -163,15 +163,15 @@ public class MainController {
     private void handleUserMenu() {
         ContextMenu menu = new ContextMenu();
 
-        // Cabecera no clickable con el nombre completo
         MenuItem viewProfile = new MenuItem(lm.get("topbar.profile"));
-        viewProfile.setStyle("-fx-font-size: 13px; -fx-font-weight: bold;");
+        viewProfile.setGraphic(new FontIcon("fas-id-card"));
         viewProfile.setOnAction(e -> handleViewProfile());
 
         SeparatorMenuItem sep = new SeparatorMenuItem();
 
         MenuItem logout = new MenuItem(lm.get("topbar.logout"));
-        logout.setStyle("-fx-font-size: 13px;");
+        logout.setGraphic(new FontIcon("fas-sign-out-alt"));
+        logout.getStyleClass().add("menu-item-danger-icon");
         logout.setOnAction(e -> handleLogout());
 
         menu.getItems().addAll(viewProfile, sep, logout);
@@ -196,7 +196,7 @@ public class MainController {
             ProfileController controller = loader.getController();
             controller.setOnProfileUpdated(() -> {
                 String username = AppContext.getInstance().getCurrentUsername();
-                userMenuButton.setText(username + "  ▾");
+                userMenuButton.setText(username);
                 if (sidebarAvatar != null) sidebarAvatar.refresh();
                 loadHome();
             });
@@ -205,46 +205,6 @@ public class MainController {
             showAlert("error.title", "error.open.profile");
         }
     }
-
-    /**
-    private void openChangePassword() {
-        try {
-            FXMLLoader loader = new FXMLLoader(
-                    getClass().getResource("/com/taskmaster/taskmasterfrontend/change-password-dialog.fxml"),
-                    LanguageManager.getInstance().getBundle()
-            );
-            VBox root = loader.load();
-            Stage dialog = new Stage();
-            dialog.setTitle(lm.get("%security.password.button"));
-            dialog.setScene(new Scene(root, 400, 320));
-            dialog.initModality(Modality.APPLICATION_MODAL);
-            dialog.showAndWait();
-        } catch (IOException e) {
-            showAlert("error.title", "error.open.dialog");
-        }
-    }
-     */
-
-    /**
-    private void openDeleteAccount() {
-        try {
-            FXMLLoader loader = new FXMLLoader(
-                    getClass().getResource("/com/taskmaster/taskmasterfrontend/delete-account-dialog.fxml"),
-                    LanguageManager.getInstance().getBundle()
-            );
-            VBox root = loader.load();
-            DeleteAccountController controller = loader.getController();
-            controller.setOnAccountDeleted(this::handleLogout);
-            Stage dialog = new Stage();
-            dialog.setTitle(lm.get("security.danger.title"));
-            dialog.setScene(new Scene(root, 340, 340));
-            dialog.initModality(Modality.APPLICATION_MODAL);
-            dialog.showAndWait();
-        } catch (IOException e) {
-            showAlert("error.title", "error.open.dialog");
-        }
-    }
-     */
 
     // ── Botón crear ───────────────────────────────────────────────────────────
 
@@ -455,15 +415,19 @@ public class MainController {
         if (birthDate != null) {
             if (birthDate.getMonthValue() == today.getMonthValue()
                     && birthDate.getDayOfMonth() == today.getDayOfMonth()) {
-                HBox birthdayBanner = new HBox();
-                birthdayBanner.setStyle("-fx-background-color: #fef3c7; -fx-padding: 10 24 10 24; " +
-                        "-fx-border-color: #fcd34d; -fx-border-width: 0 0 1 0;");
+                HBox birthdayBanner = new HBox(10);
+                birthdayBanner.getStyleClass().add("birthday-banner");
                 birthdayBanner.setAlignment(Pos.CENTER_LEFT);
+
+                FontIcon cakeIcon = new FontIcon("fas-birthday-cake");
+                cakeIcon.getStyleClass().add("birthday-banner-icon");
+
                 Label birthdayLabel = new Label(
                         java.text.MessageFormat.format(lm.get("birthday.header"),
                                 AppContext.getInstance().getCurrentUsername()));
-                birthdayLabel.setStyle("-fx-font-size: 13px; -fx-text-fill: #92400e;");
-                birthdayBanner.getChildren().add(birthdayLabel);
+                birthdayLabel.getStyleClass().add("birthday-banner-label");
+
+                birthdayBanner.getChildren().addAll(cakeIcon, birthdayLabel);
                 taskContainer.getChildren().add(birthdayBanner);
             }
         }
@@ -1548,15 +1512,13 @@ public class MainController {
     @FXML
     private void handleHelp() {
         ContextMenu menu = new ContextMenu();
-        menu.setStyle("-fx-background-color: #1a1a2e; -fx-border-color: #2a2a3e; " +
-                "-fx-border-width: 1; -fx-background-radius: 8; -fx-border-radius: 8;");
 
         MenuItem manualItem = new MenuItem(lm.get("help.manual"));
-        manualItem.setStyle("-fx-font-size: 13px; -fx-padding: 8 16 8 16; -fx-text-fill: #9999bb;");
+        manualItem.setGraphic(new FontIcon("fas-book"));
         manualItem.setOnAction(e -> showAlert("help.soon.title", "help.manual.soon"));
 
         MenuItem aboutItem = new MenuItem(lm.get("help.about"));
-        aboutItem.setStyle("-fx-font-size: 13px; -fx-padding: 8 16 8 16; -fx-text-fill: #9999bb;");
+        aboutItem.setGraphic(new FontIcon("fas-info-circle"));
         aboutItem.setOnAction(e -> showAboutView());
 
         menu.getItems().addAll(manualItem, new SeparatorMenuItem(), aboutItem);

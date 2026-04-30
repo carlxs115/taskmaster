@@ -2,6 +2,7 @@
 <?import javafx.geometry.Insets?>
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
+<?import org.kordamp.ikonli.javafx.FontIcon?>
 <VBox xmlns:fx="http://javafx.com/fxml"
       fx:controller="com.taskmaster.taskmasterfrontend.controller.ProfileController"
       spacing="0" styleClass="profile-root">
@@ -13,7 +14,12 @@
         <Button text="%profile.edit.button"
                 onAction="#handleEditProfile"
                 styleClass="btn-primary"
-                style="-fx-padding: 6 14 6 14; -fx-font-size: 12px;"/>
+                style="-fx-padding: 6 14 6 14; -fx-font-size: 12px;"
+                contentDisplay="LEFT" graphicTextGap="6">
+            <graphic>
+                <FontIcon iconLiteral="fas-pen" styleClass="btn-primary-icon"/>
+            </graphic>
+        </Button>
     </HBox>
 
     <VBox VBox.vgrow="ALWAYS" style="-fx-padding: 24;" spacing="16">

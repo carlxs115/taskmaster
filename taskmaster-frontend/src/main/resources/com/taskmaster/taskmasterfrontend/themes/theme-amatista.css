@@ -171,6 +171,10 @@
 .btn-primary:hover {
     -fx-background-color: -tm-btn-primary-hover;
 }
+.btn-primary-icon {
+    -fx-icon-size: 11;
+    -fx-icon-color: -tm-text-on-accent;
+}
 .btn-secondary {
     -fx-background-color: -tm-btn-secondary;
     -fx-text-fill: white;
@@ -348,6 +352,10 @@
     -fx-font-size: 13px;
     -fx-font-weight: bold;
 }
+.topbar-user-chevron {
+    -fx-icon-size: 9;
+    -fx-icon-color: -tm-accent-light;
+}
 
 /* =====================================================
    MAIN — Sidebar
@@ -501,8 +509,13 @@
     -fx-icon-color: -tm-text-primary;
 }
 
-/* Excepción: el item de "Eliminar" mantiene su rojo */
+/* Variante: icono Y texto en rojo (Eliminar proyecto/tarea) */
 .context-menu .menu-item.menu-item-danger .ikonli-font-icon {
+    -fx-icon-color: #e74c3c;
+}
+
+/* Variante: solo el icono en rojo, texto normal (Cerrar sesión) */
+.context-menu .menu-item.menu-item-danger-icon .ikonli-font-icon {
     -fx-icon-color: #e74c3c;
 }
 
@@ -928,6 +941,31 @@
     -fx-text-fill: -tm-text-secondary;
 }
 
+/* ── Iconos del header de las vistas de detalle ── */
+.detail-header-icon {
+    -fx-icon-size: 16;
+    -fx-icon-color: -tm-accent;
+}
+
+.detail-btn-edit-icon {
+    -fx-icon-size: 11;
+    -fx-icon-color: white;
+}
+
+.detail-btn-close-icon {
+    -fx-icon-size: 11;
+    -fx-icon-color: -tm-text-secondary;
+}
+
+.detail-btn-close:hover .detail-btn-close-icon {
+    -fx-icon-color: -tm-accent-light;
+}
+
+.detail-section-icon {
+    -fx-icon-size: 12;
+    -fx-icon-color: -tm-text-secondary;
+}
+
 /* =====================================================
    ACTIVITY LOG — tabla embebida en task/project detail
    ===================================================== */
@@ -979,6 +1017,10 @@
 }
 .table-view .table-row-cell:selected .table-cell {
     -fx-text-fill: -tm-accent-light;
+}
+.actlog-title-icon {
+    -fx-icon-size: 12;
+    -fx-icon-color: -tm-text-secondary;
 }
 
 /* =====================================================
@@ -1091,6 +1133,32 @@
     -fx-border-color: -tm-border;
 }
 
+/* ── Iconos de los diálogos ── */
+.dialog-title-icon {
+    -fx-icon-size: 18;
+    -fx-icon-color: -tm-accent;
+}
+
+.btn-confirm-accent-icon {
+    -fx-icon-size: 11;
+    -fx-icon-color: white;
+}
+
+.btn-cancel-soft-icon {
+    -fx-icon-size: 11;
+    -fx-icon-color: -tm-text-secondary;
+}
+
+/* En hover, el icono Cancel también cambia (igual que el texto) */
+.btn-cancel-soft:hover .btn-cancel-soft-icon {
+    -fx-icon-color: -tm-accent-light;
+}
+
+.zoom-slider-icon {
+    -fx-icon-size: 12;
+    -fx-icon-color: -tm-text-secondary;
+}
+
 /* =====================================================
    TRASH
    ===================================================== */
@@ -1115,6 +1183,33 @@
 .trash-empty-label {
     -fx-text-fill: -tm-text-secondary;
     -fx-font-size: 14px;
+}
+/* ── Iconos de la cabecera de la papelera ── */
+.trash-title-icon {
+    -fx-icon-size: 16;
+    -fx-icon-color: -tm-text-header;
+}
+
+.trash-retention-icon {
+    -fx-icon-size: 11;
+    -fx-icon-color: -tm-text-secondary;
+}
+
+/* ── Icono de carpeta en card de proyecto ── */
+.trash-project-icon {
+    -fx-icon-size: 13;
+    -fx-icon-color: -tm-text-muted;
+}
+
+/* ── Iconos dentro de los botones de la papelera ── */
+.btn-small-primary-icon {
+    -fx-icon-size: 10;
+    -fx-icon-color: white;
+}
+
+.btn-danger-icon {
+    -fx-icon-size: 10;
+    -fx-icon-color: white;
 }
 
 /* =====================================================
@@ -1181,6 +1276,22 @@
     -fx-font-size: 12px;
     -fx-padding: 14 20 14 20;
 }
+/* ── Iconos de las cabeceras de las tarjetas de seguridad ── */
+.security-section-icon {
+    -fx-icon-size: 13;
+    -fx-icon-color: -tm-accent;
+}
+
+.security-danger-icon {
+    -fx-icon-size: 13;
+    -fx-icon-color: #e74c3c;
+}
+
+/* ── Icono dentro del botón "Eliminar cuenta" ── */
+.btn-danger-icon {
+    -fx-icon-size: 11;
+    -fx-icon-color: white;
+}
 
 /* =====================================================
    AVATAR — icono cámara
@@ -1199,6 +1310,10 @@
     -fx-border-width: 2;
     -fx-border-radius: 13px;
     -fx-cursor: hand;
+}
+.btn-camera-icon-glyph {
+    -fx-icon-size: 11;
+    -fx-icon-color: -tm-text-on-accent;
 }
 
 /* =====================================================
@@ -1277,4 +1392,74 @@
 .about-text-area:focused {
     -fx-border-color: transparent;
     -fx-border-width: 0;
+}
+
+/* ── Iconos de la vista Acerca de ── */
+.about-header-icon {
+    -fx-icon-size: 16;
+    -fx-icon-color: -tm-text-primary;
+}
+
+.about-chip-icon {
+    -fx-icon-size: 10;
+    -fx-icon-color: -tm-text-muted;
+}
+
+.about-link-btn-icon {
+    -fx-icon-size: 11;
+    -fx-icon-color: -tm-accent;
+}
+
+/* En hover, el icono también se invierte como el texto del botón */
+.about-link-btn:hover .about-link-btn-icon {
+    -fx-icon-color: -tm-text-on-accent;
+}
+
+/* =====================================================
+   SETTINGS — iconos
+   ===================================================== */
+
+/* Icono de la cabecera "Ajustes" */
+.settings-header-icon {
+    -fx-icon-size: 16;
+    -fx-icon-color: -tm-text-primary;
+}
+
+/* Iconos de las cabeceras agrupadoras (Apariencia, Fecha y hora, etc.) */
+.settings-section-icon {
+    -fx-icon-size: 11;
+    -fx-icon-color: -tm-text-secondary;
+}
+
+.settings-section-label {
+    -fx-text-fill: -tm-text-secondary;
+    -fx-font-size: 10px;
+    -fx-font-weight: bold;
+    -fx-padding: 0;
+}
+
+/* Iconos pequeños dentro de cada tarjeta */
+.settings-card-icon {
+    -fx-icon-size: 13;
+    -fx-icon-color: -tm-accent;
+}
+
+/* =====================================================
+   HOME — Banner de cumpleaños
+   ===================================================== */
+.birthday-banner {
+    -fx-background-color: #fef3c7;
+    -fx-padding: 10 24 10 24;
+    -fx-border-color: #fcd34d;
+    -fx-border-width: 0 0 1 0;
+}
+
+.birthday-banner-icon {
+    -fx-icon-size: 16;
+    -fx-icon-color: #92400e;
+}
+
+.birthday-banner-label {
+    -fx-font-size: 13px;
+    -fx-text-fill: #92400e;
 }

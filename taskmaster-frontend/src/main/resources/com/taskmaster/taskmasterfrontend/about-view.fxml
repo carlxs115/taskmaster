@@ -3,6 +3,8 @@
 <?import javafx.scene.control.*?>
 <?import javafx.scene.control.Separator?>
 <?import javafx.scene.layout.*?>
+<?import org.kordamp.ikonli.javafx.FontIcon?>
+
 <VBox xmlns:fx="http://javafx.com/fxml"
       fx:id="aboutRoot"
       fx:controller="com.taskmaster.taskmasterfrontend.controller.AboutController"
@@ -10,7 +12,8 @@
       styleClass="profile-root">
 
     <!-- Cabecera -->
-    <HBox styleClass="profile-header" alignment="CENTER_LEFT">
+    <HBox styleClass="profile-header" alignment="CENTER_LEFT" spacing="10">
+        <FontIcon iconLiteral="fas-info-circle" styleClass="about-header-icon"/>
         <Label text="%about.title" styleClass="profile-header-title"/>
     </HBox>
 
@@ -43,41 +46,65 @@
                     <!-- Autor -->
                     <VBox spacing="4" alignment="CENTER_LEFT"
                           style="-fx-padding: 16 20 16 20;">
-                        <Label text="%about.author.label" styleClass="about-section-chip"
-                               maxWidth="Infinity"/>
+                        <HBox alignment="CENTER_LEFT" spacing="6">
+                            <FontIcon iconLiteral="fas-user" styleClass="about-chip-icon"/>
+                            <Label text="%about.author.label" styleClass="about-section-chip"/>
+                        </HBox>
                         <Label text="Carlos Riera" styleClass="about-field-value"
                                maxWidth="Infinity"/>
                         <Label text="%about.author.degree" styleClass="about-field-sub"
                                maxWidth="Infinity"/>
                     </VBox>
-
                     <Separator/>
 
                     <!-- Tecnologías -->
                     <VBox spacing="10" alignment="CENTER_LEFT"
                           style="-fx-padding: 16 20 16 20;">
-                        <Label text="%about.tech.label" styleClass="about-section-chip"
-                               maxWidth="Infinity"/>
+                        <HBox alignment="CENTER_LEFT" spacing="6">
+                            <FontIcon iconLiteral="fas-code" styleClass="about-chip-icon"/>
+                            <Label text="%about.tech.label" styleClass="about-section-chip"/>
+                        </HBox>
                         <FlowPane fx:id="techBadges" hgap="8" vgap="8"
                                   alignment="CENTER_LEFT"/>
                     </VBox>
-
                     <Separator/>
 
                     <!-- Botones legales -->
                     <VBox spacing="8" alignment="CENTER_LEFT"
                           style="-fx-padding: 16 20 16 20;">
-                        <Label text="%about.legal.label" styleClass="about-section-chip"
-                               maxWidth="Infinity"/>
+                        <HBox alignment="CENTER_LEFT" spacing="6">
+                            <FontIcon iconLiteral="fas-balance-scale" styleClass="about-chip-icon"/>
+                            <Label text="%about.legal.label" styleClass="about-section-chip"/>
+                        </HBox>
                         <HBox spacing="8" alignment="CENTER_LEFT">
-                            <Button text="%about.btn.terms"            onAction="#handleTerms"
-                                    styleClass="about-link-btn"/>
-                            <Button text="%about.btn.privacy"          onAction="#handlePrivacy"
-                                    styleClass="about-link-btn"/>
-                            <Button text="%about.btn.licenses"         onAction="#handleLicenses"
-                                    styleClass="about-link-btn"/>
+                            <Button text="%about.btn.terms" onAction="#handleTerms"
+                                    styleClass="about-link-btn"
+                                    contentDisplay="LEFT" graphicTextGap="6">
+                                <graphic>
+                                    <FontIcon iconLiteral="fas-file-contract" styleClass="about-link-btn-icon"/>
+                                </graphic>
+                            </Button>
+                            <Button text="%about.btn.privacy" onAction="#handlePrivacy"
+                                    styleClass="about-link-btn"
+                                    contentDisplay="LEFT" graphicTextGap="6">
+                                <graphic>
+                                    <FontIcon iconLiteral="fas-user-shield" styleClass="about-link-btn-icon"/>
+                                </graphic>
+                            </Button>
+                            <Button text="%about.btn.licenses" onAction="#handleLicenses"
+                                    styleClass="about-link-btn"
+                                    contentDisplay="LEFT" graphicTextGap="6">
+                                <graphic>
+                                    <FontIcon iconLiteral="fas-certificate" styleClass="about-link-btn-icon"/>
+                                </graphic>
+                            </Button>
                             <Button text="%about.btn.acknowledgements" onAction="#handleAcknowledgements"
-                                    styleClass="about-link-btn"/>
+                                    styleClass="about-link-btn"
+                                    contentDisplay="LEFT" graphicTextGap="6">
+                                <graphic>
+                                    <FontIcon iconLiteral="fas-heart" styleClass="about-link-btn-icon"/>
+                                </graphic>
+                            </Button>
                         </HBox>
                     </VBox>
                 </VBox>
@@ -85,7 +112,6 @@
                 <!-- Pie -->
                 <Label fx:id="copyrightLabel" styleClass="about-copyright"
                        alignment="CENTER" maxWidth="Infinity"/>
-
             </VBox>
         </HBox>
     </ScrollPane>

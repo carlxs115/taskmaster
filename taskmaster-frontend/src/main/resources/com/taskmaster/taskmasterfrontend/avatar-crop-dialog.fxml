@@ -2,11 +2,17 @@
 <?import javafx.scene.control.*?>
 <?import javafx.scene.image.*?>
 <?import javafx.scene.layout.*?>
+<?import org.kordamp.ikonli.javafx.FontIcon?>
+
 <VBox xmlns:fx="http://javafx.com/fxml"
       fx:controller="com.taskmaster.taskmasterfrontend.controller.AvatarCropController"
       spacing="16" styleClass="dialog-root">
 
-    <Label text="%avatar.crop.title" styleClass="dialog-title"/>
+    <HBox alignment="CENTER_LEFT" spacing="10">
+        <FontIcon iconLiteral="fas-crop" styleClass="dialog-title-icon"/>
+        <Label text="%avatar.crop.title" styleClass="dialog-title"/>
+    </HBox>
+
     <Label text="%avatar.crop.description"
            styleClass="dialog-field-label" wrapText="true"/>
 
@@ -23,7 +29,7 @@
 
     <!-- Slider de zoom -->
     <HBox spacing="10" alignment="CENTER_LEFT">
-        <Label text="🔍" style="-fx-font-size: 14px;"/>
+        <FontIcon iconLiteral="fas-search" styleClass="zoom-slider-icon"/>
         <Slider fx:id="zoomSlider" min="1.0" max="3.0" value="1.0"
                 HBox.hgrow="ALWAYS"/>
     </HBox>
@@ -31,8 +37,18 @@
     <!-- Botones -->
     <HBox spacing="10" alignment="CENTER_RIGHT">
         <Button fx:id="cancelButton" text="%common.cancel"
-                onAction="#handleCancel" styleClass="button, btn-cancel-soft"/>
+                onAction="#handleCancel" styleClass="button, btn-cancel-soft"
+                contentDisplay="LEFT" graphicTextGap="6">
+            <graphic>
+                <FontIcon iconLiteral="fas-times" styleClass="btn-cancel-soft-icon"/>
+            </graphic>
+        </Button>
         <Button fx:id="saveButton" text="%avatar.crop.save"
-                onAction="#handleSave" styleClass="btn-confirm-accent"/>
+                onAction="#handleSave" styleClass="btn-confirm-accent"
+                contentDisplay="LEFT" graphicTextGap="6">
+            <graphic>
+                <FontIcon iconLiteral="fas-check" styleClass="btn-confirm-accent-icon"/>
+            </graphic>
+        </Button>
     </HBox>
 </VBox>

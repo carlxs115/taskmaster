@@ -1,11 +1,13 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
+<?import org.kordamp.ikonli.javafx.FontIcon?>
 <VBox xmlns:fx="http://javafx.com/fxml"
       fx:controller="com.taskmaster.taskmasterfrontend.controller.EditProfileController"
       spacing="0" styleClass="dialog-body">
 
-    <HBox styleClass="dialog-header" alignment="CENTER_LEFT">
+    <HBox styleClass="dialog-header" alignment="CENTER_LEFT" spacing="10">
+        <FontIcon iconLiteral="fas-user-edit" styleClass="dialog-title-icon"/>
         <Label text="%profile.edit.dialog.title" styleClass="dialog-header-title"/>
     </HBox>
 
@@ -27,8 +29,18 @@
         <Label fx:id="errorLabel" styleClass="dialog-error" visible="false" managed="false"/>
 
         <HBox spacing="10" alignment="CENTER_RIGHT" style="-fx-padding: 8 0 0 0;">
-            <Button text="%common.cancel" onAction="#handleCancel" styleClass="button, btn-cancel-soft"/>
-            <Button text="%settings.save" onAction="#handleSave" styleClass="btn-confirm-accent"/>
+            <Button text="%common.cancel" onAction="#handleCancel" styleClass="button, btn-cancel-soft"
+                    contentDisplay="LEFT" graphicTextGap="6">
+                <graphic>
+                    <FontIcon iconLiteral="fas-times" styleClass="btn-cancel-soft-icon"/>
+                </graphic>
+            </Button>
+            <Button text="%settings.save" onAction="#handleSave" styleClass="btn-confirm-accent"
+                    contentDisplay="LEFT" graphicTextGap="6">
+                <graphic>
+                    <FontIcon iconLiteral="fas-check" styleClass="btn-confirm-accent-icon"/>
+                </graphic>
+            </Button>
         </HBox>
     </VBox>
 </VBox>

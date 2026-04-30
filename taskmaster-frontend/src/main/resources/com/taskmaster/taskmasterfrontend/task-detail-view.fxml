@@ -2,18 +2,30 @@
 <?import javafx.geometry.Insets?>
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
+<?import org.kordamp.ikonli.javafx.FontIcon?>
 <VBox xmlns:fx="http://javafx.com/fxml"
       fx:controller="com.taskmaster.taskmasterfrontend.controller.TaskDetailController"
       spacing="0" styleClass="detail-root">
 
     <HBox styleClass="detail-header" alignment="CENTER_LEFT" spacing="10">
+        <FontIcon iconLiteral="fas-tasks" styleClass="detail-header-icon"/>
         <Label fx:id="taskIdLabel" styleClass="detail-id-badge"/>
         <Label fx:id="taskTitleLabel" styleClass="detail-title"/>
         <Region HBox.hgrow="ALWAYS"/>
         <Button text="%common.menu.edit" fx:id="editButton"
-                onAction="#handleEdit" styleClass="detail-btn-edit"/>
+                onAction="#handleEdit" styleClass="detail-btn-edit"
+                contentDisplay="LEFT" graphicTextGap="6">
+            <graphic>
+                <FontIcon iconLiteral="fas-pen" styleClass="detail-btn-edit-icon"/>
+            </graphic>
+        </Button>
         <Button text="%common.close"
-                onAction="#handleClose" styleClass="detail-btn-close"/>
+                onAction="#handleClose" styleClass="detail-btn-close"
+                contentDisplay="LEFT" graphicTextGap="6">
+            <graphic>
+                <FontIcon iconLiteral="fas-times" styleClass="detail-btn-close-icon"/>
+            </graphic>
+        </Button>
     </HBox>
 
     <ScrollPane VBox.vgrow="ALWAYS" fitToWidth="true"
@@ -36,18 +48,27 @@
 
             <!-- Descripción -->
             <VBox spacing="6" styleClass="detail-section">
-                <Label text="%common.description" styleClass="detail-section-label"/>
+                <HBox alignment="CENTER_LEFT" spacing="6">
+                    <FontIcon iconLiteral="fas-align-left" styleClass="detail-section-icon"/>
+                    <Label text="%common.description" styleClass="detail-section-label"/>
+                </HBox>
                 <Label fx:id="descriptionLabel" styleClass="detail-description" wrapText="true"/>
             </VBox>
 
             <!-- Subtareas -->
             <VBox fx:id="subtasksSection" spacing="0" styleClass="detail-section">
                 <HBox alignment="CENTER_LEFT" spacing="10" style="-fx-padding: 0 0 10 0;">
+                    <FontIcon iconLiteral="fas-stream" styleClass="detail-section-icon"/>
                     <Label text="%task.detail.subtasks" styleClass="detail-section-title"/>
                     <Label fx:id="subtaskProgressLabel" styleClass="detail-section-count"/>
                     <Region HBox.hgrow="ALWAYS"/>
                     <Button text="%task.detail.subtasks.new"
-                            onAction="#handleNewSubtask" styleClass="btn-small-primary"/>
+                            onAction="#handleNewSubtask" styleClass="btn-small-primary"
+                            contentDisplay="LEFT" graphicTextGap="6">
+                        <graphic>
+                            <FontIcon iconLiteral="fas-plus" styleClass="btn-small-primary-icon"/>
+                        </graphic>
+                    </Button>
                 </HBox>
                 <StackPane fx:id="progressBarBg" styleClass="detail-progress-bg"
                            minHeight="6" maxHeight="6" managed="false" visible="false">
@@ -63,11 +84,17 @@
             <!-- Registro de tiempo -->
             <VBox spacing="0" styleClass="detail-section">
                 <HBox alignment="CENTER_LEFT" spacing="10" style="-fx-padding: 0 0 10 0;">
+                    <FontIcon iconLiteral="fas-clock" styleClass="detail-section-icon"/>
                     <Label text="%task.detail.worklog" styleClass="detail-section-title"/>
                     <Label fx:id="totalHoursLabel" styleClass="detail-section-count"/>
                     <Region HBox.hgrow="ALWAYS"/>
                     <Button text="%task.detail.worklog.add"
-                            onAction="#handleAddWorkLog" styleClass="btn-small-primary"/>
+                            onAction="#handleAddWorkLog" styleClass="btn-small-primary"
+                            contentDisplay="LEFT" graphicTextGap="6">
+                        <graphic>
+                            <FontIcon iconLiteral="fas-plus" styleClass="btn-small-primary-icon"/>
+                        </graphic>
+                    </Button>
                 </HBox>
                 <VBox fx:id="workLogContainer" spacing="0"/>
                 <Label fx:id="emptyWorkLogLabel"

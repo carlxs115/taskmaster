@@ -2,6 +2,8 @@
 <?import javafx.geometry.Insets?>
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
+<?import org.kordamp.ikonli.javafx.FontIcon?>
+
 <VBox xmlns:fx="http://javafx.com/fxml"
       fx:id="settingsRoot"
       fx:controller="com.taskmaster.taskmasterfrontend.controller.SettingsController"
@@ -9,7 +11,8 @@
       styleClass="profile-root">
 
     <!-- Cabecera -->
-    <HBox styleClass="profile-header" alignment="CENTER_LEFT">
+    <HBox styleClass="profile-header" alignment="CENTER_LEFT" spacing="10">
+        <FontIcon iconLiteral="fas-cog" styleClass="settings-header-icon"/>
         <Label text="%settings.title" styleClass="profile-header-title"/>
     </HBox>
 
@@ -18,9 +21,15 @@
         <VBox spacing="24" style="-fx-padding: 24;">
 
             <!-- APARIENCIA -->
-            <Label text="%settings.section.appearance" styleClass="sidebar-section-label"/>
+            <HBox alignment="CENTER_LEFT" spacing="8">
+                <FontIcon iconLiteral="fas-palette" styleClass="settings-section-icon"/>
+                <Label text="%settings.section.appearance" styleClass="settings-section-label"/>
+            </HBox>
             <VBox spacing="14" styleClass="card">
-                <Label text="%settings.theme.title" styleClass="profile-section-title"/>
+                <HBox alignment="CENTER_LEFT" spacing="8">
+                    <FontIcon iconLiteral="fas-paint-brush" styleClass="settings-card-icon"/>
+                    <Label text="%settings.theme.title" styleClass="profile-section-title"/>
+                </HBox>
                 <Label text="%settings.theme.description" styleClass="stat-card-label"/>
                 <FlowPane fx:id="themesContainer" hgap="10" vgap="10"
                           style="-fx-padding: 4 0 4 0;"/>
@@ -28,9 +37,15 @@
             </VBox>
 
             <!-- FECHA Y HORA -->
-            <Label text="%settings.section.datetime" styleClass="sidebar-section-label"/>
+            <HBox alignment="CENTER_LEFT" spacing="8">
+                <FontIcon iconLiteral="fas-clock" styleClass="settings-section-icon"/>
+                <Label text="%settings.section.datetime" styleClass="settings-section-label"/>
+            </HBox>
             <VBox spacing="12" styleClass="card">
-                <Label text="%settings.dateformat.title" styleClass="profile-section-title"/>
+                <HBox alignment="CENTER_LEFT" spacing="8">
+                    <FontIcon iconLiteral="fas-calendar-alt" styleClass="settings-card-icon"/>
+                    <Label text="%settings.dateformat.title" styleClass="profile-section-title"/>
+                </HBox>
                 <Label text="%settings.dateformat.description" styleClass="stat-card-label"/>
                 <ComboBox fx:id="dateFormatCombo" styleClass="dialog-combo"
                           style="-fx-pref-width: 220px;"/>
@@ -38,9 +53,11 @@
                         styleClass="btn-confirm-accent"/>
                 <Label fx:id="dateFormatStatusLabel" styleClass="profile-rate-value" visible="false"/>
             </VBox>
-
             <VBox spacing="12" styleClass="card">
-                <Label text="%settings.timeformat.title" styleClass="profile-section-title"/>
+                <HBox alignment="CENTER_LEFT" spacing="8">
+                    <FontIcon iconLiteral="fas-clock" styleClass="settings-card-icon"/>
+                    <Label text="%settings.timeformat.title" styleClass="profile-section-title"/>
+                </HBox>
                 <Label text="%settings.timeformat.description" styleClass="stat-card-label"/>
                 <HBox spacing="12" alignment="CENTER_LEFT">
                     <RadioButton fx:id="timeSystem" text="%settings.timeformat.system">
@@ -57,9 +74,15 @@
             </VBox>
 
             <!-- IDIOMA -->
-            <Label text="%settings.section.language" styleClass="sidebar-section-label"/>
+            <HBox alignment="CENTER_LEFT" spacing="8">
+                <FontIcon iconLiteral="fas-globe" styleClass="settings-section-icon"/>
+                <Label text="%settings.section.language" styleClass="settings-section-label"/>
+            </HBox>
             <VBox spacing="12" styleClass="card">
-                <Label text="%settings.language.title" styleClass="profile-section-title"/>
+                <HBox alignment="CENTER_LEFT" spacing="8">
+                    <FontIcon iconLiteral="fas-language" styleClass="settings-card-icon"/>
+                    <Label text="%settings.language.title" styleClass="profile-section-title"/>
+                </HBox>
                 <Label text="%settings.language.description" styleClass="stat-card-label"/>
                 <HBox spacing="12" alignment="CENTER_LEFT">
                     <RadioButton fx:id="langEs" text="ES  Español">
@@ -74,9 +97,15 @@
             </VBox>
 
             <!-- PAPELERA -->
-            <Label text="%settings.section.trash" styleClass="sidebar-section-label"/>
+            <HBox alignment="CENTER_LEFT" spacing="8">
+                <FontIcon iconLiteral="fas-trash" styleClass="settings-section-icon"/>
+                <Label text="%settings.section.trash" styleClass="settings-section-label"/>
+            </HBox>
             <VBox spacing="12" styleClass="card">
-                <Label text="%settings.trash.title" styleClass="profile-section-title"/>
+                <HBox alignment="CENTER_LEFT" spacing="8">
+                    <FontIcon iconLiteral="fas-clock" styleClass="settings-card-icon"/>
+                    <Label text="%settings.trash.title" styleClass="profile-section-title"/>
+                </HBox>
                 <Label text="%settings.trash.description" styleClass="stat-card-label"/>
                 <HBox spacing="12" alignment="CENTER_LEFT">
                     <RadioButton fx:id="days7" text="%settings.trash.7days">
@@ -91,7 +120,6 @@
                         styleClass="btn-confirm-accent"/>
                 <Label fx:id="retentionStatusLabel" styleClass="profile-rate-value" visible="false"/>
             </VBox>
-
         </VBox>
     </ScrollPane>
 </VBox>

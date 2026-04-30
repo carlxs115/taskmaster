@@ -24,6 +24,7 @@ import javafx.scene.layout.VBox;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
 import javafx.stage.FileChooser;
+import org.kordamp.ikonli.javafx.FontIcon;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -97,12 +98,15 @@ public class ProfileController {
         avatarView.loadForCurrentUser();
 
         // Icono de cámara sobre el avatar (esquina inferior derecha)
-        Label cameraIcon = new Label("📷");
-        cameraIcon.getStyleClass().add("btn-camera-icon");
-        StackPane.setAlignment(cameraIcon, Pos.BOTTOM_RIGHT);
-        cameraIcon.setOnMouseClicked(e -> showAvatarMenu(cameraIcon));
+        StackPane cameraButton = new StackPane();
+        cameraButton.getStyleClass().add("btn-camera-icon");
+        FontIcon cameraIcon = new FontIcon("fas-camera");
+        cameraIcon.getStyleClass().add("btn-camera-icon-glyph");
+        cameraButton.getChildren().add(cameraIcon);
+        StackPane.setAlignment(cameraButton, Pos.BOTTOM_RIGHT);
+        cameraButton.setOnMouseClicked(e -> showAvatarMenu(cameraButton));
 
-        avatarContainer.getChildren().setAll(avatarView, cameraIcon);
+        avatarContainer.getChildren().setAll(avatarView, cameraButton);
         avatarContainer.setCursor(Cursor.DEFAULT);
     }
 
@@ -114,18 +118,16 @@ public class ProfileController {
      */
     private void showAvatarMenu(javafx.scene.Node anchor) {
         javafx.scene.control.ContextMenu menu = new javafx.scene.control.ContextMenu();
-        menu.setStyle("-fx-background-color: white; -fx-border-color: #e8e8e8; " +
-                "-fx-border-width: 1; -fx-background-radius: 8; -fx-border-radius: 8;");
 
         javafx.scene.control.MenuItem change = new javafx.scene.control.MenuItem(lm.get("profile.avatar.change"));
-        change.setStyle("-fx-font-size: 13px; -fx-padding: 6 16 6 16;");
+        change.setGraphic(new FontIcon("fas-camera"));
         change.setOnAction(e -> handleChangePhoto());
         menu.getItems().add(change);
 
-        // "Eliminar foto" solo si el usuario tiene foto actualmente
         if (AppContext.getInstance().hasAvatar()) {
             javafx.scene.control.MenuItem remove = new javafx.scene.control.MenuItem(lm.get("profile.avatar.remove"));
-            remove.setStyle("-fx-font-size: 13px; -fx-padding: 6 16 6 16; -fx-text-fill: #e74c3c;");
+            remove.setGraphic(new FontIcon("fas-trash"));
+            remove.getStyleClass().add("menu-item-danger");
             remove.setOnAction(e -> handleRemovePhoto());
             menu.getItems().add(remove);
         }
@@ -460,8 +462,8 @@ public class ProfileController {
                 String newValue   = entry.has("newValue") && !entry.get("newValue").isNull()
                         ? entry.get("newValue").asText() : null;
 
-                String icon  = getActivityIcon(actionType);
-                String color = getActivityColor(actionType);
+                String iconLiteral = getActivityIcon(actionType);
+                String color       = getActivityColor(actionType);
                 String desc  = getActivityDescription(actionType, entityName, oldValue, newValue);
 
                 LocalDateTime dt = LocalDateTime.parse(entry.get("createdAt").asText());
@@ -474,8 +476,12 @@ public class ProfileController {
                         (!isLast ? "-fx-border-color: transparent transparent #f5f5f5 transparent;" +
                                 "-fx-border-width: 0 0 1 0;" : ""));
 
-                Label iconLabel = new Label(icon);
-                iconLabel.setStyle("-fx-font-size: 13px; -fx-min-width: 20px; -fx-text-fill: " + color + ";");
+                FontIcon iconNode = new FontIcon(iconLiteral);
+                iconNode.setIconSize(13);
+                iconNode.setIconColor(javafx.scene.paint.Color.web(color));
+                StackPane iconWrap = new StackPane(iconNode);
+                iconWrap.setMinWidth(20);
+                iconWrap.setAlignment(Pos.CENTER);
 
                 Label descLabel = new Label(desc);
                 descLabel.getStyleClass().add("profile-field-value");
@@ -485,7 +491,7 @@ public class ProfileController {
                 Label timeLabel = new Label(timeStr);
                 timeLabel.setStyle("-fx-font-size: 11px; -fx-text-fill: #aaaaaa;");
 
-                row.getChildren().addAll(iconLabel, descLabel, timeLabel);
+                row.getChildren().addAll(iconWrap, descLabel, timeLabel);
                 activityLogContainer.getChildren().add(row);
             }
         }
@@ -578,28 +584,28 @@ public class ProfileController {
     }
 
     /**
-     * Devuelve el icono emoji correspondiente al tipo de acción del historial.
+     * Devuelve el icono correspondiente al tipo de acción del historial.
      *
      * @param actionType Código del tipo de acción (p.ej. {@code "TASK_CREATED"}).
-     * @return Emoji representativo de la acción.
+     * @return Icono representativo de la acción.
      */
     private String getActivityIcon(String actionType) {
         return switch (actionType) {
-            case "TASK_CREATED", "SUBTASK_CREATED"      -> "✅";
-            case "TASK_EDITED", "SUBTASK_EDITED"        -> "✏️";
-            case "TASK_DELETED", "SUBTASK_DELETED"      -> "🗑";
-            case "TASK_PERMANENTLY_DELETED"             -> "❌";
-            case "TASK_RESTORED"                        -> "↩️";
-            case "TASK_STATUS_CHANGED"                  -> "🔄";
-            case "PROJECT_CREATED"                      -> "📁";
-            case "PROJECT_EDITED"                       -> "✏️";
-            case "PROJECT_DELETED"                      -> "🗑";
-            case "PROJECT_PERMANENTLY_DELETED"          -> "❌";
-            case "PROJECT_RESTORED"                     -> "↩️";
-            case "PROJECT_STATUS_CHANGED"               -> "🔄";
-            case "PROFILE_UPDATED"                      -> "👤";
-            case "PASSWORD_CHANGED"                     -> "🔒";
-            default                                     -> "•";
+            case "TASK_CREATED", "SUBTASK_CREATED"      -> "fas-plus-circle";
+            case "TASK_EDITED", "SUBTASK_EDITED"        -> "fas-pen";
+            case "TASK_DELETED", "SUBTASK_DELETED"      -> "fas-trash";
+            case "TASK_PERMANENTLY_DELETED"             -> "fas-times-circle";
+            case "TASK_RESTORED"                        -> "fas-undo";
+            case "TASK_STATUS_CHANGED"                  -> "fas-sync-alt";
+            case "PROJECT_CREATED"                      -> "fas-folder-plus";
+            case "PROJECT_EDITED"                       -> "fas-pen";
+            case "PROJECT_DELETED"                      -> "fas-trash";
+            case "PROJECT_PERMANENTLY_DELETED"          -> "fas-times-circle";
+            case "PROJECT_RESTORED"                     -> "fas-undo";
+            case "PROJECT_STATUS_CHANGED"               -> "fas-sync-alt";
+            case "PROFILE_UPDATED"                      -> "fas-user-edit";
+            case "PASSWORD_CHANGED"                     -> "fas-key";
+            default                                     -> "fas-circle";
         };
     }
 

@@ -16,6 +16,7 @@ import javafx.scene.layout.Priority;
 import javafx.scene.layout.Region;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
+import org.kordamp.ikonli.javafx.FontIcon;
 
 import java.net.URLEncoder;
 import java.net.http.HttpResponse;
@@ -92,7 +93,7 @@ public class SecurityController {
             String actionType = entry.get("actionType").asText();
             String createdAt  = entry.get("createdAt").asText();
             boolean isLogin = "LOGIN".equals(actionType);
-            String icon  = isLogin ? "→" : "←";
+            String iconLiteral = isLogin ? "fas-sign-in-alt" : "fas-sign-out-alt";
             String label = isLogin ? lm.get("security.access.login") : lm.get("security.access.logout");
             String color = isLogin ? "#22c55e" : "#9999bb";
 
@@ -104,8 +105,9 @@ public class SecurityController {
             row.setAlignment(Pos.CENTER_LEFT);
             row.getStyleClass().add("security-access-row");
 
-            Label iconLabel = new Label(icon);
-            iconLabel.setStyle("-fx-font-size: 14px; -fx-font-weight: bold; -fx-text-fill: " + color + ";");
+            FontIcon iconNode = new FontIcon(iconLiteral);
+            iconNode.setIconSize(14);
+            iconNode.setIconColor(javafx.scene.paint.Color.web(color));
 
             Label actionLabel = new Label(label);
             actionLabel.getStyleClass().add("profile-field-value");
@@ -116,7 +118,7 @@ public class SecurityController {
             Label dateLabel = new Label(dateStr);
             dateLabel.getStyleClass().add("profile-field-label");
 
-            row.getChildren().addAll(iconLabel, actionLabel, spacer, dateLabel);
+            row.getChildren().addAll(iconNode, actionLabel, spacer, dateLabel);
             accessLogContainer.getChildren().add(row);
         }
     }

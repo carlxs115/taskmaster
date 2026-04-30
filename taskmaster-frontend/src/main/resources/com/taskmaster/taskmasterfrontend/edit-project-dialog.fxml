@@ -1,11 +1,15 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
+<?import org.kordamp.ikonli.javafx.FontIcon?>
 <VBox xmlns:fx="http://javafx.com/fxml"
       fx:controller="com.taskmaster.taskmasterfrontend.controller.EditProjectController"
       spacing="16" styleClass="dialog-root">
 
-    <Label text="%edit.project.title" styleClass="dialog-title"/>
+    <HBox alignment="CENTER_LEFT" spacing="10">
+        <FontIcon iconLiteral="fas-pen" styleClass="dialog-title-icon"/>
+        <Label text="%edit.project.title" styleClass="dialog-title"/>
+    </HBox>
 
     <VBox spacing="6">
         <Label text="%new.project.name" styleClass="dialog-field-label"/>
@@ -34,7 +38,17 @@
     <Label fx:id="errorLabel" styleClass="dialog-error" visible="false"/>
 
     <HBox spacing="10" alignment="CENTER_RIGHT">
-        <Button text="%common.cancel" onAction="#handleCancel" styleClass="btn-cancel-soft"/>
-        <Button text="%settings.save" onAction="#handleSave" styleClass="btn-confirm-accent"/>
+        <Button text="%common.cancel" onAction="#handleCancel" styleClass="btn-cancel-soft"
+                contentDisplay="LEFT" graphicTextGap="6">
+            <graphic>
+                <FontIcon iconLiteral="fas-times" styleClass="btn-cancel-soft-icon"/>
+            </graphic>
+        </Button>
+        <Button text="%settings.save" onAction="#handleSave" styleClass="btn-confirm-accent"
+                contentDisplay="LEFT" graphicTextGap="6">
+            <graphic>
+                <FontIcon iconLiteral="fas-check" styleClass="btn-confirm-accent-icon"/>
+            </graphic>
+        </Button>
     </HBox>
 </VBox>

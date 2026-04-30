@@ -19,6 +19,7 @@
                   styleClass="app-topbar-user-pill">
                 <StackPane fx:id="sidebarAvatarContainer"/>
                 <Label fx:id="userMenuButton" styleClass="app-topbar-username"/>
+                <FontIcon iconLiteral="fas-chevron-down" styleClass="topbar-user-chevron"/>
             </HBox>
         </HBox>
     </top>

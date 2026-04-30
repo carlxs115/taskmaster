@@ -90,10 +90,56 @@ public class ActivityLogSectionController {
     @FXML
     public void initialize() {
         activityTable.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
+
+        // Columnas de fecha y detalle: solo texto
         colDate.setCellValueFactory(c -> new SimpleStringProperty(c.getValue().date()));
-        colAction.setCellValueFactory(c -> new SimpleStringProperty(c.getValue().action()));
-        colEntity.setCellValueFactory(c -> new SimpleStringProperty(c.getValue().entity()));
         colDetail.setCellValueFactory(c -> new SimpleStringProperty(c.getValue().detail()));
+
+        // Columna Acción: texto con icono
+        colAction.setCellValueFactory(c -> new SimpleStringProperty(c.getValue().action()));
+        colAction.setCellFactory(col -> new javafx.scene.control.TableCell<>() {
+            @Override
+            protected void updateItem(String item, boolean empty) {
+                super.updateItem(item, empty);
+                if (empty || item == null) {
+                    setText(null);
+                    setGraphic(null);
+                    return;
+                }
+                ActivityRow row = getTableView().getItems().get(getIndex());
+                org.kordamp.ikonli.javafx.FontIcon icon =
+                        new org.kordamp.ikonli.javafx.FontIcon(getActionIcon(row.actionType()));
+                icon.setIconSize(12);
+                icon.setIconColor(javafx.scene.paint.Color.web(getActionColor(row.actionType())));
+                setGraphic(icon);
+                setText(item);
+                setContentDisplay(javafx.scene.control.ContentDisplay.LEFT);
+                setGraphicTextGap(8);
+            }
+        });
+
+        // Columna Entidad: texto con icono
+        colEntity.setCellValueFactory(c -> new SimpleStringProperty(c.getValue().entity()));
+        colEntity.setCellFactory(col -> new javafx.scene.control.TableCell<>() {
+            @Override
+            protected void updateItem(String item, boolean empty) {
+                super.updateItem(item, empty);
+                if (empty || item == null) {
+                    setText(null);
+                    setGraphic(null);
+                    return;
+                }
+                ActivityRow row = getTableView().getItems().get(getIndex());
+                org.kordamp.ikonli.javafx.FontIcon icon =
+                        new org.kordamp.ikonli.javafx.FontIcon(getEntityIcon(row.entityType()));
+                icon.setIconSize(11);
+                icon.setIconColor(javafx.scene.paint.Color.web("#888888"));
+                setGraphic(icon);
+                setText(item);
+                setContentDisplay(javafx.scene.control.ContentDisplay.LEFT);
+                setGraphicTextGap(6);
+            }
+        });
     }
 
     /**
@@ -214,7 +260,7 @@ public class ActivityLogSectionController {
                         + getEntityLabel(entType);
                 String detail      = buildDetail(actionType, oldVal, newVal, entityName);
 
-                rows.add(new ActivityRow(dateStr, actionLabel, entityLabel, detail, rawDate));
+                rows.add(new ActivityRow(dateStr, actionLabel, entityLabel, detail, rawDate, actionType, entType));
             }
         }
         return rows;
@@ -309,13 +355,75 @@ public class ActivityLogSectionController {
     }
 
     /**
+     * Devuelve el identificador Ikonli del icono asociado al tipo de acción.
+     *
+     * @param actionType Código del tipo de acción.
+     * @return Identificador del icono FontAwesome.
+     */
+    private String getActionIcon(String actionType) {
+        return switch (actionType) {
+            case "TASK_CREATED", "SUBTASK_CREATED"        -> "fas-plus-circle";
+            case "TASK_EDITED", "SUBTASK_EDITED"          -> "fas-pen";
+            case "TASK_DELETED", "SUBTASK_DELETED"        -> "fas-trash";
+            case "TASK_PERMANENTLY_DELETED"               -> "fas-times-circle";
+            case "TASK_RESTORED"                          -> "fas-undo";
+            case "TASK_STATUS_CHANGED"                    -> "fas-sync-alt";
+            case "PROJECT_CREATED"                        -> "fas-folder-plus";
+            case "PROJECT_EDITED"                         -> "fas-pen";
+            case "PROJECT_DELETED"                        -> "fas-trash";
+            case "PROJECT_PERMANENTLY_DELETED"            -> "fas-times-circle";
+            case "PROJECT_RESTORED"                       -> "fas-undo";
+            case "PROJECT_STATUS_CHANGED"                 -> "fas-sync-alt";
+            case "PROFILE_UPDATED"                        -> "fas-user-edit";
+            case "PASSWORD_CHANGED"                       -> "fas-key";
+            default                                       -> "fas-circle";
+        };
+    }
+
+    /**
+     * Devuelve el color hex asociado al tipo de acción.
+     *
+     * @param actionType Código del tipo de acción.
+     * @return Color en formato hex.
+     */
+    private String getActionColor(String actionType) {
+        return switch (actionType) {
+            case "TASK_CREATED", "SUBTASK_CREATED", "PROJECT_CREATED"     -> "#22c55e";
+            case "TASK_DELETED", "SUBTASK_DELETED", "PROJECT_DELETED"     -> "#f59e0b";
+            case "TASK_PERMANENTLY_DELETED", "PROJECT_PERMANENTLY_DELETED" -> "#e74c3c";
+            case "TASK_RESTORED", "PROJECT_RESTORED"                       -> "#3b82f6";
+            case "TASK_STATUS_CHANGED", "PROJECT_STATUS_CHANGED"           -> "#7c3aed";
+            default                                                         -> "#888888";
+        };
+    }
+
+    /**
+     * Devuelve el identificador Ikonli del icono asociado al tipo de entidad.
+     *
+     * @param entityType Tipo de entidad.
+     * @return Identificador del icono FontAwesome.
+     */
+    private String getEntityIcon(String entityType) {
+        return switch (entityType) {
+            case "TASK"    -> "fas-tasks";
+            case "SUBTASK" -> "fas-stream";
+            case "PROJECT" -> "fas-folder";
+            case "PROFILE" -> "fas-user";
+            default        -> "fas-circle";
+        };
+    }
+
+    /**
      * Registro que representa una fila de la tabla de historial de actividad.
      *
-     * @param date    Fecha formateada para mostrar.
-     * @param action  Etiqueta localizada de la acción realizada.
-     * @param entity  Tipo e identificador de la entidad afectada.
-     * @param detail  Descripción del cambio realizado.
-     * @param rawDate Fecha en formato ISO, usada para ordenación.
+     * @param date       Fecha formateada para mostrar.
+     * @param action     Etiqueta localizada de la acción realizada.
+     * @param entity     Tipo e identificador de la entidad afectada.
+     * @param detail     Descripción del cambio realizado.
+     * @param rawDate    Fecha en formato ISO, usada para ordenación.
+     * @param actionType Código original de la acción, usado para mapear iconos.
+     * @param entityType Código original del tipo de entidad, usado para mapear iconos.
      */
-    public record ActivityRow(String date, String action, String entity, String detail, String rawDate) {}
+    public record ActivityRow(String date, String action, String entity, String detail,
+                              String rawDate, String actionType, String entityType) {}
 }
