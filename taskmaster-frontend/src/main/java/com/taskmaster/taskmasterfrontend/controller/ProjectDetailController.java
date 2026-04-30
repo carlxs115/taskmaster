@@ -14,6 +14,7 @@ import javafx.scene.control.*;
 import javafx.scene.layout.*;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
+import org.kordamp.ikonli.javafx.FontIcon;
 
 import java.io.IOException;
 import java.net.http.HttpResponse;
@@ -308,28 +309,23 @@ public class ProjectDetailController {
 
         row.getChildren().add(priBadge);
 
-        Button menuBtn = new Button("•••");
-        menuBtn.setStyle("-fx-background-color: transparent; -fx-text-fill: #666688; " +
-                "-fx-font-size: 16px; -fx-font-weight: bold; -fx-cursor: hand; " +
-                "-fx-padding: 2 8 2 8; -fx-background-radius: 6px;");
-        menuBtn.setOnMouseEntered(e -> menuBtn.setStyle(
-                "-fx-background-color: #f0f0f5; -fx-text-fill: #1e1e2e; " +
-                        "-fx-font-size: 16px; -fx-font-weight: bold; -fx-cursor: hand; " +
-                        "-fx-padding: 2 8 2 8; -fx-background-radius: 6px;"));
-        menuBtn.setOnMouseExited(e -> menuBtn.setStyle(
-                "-fx-background-color: transparent; -fx-text-fill: #666688; " +
-                        "-fx-font-size: 16px; -fx-font-weight: bold; -fx-cursor: hand; " +
-                        "-fx-padding: 2 8 2 8; -fx-background-radius: 6px;"));
+        Button menuBtn = new Button();
+        menuBtn.getStyleClass().add("task-menu-btn");
+        FontIcon menuIcon = new FontIcon("fas-ellipsis-h");
+        menuIcon.getStyleClass().add("task-menu-btn-icon");
+        menuBtn.setGraphic(menuIcon);
         menuBtn.setOnAction(e -> {
             ContextMenu menu = new ContextMenu();
-            menu.setStyle("-fx-background-color: white; -fx-border-color: #e8e8e8; " +
-                    "-fx-border-width: 1; -fx-background-radius: 8; -fx-border-radius: 8;");
+
             MenuItem edit = new MenuItem(lm.get("common.menu.edit"));
-            edit.setStyle("-fx-font-size: 13px; -fx-padding: 2 10 2 10;");
+            edit.setGraphic(new FontIcon("fas-pen"));
             edit.setOnAction(ev -> openEditTask(task, taskId));
+
             MenuItem delete = new MenuItem(lm.get("common.menu.delete"));
-            delete.setStyle("-fx-font-size: 13px; -fx-padding: 2 10 2 10; -fx-text-fill: #e74c3c;");
+            delete.setGraphic(new FontIcon("fas-trash"));
+            delete.getStyleClass().add("menu-item-danger");
             delete.setOnAction(ev -> deleteTask(taskId));
+
             menu.getItems().addAll(edit, delete);
             menu.show(menuBtn, javafx.geometry.Side.BOTTOM, 0, 0);
         });
