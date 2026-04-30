@@ -3,10 +3,7 @@ package com.taskmaster.taskmasterfrontend.controller;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
-import com.taskmaster.taskmasterfrontend.util.AppContext;
-import com.taskmaster.taskmasterfrontend.util.AvatarView;
-import com.taskmaster.taskmasterfrontend.util.LanguageManager;
-import com.taskmaster.taskmasterfrontend.util.ThemeManager;
+import com.taskmaster.taskmasterfrontend.util.*;
 import javafx.application.Platform;
 import javafx.collections.FXCollections;
 import javafx.fxml.FXML;
@@ -930,27 +927,12 @@ public class MainController {
             }).start();
         });
 
-        Button menuBtn = new Button();
-        menuBtn.getStyleClass().add("task-menu-btn");
-        FontIcon menuIcon = new FontIcon("fas-ellipsis-h");
-        menuIcon.getStyleClass().add("task-menu-btn-icon");
-        menuBtn.setGraphic(menuIcon);
-
-        menuBtn.setOnAction(e -> {
-            ContextMenu menu = new ContextMenu();
-
-            MenuItem edit = new MenuItem(lm.get("common.menu.edit"));
-            edit.setGraphic(new FontIcon("fas-pen"));
-            edit.setOnAction(ev -> handleEditTask(taskId, task));
-
-            MenuItem delete = new MenuItem(lm.get("common.menu.delete"));
-            delete.setGraphic(new FontIcon("fas-trash"));
-            delete.getStyleClass().add("menu-item-danger");
-            delete.setOnAction(ev -> handleDeleteTask(taskId));
-
-            menu.getItems().addAll(edit, delete);
-            menu.show(menuBtn, javafx.geometry.Side.BOTTOM, 0, 0);
-        });
+        Button menuBtn = MenuButtonFactory.createEditDeleteMenu(
+                lm.get("common.menu.edit"),
+                lm.get("common.menu.delete"),
+                () -> handleEditTask(taskId, task),
+                () -> handleDeleteTask(taskId)
+        );
 
         boolean isOverdue = false;
         if (task.has("dueDate") && !task.get("dueDate").isNull()

@@ -6,6 +6,7 @@ import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.taskmaster.taskmasterfrontend.util.AppContext;
 import com.taskmaster.taskmasterfrontend.util.DateFormatManager;
 import com.taskmaster.taskmasterfrontend.util.LanguageManager;
+import com.taskmaster.taskmasterfrontend.util.MenuButtonFactory;
 import javafx.application.Platform;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
@@ -292,26 +293,12 @@ public class TaskDetailController {
                 "-fx-background-radius: 10px; -fx-text-fill: white; " +
                 "-fx-background-color: " + getPriorityColor(priority) + ";");
 
-        Button menuBtn = new Button();
-        menuBtn.getStyleClass().add("task-menu-btn");
-        FontIcon menuIcon = new FontIcon("fas-ellipsis-h");
-        menuIcon.getStyleClass().add("task-menu-btn-icon");
-        menuBtn.setGraphic(menuIcon);
-        menuBtn.setOnAction(e -> {
-            ContextMenu menu = new ContextMenu();
-
-            MenuItem edit = new MenuItem(lm.get("common.menu.edit"));
-            edit.setGraphic(new FontIcon("fas-pen"));
-            edit.setOnAction(ev -> openEditSubtask(stId, parentTaskId));
-
-            MenuItem delete = new MenuItem(lm.get("common.menu.delete"));
-            delete.setGraphic(new FontIcon("fas-trash"));
-            delete.getStyleClass().add("menu-item-danger");
-            delete.setOnAction(ev -> deleteSubtask(stId, parentTaskId));
-
-            menu.getItems().addAll(edit, delete);
-            menu.show(menuBtn, javafx.geometry.Side.BOTTOM, 0, 0);
-        });
+        Button menuBtn = MenuButtonFactory.createEditDeleteMenu(
+                lm.get("common.menu.edit"),
+                lm.get("common.menu.delete"),
+                () -> openEditSubtask(stId, parentTaskId),
+                () -> deleteSubtask(stId, parentTaskId)
+        );
 
         final boolean[] updating = {false};
         check.selectedProperty().addListener((obs, was, is) -> {
@@ -526,37 +513,13 @@ public class TaskDetailController {
             noteLbl.getStyleClass().add("profile-field-value");
             noteLbl.setWrapText(true);
 
-            Button menuBtn = new Button();
-            menuBtn.getStyleClass().add("task-menu-btn");
-            FontIcon menuIcon = new FontIcon("fas-ellipsis-h");
-            menuIcon.getStyleClass().add("task-menu-btn-icon");
-            menuBtn.setGraphic(menuIcon);
-
-            menuBtn.setOnMouseEntered(e -> menuBtn.setStyle(
-                    "-fx-background-color: #f0f0f5; -fx-text-fill: #1e1e2e; " +
-                            "-fx-font-size: 14px; -fx-font-weight: bold; -fx-cursor: hand; " +
-                            "-fx-padding: 2 8 2 8; -fx-background-radius: 6px;"));
-            menuBtn.setOnMouseExited(e -> menuBtn.setStyle(
-                    "-fx-background-color: transparent; -fx-text-fill: #666688; " +
-                            "-fx-font-size: 14px; -fx-font-weight: bold; -fx-cursor: hand; " +
-                            "-fx-padding: 2 8 2 8; -fx-background-radius: 6px;"));
-
             Long taskId = taskData.get("id").asLong();
-            menuBtn.setOnAction(e -> {
-                ContextMenu menu = new ContextMenu();
-
-                MenuItem editItem = new MenuItem(lm.get("common.menu.edit"));
-                editItem.setGraphic(new FontIcon("fas-pen"));
-                editItem.setOnAction(ev -> openEditWorkLog(logId, log, taskId));
-
-                MenuItem deleteItem = new MenuItem(lm.get("common.menu.delete"));
-                deleteItem.setGraphic(new FontIcon("fas-trash"));
-                deleteItem.getStyleClass().add("menu-item-danger");
-                deleteItem.setOnAction(ev -> deleteWorkLog(logId, taskId));
-
-                menu.getItems().addAll(editItem, deleteItem);
-                menu.show(menuBtn, javafx.geometry.Side.BOTTOM, 0, 0);
-            });
+            Button menuBtn = MenuButtonFactory.createEditDeleteMenu(
+                    lm.get("common.menu.edit"),
+                    lm.get("common.menu.delete"),
+                    () -> openEditWorkLog(logId, log, taskId),
+                    () -> deleteWorkLog(logId, taskId)
+            );
 
             Region spacer = new Region();
             HBox.setHgrow(spacer, javafx.scene.layout.Priority.ALWAYS);

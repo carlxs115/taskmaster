@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.taskmaster.taskmasterfrontend.util.AppContext;
 import com.taskmaster.taskmasterfrontend.util.LanguageManager;
+import com.taskmaster.taskmasterfrontend.util.MenuButtonFactory;
 import javafx.application.Platform;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
@@ -309,26 +310,12 @@ public class ProjectDetailController {
 
         row.getChildren().add(priBadge);
 
-        Button menuBtn = new Button();
-        menuBtn.getStyleClass().add("task-menu-btn");
-        FontIcon menuIcon = new FontIcon("fas-ellipsis-h");
-        menuIcon.getStyleClass().add("task-menu-btn-icon");
-        menuBtn.setGraphic(menuIcon);
-        menuBtn.setOnAction(e -> {
-            ContextMenu menu = new ContextMenu();
-
-            MenuItem edit = new MenuItem(lm.get("common.menu.edit"));
-            edit.setGraphic(new FontIcon("fas-pen"));
-            edit.setOnAction(ev -> openEditTask(task, taskId));
-
-            MenuItem delete = new MenuItem(lm.get("common.menu.delete"));
-            delete.setGraphic(new FontIcon("fas-trash"));
-            delete.getStyleClass().add("menu-item-danger");
-            delete.setOnAction(ev -> deleteTask(taskId));
-
-            menu.getItems().addAll(edit, delete);
-            menu.show(menuBtn, javafx.geometry.Side.BOTTOM, 0, 0);
-        });
+        Button menuBtn = MenuButtonFactory.createEditDeleteMenu(
+                lm.get("common.menu.edit"),
+                lm.get("common.menu.delete"),
+                () -> openEditTask(task, taskId),
+                () -> deleteTask(taskId)
+        );
 
         Region spacer = new Region();
         HBox.setHgrow(spacer, Priority.ALWAYS);
