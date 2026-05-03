@@ -195,6 +195,10 @@ public class AuthController {
 
             return ResponseEntity.noContent().build();
         } catch (RuntimeException e) {
+            e.printStackTrace();
+            if (e.getMessage().contains("contraseña")) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+            }
             return ResponseEntity.badRequest().body(e.getMessage());
         }
     }

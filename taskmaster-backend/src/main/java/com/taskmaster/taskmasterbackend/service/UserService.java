@@ -188,5 +188,7 @@ public class UserService {
         workLogRepository.deleteByTaskUserId(userId);
         activityLogRepository.deleteByUserId(userId);
         userRepository.delete(user);
+
+        System.out.println(">>> deleteAccount called for userId: " + userId);
     }
 }

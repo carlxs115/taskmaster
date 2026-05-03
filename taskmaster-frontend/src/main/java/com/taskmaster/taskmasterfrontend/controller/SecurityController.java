@@ -223,6 +223,7 @@ public class SecurityController {
 
             confirm.showAndWait().ifPresent(r -> {
                 if (r != ButtonType.OK) return;
+                Stage stage = (Stage) accessLogContainer.getScene().getWindow();
                 new Thread(() -> {
                     try {
                         String encodedPassword = URLEncoder.encode(password, StandardCharsets.UTF_8);
@@ -230,8 +231,8 @@ public class SecurityController {
                                 .getApiService().delete("/api/auth/account?password=" + encodedPassword);
                         Platform.runLater(() -> {
                             if (response.statusCode() == 200 || response.statusCode() == 204) {
+                                navigateToLogin(stage);
                                 AppContext.getInstance().logout();
-                                navigateToLogin();
                             } else {
                                 showInfo(lm.get("security.delete.error"));
                             }
@@ -248,14 +249,24 @@ public class SecurityController {
      * Carga la vista de login y reemplaza la escena actual con ella
      * tras la eliminación exitosa de la cuenta.
      */
-    private void navigateToLogin() {
+    private void navigateToLogin(Stage stage) {
         try {
             FXMLLoader loader = new FXMLLoader(
                     getClass().getResource("/com/taskmaster/taskmasterfrontend/login-view.fxml"),
                     LanguageManager.getInstance().getBundle()
             );
-            Stage stage = (Stage) accessLogContainer.getScene().getWindow();
-            stage.setScene(new Scene(loader.load(), 400, 500));
+            Scene scene = new Scene(loader.load(), 400, 500);
+            String baseUrl = getClass().getResource(
+                    "/com/taskmaster/taskmasterfrontend/themes/theme-amatista.css").toExternalForm();
+            scene.getStylesheets().add(baseUrl);
+            stage.setScene(scene);
+            stage.setWidth(400);
+            stage.setHeight(520);
+            stage.setMinWidth(400);
+            stage.setMinHeight(520);
+            stage.setResizable(false);
+            stage.centerOnScreen();
+            stage.setScene(scene);
             stage.setTitle("TaskMaster");
         } catch (Exception e) {
             e.printStackTrace();
