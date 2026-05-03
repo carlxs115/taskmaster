@@ -38,6 +38,7 @@ public class TrashController {
     @FXML private Label retentionLabel;
 
     private Runnable onTrashChanged;
+    private int retentionDays = 30;
 
     private final ObjectMapper objectMapper = new ObjectMapper()
             .registerModule(new JavaTimeModule());
@@ -79,8 +80,10 @@ public class TrashController {
                 if (response.statusCode() == 200) {
                     JsonNode settings = objectMapper.readTree(response.body());
                     int days = settings.get("trashRetentionDays").asInt();
-                    Platform.runLater(() ->
-                            retentionLabel.setText(java.text.MessageFormat.format(lm.get("trash.retention"), days)));
+                    Platform.runLater(() -> {
+                        retentionDays = days;
+                        retentionLabel.setText(java.text.MessageFormat.format(lm.get("trash.retention"), days));
+                    });
                 }
             } catch (Exception e) {
 
@@ -190,12 +193,17 @@ public class TrashController {
         Long taskId = task.get("id").asLong();
         String title = task.get("title").asText();
         String priority = task.get("priority").asText();
+        String category = task.has("category") && !task.get("category").isNull()
+                ? task.get("category").asText() : "PERSONAL";
 
         Label titleLabel = new Label(title);
         titleLabel.getStyleClass().add("task-title-done");
 
         Label priorityBadge = new Label(translatePriority(priority));
         priorityBadge.getStyleClass().add("detail-section-count");
+
+        Label categoryBadge = new Label(translateCategory(category));
+        categoryBadge.getStyleClass().add("detail-section-count");
 
         Button restoreBtn = new Button(lm.get("trash.restore"));
         restoreBtn.getStyleClass().add("btn-small-primary");
@@ -218,7 +226,25 @@ public class TrashController {
 
         Region spacer = new Region();
         HBox.setHgrow(spacer, Priority.ALWAYS);
-        card.getChildren().addAll(titleLabel, priorityBadge, spacer, restoreBtn, deleteBtn);
+
+        Label datesLabel = new Label();
+        datesLabel.setStyle("-fx-font-size: 10px; -fx-text-fill: #aaaaaa;");
+        if (task.has("deletedAt") && !task.get("deletedAt").isNull()) {
+            try {
+                java.time.LocalDateTime deletedAt = java.time.LocalDateTime.parse(task.get("deletedAt").asText());
+                java.time.LocalDate purgeDate = deletedAt.toLocalDate().plusDays(retentionDays);
+                datesLabel.setText(
+                        lm.get("trash.deleted.on") + " " + deletedAt.toLocalDate().format(
+                                java.time.format.DateTimeFormatter.ofPattern("d MMM yyyy",
+                                        LanguageManager.getInstance().getCurrentLocale())) +
+                                "  ·  " + lm.get("trash.purge.on") + " " + purgeDate.format(
+                                java.time.format.DateTimeFormatter.ofPattern("d MMM yyyy",
+                                        LanguageManager.getInstance().getCurrentLocale()))
+                );
+            } catch (Exception ignored) {}
+        }
+
+        card.getChildren().addAll(titleLabel, priorityBadge, categoryBadge, spacer, datesLabel, restoreBtn, deleteBtn);
         return card;
     }
 
@@ -238,6 +264,8 @@ public class TrashController {
         Long projectId = project.get("id").asLong();
         String name = project.get("name").asText();
         String category = project.get("category").asText();
+        String priority = project.has("priority") && !project.get("priority").isNull()
+                ? project.get("priority").asText() : "MEDIUM";
 
         FontIcon folderIcon = new FontIcon("fas-folder");
         folderIcon.getStyleClass().add("trash-project-icon");
@@ -247,7 +275,9 @@ public class TrashController {
 
         HBox titleBox = new HBox(8, folderIcon, nameLabel);
         titleBox.setAlignment(Pos.CENTER_LEFT);
-        HBox.setHgrow(titleBox, Priority.ALWAYS);
+
+        Label priorityBadge = new Label(translatePriority(priority));
+        priorityBadge.getStyleClass().add("detail-section-count");
 
         Label categoryBadge = new Label(translateCategory(category));
         categoryBadge.getStyleClass().add("detail-section-count");
@@ -273,8 +303,25 @@ public class TrashController {
 
         Region spacer = new Region();
         HBox.setHgrow(spacer, Priority.ALWAYS);
-        HBox.setHgrow(titleBox, Priority.NEVER);
-        card.getChildren().addAll(titleBox, categoryBadge, spacer, restoreBtn, deleteBtn);
+
+        Label datesLabel = new Label();
+        datesLabel.setStyle("-fx-font-size: 10px; -fx-text-fill: #aaaaaa;");
+        if (project.has("deletedAt") && !project.get("deletedAt").isNull()) {
+            try {
+                java.time.LocalDateTime deletedAt = java.time.LocalDateTime.parse(project.get("deletedAt").asText());
+                java.time.LocalDate purgeDate = deletedAt.toLocalDate().plusDays(retentionDays);
+                datesLabel.setText(
+                        lm.get("trash.deleted.on") + " " + deletedAt.toLocalDate().format(
+                                java.time.format.DateTimeFormatter.ofPattern("d MMM yyyy",
+                                        LanguageManager.getInstance().getCurrentLocale())) +
+                                "  ·  " + lm.get("trash.purge.on") + " " + purgeDate.format(
+                                java.time.format.DateTimeFormatter.ofPattern("d MMM yyyy",
+                                        LanguageManager.getInstance().getCurrentLocale()))
+                );
+            } catch (Exception ignored) {}
+        }
+
+        card.getChildren().addAll(titleBox, priorityBadge, categoryBadge, spacer, datesLabel, restoreBtn, deleteBtn);
         return card;
     }
 
