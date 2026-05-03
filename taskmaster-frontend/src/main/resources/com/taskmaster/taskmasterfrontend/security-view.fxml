@@ -7,7 +7,7 @@
       fx:controller="com.taskmaster.taskmasterfrontend.controller.SecurityController"
       spacing="16" styleClass="security-root">
 
-    <!-- Últimos accesos -->
+    <!-- Registros de seguridad -->
     <VBox spacing="0" styleClass="security-card" style="-fx-padding: 0;">
         <HBox styleClass="security-access-row" alignment="CENTER_LEFT" spacing="8">
             <FontIcon iconLiteral="fas-history" styleClass="security-section-icon"/>

@@ -23,6 +23,15 @@ public class ProjectWithTasksResponse {
     /** Nombre del proyecto. */
     private String name;
 
+    /** Descripción del proyecto. */
+    private String description;
+
+    /** Estado actual del proyecto. */
+    private String status;
+
+    /** Prioridad del proyecto. */
+    private String priority;
+
     /** Categoría del proyecto. */
     private String category;
 

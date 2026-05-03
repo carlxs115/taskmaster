@@ -206,6 +206,15 @@ public class TaskService {
         TaskPriority oldPriority = task.getPriority();
         LocalDate oldDueDate = task.getDueDate();
 
+        if (status == TaskStatus.DONE && oldStatus != TaskStatus.DONE) {
+            boolean hasPending = taskRepository
+                    .existsByParentTaskIdAndStatusNotInAndDeletedFalse(
+                            taskId, List.of(TaskStatus.DONE, TaskStatus.CANCELLED));
+            if (hasPending) {
+                throw new RuntimeException("No puedes completar esta tarea porque tiene subtareas pendientes");
+            }
+        }
+
         task.setTitle(title);
         task.setDescription(description);
         task.setStatus(status);

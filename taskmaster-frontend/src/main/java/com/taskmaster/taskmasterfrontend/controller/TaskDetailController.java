@@ -321,6 +321,7 @@ public class TaskDetailController {
                             updating[0] = true;
                             check.setSelected(was);
                             updating[0] = false;
+                            showAlert(lm.get("error.title"), lm.get("task.error.pending.subtasks"));
                         }
                     });
                 } catch (Exception ex) {

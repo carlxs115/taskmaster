@@ -140,6 +140,8 @@ public class EditTaskController {
                     if (response.statusCode() == 200) {
                         if (onTaskUpdated != null) onTaskUpdated.run();
                         closeDialog();
+                    } else if (response.statusCode() == 400) {
+                        showError(lm.get("task.error.pending.subtasks"));
                     } else {
                         showError(lm.get("common.error.save"));
                     }

@@ -165,6 +165,8 @@ public class EditProjectController {
                     if (response.statusCode() == 200) {
                         if (onProjectUpdated != null) onProjectUpdated.run();
                         closeDialog();
+                    } else if (response.statusCode() == 400) {
+                        showError(lm.get("project.error.pending.tasks"));
                     } else {
                         showError(lm.get("common.error.save"));
                     }

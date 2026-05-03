@@ -924,6 +924,11 @@ public class MainController {
                     Platform.runLater(() -> {
                         if (resp.statusCode() == 200) {
                             reloadTasks();
+                        } else if (resp.statusCode() == 400) {
+                            updating[0] = true;
+                            checkBox.setSelected(was);
+                            updating[0] = false;
+                            showAlert("error.title", "task.error.pending.subtasks");
                         } else {
                             updating[0] = true;
                             checkBox.setSelected(was);

@@ -28,7 +28,7 @@ import java.util.Map;
 /**
  * Controlador de la pantalla de seguridad.
  *
- * <p>Muestra el historial de accesos (login/logout) del usuario y permite
+ * <p>Muestra el historial de accesos (login/logout) del usuario y de cambio de contrseña, además permite
  * cambiar la contraseña de la cuenta. También gestiona la eliminación
  * permanente de la cuenta tras doble confirmación, redirigiendo al login
  * si la operación es exitosa.</p>
@@ -50,7 +50,7 @@ public class SecurityController {
     private final LanguageManager lm = LanguageManager.getInstance();
 
     /**
-     * Inicializa la pantalla cargando el historial de accesos del usuario.
+     * Inicializa la pantalla cargando el historial de accesos y de cambios de contraseña del usuario.
      */
     @FXML
     public void initialize() {

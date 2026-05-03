@@ -7,6 +7,7 @@ import com.taskmaster.taskmasterbackend.model.enums.TaskCategory;
 import com.taskmaster.taskmasterbackend.model.enums.TaskPriority;
 import com.taskmaster.taskmasterbackend.model.enums.TaskStatus;
 import com.taskmaster.taskmasterbackend.repository.ProjectRepository;
+import com.taskmaster.taskmasterbackend.repository.TaskRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -30,6 +31,7 @@ public class ProjectService {
     private final ProjectRepository projectRepository;
     private final UserService userService;
     private final ActivityLogService activityLogService;
+    private final TaskRepository taskRepository;
 
     /**
      * Devuelve todos los proyectos activos de un usuario.
@@ -120,6 +122,18 @@ public class ProjectService {
                                  TaskPriority priority, Long userId) {
         Project project = getProjectByIdAndUser(projectId, userId);
         TaskStatus oldStatus = project.getStatus();
+
+        // Validar que todas las tareas estén completadas antes de marcar el proyecto como DONE
+        if (status == TaskStatus.DONE && oldStatus != TaskStatus.DONE) {
+            boolean hasPendingTasks = taskRepository
+                    .existsByProjectIdAndStatusNotInAndDeletedFalse(
+                            projectId,
+                            List.of(TaskStatus.DONE, TaskStatus.CANCELLED)
+                    );
+            if (hasPendingTasks) {
+                throw new RuntimeException("No puedes completar este proyecto porque tiene tareas pendientes");
+            }
+        }
 
         project.setName(name);
         project.setDescription(description);

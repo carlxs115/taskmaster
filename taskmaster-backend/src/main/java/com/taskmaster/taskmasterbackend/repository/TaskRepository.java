@@ -154,4 +154,24 @@ public interface TaskRepository extends JpaRepository<Task, Long> {
      * @return lista de todas las tareas raíz del proyecto, activas y eliminadas
      */
     List<Task> findByProjectIdAndParentTaskIsNull(Long projectId);
+
+    /**
+     * Comprueba si un proyecto tiene tareas activas con un estado distinto a los indicados.
+     * Se usa para validar que todas las tareas estén completadas antes de cerrar el proyecto.
+     *
+     * @param projectId  identificador del proyecto
+     * @param statuses   lista de estados a excluir de la comprobación
+     * @return {@code true} si existe alguna tarea activa con estado distinto
+     */
+    boolean existsByProjectIdAndStatusNotInAndDeletedFalse(Long projectId, List<TaskStatus> statuses);
+
+    /**
+     * Comprueba si una tarea padre tiene subtareas activas con un estado distinto a los indicados.
+     * Se usa para validar que todas las subtareas estén completadas o canceladas antes de cerrar la tarea.
+     *
+     * @param parentTaskId identificador de la tarea padre
+     * @param statuses     lista de estados a excluir de la comprobación
+     * @return {@code true} si existe alguna subtarea activa con estado distinto
+     */
+    boolean existsByParentTaskIdAndStatusNotInAndDeletedFalse(Long parentTaskId, List<TaskStatus> statuses);
 }
