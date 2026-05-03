@@ -75,7 +75,7 @@ public class SettingsController {
             { ThemeManager.Theme.NOCHE,           "Noche",         "#22d3ee", "#000000", "#67e8f9" },
             { ThemeManager.Theme.VIGILANTE,       "Vigilante",     "#facc15", "#080808", "#fde047" },
             { ThemeManager.Theme.HACKER,          "Hacker",        "#00ff41", "#000000", "#39ff6e" },
-            { ThemeManager.Theme.LUZ,             "Luz",           "#f472b6", "#ffffff", "#ec4899" },
+            { ThemeManager.Theme.LUZ,             "Luz",           "#ec4899", "#080808", "#f472b6" },
     };
 
     /**
@@ -231,7 +231,6 @@ public class SettingsController {
                 for (Object[] data : THEME_DATA) {
                     if (data[0] == cardTheme) {
                         boolean sel = card == selectedCard;
-                        card.setStyle(buildCardStyle((String) data[2], (String) data[2], sel));
                         card.setStyle(buildCardStyle((String) data[3], (String) data[2], sel));
                         break;
                     }
