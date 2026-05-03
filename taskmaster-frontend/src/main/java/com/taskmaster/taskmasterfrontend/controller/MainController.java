@@ -12,13 +12,23 @@ import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
+import javafx.scene.control.Button;
+import javafx.scene.control.Label;
+import javafx.scene.control.MenuItem;
+import javafx.scene.control.TextField;
 import javafx.scene.layout.*;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
 import org.kordamp.ikonli.javafx.FontIcon;
 
+import java.awt.*;
 import java.io.IOException;
+import java.io.InputStream;
+import java.net.URL;
 import java.net.http.HttpResponse;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.time.format.TextStyle;
@@ -1505,6 +1515,39 @@ public class MainController {
 
         menu.getItems().addAll(manualItem, new SeparatorMenuItem(), aboutItem);
         menu.show(btnHelp, javafx.geometry.Side.RIGHT, 4, 0);
+    }
+
+    /**
+     * Abre el manual de usuario en el navegador predeterminado del sistema.
+     * <p>
+     * Extrae el archivo HTML del JAR a un fichero temporal y lo abre con
+     * {@link Desktop#browse(java.net.URI)}. El fichero temporal se elimina
+     * automáticamente al cerrar la aplicación.
+     * </p>
+     *
+     * @throws IllegalStateException si el recurso del manual no se encuentra en el classpath
+     */
+    @FXML
+    private void handleOpenManual() {
+        try {
+            URL resource = getClass().getResource(
+                    "/com/taskmaster/taskmasterfrontend/help/manual_usuario.html"
+            );
+            if (resource == null) {
+                throw new IllegalStateException("Manual de usuario no encontrado en el classpath");
+            }
+
+            Path temp = Files.createTempFile("taskmaster_manual_", ".html");
+            try (InputStream is = resource.openStream()) {
+                Files.copy(is, temp, StandardCopyOption.REPLACE_EXISTING);
+            }
+            temp.toFile().deleteOnExit();
+            Desktop.getDesktop().browse(temp.toFile().toURI());
+
+        } catch (IllegalStateException | IOException e) {
+            // TODO: mostrar alerta al usuario
+            e.printStackTrace();
+        }
     }
 
     /**

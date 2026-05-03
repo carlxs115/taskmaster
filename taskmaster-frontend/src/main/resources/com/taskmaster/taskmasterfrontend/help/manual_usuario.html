@@ -1,0 +1,884 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manual de Usuario — TaskMaster</title>
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+        :root {
+          --bg:         #ffffff;
+          --bg-2:       #f7f7f5;
+          --bg-3:       #f0f0ed;
+          --text:       #1a1a18;
+          --text-2:     #4a4a47;
+          --text-3:     #888880;
+          --border:     #e0e0da;
+          --accent:     #3a6ea8;
+          --accent-bg:  #eaf0f8;
+          --accent-txt: #1d4a7a;
+          --success-bg: #eaf4ec;
+          --success-txt:#1a5c2a;
+          --warn-bg:    #fef7e6;
+          --warn-txt:   #7a4f00;
+          --danger-bg:  #fdecea;
+          --danger-txt: #8b1a1a;
+          --radius:     8px;
+          --radius-lg:  12px;
+        }
+        body {
+          font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+          font-size: 15px; line-height: 1.7;
+          color: var(--text); background: var(--bg);
+          max-width: 820px; margin: 0 auto; padding: 2rem 2rem 4rem;
+        }
+        h1 { font-size: 28px; font-weight: 600; color: var(--text); margin-bottom: 6px; }
+        h2 { font-size: 20px; font-weight: 600; color: var(--text); margin: 2.5rem 0 0.75rem;
+             padding-bottom: 8px; border-bottom: 1px solid var(--border); }
+        h3 { font-size: 16px; font-weight: 600; color: var(--text); margin: 1.5rem 0 0.5rem; }
+        p  { color: var(--text-2); margin-bottom: 0.75rem; }
+        strong { color: var(--text); font-weight: 600; }
+        a  { color: var(--accent); text-decoration: none; }
+        a:hover { text-decoration: underline; }
+
+        .manual-header { padding: 2rem 0 1.5rem; border-bottom: 1px solid var(--border); margin-bottom: 1rem; }
+        .manual-header .version { font-size: 13px; color: var(--text-3); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 8px; }
+        .manual-header .subtitle { font-size: 15px; color: var(--text-3); margin-top: 4px; }
+
+        .toc { background: var(--bg-2); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 1.25rem 1.5rem; margin: 1.5rem 0 2rem; }
+        .toc-title { font-size: 13px; font-weight: 600; color: var(--text-3); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 0.75rem; }
+        .toc ol { padding-left: 1.25rem; }
+        .toc li { margin: 4px 0; font-size: 14px; }
+        .toc li a { color: var(--accent); }
+        .toc ol ol { padding-left: 1.25rem; margin-top: 4px; }
+        .toc ol ol li { color: var(--text-3); font-size: 13px; }
+
+        .info-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; margin: 1rem 0 1.5rem; }
+        .info-card { background: var(--bg-2); border: 1px solid var(--border); border-radius: var(--radius); padding: 10px 14px; }
+        .info-card .label { font-size: 11px; color: var(--text-3); margin-bottom: 3px; text-transform: uppercase; letter-spacing: 0.05em; }
+        .info-card .value { font-size: 14px; color: var(--text); font-weight: 500; }
+
+        .note { background: var(--accent-bg); border-left: 3px solid var(--accent); border-radius: 0 var(--radius) var(--radius) 0; padding: 10px 14px; margin: 1rem 0; font-size: 14px; color: var(--text-2); }
+        .note strong { color: var(--accent-txt); }
+        .warn { background: var(--warn-bg); border-left: 3px solid #e6a817; border-radius: 0 var(--radius) var(--radius) 0; padding: 10px 14px; margin: 1rem 0; font-size: 14px; color: var(--text-2); }
+        .warn strong { color: var(--warn-txt); }
+        .danger-note { background: var(--danger-bg); border-left: 3px solid #c0392b; border-radius: 0 var(--radius) var(--radius) 0; padding: 10px 14px; margin: 1rem 0; font-size: 14px; color: var(--text-2); }
+        .danger-note strong { color: var(--danger-txt); }
+
+        .steps { list-style: none; padding: 0; margin: 0.75rem 0 1.25rem; }
+        .steps li { display: flex; gap: 12px; align-items: flex-start; font-size: 14px; color: var(--text-2); padding: 5px 0; line-height: 1.6; }
+        .step-num { min-width: 24px; height: 24px; border-radius: 50%; background: var(--accent-bg); color: var(--accent-txt); font-size: 12px; font-weight: 600; display: flex; align-items: center; justify-content: center; margin-top: 1px; flex-shrink: 0; }
+
+        .badge { display: inline-flex; align-items: center; font-size: 12px; font-weight: 500; padding: 2px 9px; border-radius: 20px; margin-right: 4px; }
+        .badge-blue   { background: var(--accent-bg);  color: var(--accent-txt); }
+        .badge-green  { background: var(--success-bg); color: var(--success-txt); }
+        .badge-yellow { background: var(--warn-bg);    color: var(--warn-txt); }
+        .badge-red    { background: var(--danger-bg);  color: var(--danger-txt); }
+        .badge-gray   { background: var(--bg-3);       color: var(--text-3); }
+
+        .mockup-wrap { background: var(--bg-2); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 16px; margin: 1.25rem 0 1.75rem; }
+        .mockup-label { font-size: 11px; color: var(--text-3); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 10px; }
+
+        .screen { background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; font-size: 13px; }
+        .screen-topbar { background: var(--bg-2); border-bottom: 1px solid var(--border); padding: 7px 14px; display: flex; align-items: center; justify-content: space-between; }
+        .app-name { font-size: 13px; font-weight: 600; color: var(--text); }
+        .avatar-pill { display: inline-flex; align-items: center; gap: 6px; background: var(--bg); border: 1px solid var(--border); border-radius: 20px; padding: 3px 10px 3px 4px; font-size: 12px; color: var(--text-2); }
+        .avatar-circle { width: 20px; height: 20px; border-radius: 50%; background: var(--accent-bg); color: var(--accent-txt); font-size: 9px; font-weight: 700; display: flex; align-items: center; justify-content: center; }
+        .screen-body { display: flex; }
+        .sidebar { width: 152px; min-width: 152px; border-right: 1px solid var(--border); padding: 8px 0; }
+        .sidebar-section { font-size: 10px; color: var(--text-3); text-transform: uppercase; letter-spacing: 0.06em; padding: 8px 12px 3px; }
+        .sidebar-item { display: flex; align-items: center; justify-content: space-between; padding: 5px 12px; font-size: 12px; color: var(--text-2); }
+        .sidebar-item.active { background: var(--accent-bg); color: var(--accent-txt); }
+        .sidebar-item-left { display: flex; align-items: center; gap: 7px; }
+        .dot { width: 6px; height: 6px; border-radius: 50%; background: currentColor; opacity: 0.5; }
+        .sq  { width: 6px; height: 6px; border-radius: 2px; background: currentColor; opacity: 0.5; }
+        .main-content { flex: 1; padding: 14px; }
+
+        .form-wrap { padding: 24px 32px; max-width: 380px; margin: 0 auto; }
+        .form-title { font-size: 16px; font-weight: 600; color: var(--text); margin-bottom: 4px; }
+        .form-subtitle { font-size: 12px; color: var(--text-3); margin-bottom: 18px; }
+        .form-field { margin-bottom: 12px; }
+        .form-label { font-size: 12px; color: var(--text-2); margin-bottom: 4px; display: block; }
+        .form-input { width: 100%; height: 32px; padding: 0 10px; border: 1px solid var(--border); border-radius: var(--radius); font-size: 13px; color: var(--text-3); background: var(--bg-2); }
+        .form-input.tall { height: 60px; padding: 8px 10px; }
+        .form-btn { width: 100%; height: 34px; border-radius: var(--radius); background: var(--accent); color: #fff; border: none; font-size: 13px; font-weight: 600; margin-top: 4px; }
+        .form-btn-sec { width: 100%; height: 34px; border-radius: var(--radius); background: var(--bg-2); color: var(--text-2); border: 1px solid var(--border); font-size: 13px; margin-top: 6px; }
+        .form-link { font-size: 12px; color: var(--accent); text-align: center; display: block; margin-top: 12px; }
+        .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+
+        .dropdown-menu { background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; min-width: 170px; display: inline-block; }
+        .dropdown-item { padding: 9px 14px; font-size: 13px; color: var(--text); border-bottom: 1px solid var(--border); }
+        .dropdown-item:last-child { border-bottom: none; }
+        .dropdown-item.danger { color: #c0392b; }
+
+        .task-row { display: flex; align-items: center; gap: 8px; padding: 7px 10px; border: 1px solid var(--border); border-radius: var(--radius); margin-bottom: 5px; background: var(--bg); }
+        .check-box { width: 14px; height: 14px; border-radius: 3px; border: 1px solid var(--border); flex-shrink: 0; }
+        .check-box.done { background: var(--success-bg); border-color: var(--success-txt); }
+        .task-title { font-size: 12px; color: var(--text); flex: 1; }
+        .task-title.done { color: var(--text-3); text-decoration: line-through; }
+        .three-dots { font-size: 14px; color: var(--text-3); padding: 0 2px; cursor: default; }
+
+        .toolbar { display: flex; align-items: center; gap: 6px; margin-bottom: 10px; flex-wrap: wrap; }
+        .tb-input { height: 28px; padding: 0 8px; border: 1px solid var(--border); border-radius: var(--radius); font-size: 12px; color: var(--text-2); background: var(--bg-2); flex: 1; min-width: 100px; }
+        .tb-select { height: 28px; padding: 0 8px; border: 1px solid var(--border); border-radius: var(--radius); font-size: 12px; color: var(--text-2); background: var(--bg-2); }
+        .tb-btn { height: 28px; padding: 0 10px; border: 1px solid var(--border); border-radius: var(--radius); font-size: 12px; color: var(--text-2); background: var(--bg); white-space: nowrap; }
+        .tb-btn-primary { height: 28px; padding: 0 10px; border-radius: var(--radius); font-size: 12px; color: #fff; background: var(--accent); border: none; white-space: nowrap; }
+
+        .detail-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
+        .detail-title { font-size: 15px; font-weight: 600; color: var(--text); }
+        .detail-btns { display: flex; gap: 6px; }
+        .btn-sm { padding: 4px 10px; border: 1px solid var(--border); border-radius: var(--radius); font-size: 12px; color: var(--text-2); background: var(--bg); }
+        .btn-sm-primary { padding: 4px 10px; border-radius: var(--radius); font-size: 12px; color: #fff; background: var(--accent); border: none; }
+
+        .progress-wrap { margin: 8px 0; }
+        .progress-bar { height: 6px; background: var(--bg-3); border-radius: 3px; }
+        .progress-fill { height: 6px; border-radius: 3px; background: var(--accent); }
+
+        .section-row { display: flex; align-items: center; justify-content: space-between; margin: 10px 0 6px; }
+        .section-row-label { font-size: 12px; font-weight: 600; color: var(--text); }
+
+        .log-row { display: flex; align-items: flex-start; gap: 8px; padding: 5px 0; border-bottom: 1px solid var(--border); font-size: 11px; color: var(--text-2); }
+        .log-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--accent); margin-top: 3px; flex-shrink: 0; }
+
+        .stat-grid-4 { display: grid; grid-template-columns: repeat(4,1fr); gap: 8px; margin-bottom: 10px; }
+        .stat-card { background: var(--bg-2); border-radius: var(--radius); padding: 8px 10px; }
+        .stat-card .lbl { font-size: 10px; color: var(--text-3); margin-bottom: 2px; }
+        .stat-card .val { font-size: 15px; font-weight: 600; color: var(--text); }
+
+        .settings-row { display: flex; align-items: center; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid var(--border); font-size: 13px; color: var(--text-2); }
+        .settings-row:last-child { border-bottom: none; }
+        .settings-val { font-size: 12px; color: var(--text-3); }
+
+        .trash-row { display: flex; align-items: center; gap: 8px; padding: 7px 10px; border: 1px solid var(--border); border-radius: var(--radius); margin-bottom: 5px; background: var(--bg); }
+        .trash-icon { width: 10px; height: 10px; border-radius: 2px; background: var(--danger-bg); flex-shrink: 0; }
+        .trash-title { font-size: 12px; color: var(--text); flex: 1; }
+        .trash-date { font-size: 11px; color: var(--text-3); }
+
+        .profile-header { display: flex; align-items: center; gap: 14px; margin-bottom: 14px; }
+        .profile-avatar { width: 48px; height: 48px; border-radius: 50%; background: var(--accent-bg); color: var(--accent-txt); font-size: 16px; font-weight: 700; display: flex; align-items: center; justify-content: center; border: 2px solid var(--border); }
+        .profile-name { font-size: 15px; font-weight: 600; color: var(--text); }
+        .profile-email { font-size: 12px; color: var(--text-3); }
+
+        .wl-row { display: flex; align-items: center; gap: 8px; padding: 6px 8px; border: 1px solid var(--border); border-radius: var(--radius); margin-bottom: 5px; background: var(--bg); font-size: 12px; color: var(--text-2); }
+
+        .about-center { text-align: center; padding: 20px 0; }
+        .about-logo { width: 56px; height: 56px; border-radius: var(--radius-lg); background: var(--accent-bg); margin: 0 auto 10px; display: flex; align-items: center; justify-content: center; font-size: 22px; font-weight: 700; color: var(--accent-txt); }
+
+        hr.section-divider { border: none; border-top: 1px solid var(--border); margin: 2rem 0; }
+
+        .group-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 10px; margin: 1rem 0 1.5rem; }
+        .group-card { background: var(--bg-2); border: 1px solid var(--border); border-radius: var(--radius); padding: 10px 14px; }
+        .group-card .group-label { font-size: 11px; color: var(--text-3); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 5px; }
+        .group-card .group-items { font-size: 13px; color: var(--text-2); line-height: 1.8; }
+
+        @media (max-width: 600px) {
+          body { padding: 1rem 1rem 3rem; }
+          .form-wrap { padding: 20px 16px; }
+          .screen-body { flex-direction: column; }
+          .sidebar { width: 100%; min-width: unset; border-right: none; border-bottom: 1px solid var(--border); }
+          .stat-grid-4 { grid-template-columns: repeat(2,1fr); }
+        }
+    </style>
+</head>
+<body>
+
+<!-- ENCABEZADO -->
+<div class="manual-header">
+    <div class="version">Manual de usuario</div>
+    <h1>TaskMaster</h1>
+    <div class="subtitle">Guía completa de uso · v1.0</div>
+</div>
+
+<!-- ÍNDICE -->
+<div class="toc">
+    <div class="toc-title">Contenido</div>
+    <ol>
+        <li><a href="#s1">Introducción</a></li>
+        <li><a href="#s2">Registro e inicio de sesión</a>
+            <ol>
+                <li><a href="#s2-1">Crear una cuenta nueva</a></li>
+                <li><a href="#s2-2">Iniciar sesión</a></li>
+            </ol>
+        </li>
+        <li><a href="#s3">Interfaz principal</a>
+            <ol>
+                <li><a href="#s3-1">Barra superior (top bar)</a></li>
+                <li><a href="#s3-2">Barra lateral (sidebar)</a></li>
+            </ol>
+        </li>
+        <li><a href="#s4">Inicio (Home)</a></li>
+        <li><a href="#s5">Tareas</a>
+            <ol>
+                <li><a href="#s5-1">Ver todas las tareas / por categoría</a></li>
+                <li><a href="#s5-2">Crear tarea</a></li>
+                <li><a href="#s5-3">Detalles de tarea</a></li>
+                <li><a href="#s5-4">Subtareas y detalles de subtarea</a></li>
+                <li><a href="#s5-5">Registros de tiempo</a></li>
+            </ol>
+        </li>
+        <li><a href="#s6">Proyectos</a>
+            <ol>
+                <li><a href="#s6-1">Ver proyectos</a></li>
+                <li><a href="#s6-2">Crear proyecto</a></li>
+                <li><a href="#s6-3">Detalles de proyecto</a></li>
+            </ol>
+        </li>
+        <li><a href="#s7">Papelera</a></li>
+        <li><a href="#s8">Perfil</a>
+            <ol>
+                <li><a href="#s8-1">Ver y editar perfil</a></li>
+                <li><a href="#s8-2">Foto de perfil</a></li>
+                <li><a href="#s8-3">Estadísticas y actividad reciente</a></li>
+            </ol>
+        </li>
+        <li><a href="#s9">Seguridad</a></li>
+        <li><a href="#s10">Ajustes</a></li>
+        <li><a href="#s11">Ayuda</a>
+            <ol>
+                <li><a href="#s11-1">Manual de usuario</a></li>
+                <li><a href="#s11-2">Acerca de TaskMaster</a></li>
+            </ol>
+        </li>
+    </ol>
+</div>
+
+<hr class="section-divider">
+
+<!-- 1. INTRODUCCIÓN -->
+<h2 id="s1">1. Introducción</h2>
+<p>TaskMaster es una aplicación de escritorio para la gestión de tareas y proyectos personales y profesionales. Permite organizar el trabajo por categorías, hacer seguimiento del tiempo invertido y consultar estadísticas de productividad, todo desde una interfaz local sin necesidad de conexión a internet.</p>
+<p>Este manual describe todas las funcionalidades disponibles en la versión actual de la aplicación.</p>
+<div class="info-grid">
+    <div class="info-card"><div class="label">Plataforma</div><div class="value">Windows · Linux</div></div>
+    <div class="info-card"><div class="label">Requisitos</div><div class="value">JRE 21 o superior</div></div>
+    <div class="info-card"><div class="label">Idiomas</div><div class="value">Español · Inglés</div></div>
+    <div class="info-card"><div class="label">Datos</div><div class="value">Almacenamiento local</div></div>
+</div>
+
+<hr class="section-divider">
+
+<!-- 2. REGISTRO E INICIO DE SESIÓN -->
+<h2 id="s2">2. Registro e inicio de sesión</h2>
+
+<h3 id="s2-1">2.1 Crear una cuenta nueva</h3>
+<p>Al abrir TaskMaster por primera vez se muestra la pantalla de inicio de sesión. Para registrarse, haz clic en el enlace <strong>Regístrate</strong> y rellena el formulario con los datos requeridos.</p>
+<div class="mockup-wrap">
+    <div class="mockup-label">Pantalla de registro</div>
+    <div class="screen" style="max-width:340px;margin:0 auto;">
+        <div class="form-wrap">
+            <div class="form-title">Crear cuenta</div>
+            <div class="form-subtitle">Completa los datos para registrarte</div>
+            <div class="form-field"><label class="form-label">Nombre de usuario</label><div class="form-input">ej. carlos_dev</div></div>
+            <div class="form-field"><label class="form-label">Correo electrónico</label><div class="form-input">ej. correo@ejemplo.com</div></div>
+            <div class="form-field"><label class="form-label">Contraseña</label><div class="form-input">········</div></div>
+            <div class="form-field"><label class="form-label">Confirmar contraseña</label><div class="form-input">········</div></div>
+            <button class="form-btn">Registrarse</button>
+            <a class="form-link">¿Ya tienes cuenta? Inicia sesión</a>
+        </div>
+    </div>
+</div>
+<ol class="steps">
+    <li><span class="step-num">1</span>Introduce un nombre de usuario único.</li>
+    <li><span class="step-num">2</span>Escribe tu dirección de correo electrónico.</li>
+    <li><span class="step-num">3</span>Crea una contraseña segura.</li>
+    <li><span class="step-num">4</span>Elige tu fecha de nacimiento.</li>
+    <li><span class="step-num">5</span>Pulsa <strong>Crear cuenta</strong> para crear tu cuenta.</li>
+</ol>
+
+<h3 id="s2-2">2.2 Iniciar sesión</h3>
+<p>Si ya tienes cuenta, introduce tu nombre de usuario o correo electrónico y tu contraseña, y pulsa <strong>Iniciar sesión</strong>.</p>
+<div class="mockup-wrap">
+    <div class="mockup-label">Pantalla de inicio de sesión</div>
+    <div class="screen" style="max-width:340px;margin:0 auto;">
+        <div class="form-wrap">
+            <div class="form-title">Bienvenido a TaskMaster</div>
+            <div class="form-subtitle">Inicia sesión para continuar</div>
+            <div class="form-field"><label class="form-label">Usuario o correo electrónico</label><div class="form-input">Tu usuario o email</div></div>
+            <div class="form-field"><label class="form-label">Contraseña</label><div class="form-input">········</div></div>
+            <button class="form-btn">Entrar</button>
+            <a class="form-link">¿No tienes cuenta? Regístrate</a>
+        </div>
+    </div>
+</div>
+<div class="note"><strong>Nota:</strong> Todos los datos se almacenan localmente. No se requiere conexión a internet para usar TaskMaster.</div>
+
+<hr class="section-divider">
+
+<!-- 3. INTERFAZ PRINCIPAL -->
+<h2 id="s3">3. Interfaz principal</h2>
+<p>Una vez autenticado, la interfaz principal se divide en tres zonas: la barra superior, la barra lateral y el área de contenido central.</p>
+<div class="mockup-wrap">
+    <div class="mockup-label">Vista general de la interfaz</div>
+    <div class="screen">
+        <div class="screen-topbar">
+            <span class="app-name">TaskMaster</span>
+            <div class="avatar-pill"><div class="avatar-circle">CG</div><span>carlos</span><span style="font-size:10px;color:#aaa;">▾</span></div>
+        </div>
+        <div class="screen-body" style="min-height:240px;">
+            <div class="sidebar">
+                <div class="sidebar-section">Principal</div>
+                <div class="sidebar-item active"><div class="sidebar-item-left"><span class="dot"></span>Inicio</div></div>
+                <div class="sidebar-item"><div class="sidebar-item-left"><span class="dot"></span>Todas las tareas</div></div>
+                <div class="sidebar-section">Categorías</div>
+                <div class="sidebar-item"><div class="sidebar-item-left"><span class="dot"></span>Personal</div></div>
+                <div class="sidebar-item"><div class="sidebar-item-left"><span class="dot"></span>Estudios</div></div>
+                <div class="sidebar-item"><div class="sidebar-item-left"><span class="dot"></span>Trabajo</div></div>
+                <div class="sidebar-section">Proyectos</div>
+                <div class="sidebar-item"><div class="sidebar-item-left"><span class="sq"></span>TFG 2025</div><span style="font-size:13px;color:var(--text-3);">···</span></div>
+                <div class="sidebar-section">Aplicación</div>
+                <div class="sidebar-item"><div class="sidebar-item-left"><span class="dot"></span>Ayuda</div></div>
+                <div class="sidebar-item"><div class="sidebar-item-left"><span class="dot"></span>Ajustes</div></div>
+                <div class="sidebar-item"><div class="sidebar-item-left"><span class="dot"></span>Seguridad</div></div>
+                <div class="sidebar-item"><div class="sidebar-item-left"><span class="dot"></span>Papelera</div></div>
+            </div>
+            <div class="main-content"><p style="font-size:13px;color:#ccc;text-align:center;margin-top:50px;">Área de contenido</p></div>
+        </div>
+    </div>
+</div>
+
+<h3 id="s3-1">3.1 Barra superior (top bar)</h3>
+<p>La barra superior está siempre visible. A la derecha aparece un botón con el nombre de usuario. Al hacer clic se despliega un menú con dos opciones:</p>
+<ol class="steps">
+    <li><span class="step-num">1</span><div><strong>Ver perfil</strong> — abre la pantalla de perfil con datos, estadísticas y actividad reciente.</div></li>
+    <li><span class="step-num">2</span><div><strong>Cerrar sesión</strong> — cierra la sesión y regresa a la pantalla de inicio de sesión.</div></li>
+</ol>
+<div class="mockup-wrap">
+    <div class="mockup-label">Menú desplegable del top bar</div>
+    <div style="display:flex;justify-content:flex-end;padding:10px 14px;background:var(--bg-2);border-radius:var(--radius);">
+        <div>
+            <div class="avatar-pill" style="margin-bottom:6px;"><div class="avatar-circle">CG</div><span>carlos</span><span style="font-size:10px;color:#aaa;">▴</span></div>
+            <div class="dropdown-menu">
+                <div class="dropdown-item">Ver perfil</div>
+                <div class="dropdown-item danger">Cerrar sesión</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<h3 id="s3-2">3.2 Barra lateral (sidebar)</h3>
+<p>El sidebar permite navegar entre todas las secciones de la aplicación, organizado en cuatro grupos:</p>
+<div class="group-grid">
+    <div class="group-card"><div class="group-label">Principal</div><div class="group-items">Inicio</div></div>
+    <div class="group-card"><div class="group-label">Mis tareas</div><div class="group-items">Todas las tareas<br>Personal<br>Estudios<br>Trabajo</div></div>
+    <div class="group-card"><div class="group-label">Mis proyectos</div><div class="group-items">Listado de proyectos activos</div></div>
+    <div class="group-card"><div class="group-label">Aplicación</div><div class="group-items">Ayuda<br>Ajustes<br>Seguridad<br>Papelera</div></div>
+</div>
+<p>En la sección <strong>Proyectos</strong>, al hacer clic en el nombre de un proyecto se accede a sus detalles. El botón <strong>···</strong> a la derecha despliega un menú con las opciones <strong>Editar</strong> y <strong>Eliminar</strong>.</p>
+<div class="note"><strong>Nota:</strong> La sección Proyectos del sidebar solo muestra los proyectos con estado <span class="badge badge-blue">Activo</span>. Los proyectos completados o cancelados no aparecen aquí.</div>
+
+<hr class="section-divider">
+
+<!-- 4. INICIO (HOME) -->
+<h2 id="s4">4. Inicio (Home)</h2>
+<p>La pantalla de inicio es la vista principal de TaskMaster tras iniciar sesión. Muestra un resumen del estado actual: fecha, estadísticas rápidas, proyectos activos y tareas recientes.</p>
+<div class="mockup-wrap">
+    <div class="mockup-label">Pantalla de inicio (Home)</div>
+    <div class="screen">
+        <div class="screen-topbar">
+            <span class="app-name">TaskMaster</span>
+            <div class="avatar-pill"><div class="avatar-circle">CG</div><span>carlos</span><span style="font-size:10px;color:#aaa;">▾</span></div>
+        </div>
+        <div class="screen-body">
+            <div class="sidebar">
+                <div class="sidebar-section">Principal</div>
+                <div class="sidebar-item active"><div class="sidebar-item-left"><span class="dot"></span>Inicio</div></div>
+                <div class="sidebar-item"><div class="sidebar-item-left"><span class="dot"></span>Todas las tareas</div></div>
+                <div class="sidebar-section">Categorías</div>
+                <div class="sidebar-item"><div class="sidebar-item-left"><span class="dot"></span>Personal</div></div>
+                <div class="sidebar-item"><div class="sidebar-item-left"><span class="dot"></span>Estudios</div></div>
+                <div class="sidebar-item"><div class="sidebar-item-left"><span class="dot"></span>Trabajo</div></div>
+            </div>
+            <div class="main-content">
+                <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+                    <div style="font-size:15px;font-weight:600;color:var(--text);">Domingo, 4 de mayo de 2025</div>
+                    <div style="padding:4px 10px;border:1px solid var(--border);border-radius:var(--radius);font-size:12px;color:var(--text-2);">+ Nuevo ▾</div>
+                </div>
+                <div class="stat-grid-4">
+                    <div class="stat-card"><div class="lbl">Pendientes</div><div class="val" style="color:#b45309;">8</div></div>
+                    <div class="stat-card"><div class="lbl">En curso</div><div class="val" style="color:var(--accent);">3</div></div>
+                    <div class="stat-card"><div class="lbl">Completadas</div><div class="val" style="color:var(--success-txt);">12</div></div>
+                    <div class="stat-card"><div class="lbl">Proyectos</div><div class="val">2</div></div>
+                </div>
+                <div style="font-size:12px;font-weight:600;color:var(--text);margin:8px 0 5px;">Proyectos activos</div>
+                <div class="task-row"><div style="width:10px;height:10px;border-radius:2px;background:var(--accent-bg);flex-shrink:0;"></div><div style="flex:1;"><div style="font-size:12px;color:var(--text);">TFG 2025</div><div style="height:4px;background:var(--bg-3);border-radius:2px;margin-top:3px;"><div style="height:4px;border-radius:2px;background:var(--accent);width:65%;"></div></div></div><span class="badge badge-blue">Activo</span></div>
+                <div style="font-size:12px;font-weight:600;color:var(--text);margin:8px 0 5px;">Tareas recientes</div>
+                <div class="task-row"><div class="check-box"></div><span class="task-title">Redactar memoria del TFG</span><span class="badge badge-yellow">Alta</span></div>
+                <div class="task-row"><div class="check-box done"></div><span class="task-title done">Diseñar diagrama de clases</span><span class="badge badge-green">Completada</span></div>
+                <div class="task-row"><div class="check-box"></div><span class="task-title">Implementar filtros</span><span class="badge badge-blue">Media</span></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<h3>4.1 Saludo de bienvenida</h3>
+<p>En la parte superior se muestra un saludo de bienvenida, la fecha de hoy y el recuento de tareas pendientes.</p>
+
+<h3>4.2 Botón de creación rápida</h3>
+<p>El botón <strong>+ Nuevo</strong> abre un menú con dos opciones: <strong>Nueva tarea</strong> y <strong>Nuevo proyecto</strong>.</p>
+
+<h3>4.3 Badges de resumen</h3>
+<p>Cuatro contadores muestran el estado global: tareas <strong>pendientes</strong>, <strong>en curso</strong>, <strong>completadas</strong> y número de <strong>proyectos activos</strong>.</p>
+
+<h3>4.4 Proyectos activos</h3>
+<p>Listado de proyectos en estado <span class="badge badge-blue">Activo</span>, cada uno con una barra de progreso. Al hacer clic en el nombre se accede a los detalles del proyecto.</p>
+
+<h3>4.5 Listado de tareas</h3>
+<p>Tareas recientes con casilla de verificación para marcarlas como completadas y enlace al detalle al hacer clic en el título. Las completadas aparecen tachadas.</p>
+
+<hr class="section-divider">
+
+<!-- 5. TAREAS -->
+<h2 id="s5">5. Tareas</h2>
+
+<h3 id="s5-1">5.1 Ver todas las tareas / por categoría</h3>
+<p>Las secciones <strong>Todas las tareas</strong>, <strong>Personal</strong>, <strong>Estudios</strong> y <strong>Trabajo</strong> muestran el mismo listado de tareas filtrado por categoría. Todas ellas comparten la misma barra de herramientas.</p>
+<div class="mockup-wrap">
+    <div class="mockup-label">Vista de listado de tareas</div>
+    <div class="screen">
+        <div class="screen-topbar"><span class="app-name">TaskMaster</span><div class="avatar-pill"><div class="avatar-circle">CG</div><span>carlos</span><span style="font-size:10px;color:#aaa;">▾</span></div></div>
+        <div class="screen-body">
+            <div class="sidebar">
+                <div class="sidebar-section">Principal</div>
+                <div class="sidebar-item"><div class="sidebar-item-left"><span class="dot"></span>Inicio</div></div>
+                <div class="sidebar-item active"><div class="sidebar-item-left"><span class="dot"></span>Todas las tareas</div></div>
+                <div class="sidebar-section">Categorías</div>
+                <div class="sidebar-item"><div class="sidebar-item-left"><span class="dot"></span>Personal</div></div>
+                <div class="sidebar-item"><div class="sidebar-item-left"><span class="dot"></span>Estudios</div></div>
+                <div class="sidebar-item"><div class="sidebar-item-left"><span class="dot"></span>Trabajo</div></div>
+            </div>
+            <div class="main-content">
+                <div class="toolbar">
+                    <div class="tb-input">Buscar por título o ID…</div>
+                    <div class="tb-select">Estado ▾</div>
+                    <div class="tb-select">Prioridad ▾</div>
+                    <div class="tb-select">Ordenar ▾</div>
+                    <div class="tb-btn">Limpiar</div>
+                    <div class="tb-btn-primary">+ Nueva tarea</div>
+                </div>
+                <div class="task-row"><div class="check-box"></div><span class="task-title">Redactar memoria del TFG</span><span class="badge badge-yellow">Alta</span><span class="badge badge-gray">Pendiente</span><span class="three-dots">···</span></div>
+                <div class="task-row"><div class="check-box"></div><span class="task-title">Implementar filtros de tareas</span><span class="badge badge-blue">Media</span><span class="badge badge-blue">En curso</span><span class="three-dots">···</span></div>
+                <div class="task-row"><div class="check-box done"></div><span class="task-title done">Diseñar diagrama de clases</span><span class="badge badge-gray">Baja</span><span class="badge badge-green">Completada</span><span class="three-dots">···</span></div>
+            </div>
+        </div>
+    </div>
+</div>
+<p>La barra de herramientas incluye:</p>
+<ol class="steps">
+    <li><span class="step-num">1</span><div><strong>Buscador</strong> — filtra tareas por título o por ID de tarea.</div></li>
+    <li><span class="step-num">2</span><div><strong>Filtro de estado</strong> — muestra solo las tareas con el estado seleccionado (pendiente, en curso, completada, cancelada, entregada).</div></li>
+    <li><span class="step-num">3</span><div><strong>Filtro de prioridad</strong> — muestra solo las tareas con la prioridad seleccionada (baja, media, alta, urgente).</div></li>
+    <li><span class="step-num">4</span><div><strong>Ordenación</strong> — ordena el listado por título, ID, fecha límite o prioridad, de forma ascendente o descendente.</div></li>
+    <li><span class="step-num">5</span><div><strong>Limpiar filtros</strong> — restablece todos los filtros y la ordenación al estado por defecto.</div></li>
+    <li><span class="step-num">6</span><div><strong>+ Nueva tarea</strong> — abre el diálogo de creación de tarea.</div></li>
+</ol>
+<p>Cada fila de tarea muestra la casilla de verificación, el título, badges de prioridad y estado, y el botón <strong>···</strong> que despliega las opciones <strong>Editar</strong> y <strong>Eliminar</strong>. Al hacer clic en el título se accede al detalle de la tarea.</p>
+
+<h3 id="s5-2">5.2 Crear tarea</h3>
+<p>El diálogo de creación de tarea se abre desde el botón <strong>+ Nueva tarea</strong> o desde el menú <strong>+ Nuevo</strong> del Home.</p>
+<div class="mockup-wrap">
+    <div class="mockup-label">Diálogo de nueva tarea</div>
+    <div style="min-height:420px;background:rgba(0,0,0,0.25);display:flex;align-items:center;justify-content:center;border-radius:var(--radius);">
+        <div class="screen" style="max-width:400px;width:100%;">
+            <div class="form-wrap">
+                <div class="form-title">Nueva tarea</div>
+                <div class="form-subtitle">Rellena los campos para crear la tarea</div>
+                <div class="form-field"><label class="form-label">Título</label><div class="form-input">Título de la tarea</div></div>
+                <div class="form-field"><label class="form-label">Descripción</label><div class="form-input tall">Descripción opcional…</div></div>
+                <div class="form-row">
+                    <div class="form-field"><label class="form-label">Categoría</label><div class="form-input">Personal ▾</div></div>
+                    <div class="form-field"><label class="form-label">Prioridad</label><div class="form-input">Media ▾</div></div>
+                </div>
+                <div class="form-field"><label class="form-label">Fecha límite</label><div class="form-input">dd/mm/aaaa</div></div>
+                <div class="form-field"><label class="form-label">Proyecto (opcional)</label><div class="form-input">Sin proyecto ▾</div></div>
+                <button class="form-btn">Crear tarea</button>
+                <button class="form-btn-sec">Cancelar</button>
+            </div>
+        </div>
+    </div>
+</div>
+<p>Los campos disponibles son:</p>
+<ol class="steps">
+    <li><span class="step-num">1</span><div><strong>Título</strong> (obligatorio) — nombre identificativo de la tarea.</div></li>
+    <li><span class="step-num">2</span><div><strong>Descripción</strong> (opcional) — texto libre con detalles adicionales.</div></li>
+    <li><span class="step-num">3</span><div><strong>Categoría</strong> — Personal, Estudios o Trabajo.</div></li>
+    <li><span class="step-num">4</span><div><strong>Prioridad</strong> — Baja, Media, Alta o Urgente.</div></li>
+    <li><span class="step-num">5</span><div><strong>Fecha límite</strong> (opcional) — fecha en la que debe completarse la tarea.</div></li>
+    <li><span class="step-num">6</span><div><strong>Proyecto</strong> (opcional) — asigna la tarea a uno de los proyectos activos.</div></li>
+</ol>
+
+<h3 id="s5-3">5.3 Detalles de tarea</h3>
+<p>Al hacer clic en el título de una tarea se abre su pantalla de detalles.</p>
+<div class="mockup-wrap">
+    <div class="mockup-label">Pantalla de detalles de tarea</div>
+    <div class="screen">
+        <div class="screen-topbar"><span class="app-name">TaskMaster</span><div class="avatar-pill"><div class="avatar-circle">CG</div><span>carlos</span></div></div>
+        <div class="screen-body">
+            <div class="sidebar">
+                <div class="sidebar-section">Principal</div>
+                <div class="sidebar-item"><div class="sidebar-item-left"><span class="dot"></span>Inicio</div></div>
+                <div class="sidebar-item active"><div class="sidebar-item-left"><span class="dot"></span>Todas las tareas</div></div>
+            </div>
+            <div class="main-content">
+                <div class="detail-header">
+                    <div class="detail-title">Redactar memoria del TFG</div>
+                    <div class="detail-btns"><button class="btn-sm-primary">Editar</button><button class="btn-sm">Cerrar</button></div>
+                </div>
+                <div style="margin-bottom:10px;">
+                    <span class="badge badge-gray">Pendiente</span>
+                    <span class="badge badge-yellow">Alta</span>
+                    <span class="badge badge-blue">Estudios</span>
+                </div>
+                <p style="font-size:12px;color:var(--text-2);margin-bottom:10px;">Escribir todos los apartados de la memoria del TFG siguiendo la estructura del centro.</p>
+                <div class="section-row"><span class="section-row-label">Subtareas</span><button class="btn-sm">+ Nueva subtarea</button></div>
+                <div class="task-row"><div class="check-box done"></div><span class="task-title done">Introducción</span><span class="badge badge-green">Completada</span><span class="three-dots">···</span></div>
+                <div class="task-row"><div class="check-box"></div><span class="task-title">Análisis de requisitos</span><span class="badge badge-gray">Pendiente</span><span class="three-dots">···</span></div>
+                <div class="section-row"><span class="section-row-label">Registros de tiempo</span><button class="btn-sm">+ Nuevo registro</button></div>
+                <div class="wl-row"><span style="flex:1;">15/04/2025 · 2h · Documentación</span><span class="three-dots">···</span></div>
+                <div class="section-row"><span class="section-row-label">Actividad</span></div>
+                <div class="log-row"><span class="log-dot"></span><span>Tarea creada · 01/04/2025</span></div>
+                <div class="log-row"><span class="log-dot"></span><span>Prioridad cambiada a Alta · 10/04/2025</span></div>
+            </div>
+        </div>
+    </div>
+</div>
+<p>La pantalla de detalles muestra:</p>
+<ol class="steps">
+    <li><span class="step-num">1</span><div><strong>Título</strong> y botones <strong>Editar</strong> / <strong>Cerrar</strong> en la cabecera.</div></li>
+    <li><span class="step-num">2</span><div><strong>Badges</strong> de estado, prioridad y categoría.</div></li>
+    <li><span class="step-num">3</span><div><strong>Descripción</strong> de la tarea.</div></li>
+    <li><span class="step-num">4</span><div><strong>Subtareas</strong> — listado con casilla de verificación, botón <strong>···</strong> (editar/eliminar) y botón <strong>+ Nueva subtarea</strong>. Al hacer clic en el título de una subtarea se accede a sus detalles.</div></li>
+    <li><span class="step-num">5</span><div><strong>Registros de tiempo</strong> — listado de registros con botón <strong>···</strong> (editar/eliminar) y botón <strong>+ Nuevo registro</strong>.</div></li>
+    <li><span class="step-num">6</span><div><strong>Actividad</strong> — historial de cambios realizados sobre la tarea.</div></li>
+</ol>
+
+<h3 id="s5-4">5.4 Subtareas y detalles de subtarea</h3>
+<p>Las subtareas son tareas hijas asociadas a una tarea padre. Se crean desde el botón <strong>+ Nueva subtarea</strong> en los detalles de la tarea. El formulario de creación incluye los mismos campos que una tarea normal.</p>
+<p>Al hacer clic en el título de una subtarea se accede a su pantalla de detalles, que es idéntica a la de una tarea pero sin la sección de subtareas anidadas. Incluye badges de estado, prioridad y categoría, descripción, registros de tiempo y actividad.</p>
+<div class="note"><strong>Nota:</strong> Al eliminar una tarea padre, todas sus subtareas se envían también a la papelera.</div>
+
+<h3 id="s5-5">5.5 Registros de tiempo</h3>
+<p>Los registros de tiempo permiten llevar un seguimiento del esfuerzo dedicado a cada tarea o subtarea. Se crean desde el botón <strong>+ Nuevo registro</strong> en la pantalla de detalles.</p>
+<div class="mockup-wrap">
+    <div class="mockup-label">Diálogo de nuevo registro de tiempo</div>
+    <div style="min-height:380px;background:rgba(0,0,0,0.25);display:flex;align-items:center;justify-content:center;border-radius:var(--radius);">
+        <div class="screen" style="max-width:380px;width:100%;">
+            <div class="form-wrap">
+                <div class="form-title">Nuevo registro de tiempo</div>
+                <div class="form-field"><label class="form-label">Fecha del registro</label><div class="form-input">dd/mm/aaaa</div></div>
+                <div class="form-row">
+                    <div class="form-field"><label class="form-label">Horas invertidas</label><div class="form-input">0.0</div></div>
+                    <div class="form-field"><label class="form-label">Tipo de actividad</label><div class="form-input">Desarrollo ▾</div></div>
+                </div>
+                <div class="form-field"><label class="form-label">Nota (opcional)</label><div class="form-input tall">Descripción de lo realizado…</div></div>
+                <button class="form-btn">Guardar registro</button>
+                <button class="form-btn-sec">Cancelar</button>
+            </div>
+        </div>
+    </div>
+</div>
+<p>Los campos del registro son:</p>
+<ol class="steps">
+    <li><span class="step-num">1</span><div><strong>Fecha del registro</strong> — día en que se realizó el trabajo.</div></li>
+    <li><span class="step-num">2</span><div><strong>Horas invertidas</strong> — tiempo dedicado en horas (admite decimales, ej. 1.5).</div></li>
+    <li><span class="step-num">3</span><div><strong>Tipo de actividad</strong> — Análisis, Diseño, Desarrollo, Gestión, Documentación, Reunión, Test, Instalación o Soporte.</div></li>
+    <li><span class="step-num">4</span><div><strong>Nota</strong> (opcional) — descripción libre de lo que se realizó.</div></li>
+</ol>
+
+<hr class="section-divider">
+
+<!-- 6. PROYECTOS -->
+<h2 id="s6">6. Proyectos</h2>
+
+<h3 id="s6-1">6.1 Ver proyectos</h3>
+<p>Los proyectos activos se muestran tanto en el Home como en el sidebar. Desde ambos lugares se puede acceder a sus detalles haciendo clic en el nombre. El botón <strong>···</strong> del sidebar permite <strong>editar</strong> o <strong>eliminar</strong> directamente cualquier proyecto.</p>
+
+<h3 id="s6-2">6.2 Crear proyecto</h3>
+<p>El diálogo de creación de proyecto se abre desde el botón <strong>+ Nuevo → Nuevo proyecto</strong> del Home.</p>
+<div class="mockup-wrap">
+    <div class="mockup-label">Diálogo de nuevo proyecto</div>
+    <div style="min-height:380px;background:rgba(0,0,0,0.25);display:flex;align-items:center;justify-content:center;border-radius:var(--radius);">
+        <div class="screen" style="max-width:380px;width:100%;">
+            <div class="form-wrap">
+                <div class="form-title">Nuevo proyecto</div>
+                <div class="form-field"><label class="form-label">Nombre</label><div class="form-input">Nombre del proyecto</div></div>
+                <div class="form-field"><label class="form-label">Descripción</label><div class="form-input tall">Descripción opcional…</div></div>
+                <div class="form-row">
+                    <div class="form-field"><label class="form-label">Categoría</label><div class="form-input">Personal ▾</div></div>
+                    <div class="form-field"><label class="form-label">Estado</label><div class="form-input">Activo ▾</div></div>
+                </div>
+                <div class="form-field"><label class="form-label">Prioridad</label><div class="form-input">Media ▾</div></div>
+                <button class="form-btn">Crear proyecto</button>
+                <button class="form-btn-sec">Cancelar</button>
+            </div>
+        </div>
+    </div>
+</div>
+<ol class="steps">
+    <li><span class="step-num">1</span><div><strong>Nombre</strong> (obligatorio) — identificador del proyecto.</div></li>
+    <li><span class="step-num">2</span><div><strong>Descripción</strong> (opcional) — detalle adicional sobre el objetivo del proyecto.</div></li>
+    <li><span class="step-num">3</span><div><strong>Categoría</strong> — Personal, Estudios o Trabajo.</div></li>
+    <li><span class="step-num">4</span><div><strong>Estado</strong> — Activo, Completado o Cancelado.</div></li>
+    <li><span class="step-num">5</span><div><strong>Prioridad</strong> — Baja, Media, Alta o Urgente.</div></li>
+</ol>
+
+<h3 id="s6-3">6.3 Detalles de proyecto</h3>
+<p>Al hacer clic en el nombre de un proyecto se abre su pantalla de detalles.</p>
+<div class="mockup-wrap">
+    <div class="mockup-label">Pantalla de detalles de proyecto</div>
+    <div class="screen">
+        <div class="screen-topbar"><span class="app-name">TaskMaster</span><div class="avatar-pill"><div class="avatar-circle">CG</div><span>carlos</span></div></div>
+        <div class="screen-body">
+            <div class="sidebar">
+                <div class="sidebar-section">Proyectos</div>
+                <div class="sidebar-item active"><div class="sidebar-item-left"><span class="sq"></span>TFG 2025</div></div>
+            </div>
+            <div class="main-content">
+                <div class="detail-header">
+                    <div class="detail-title">TFG 2025</div>
+                    <div class="detail-btns"><button class="btn-sm-primary">Editar</button><button class="btn-sm">Cerrar</button></div>
+                </div>
+                <div style="margin-bottom:8px;">
+                    <span class="badge badge-blue">Activo</span>
+                    <span class="badge badge-yellow">Alta</span>
+                    <span class="badge badge-blue">Estudios</span>
+                </div>
+                <div style="display:flex;gap:6px;margin-bottom:8px;flex-wrap:wrap;">
+                    <span class="badge badge-gray">12 tareas totales</span>
+                    <span class="badge badge-yellow">5 pendientes</span>
+                    <span class="badge badge-green">6 completadas</span>
+                    <span class="badge badge-red">1 vencida</span>
+                </div>
+                <div class="progress-wrap"><div class="progress-bar"><div class="progress-fill" style="width:65%;"></div></div></div>
+                <p style="font-size:12px;color:var(--text-2);margin:8px 0 10px;">Proyecto final de grado DAM — aplicación de gestión de tareas.</p>
+                <div class="section-row"><span class="section-row-label">Tareas del proyecto</span><button class="btn-sm">+ Nueva tarea</button></div>
+                <div class="task-row"><div class="check-box"></div><span class="task-title">Redactar memoria</span><span class="badge badge-yellow">Alta</span><span class="three-dots">···</span></div>
+                <div class="task-row"><div class="check-box done"></div><span class="task-title done">Diagrama de clases</span><span class="badge badge-green">Completada</span><span class="three-dots">···</span></div>
+                <div class="section-row"><span class="section-row-label">Actividad</span></div>
+                <div class="log-row"><span class="log-dot"></span><span>Proyecto creado · 01/03/2025</span></div>
+                <div class="log-row"><span class="log-dot"></span><span>Tarea "Diagrama de clases" completada · 10/04/2025</span></div>
+            </div>
+        </div>
+    </div>
+</div>
+<p>La pantalla de detalles incluye:</p>
+<ol class="steps">
+    <li><span class="step-num">1</span><div><strong>Título</strong> y botones <strong>Editar</strong> / <strong>Cerrar</strong>.</div></li>
+    <li><span class="step-num">2</span><div><strong>Badges</strong> de estado, prioridad y categoría.</div></li>
+    <li><span class="step-num">3</span><div><strong>Contadores</strong> de tareas totales, pendientes, completadas y vencidas.</div></li>
+    <li><span class="step-num">4</span><div><strong>Barra de progreso</strong> — porcentaje de tareas completadas.</div></li>
+    <li><span class="step-num">5</span><div><strong>Descripción</strong> del proyecto.</div></li>
+    <li><span class="step-num">6</span><div><strong>Listado de tareas</strong> con casilla de verificación, botón <strong>···</strong> (editar/eliminar) y botón <strong>+ Nueva tarea</strong>. Al hacer clic en el título de una tarea se accede a sus detalles.</div></li>
+    <li><span class="step-num">7</span><div><strong>Actividad</strong> — historial de cambios realizados sobre el proyecto.</div></li>
+</ol>
+<div class="note"><strong>Nota:</strong> Al eliminar un proyecto se envían a la papelera tanto el proyecto como todas sus tareas asociadas.</div>
+
+<hr class="section-divider">
+
+<!-- 7. PAPELERA -->
+<h2 id="s7">7. Papelera</h2>
+<p>La papelera almacena temporalmente las tareas y proyectos eliminados antes de su borrado definitivo. Se accede desde el sidebar.</p>
+<div class="mockup-wrap">
+    <div class="mockup-label">Pantalla de papelera</div>
+    <div class="screen">
+        <div class="screen-topbar"><span class="app-name">TaskMaster</span><div class="avatar-pill"><div class="avatar-circle">CG</div><span>carlos</span></div></div>
+        <div class="screen-body">
+            <div class="sidebar">
+                <div class="sidebar-section">Aplicación</div>
+                <div class="sidebar-item active"><div class="sidebar-item-left"><span class="dot"></span>Papelera</div></div>
+            </div>
+            <div class="main-content">
+                <div style="font-size:14px;font-weight:600;color:var(--text);margin-bottom:10px;">Papelera</div>
+                <div class="trash-row">
+                    <div class="trash-icon"></div>
+                    <div style="flex:1;"><div class="trash-title">Tarea: Revisar entregable v1</div><div class="trash-date">Eliminada el 20/04/2025 · se borra el 20/05/2025</div></div>
+                    <button class="btn-sm" style="font-size:11px;">Restaurar</button>
+                    <button class="btn-sm" style="font-size:11px;color:var(--danger-txt);border-color:var(--danger-txt);">Eliminar</button>
+                </div>
+                <div class="trash-row">
+                    <div class="trash-icon"></div>
+                    <div style="flex:1;"><div class="trash-title">Proyecto: App de notas</div><div class="trash-date">Eliminado el 15/04/2025 · se borra el 15/05/2025</div></div>
+                    <button class="btn-sm" style="font-size:11px;">Restaurar</button>
+                    <button class="btn-sm" style="font-size:11px;color:var(--danger-txt);border-color:var(--danger-txt);">Eliminar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<p>Cada elemento de la papelera muestra el nombre, la fecha de eliminación y la fecha en que se borrará definitivamente. Las opciones disponibles para cada elemento son:</p>
+<ol class="steps">
+    <li><span class="step-num">1</span><div><strong>Restaurar</strong> — devuelve la tarea o proyecto a su estado anterior.</div></li>
+    <li><span class="step-num">2</span><div><strong>Eliminar definitivamente</strong> — borra el elemento de forma permanente e irrecuperable.</div></li>
+</ol>
+<div class="warn"><strong>Atención:</strong> Los elementos de la papelera se eliminan automáticamente tras el periodo de retención configurado en Ajustes (por defecto, 30 días). Esta acción no se puede deshacer.</div>
+
+<hr class="section-divider">
+
+<!-- 8. PERFIL -->
+<h2 id="s8">8. Perfil</h2>
+<p>La pantalla de perfil se abre desde el menú desplegable del top bar, opción <strong>Ver perfil</strong>.</p>
+
+<h3 id="s8-1">8.1 Ver y editar perfil</h3>
+<p>La pantalla muestra los datos del usuario: nombre de usuario, correo electrónico, fecha de nacimiento y fecha de creación de la cuenta.</p>
+<div class="mockup-wrap">
+    <div class="mockup-label">Pantalla de perfil</div>
+    <div class="screen">
+        <div class="screen-topbar"><span class="app-name">TaskMaster</span><div class="avatar-pill"><div class="avatar-circle">CG</div><span>carlos</span><span style="font-size:10px;color:#aaa;">▾</span></div></div>
+        <div class="main-content" style="padding:16px;">
+            <div class="profile-header">
+                <div class="profile-avatar">CG</div>
+                <div>
+                    <div class="profile-name">carlos_dev</div>
+                    <div class="profile-email">carlos@ejemplo.com</div>
+                </div>
+                <button class="btn-sm" style="margin-left:auto;">Editar perfil</button>
+            </div>
+            <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:8px;margin-bottom:14px;">
+                <div class="info-card"><div class="label">Usuario</div><div class="value">carlos_dev</div></div>
+                <div class="info-card"><div class="label">Email</div><div class="value">carlos@ejemplo.com</div></div>
+                <div class="info-card"><div class="label">Fecha de nacimiento</div><div class="value">01/01/2000</div></div>
+                <div class="info-card"><div class="label">Miembro desde</div><div class="value">01/01/2025</div></div>
+            </div>
+            <div class="stat-grid-4">
+                <div class="stat-card"><div class="lbl">Tareas totales</div><div class="val">23</div></div>
+                <div class="stat-card"><div class="lbl">Completadas</div><div class="val" style="color:var(--success-txt);">12</div></div>
+                <div class="stat-card"><div class="lbl">Proyectos</div><div class="val">3</div></div>
+                <div class="stat-card"><div class="lbl">Horas registradas</div><div class="val">47</div></div>
+            </div>
+            <div class="section-row"><span class="section-row-label">Actividad reciente</span></div>
+            <div class="log-row"><span class="log-dot"></span><span>Tarea "Redactar memoria" creada · hoy</span></div>
+            <div class="log-row"><span class="log-dot"></span><span>Estado de "Diagrama de clases" cambiado a Completada · ayer</span></div>
+        </div>
+    </div>
+</div>
+<p>El botón <strong>Editar perfil</strong> abre un diálogo donde se pueden modificar el nombre de usuario, el correo electrónico y la fecha de nacimiento.</p>
+
+<h3 id="s8-2">8.2 Foto de perfil</h3>
+<p>Desde la pantalla de perfil hay un botón para gestionar la foto de perfil. Las opciones disponibles son <strong>Añadir foto</strong>, <strong>Cambiar foto</strong> y <strong>Eliminar foto</strong>.</p>
+<div class="note"><strong>Formatos aceptados:</strong> PNG y JPG únicamente. Al seleccionar una imagen aparece una herramienta de recorte para ajustar el encuadre antes de guardarla.</div>
+
+<h3 id="s8-3">8.3 Estadísticas y actividad reciente</h3>
+<p>La pantalla de perfil también muestra cuatro estadísticas de productividad calculadas en tiempo real: total de tareas, tareas completadas, proyectos activos y horas totales registradas.</p>
+<p>Debajo de las estadísticas aparece el <strong>historial de actividad reciente</strong> con los últimos cambios realizados en la cuenta: creaciones, modificaciones, cambios de estado y actualizaciones de perfil.</p>
+
+<hr class="section-divider">
+
+<!-- 9. SEGURIDAD -->
+<h2 id="s9">9. Seguridad</h2>
+<p>La pantalla de seguridad se accede desde el sidebar. Centraliza las opciones de gestión de acceso y los registros de sesión.</p>
+<div class="mockup-wrap">
+    <div class="mockup-label">Pantalla de seguridad</div>
+    <div class="screen">
+        <div class="screen-topbar"><span class="app-name">TaskMaster</span><div class="avatar-pill"><div class="avatar-circle">CG</div><span>carlos</span></div></div>
+        <div class="screen-body">
+            <div class="sidebar">
+                <div class="sidebar-section">Aplicación</div>
+                <div class="sidebar-item active"><div class="sidebar-item-left"><span class="dot"></span>Seguridad</div></div>
+            </div>
+            <div class="main-content">
+                <div style="font-size:14px;font-weight:600;color:var(--text);margin-bottom:10px;">Seguridad</div>
+                <div class="section-row"><span class="section-row-label">Últimos accesos</span></div>
+                <div class="log-row"><span class="log-dot"></span><span>Inicio de sesión · 03/05/2025 09:14</span></div>
+                <div class="log-row"><span class="log-dot"></span><span>Cierre de sesión · 02/05/2025 22:30</span></div>
+                <div class="log-row"><span class="log-dot"></span><span>Cambio de contraseña · 01/05/2025 11:05</span></div>
+                <div class="section-row" style="margin-top:12px;"><span class="section-row-label">Contraseña</span></div>
+                <button class="btn-sm" style="margin-bottom:14px;">Cambiar contraseña</button>
+                <div class="section-row"><span class="section-row-label" style="color:var(--danger-txt);">Zona de peligro</span></div>
+                <button class="btn-sm" style="color:var(--danger-txt);border-color:var(--danger-txt);">Eliminar cuenta</button>
+            </div>
+        </div>
+    </div>
+</div>
+<p>La pantalla de seguridad incluye tres bloques:</p>
+<ol class="steps">
+    <li><span class="step-num">1</span><div><strong>Últimos accesos</strong> — registro cronológico de inicios de sesión, cierres de sesión y cambios de contraseña, con fecha y hora.</div></li>
+    <li><span class="step-num">2</span><div><strong>Cambiar contraseña</strong> — abre un diálogo donde se introduce la contraseña actual y la nueva dos veces para confirmarla.</div></li>
+    <li><span class="step-num">3</span><div><strong>Eliminar cuenta</strong> — borra permanentemente la cuenta y todos sus datos. Se solicita confirmación antes de ejecutar la acción.</div></li>
+</ol>
+<div class="danger-note"><strong>Atención:</strong> La eliminación de cuenta es irreversible. Se perderán todas las tareas, proyectos, registros de tiempo e historial de actividad asociados a la cuenta.</div>
+
+<hr class="section-divider">
+
+<!-- 10. AJUSTES -->
+<h2 id="s10">10. Ajustes</h2>
+<p>La pantalla de ajustes permite personalizar el comportamiento y la apariencia de la aplicación. Se accede desde el sidebar.</p>
+<div class="mockup-wrap">
+    <div class="mockup-label">Pantalla de ajustes</div>
+    <div class="screen">
+        <div class="screen-topbar"><span class="app-name">TaskMaster</span><div class="avatar-pill"><div class="avatar-circle">CG</div><span>carlos</span></div></div>
+        <div class="screen-body">
+            <div class="sidebar">
+                <div class="sidebar-section">Aplicación</div>
+                <div class="sidebar-item active"><div class="sidebar-item-left"><span class="dot"></span>Ajustes</div></div>
+            </div>
+            <div class="main-content">
+                <div style="font-size:14px;font-weight:600;color:var(--text);margin-bottom:10px;">Ajustes</div>
+                <div class="settings-row"><span>Tema</span><span class="settings-val">Amatista ▾</span></div>
+                <div class="settings-row"><span>Idioma</span><span class="settings-val">Español ▾</span></div>
+                <div class="settings-row"><span>Formato de fecha</span><span class="settings-val">dd/MM/yyyy ▾</span></div>
+                <div class="settings-row"><span>Formato de hora</span><span class="settings-val">24 horas ▾</span></div>
+                <div class="settings-row"><span>Retención de papelera</span><span class="settings-val">30 días ▾</span></div>
+            </div>
+        </div>
+    </div>
+</div>
+<p>Las opciones disponibles son:</p>
+<ol class="steps">
+    <li><span class="step-num">1</span><div><strong>Tema</strong> — cambia la apariencia visual de la aplicación. Hay varios temas disponibles: Amatista, Ámbar, Ártico, Aurora Boreal, Hacker, Noche, Océano, Perla, Pradera, Sákura, Vigilante, entre otros.</div></li>
+    <li><span class="step-num">2</span><div><strong>Idioma</strong> — cambia el idioma de la interfaz entre <strong>Español</strong> e <strong>Inglés</strong>.</div></li>
+    <li><span class="step-num">3</span><div><strong>Formato de fecha</strong> — selecciona cómo se muestran las fechas en toda la aplicación.</div></li>
+    <li><span class="step-num">4</span><div><strong>Formato de hora</strong> — selecciona el formato de 12 o 24 horas.</div></li>
+    <li><span class="step-num">5</span><div><strong>Retención de papelera</strong> — número de días que los elementos permanecen en la papelera antes de ser eliminados definitivamente. Por defecto, 30 días.</div></li>
+</ol>
+
+<hr class="section-divider">
+
+<!-- 11. AYUDA -->
+<h2 id="s11">11. Ayuda</h2>
+<p>El botón <strong>Ayuda</strong> del sidebar abre un menú desplegable con dos opciones.</p>
+<div class="mockup-wrap">
+    <div class="mockup-label">Menú desplegable de ayuda</div>
+    <div style="padding:8px 0 4px 12px;">
+        <div class="dropdown-menu">
+            <div class="dropdown-item">Manual de usuario</div>
+            <div class="dropdown-item">Acerca de TaskMaster</div>
+        </div>
+    </div>
+</div>
+
+<h3 id="s11-1">11.1 Manual de usuario</h3>
+<p>Abre este documento en el navegador predeterminado del sistema. El manual está disponible sin conexión a internet ya que se incluye dentro de la propia aplicación.</p>
+
+<h3 id="s11-2">11.2 Acerca de TaskMaster</h3>
+<p>Abre un diálogo con información sobre la aplicación:</p>
+<div class="mockup-wrap">
+    <div class="mockup-label">Diálogo Acerca de TaskMaster</div>
+    <div style="min-height:360px;background:rgba(0,0,0,0.25);display:flex;align-items:center;justify-content:center;border-radius:var(--radius);">
+        <div class="screen" style="max-width:360px;width:100%;">
+            <div style="padding:24px 28px;">
+                <div class="about-center">
+                    <div class="about-logo">TM</div>
+                    <div style="font-size:18px;font-weight:600;color:var(--text);margin-bottom:2px;">TaskMaster</div>
+                    <div style="font-size:12px;color:var(--text-3);margin-bottom:8px;">Versión 1.0.0</div>
+                    <p style="font-size:13px;color:var(--text-2);margin-bottom:12px;">Aplicación de escritorio para la gestión de tareas y proyectos. Proyecto de Fin de Grado — DAM.</p>
+                    <div style="font-size:12px;color:var(--text-3);margin-bottom:14px;">Desarrollado por <strong style="color:var(--text);">Carlos García</strong><br>Spring Boot · JavaFX · JDK 25</div>
+                </div>
+                <div style="border-top:1px solid var(--border);padding-top:12px;">
+                    <div style="font-size:12px;font-weight:600;color:var(--text);margin-bottom:8px;">Información legal</div>
+                    <div style="display:flex;flex-wrap:wrap;gap:6px;">
+                        <button class="btn-sm" style="font-size:11px;">Términos de uso</button>
+                        <button class="btn-sm" style="font-size:11px;">Privacidad</button>
+                        <button class="btn-sm" style="font-size:11px;">Licencias</button>
+                        <button class="btn-sm" style="font-size:11px;">Reconocimientos</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<p>El diálogo muestra el logo de la aplicación, la versión, la descripción, el autor y las tecnologías utilizadas. La sección <strong>Información legal</strong> incluye acceso a los términos de uso, política de privacidad, licencias de software y reconocimientos.</p>
+
+<hr class="section-divider">
+<p style="text-align:center;color:var(--text-3);font-size:13px;margin-top:2rem;">TaskMaster · Manual de usuario v1.0 · Todos los derechos reservados</p>
+
+</body>
+</html>
