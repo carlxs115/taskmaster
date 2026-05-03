@@ -118,3 +118,8 @@
 .btn-create-chevron {
     -fx-icon-color: #000000;
 }
+.detail-btn-edit-icon,
+.btn-small-primary-icon,
+.btn-primary-icon {
+    -fx-icon-color: #000000;
+}

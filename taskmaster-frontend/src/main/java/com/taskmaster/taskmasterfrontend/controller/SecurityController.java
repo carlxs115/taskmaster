@@ -77,7 +77,7 @@ public class SecurityController {
 
     /**
      * Renderiza las últimas 10 entradas del historial de accesos, mostrando
-     * el tipo de acción (login/logout), su icono de color y la fecha formateada.
+     * el tipo de acción (login/logout/cambio de contraseña), su icono de color y la fecha formateada.
      *
      * @param entries Array JSON con las entradas del historial de accesos.
      */
@@ -92,10 +92,19 @@ public class SecurityController {
             JsonNode entry = entries.get(i);
             String actionType = entry.get("actionType").asText();
             String createdAt  = entry.get("createdAt").asText();
-            boolean isLogin = "LOGIN".equals(actionType);
-            String iconLiteral = isLogin ? "fas-sign-in-alt" : "fas-sign-out-alt";
-            String label = isLogin ? lm.get("security.access.login") : lm.get("security.access.logout");
-            String color = isLogin ? "#22c55e" : "#9999bb";
+
+            boolean isLogin          = "LOGIN".equals(actionType);
+            boolean isPasswordChange = "PASSWORD_CHANGED".equals(actionType);
+
+            String iconLiteral = isPasswordChange ? "fas-key"
+                    : isLogin          ? "fas-sign-in-alt"
+                    : "fas-sign-out-alt";
+            String label = isPasswordChange ? lm.get("common.password.changed")
+                    : isLogin          ? lm.get("security.access.login")
+                    : lm.get("security.access.logout");
+            String color = isPasswordChange ? "#f59e0b"
+                    : isLogin          ? "#22c55e"
+                    : "#9999bb";
 
             LocalDateTime dt = LocalDateTime.parse(createdAt);
             String dateStr = dt.format(DateTimeFormatter.ofPattern("d MMM yyyy, HH:mm",
@@ -165,6 +174,7 @@ public class SecurityController {
                         AppContext.getInstance().getApiService()
                                 .setCredentials(AppContext.getInstance().getCurrentUsername(), newPass);
                         showInfo(lm.get("security.password.success"));
+                        loadAccessLog();
                     } else {
                         showError(lm.get("security.password.error.wrong"));
                     }

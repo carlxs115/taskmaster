@@ -276,8 +276,8 @@ public class ProjectDetailController {
         Label titleLabel = new Label(title);
         titleLabel.setOnMouseClicked(e -> openTaskDetail(task, taskId));
         titleLabel.setStyle(isDone
-                ? "-fx-font-size: 13px; -fx-text-fill: #aaaaaa; -fx-strikethrough: true; -fx-cursor: hand;"
-                : "-fx-font-size: 13px; -fx-text-fill: #1e1e2e; -fx-cursor: hand;");
+                ? "-fx-font-size: 13px; -fx-text-fill: -tm-text-muted; -fx-strikethrough: true; -fx-cursor: hand;"
+                : "-fx-font-size: 13px; -fx-text-fill: -tm-text-primary; -fx-cursor: hand;");
 
         // Badge fecha vencida
         boolean isOverdue = false;

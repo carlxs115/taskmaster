@@ -77,3 +77,29 @@
 .btn-create-chevron {
     -fx-icon-color: #000000;
 }
+.detail-header .detail-btn-edit,
+.detail-header .detail-btn-edit:hover,
+.area-topbar .btn-create,
+.area-topbar .btn-create:hover,
+.detail-section .btn-small-primary,
+.detail-section .btn-small-primary:hover {
+    -fx-text-fill: #000000;
+}
+
+.btn-create-label {
+    -fx-text-fill: #000000;
+}
+
+.btn-create-icon {
+    -fx-icon-color: #000000;
+}
+
+.btn-create-chevron {
+    -fx-icon-color: #000000;
+}
+.detail-btn-edit-icon,
+.btn-small-primary-icon,
+.btn-primary-icon,
+.btn-create-icon {
+    -fx-icon-color: #000000;
+}

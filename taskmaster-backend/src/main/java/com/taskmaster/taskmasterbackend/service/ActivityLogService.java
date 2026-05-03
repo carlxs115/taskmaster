@@ -104,7 +104,7 @@ public class ActivityLogService {
                         ActionType.PROJECT_CREATED, ActionType.PROJECT_EDITED,
                         ActionType.PROJECT_DELETED, ActionType.PROJECT_PERMANENTLY_DELETED,
                         ActionType.PROJECT_RESTORED, ActionType.PROJECT_STATUS_CHANGED,
-                        ActionType.PROFILE_UPDATED, ActionType.PASSWORD_CHANGED
+                        ActionType.PROFILE_UPDATED
                 )
         );
     }
@@ -119,7 +119,7 @@ public class ActivityLogService {
     public List<ActivityLog> getAccessHistory(Long userId) {
         return activityLogRepository.findByUserIdAndActionTypeInOrderByCreatedAtDesc(
                 userId,
-                List.of(ActionType.LOGIN, ActionType.LOGOUT)
+                List.of(ActionType.LOGIN, ActionType.LOGOUT, ActionType.PASSWORD_CHANGED)
         );
     }
 
