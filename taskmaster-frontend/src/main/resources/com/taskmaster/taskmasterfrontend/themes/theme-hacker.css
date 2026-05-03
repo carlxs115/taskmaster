@@ -103,3 +103,18 @@
 .detail-empty-label {
     -fx-text-fill: -tm-text-primary;
 }
+
+/* ── Overrides específicos del tema ── */
+.btn-confirm-accent,
+.btn-confirm-accent:hover {
+    -fx-text-fill: #000000;
+}
+.btn-create-label {
+    -fx-text-fill: #000000;
+}
+.btn-create-icon {
+    -fx-icon-color: #000000;
+}
+.btn-create-chevron {
+    -fx-icon-color: #000000;
+}

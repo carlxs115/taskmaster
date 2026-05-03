@@ -1638,6 +1638,15 @@ public class MainController {
         taskFiltersBar.setManaged(true);
         showSearch();
         createButton.setText(LanguageManager.getInstance().get("topbar.create.task"));
+        Node chevron = createButton.lookup(".btn-create-chevron");
+        if (chevron != null) {
+            chevron.setVisible(false);
+            chevron.setManaged(false);
+        }
+        Label createLabel = (Label) createButton.lookup(".btn-create-label");
+        if (createLabel != null) {
+            createLabel.setText(LanguageManager.getInstance().get("topbar.create.task"));
+        }
     }
 
     /**
@@ -1674,6 +1683,15 @@ public class MainController {
         taskFiltersBar.setManaged(false);
         hideSearch();
         createButton.setText(lm.get("topbar.create"));
+        Node chevron = createButton.lookup(".btn-create-chevron");
+        if (chevron != null) {
+            chevron.setVisible(true);
+            chevron.setManaged(true);
+        }
+        Label createLabel = (Label) createButton.lookup(".btn-create-label");
+        if (createLabel != null) {
+            createLabel.setText(lm.get("topbar.create"));
+        }
     }
 
     /**
@@ -2314,5 +2332,11 @@ public class MainController {
         sortFilter.setItems(FXCollections.observableArrayList(
                 lm.get("sort.title"), lm.get("id"),
                 lm.get("common.duedate"), lm.get("common.priority")));
+
+        Label createLabel = (Label) createButton.lookup(".btn-create-label");
+        if (createLabel != null) {
+            boolean isHome = selectedProjectId == null && selectedCategory == null && !viewingAllTasks;
+            createLabel.setText(lm.get(isHome ? "topbar.create" : "topbar.create.task"));
+        }
     }
 }
