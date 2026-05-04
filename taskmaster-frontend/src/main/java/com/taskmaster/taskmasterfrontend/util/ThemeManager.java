@@ -37,6 +37,7 @@ public class ThemeManager {
         NOCHE,
         VIGILANTE,
         HACKER,
+        DRAGONSLAYER,
         LUZ
     }
 
@@ -150,7 +151,8 @@ public class ThemeManager {
                 || currentTheme.get() == Theme.OCEANO
                 || currentTheme.get() == Theme.NOCHE
                 || currentTheme.get() == Theme.VIGILANTE
-                || currentTheme.get() == Theme.HACKER;
+                || currentTheme.get() == Theme.HACKER
+                || currentTheme.get() == Theme.DRAGONSLAYER;
     }
 
     /**
@@ -191,6 +193,7 @@ public class ThemeManager {
             case NOCHE             -> "theme-noche.css";
             case VIGILANTE         -> "theme-vigilante.css";
             case HACKER            -> "theme-hacker.css";
+            case DRAGONSLAYER      -> "theme-dragonslayer.css";
             case LUZ               -> "theme-luz.css";
         };
     }
@@ -212,6 +215,7 @@ public class ThemeManager {
      * @param theme el tema a guardar
      */
     public void saveThemePreference(Theme theme) {
+        System.out.println("Guardando tema: " + theme.name());
         try {
             File file = new File(CONFIG_PATH);
             file.getParentFile().mkdirs();

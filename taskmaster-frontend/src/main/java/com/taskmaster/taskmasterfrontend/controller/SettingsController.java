@@ -75,6 +75,7 @@ public class SettingsController {
             { ThemeManager.Theme.NOCHE,           "Noche",         "#22d3ee", "#000000", "#67e8f9" },
             { ThemeManager.Theme.VIGILANTE,       "Vigilante",     "#facc15", "#080808", "#fde047" },
             { ThemeManager.Theme.HACKER,          "Hacker",        "#00ff41", "#000000", "#39ff6e" },
+            { ThemeManager.Theme.DRAGONSLAYER,    "DragonSlayer",  "#ff0000", "#000000", "#ff3333" },
             { ThemeManager.Theme.LUZ,             "Luz",           "#ec4899", "#080808", "#f472b6" },
     };
 
@@ -243,6 +244,7 @@ public class SettingsController {
                 HttpResponse<String> response = AppContext.getInstance()
                         .getApiService()
                         .patch("/api/settings/theme?theme=" + theme.name(), null);
+                System.out.println("PATCH tema respuesta: " + response.statusCode() + " - " + response.body());
                 Platform.runLater(() -> {
                     if (response.statusCode() == 200) {
                         themeStatusLabel.setText(lm.get("settings.saved"));
@@ -285,8 +287,6 @@ public class SettingsController {
                         if (days == 7) days7.setSelected(true);
                         else if (days == 15) days15.setSelected(true);
                         else days30.setSelected(true);
-
-                        ThemeManager.getInstance().applyTheme(savedTheme);
                         buildThemeSelector();
                     });
                 }

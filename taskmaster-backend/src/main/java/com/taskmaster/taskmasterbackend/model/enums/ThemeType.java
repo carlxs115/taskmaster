@@ -21,5 +21,6 @@ public enum ThemeType {
     NOCHE,
     VIGILANTE,
     HACKER,
+    DRAGONSLAYER,
     LUZ
 }

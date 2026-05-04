@@ -1,0 +1,99 @@
+/* =====================================================
+   THEME: DRAGONSLAYER
+   TaskMaster — Negro con acentos rojo
+   ===================================================== */
+
+.root {
+    /* Fondos */
+    -tm-bg-app:          #080808;
+    -tm-bg-topbar:       #000000;
+    -tm-bg-sidebar:      #000000;
+    -tm-bg-surface:      #0f0f0f;
+    -tm-bg-surface-alt:  #0a0a0a;
+    -tm-bg-input:        #141414;
+    -tm-bg-hover:        #1a1a1a;
+    -tm-bg-active:       #2a0000;
+    -tm-bg-badge:        #2a0000;
+    -tm-bg-scroll:       #141414;
+
+    /* Acentos — rojo fuego */
+    -tm-accent:          #ff0000;
+    -tm-accent-light:    #ff3333;
+    -tm-accent-dark:     #cc0000;
+    -tm-accent-subtle:   #2a0000;
+
+    /* Textos */
+    -tm-text-primary:    #f0f0f0;
+    -tm-text-secondary:  #aaaaaa;
+    -tm-text-muted:      #444444;
+    -tm-text-sidebar:    #aaaaaa;
+    -tm-text-on-accent:  white;
+    -tm-text-label:      #444444;
+    -tm-text-header:     #f0f0f0;
+
+    /* Bordes — rojo oscuro */
+    -tm-border:          #cc0000;
+    -tm-border-topbar:   #cc0000;
+    -tm-border-sidebar:  #cc0000;
+
+    /* Botones */
+    -tm-btn-primary:       #ff0000;
+    -tm-btn-primary-hover: #cc0000;
+    -tm-btn-secondary:     #cc0000;
+
+    /* Estados de tarea */
+    -tm-status-done:     #22c55e;
+    -tm-status-progress: #ef4444;
+    -tm-status-pending:  #f59e0b;
+    -tm-status-urgent:   #ff0000;
+
+    /* Sidebar */
+    -tm-sidebar-active-bg:    #2a0000;
+    -tm-sidebar-active-text:  #f87171;
+    -tm-sidebar-section-text: #444444;
+    -tm-topbar-user-bg:       #2a0000;
+    -tm-topbar-user-border:   #3a0000;
+    -tm-bg-hover-sidebar:     #141414;
+}
+
+/* ── Overrides específicos ── */
+
+.btn-clear-filters {
+    -fx-text-fill: -tm-text-secondary;
+}
+
+.radio-button {
+    -fx-text-fill: -tm-text-primary;
+}
+
+.tab-pane,
+.tab-pane > .tab-content-area {
+    -fx-background-color: -tm-bg-app;
+}
+
+.tab-pane .tab-header-background,
+.tab-pane .tab-header-area {
+    -fx-background-color: -tm-bg-surface;
+}
+
+.tab-pane .tab {
+    -fx-background-color: -tm-bg-surface;
+    -fx-border-color: -tm-border;
+}
+
+.tab-pane .tab .tab-label {
+    -fx-text-fill: -tm-text-secondary;
+}
+
+.tab-pane .tab:selected {
+    -fx-background-color: -tm-bg-active;
+}
+
+.tab-pane .tab:selected .tab-label {
+    -fx-text-fill: -tm-accent-light;
+}
+
+.btn-cancel-soft:hover {
+    -fx-background-color: -tm-bg-active;
+    -fx-text-fill: -tm-accent-light;
+}

@@ -45,6 +45,12 @@ public class LanguageManager {
             java.io.File file = new java.io.File(CONFIG_PATH);
             file.getParentFile().mkdirs();
             java.util.Properties props = new java.util.Properties();
+            // Leer props existentes para no sobreescribir el tema u otros valores
+            if (file.exists()) {
+                try (var in = new java.io.FileInputStream(file)) {
+                    props.load(in);
+                }
+            }
             props.setProperty("language", locale.getLanguage());
             try (var out = new java.io.FileOutputStream(file)) {
                 props.store(out, "TaskMaster config");
