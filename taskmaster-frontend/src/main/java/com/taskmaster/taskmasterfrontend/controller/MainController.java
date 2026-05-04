@@ -642,17 +642,28 @@ public class MainController {
             Long   taskId   = task.get("id").asLong();
 
             String dueLbl = ""; boolean isUrgentDate = false; boolean isOverdue = false;
+            boolean isDueSoon = false; // nueva variable de control
             if (task.has("dueDate") && !task.get("dueDate").isNull()) {
                 try {
                     LocalDate due = LocalDate.parse(task.get("dueDate").asText().substring(0, 10));
+                    long daysUntilDue = java.time.temporal.ChronoUnit.DAYS.between(today, due);
                     if (due.isBefore(today)) {
                         dueLbl = lm.get("date.overdue");
                         isUrgentDate = true;
                         isOverdue = true;
+                    } else if (due.equals(today)) {
+                        dueLbl = lm.get("common.date.today");
+                        isUrgentDate = true;
+                        isDueSoon = true;
+                    } else if (due.equals(today.plusDays(1))) {
+                        dueLbl = lm.get("date.tomorrow");
+                        isDueSoon = true;
+                    } else if (daysUntilDue <= 3) {
+                        dueLbl = due.format(DateTimeFormatter.ofPattern("d MMM", new Locale("es", "ES")));
+                        isDueSoon = true;
+                    } else {
+                        dueLbl = due.format(DateTimeFormatter.ofPattern("d MMM", new Locale("es", "ES")));
                     }
-                    else if (due.equals(today))                  { dueLbl = lm.get("common.date.today");    isUrgentDate = true; }
-                    else if (due.equals(today.plusDays(1))) { dueLbl = lm.get("date.tomorrow"); }
-                    else dueLbl = due.format(DateTimeFormatter.ofPattern("d MMM", new Locale("es", "ES")));
                 } catch (Exception ignored) {}
             }
 
@@ -681,16 +692,27 @@ public class MainController {
             badges.setAlignment(Pos.CENTER_LEFT);
 
             if (!dueLbl.isEmpty()) {
-                Label dueLabel = new Label(dueLbl);
                 if (isOverdue) {
+                    Label dueLabel = new Label(dueLbl);
                     dueLabel.setStyle("-fx-font-size: 10px; -fx-padding: 2 7 2 7; " +
                             "-fx-background-radius: 10px; -fx-text-fill: #991b1b; " +
                             "-fx-background-color: #fee2e2;");
+                    badges.getChildren().add(dueLabel);
+                } else if (isDueSoon) {
+                    HBox dueSoonBox = new HBox(3);
+                    dueSoonBox.setAlignment(Pos.CENTER_LEFT);
+                    FontIcon alertIcon = new FontIcon("fas-exclamation-triangle");
+                    alertIcon.setIconSize(11);
+                    alertIcon.setIconColor(javafx.scene.paint.Color.web("#dc2626"));
+                    Label dueLabel = new Label(dueLbl);
+                    dueLabel.setStyle("-fx-font-size: 11px; -fx-text-fill: #dc2626; -fx-font-weight: bold;");
+                    dueSoonBox.getChildren().addAll(alertIcon, dueLabel);
+                    badges.getChildren().add(dueSoonBox);
                 } else {
-                    dueLabel.setStyle("-fx-font-size: 11px; -fx-text-fill: " +
-                            (isUrgentDate ? "#dc2626" : "#888888") + ";");
+                    Label dueLabel = new Label(dueLbl);
+                    dueLabel.setStyle("-fx-font-size: 11px; -fx-text-fill: #888888;");
+                    badges.getChildren().add(dueLabel);
                 }
-                badges.getChildren().add(dueLabel);
             }
             badges.getChildren().add(createBadge(translateStatus(status), "-fx-font-size: 10px; -fx-padding: 2 7 2 7; " +
                     "-fx-background-radius: 10px; -fx-text-fill: white; " +
@@ -952,11 +974,30 @@ public class MainController {
         );
 
         boolean isOverdue = false;
+        boolean isDueSoon = false;
+        String dueLbl = "";
+        LocalDate today = LocalDate.now();
+
         if (task.has("dueDate") && !task.get("dueDate").isNull()
                 && !"DONE".equals(status) && !"CANCELLED".equals(status)) {
             try {
                 LocalDate dueDate = LocalDate.parse(task.get("dueDate").asText().substring(0, 10));
-                isOverdue = dueDate.isBefore(LocalDate.now());
+                long daysUntilDue = java.time.temporal.ChronoUnit.DAYS.between(today, dueDate);
+                if (dueDate.isBefore(today)) {
+                    isOverdue = true;
+                    dueLbl = lm.get("date.overdue");
+                } else if (dueDate.equals(today)) {
+                    isDueSoon = true;
+                    dueLbl = lm.get("common.date.today");
+                } else if (dueDate.equals(today.plusDays(1))) {
+                    isDueSoon = true;
+                    dueLbl = lm.get("date.tomorrow");
+                } else if (daysUntilDue <= 3) {
+                    isDueSoon = true;
+                    dueLbl = dueDate.format(DateTimeFormatter.ofPattern("d MMM", new Locale("es", "ES")));
+                } else {
+                    dueLbl = dueDate.format(DateTimeFormatter.ofPattern("d MMM", new Locale("es", "ES")));
+                }
             } catch (Exception ignored) {}
         }
 
@@ -966,11 +1007,27 @@ public class MainController {
         if (isOverdue) {
             card.getStyleClass().removeAll("task-card");
             card.getStyleClass().add("task-card-overdue");
-            Label overdueLabel = new Label(lm.get("date.overdue"));
+            Label overdueLabel = new Label(dueLbl);
             overdueLabel.setStyle("-fx-font-size: 10px; -fx-padding: 2 7 2 7; " +
                     "-fx-background-radius: 10px; -fx-text-fill: #991b1b; " +
                     "-fx-background-color: #fee2e2;");
             card.getChildren().addAll(checkBox, idLabel, titleLabel, overdueLabel,
+                    statusBadge, priorityBadge, spacer, menuBtn);
+        } else if (isDueSoon) {
+            HBox dueSoonBox = new HBox(3);
+            dueSoonBox.setAlignment(Pos.CENTER_LEFT);
+            FontIcon alertIcon = new FontIcon("fas-exclamation-triangle");
+            alertIcon.setIconSize(11);
+            alertIcon.setIconColor(javafx.scene.paint.Color.web("#dc2626"));
+            Label dueLabel = new Label(dueLbl);
+            dueLabel.setStyle("-fx-font-size: 11px; -fx-text-fill: #dc2626; -fx-font-weight: bold;");
+            dueSoonBox.getChildren().addAll(alertIcon, dueLabel);
+            card.getChildren().addAll(checkBox, idLabel, titleLabel, dueSoonBox,
+                    statusBadge, priorityBadge, spacer, menuBtn);
+        } else if (!dueLbl.isEmpty()) {
+            Label dueLabel = new Label(dueLbl);
+            dueLabel.setStyle("-fx-font-size: 11px; -fx-text-fill: #888888;");
+            card.getChildren().addAll(checkBox, idLabel, titleLabel, dueLabel,
                     statusBadge, priorityBadge, spacer, menuBtn);
         } else {
             card.getChildren().addAll(checkBox, idLabel, titleLabel,
