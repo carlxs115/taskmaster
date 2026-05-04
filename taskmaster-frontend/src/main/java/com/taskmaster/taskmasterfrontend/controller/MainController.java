@@ -15,6 +15,7 @@ import javafx.scene.control.*;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.MenuItem;
+import javafx.scene.control.ScrollPane;
 import javafx.scene.control.TextField;
 import javafx.scene.layout.*;
 import javafx.stage.Modality;
@@ -1500,7 +1501,7 @@ public class MainController {
                     getClass().getResource("/com/taskmaster/taskmasterfrontend/security-view.fxml"),
                     LanguageManager.getInstance().getBundle()
             );
-            VBox securityView = loader.load();
+            ScrollPane securityView = loader.load();
             HBox.setHgrow(securityView, Priority.ALWAYS);
             securityView.setUserData("settings");
             setSidebarActive(btnSecurity);

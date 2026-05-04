@@ -243,7 +243,7 @@
     -fx-padding: 4 10 4 10;
 }
 .btn-danger {
-    -fx-background-color: #e74c3c;
+    -fx-background-color: #ff0000;
     -fx-text-fill: white;
     -fx-font-size: 12px;
     -fx-background-radius: 6px;
@@ -1234,7 +1234,7 @@
     -fx-background-color: -tm-bg-surface;
     -fx-padding: 20;
     -fx-background-radius: 10px;
-    -fx-border-color: #ffcccc;
+    -fx-border-color: #ff0000;
     -fx-border-radius: 10px;
     -fx-border-width: 2.5;
 }
@@ -1246,7 +1246,7 @@
 .security-danger-title {
     -fx-font-size: 13px;
     -fx-font-weight: bold;
-    -fx-text-fill: #e74c3c;
+    -fx-text-fill: #ff0000;
 }
 .security-danger-desc {
     -fx-font-size: 12px;
@@ -1287,7 +1287,7 @@
 
 .security-danger-icon {
     -fx-icon-size: 13;
-    -fx-icon-color: #e74c3c;
+    -fx-icon-color: #ff0000;
 }
 
 /* ── Icono dentro del botón "Eliminar cuenta" ── */
