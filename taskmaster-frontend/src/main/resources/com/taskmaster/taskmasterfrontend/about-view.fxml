@@ -5,6 +5,8 @@
 <?import javafx.scene.layout.*?>
 <?import org.kordamp.ikonli.javafx.FontIcon?>
 
+<?import javafx.scene.image.Image?>
+<?import javafx.scene.image.ImageView?>
 <VBox xmlns:fx="http://javafx.com/fxml"
       fx:id="aboutRoot"
       fx:controller="com.taskmaster.taskmasterfrontend.controller.AboutController"
@@ -24,12 +26,11 @@
 
                 <!-- Logo + nombre + versión + descripción -->
                 <VBox spacing="8" alignment="CENTER" fillWidth="true">
-                    <StackPane fx:id="logoContainer" minWidth="72" minHeight="72"
-                               maxWidth="72" maxHeight="72"
-                               styleClass="about-logo-container">
-                        <Label text="TM" styleClass="about-logo-label"
-                               alignment="CENTER" maxWidth="Infinity"/>
-                    </StackPane>
+                    <ImageView fitWidth="72" fitHeight="72" preserveRatio="true" smooth="true">
+                        <image>
+                            <Image url="@images/app-icon/icon_128.png"/>
+                        </image>
+                    </ImageView>
                     <Label text="TaskMaster" styleClass="about-app-name"
                            alignment="CENTER" maxWidth="Infinity"/>
                     <Label fx:id="versionLabel" styleClass="about-version"
