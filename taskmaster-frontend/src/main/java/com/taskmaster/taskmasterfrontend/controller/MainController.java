@@ -81,6 +81,7 @@ public class MainController {
     @FXML private Button btnHelp;
     @FXML private HBox searchContainer;
     @FXML private FontIcon sortDirectionIcon;
+    @FXML private Button btnCalendar;
 
     private AvatarView sidebarAvatar;
 
@@ -1184,6 +1185,37 @@ public class MainController {
     }
 
     /**
+     * Navega a la vista de calendario y la muestra en el área principal.
+     *
+     * <p>Limpia el estado de navegación activo (proyecto, categoría y modo
+     * "todas las tareas") y carga {@code calendar-view.fxml}, registrando
+     * el callback para abrir el detalle de una tarea al hacer clic en un chip.</p>
+     */
+    @FXML
+    private void handleCalendar() {
+        activeProjectDetailController = null;
+        viewingAllTasks = false;
+        selectedProjectId = null;
+        selectedCategory  = null;
+        removeOverlayPanels();
+        try {
+            FXMLLoader loader = new FXMLLoader(
+                    getClass().getResource("/com/taskmaster/taskmasterfrontend/calendar-view.fxml"),
+                    LanguageManager.getInstance().getBundle()
+            );
+            VBox calendarView = loader.load();
+            HBox.setHgrow(calendarView, Priority.ALWAYS);
+            calendarView.setUserData("settings"); // usa "settings" para que swapMainAreaWith lo limpie
+            CalendarController controller = loader.getController();
+            controller.setOnOpenTask(task -> openTaskDetail(task));
+            setSidebarActive(btnCalendar);
+            swapMainAreaWith(calendarView);
+        } catch (Exception e) {
+            showAlert("error.title", "error.open.calendar");
+        }
+    }
+
+    /**
      * Carga las tareas de la categoría indicada desde el backend y las
      * renderiza en el área principal con los filtros visibles.
      *
@@ -2129,7 +2161,7 @@ public class MainController {
      */
     private void clearSidebarSelection() {
         for (Button btn : new Button[]{btnHome, btnAllTasks, btnPersonal,
-                btnEstudios, btnTrabajo, btnSettings, btnSecurity, btnTrash, btnHelp}) {
+                btnEstudios, btnTrabajo, btnCalendar, btnSettings, btnSecurity, btnTrash, btnHelp}) {
             btn.getStyleClass().removeAll("sidebar-btn-active");
             if (!btn.getStyleClass().contains("sidebar-btn"))
                 btn.getStyleClass().add("sidebar-btn");
@@ -2370,6 +2402,7 @@ public class MainController {
         filterLabel.setText(lm.get("filter.label"));
         sortLabel.setText(lm.get("sort.label"));
         clearFiltersBtn.setText(lm.get("filter.clear"));
+        btnCalendar.setText(lm.get("sidebar.calendar"));
 
         String currentStatus   = statusFilter.getValue();
         String currentPriority = priorityFilter.getValue();

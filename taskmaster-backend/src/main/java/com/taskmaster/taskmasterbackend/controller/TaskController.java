@@ -1,5 +1,6 @@
 package com.taskmaster.taskmasterbackend.controller;
 
+import com.taskmaster.taskmasterbackend.dto.CalendarTaskDTO;
 import com.taskmaster.taskmasterbackend.dto.request.TaskRequest;
 import com.taskmaster.taskmasterbackend.dto.response.HomeResponse;
 import com.taskmaster.taskmasterbackend.dto.response.ProjectWithTasksResponse;
@@ -139,6 +140,25 @@ public class TaskController {
             @PathVariable Long id,
             @AuthenticationPrincipal UserDetails userDetails) {
         return ResponseEntity.ok(toResponseList(taskService.getSubTasks(id)));
+    }
+
+    /**
+     * Devuelve las tareas activas del usuario con fecha límite en el mes indicado.
+     * Se usa para poblar la vista de calendario en el frontend.
+     *
+     * @param year  año del mes a consultar
+     * @param month mes a consultar (1-12)
+     * @return lista de tareas del calendario
+     */
+    @GetMapping("/calendar")
+    public ResponseEntity<List<CalendarTaskDTO>> getCalendarTasks(
+            @RequestParam int year,
+            @RequestParam int month,
+            @AuthenticationPrincipal UserDetails userDetails) {
+
+        Long userId = securityUtils.getUserId(userDetails);
+        List<CalendarTaskDTO> tasks = taskService.getTasksForCalendar(userId, year, month);
+        return ResponseEntity.ok(tasks);
     }
 
     /**

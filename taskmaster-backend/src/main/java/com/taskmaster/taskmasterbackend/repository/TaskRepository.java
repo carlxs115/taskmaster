@@ -7,6 +7,7 @@ import com.taskmaster.taskmasterbackend.model.enums.TaskStatus;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -94,6 +95,18 @@ public interface TaskRepository extends JpaRepository<Task, Long> {
      * @return lista de tareas personales raíz activas con esa categoría
      */
     List<Task> findByUserIdAndCategoryAndProjectIsNullAndParentTaskIsNullAndDeletedFalse(Long userId, TaskCategory category);
+
+    /**
+     * Devuelve las tareas activas de un usuario con dueDate en un rango de fechas.
+     * Excluye subtareas (parentTask == null) y tareas eliminadas.
+     *
+     * @param userId    identificador del usuario
+     * @param startDate inicio del rango (inclusive)
+     * @param endDate   fin del rango (inclusive)
+     * @return lista de tareas con fecha límite en ese rango
+     */
+    List<Task> findByUserIdAndDueDateBetweenAndParentTaskIsNullAndDeletedFalse(
+            Long userId, LocalDate startDate, LocalDate endDate);
 
     // ── Papelera ──────────────────────────────────────────────────────────────
 

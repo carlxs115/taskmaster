@@ -74,6 +74,14 @@
                 </ScrollPane>
 
                 <Separator styleClass="sidebar-separator"/>
+                <Button fx:id="btnCalendar" text="%sidebar.calendar"
+                        onAction="#handleCalendar"
+                        maxWidth="Infinity" styleClass="sidebar-btn"
+                        contentDisplay="LEFT" graphicTextGap="10">
+                    <graphic><FontIcon iconLiteral="fas-calendar-alt" styleClass="sidebar-icon"/></graphic>
+                </Button>
+
+                <Separator styleClass="sidebar-separator"/>
                 <Button fx:id="btnHelp" text="%sidebar.help"
                         onAction="#handleHelp"
                         maxWidth="Infinity" styleClass="sidebar-btn"

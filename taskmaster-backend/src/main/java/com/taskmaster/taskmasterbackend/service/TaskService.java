@@ -1,5 +1,6 @@
 package com.taskmaster.taskmasterbackend.service;
 
+import com.taskmaster.taskmasterbackend.dto.CalendarTaskDTO;
 import com.taskmaster.taskmasterbackend.model.Project;
 import com.taskmaster.taskmasterbackend.model.Task;
 import com.taskmaster.taskmasterbackend.model.User;
@@ -122,6 +123,32 @@ public class TaskService {
      */
     public List<Task> getTasksByCategory(TaskCategory category, Long userId) {
         return taskRepository.findByUserIdAndCategoryAndProjectIsNullAndParentTaskIsNullAndDeletedFalse(userId, category);
+    }
+
+    /**
+     * Devuelve las tareas activas del usuario con dueDate en el mes indicado.
+     * Excluye subtareas y tareas eliminadas.
+     *
+     * @param userId identificador del usuario
+     * @param year   año del mes a consultar
+     * @param month  mes a consultar (1-12)
+     * @return lista de DTOs de calendario
+     */
+    public List<CalendarTaskDTO> getTasksForCalendar(Long userId, int year, int month) {
+        LocalDate startDate = LocalDate.of(year, month, 1);
+        LocalDate endDate   = startDate.withDayOfMonth(startDate.lengthOfMonth());
+
+        return taskRepository
+                .findByUserIdAndDueDateBetweenAndParentTaskIsNullAndDeletedFalse(userId, startDate, endDate)
+                .stream()
+                .map(t -> new CalendarTaskDTO(
+                        t.getId(),
+                        t.getTitle(),
+                        t.getDueDate(),
+                        t.getStatus(),
+                        t.getPriority()
+                ))
+                .toList();
     }
 
     // ── Escritura ─────────────────────────────────────────────────────────────

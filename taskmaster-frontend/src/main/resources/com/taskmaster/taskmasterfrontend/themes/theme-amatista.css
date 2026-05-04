@@ -328,7 +328,7 @@
 .app-topbar {
     -fx-background-color: -tm-bg-topbar;
     -fx-border-color: -tm-border-topbar;
-    -fx-border-width: 0 0 1.5 0;
+    -fx-border-width: 0 0 2.5 0;
     -fx-padding: 13 20 13 20;
 }
 .app-topbar-logo-task {
@@ -368,7 +368,7 @@
     -fx-min-width: 220px;
     -fx-max-width: 220px;
     -fx-border-color: -tm-border-sidebar;
-    -fx-border-width: 0 1.5 0 0;
+    -fx-border-width: 0 2.5 0 0;
 }
 .sidebar-scroll {
     -fx-background-color: -tm-bg-sidebar;
@@ -532,7 +532,7 @@
     -fx-background-color: -tm-bg-surface;
     -fx-padding: 14 20 14 20;
     -fx-border-color: -tm-border;
-    -fx-border-width: 0 0 1.5 0;
+    -fx-border-width: 0 0 2.5 0;
 }
 .area-title {
     -fx-font-size: 15px;
@@ -580,7 +580,7 @@
     -fx-background-color: -tm-bg-surface;
     -fx-padding: 8 20 8 20;
     -fx-border-color: -tm-border;
-    -fx-border-width: 0 0 1.5 0;
+    -fx-border-width: 0 0 2.5 0;
 }
 .filter-label {
     -fx-font-size: 11px;
@@ -638,7 +638,7 @@
     -fx-background-radius: 8px;
     -fx-border-color: -tm-border;
     -fx-border-radius: 8px;
-    -fx-border-width: 1.5;
+    -fx-border-width: 2.5;
 }
 .task-card-overdue {
     -fx-background-color: -tm-bg-surface;
@@ -646,7 +646,7 @@
     -fx-background-radius: 8px;
     -fx-border-color: #fecaca;
     -fx-border-radius: 8px;
-    -fx-border-width: 1 1 1 3;
+    -fx-border-width: 1 1 1 4;
 }
 .task-title {
     -fx-font-size: 13px;
@@ -692,7 +692,7 @@
     -fx-background-color: -tm-bg-surface;
     -fx-padding: 20 24 20 24;
     -fx-border-color: -tm-border;
-    -fx-border-width: 0 0 1.5 0;
+    -fx-border-width: 0 0 2.5 0;
 }
 .home-greeting-label {
     -fx-font-size: 17px;
@@ -709,7 +709,7 @@
     -fx-background-radius: 8px;
     -fx-border-color: -tm-border;
     -fx-border-radius: 8px;
-    -fx-border-width: 1.5;
+    -fx-border-width: 2.5;
 }
 .stat-card-number {
     -fx-font-size: 22px;
@@ -726,7 +726,7 @@
     -fx-background-radius: 10px;
     -fx-border-color: -tm-border;
     -fx-border-radius: 10px;
-    -fx-border-width: 1.5;
+    -fx-border-width: 2.5;
 }
 .home-panel-title {
     -fx-font-size: 13px;
@@ -760,7 +760,7 @@
     -fx-background-color: -tm-bg-surface;
     -fx-padding: 14 20 14 20;
     -fx-border-color: -tm-border;
-    -fx-border-width: 0 0 1.5 0;
+    -fx-border-width: 0 0 2.5 0;
 }
 .profile-header-title {
     -fx-font-size: 15px;
@@ -773,7 +773,7 @@
     -fx-background-radius: 10px;
     -fx-border-color: -tm-border;
     -fx-border-radius: 10px;
-    -fx-border-width: 1.5;
+    -fx-border-width: 2.5;
 }
 .card {
     -fx-background-color: -tm-bg-surface;
@@ -781,7 +781,7 @@
     -fx-background-radius: 8px;
     -fx-border-color: -tm-border;
     -fx-border-radius: 8px;
-    -fx-border-width: 1.5;
+    -fx-border-width: 2.5;
 }
 .profile-username-label {
     -fx-font-size: 20px;
@@ -841,7 +841,7 @@
     -fx-background-color: -tm-bg-surface;
     -fx-padding: 14 20 14 20;
     -fx-border-color: -tm-border;
-    -fx-border-width: 0 0 1.5 0;
+    -fx-border-width: 0 0 2.5 0;
 }
 .detail-id-badge {
     -fx-font-size: 11px;
@@ -887,7 +887,7 @@
     -fx-background-radius: 8px;
     -fx-border-color: -tm-border;
     -fx-border-radius: 8px;
-    -fx-border-width: 1.5;
+    -fx-border-width: 2.5;
 }
 .detail-section-title {
     -fx-font-size: 13px;
@@ -932,7 +932,7 @@
     -fx-background-radius: 8px;
     -fx-border-color: -tm-border;
     -fx-border-radius: 8px;
-    -fx-border-width: 1.5;
+    -fx-border-width: 2.5;
 }
 .project-stat-number {
     -fx-font-size: 22px;
@@ -1172,7 +1172,7 @@
     -fx-background-color: -tm-bg-surface;
     -fx-padding: 16 20 16 20;
     -fx-border-color: -tm-border;
-    -fx-border-width: 0 0 1.5 0;
+    -fx-border-width: 0 0 2.5 0;
 }
 .trash-title {
     -fx-font-size: 18px;
@@ -1228,7 +1228,7 @@
     -fx-background-radius: 10px;
     -fx-border-color: -tm-border;
     -fx-border-radius: 10px;
-    -fx-border-width: 1.5;
+    -fx-border-width: 2.5;
 }
 .security-card-danger {
     -fx-background-color: -tm-bg-surface;
@@ -1236,7 +1236,7 @@
     -fx-background-radius: 10px;
     -fx-border-color: #ffcccc;
     -fx-border-radius: 10px;
-    -fx-border-width: 1.5;
+    -fx-border-width: 2.5;
 }
 .security-section-title {
     -fx-font-size: 13px;
@@ -1465,4 +1465,87 @@
 .birthday-banner-label {
     -fx-font-size: 13px;
     -fx-text-fill: #92400e;
+}
+
+/* =====================================================
+   CALENDAR — Pantalla de calendario
+   ===================================================== */
+.cal-day-header {
+    -fx-font-size: 11px;
+    -fx-font-weight: bold;
+    -fx-text-fill: -tm-text-secondary;
+    -fx-padding: 4 0 4 0;
+}
+.cal-cell {
+    -fx-background-color: -tm-bg-surface;
+    -fx-background-radius: 8px;
+    -fx-border-color: -tm-border;
+    -fx-border-radius: 8px;
+    -fx-border-width: 2.5px;
+}
+.cal-day-num {
+    -fx-font-size: 12px;
+    -fx-text-fill: -tm-text-secondary;
+    -fx-font-weight: bold;
+}
+.cal-day-num-today {
+    -fx-font-size: 12px;
+    -fx-font-weight: bold;
+    -fx-text-fill: white;
+    -fx-background-color: -tm-accent;
+    -fx-background-radius: 50%;
+    -fx-min-width: 22px;
+    -fx-min-height: 22px;
+    -fx-max-width: 22px;
+    -fx-max-height: 22px;
+    -fx-alignment: center;
+}
+.cal-chip {
+    -fx-font-size: 10px;
+    -fx-padding: 2 6 2 6;
+    -fx-background-radius: 4px;
+    -fx-background-color: -tm-bg-badge;
+    -fx-border-color: -tm-border;
+    -fx-border-radius: 4px;
+    -fx-border-width: 1px;
+    -fx-text-fill: -tm-text-primary;
+    -fx-cursor: hand;
+}
+.cal-chip:hover {
+    -fx-background-color: -tm-bg-hover;
+}
+.cal-chip-more {
+    -fx-font-size: 10px;
+    -fx-text-fill: -tm-text-secondary;
+    -fx-padding: 1 4 1 4;
+}
+.cal-month-label {
+    -fx-font-size: 14px;
+    -fx-font-weight: bold;
+    -fx-text-fill: -tm-text-primary;
+    -fx-alignment: center;
+}
+.cal-nav-btn {
+    -fx-background-color: transparent;
+    -fx-cursor: hand;
+    -fx-padding: 6 10 6 10;
+    -fx-background-radius: 6px;
+}
+.cal-nav-btn:hover {
+    -fx-background-color: -tm-bg-hover;
+}
+.cal-chip-todo {
+    -fx-border-color: #95a5a6;
+}
+.cal-chip-in-progress {
+    -fx-border-color: #3498db;
+}
+.cal-chip-done {
+    -fx-border-color: #2ecc71;
+}
+.cal-chip-cancelled {
+    -fx-border-color: #e74c3c;
+}
+.cal-chip-submitted {
+    -fx-border-color: #8e44ad;
 }
