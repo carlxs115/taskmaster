@@ -24,9 +24,9 @@
 
         <!-- FORMULARIO -->
         <VBox spacing="8">
-            <Label text="%common.username" styleClass="auth-field-label"/>
+            <Label text="%login.identifier.label" styleClass="auth-field-label"/>
             <TextField fx:id="usernameField"
-                       promptText="%common.username.prompt"
+                       promptText="%login.identifier.prompt"
                        styleClass="auth-field"/>
         </VBox>
         <VBox spacing="8">

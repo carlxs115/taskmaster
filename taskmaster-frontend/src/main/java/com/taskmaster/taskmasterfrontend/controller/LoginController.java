@@ -63,51 +63,43 @@ public class LoginController {
      * aplica el tema del usuario y navega a la pantalla principal.</p>
      */
     @FXML
-    private void handleLogin(){
-        String username = usernameField.getText().trim();
+    private void handleLogin() {
+        String identifier = usernameField.getText().trim();
         String password = passwordField.getText().trim();
 
-        if (username.isEmpty() || password.isEmpty()) {
+        if (identifier.isEmpty() || password.isEmpty()) {
             showError(lm.get("error.fields.required"));
             return;
         }
 
-        // Desactivamos el botón para evitar doble click
         loginButton.setDisable(true);
         errorLabel.setVisible(false);
 
-        // Petición en hilo separado para no bloquear la UI
         new Thread(() -> {
             try {
-                // Creamos el objeto con las credenciales
                 var credentials = new java.util.HashMap<String, String>();
-                credentials.put("username", username);
+                credentials.put("username", identifier);   // Spring Security espera este key
                 credentials.put("password", password);
 
-                // Hacemos la petición POST al backend
                 HttpResponse<String> response = AppContext.getInstance()
                         .getApiService()
                         .post("/api/auth/login", credentials);
 
                 if (response.statusCode() == 200) {
-                    // Login exitoso - parseamos la respuesta
                     ObjectMapper mapper = new ObjectMapper();
                     JsonNode jsonNode = mapper.readTree(response.body());
-
                     Long userId = jsonNode.get("id").asLong();
                     String returnedUsername = jsonNode.get("username").asText();
 
-                    // Guardamos las credenciales y datos del usuario en AppContext
-                    AppContext.getInstance().getApiService().setCredentials(username, password);
+                    // Guardamos siempre el username real devuelto por el backend
+                    AppContext.getInstance().getApiService().setCredentials(returnedUsername, password);
                     AppContext.getInstance().setCurrentUserId(userId);
                     AppContext.getInstance().setCurrentUsername(returnedUsername);
                     AppContext.getInstance().setCurrentPassword(password);
 
-                    // Guardar si el usuario tiene avatar (para decidir si pedimos la imagen después)
                     AppContext.getInstance().setHasAvatar(
                             jsonNode.has("hasAvatar") && jsonNode.get("hasAvatar").asBoolean(false));
 
-                    // Guardar birthDate y comprobar cumpleaños
                     if (jsonNode.has("birthDate") && !jsonNode.get("birthDate").isNull()) {
                         try {
                             LocalDate birthDate = LocalDate.parse(
@@ -129,13 +121,11 @@ public class LoginController {
                         }
                     } catch (Exception ignored) {}
 
-                    // Navegamos a la pantalla principal en el hilo de JavaFX
                     Platform.runLater(() -> {
                         navigateToMain();
                         checkBirthday();
                     });
                 } else {
-                    // Login fallido — mostramos error
                     Platform.runLater(() -> {
                         showError(lm.get("login.error.credentials"));
                         loginButton.setDisable(false);
@@ -148,7 +138,6 @@ public class LoginController {
                 });
             }
         }).start();
-        System.out.println("Login: " + username);
     }
 
     /**

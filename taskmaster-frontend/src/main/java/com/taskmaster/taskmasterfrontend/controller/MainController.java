@@ -1907,8 +1907,12 @@ public class MainController {
                                 .getApiService().delete("/api/projects/" + projectId);
                         Platform.runLater(() -> {
                             if (resp.statusCode() == 200 || resp.statusCode() == 204) {
-                                if (projectId.equals(selectedProjectId)) handleGoHome();
-                                loadProjects(); reloadTasks();
+                                if (projectId.equals(selectedProjectId) || activeProjectDetailController != null) {
+                                    activeProjectDetailController = null;
+                                    handleGoHome();
+                                }
+                                loadProjects();
+                                reloadTasks();
                                 if (trashController != null) trashController.refresh();
                             } else showAlert("error.title", "error.delete.project");
                         });

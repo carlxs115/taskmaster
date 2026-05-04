@@ -83,8 +83,9 @@ public class AuthController {
                     )
             );
 
-            // Cargamos el usuario completo para devolver sus datos
-            User user = userService.findByUsername(request.getUsername());
+            // Usamos el username real resuelto por Spring Security, no el identificador del request
+            String resolvedUsername = authentication.getName();
+            User user = userService.findByUsername(resolvedUsername);
             activityLogService.log(user.getId(), ActionType.LOGIN);
             return ResponseEntity.ok(toResponse(user));
 

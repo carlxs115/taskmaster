@@ -33,13 +33,13 @@ public class UserDetailsServiceImpl implements UserDetailsService {
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
         com.taskmaster.taskmasterbackend.model.User user = userRepository.findByUsername(username)
-                .orElseThrow(() -> new UsernameNotFoundException("Usuario no encontrado: " + username));
+                .or(() -> userRepository.findByEmail(username))
+                .orElseThrow(() -> new UsernameNotFoundException(
+                        "Usuario no encontrado: " + username));
 
         return User.withUsername(user.getUsername())
-                .password(user.getPassword())  // Ya viene cifrada con BCrypt
+                .password(user.getPassword())
                 .roles("USER")
                 .build();
     }
-
-
 }
