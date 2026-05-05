@@ -206,10 +206,15 @@ public class NewTaskController {
             return;
         }
 
-        int selectedIndex = projectCombo.getSelectionModel().getSelectedIndex();
-        Long projectId = (selectedIndex >= 0 && selectedIndex < projectIds.size())
-                ? projectIds.get(selectedIndex)
-                : null;
+        Long projectId;
+        if (preSelectedProjectId != null) {
+            projectId = preSelectedProjectId;
+        } else {
+            int selectedIndex = projectCombo.getSelectionModel().getSelectedIndex();
+            projectId = (selectedIndex >= 0 && selectedIndex < projectIds.size())
+                    ? projectIds.get(selectedIndex)
+                    : null;
+        }
 
         new Thread(() -> {
             try {

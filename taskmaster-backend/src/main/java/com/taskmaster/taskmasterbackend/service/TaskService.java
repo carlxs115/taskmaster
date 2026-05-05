@@ -412,7 +412,8 @@ public class TaskService {
      * @return lista de todas las tareas raíz del proyecto
      */
     public List<Task> getAllTasksByProject(Long projectId) {
-        return taskRepository.findByProjectIdAndParentTaskIsNull(projectId);
+        List<Task> tasks = taskRepository.findByProjectIdAndParentTaskIsNull(projectId);
+        return tasks;
     }
 
     /**

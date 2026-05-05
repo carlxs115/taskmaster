@@ -476,7 +476,12 @@ public class ProjectDetailController {
             controller.initData(projectId);
             controller.setOnTaskCreated(() -> {
                 loadTasks(projectId);
-                activityLogSectionController.loadForEntity("PROJECT", projectId, "TASK");
+                javafx.animation.PauseTransition pause = new javafx.animation.PauseTransition(
+                        javafx.util.Duration.millis(300));
+                pause.setOnFinished(e -> {
+                    activityLogSectionController.loadForEntity("PROJECT", projectId, "TASK");
+                });
+                pause.play();
             });
             showAsDialog(root, lm.get("new.task.title"));
         } catch (IOException e) {
@@ -500,7 +505,6 @@ public class ProjectDetailController {
         applyThemeToScene(scene);
         dialog.setScene(scene);
         dialog.centerOnScreen();
-        System.out.println("centrado");
         dialog.showAndWait();
     }
 

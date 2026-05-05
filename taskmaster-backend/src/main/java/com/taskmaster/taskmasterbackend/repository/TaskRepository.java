@@ -5,6 +5,8 @@ import com.taskmaster.taskmasterbackend.model.enums.TaskCategory;
 import com.taskmaster.taskmasterbackend.model.enums.TaskPriority;
 import com.taskmaster.taskmasterbackend.model.enums.TaskStatus;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.time.LocalDate;
@@ -166,7 +168,8 @@ public interface TaskRepository extends JpaRepository<Task, Long> {
      * @param projectId identificador del proyecto
      * @return lista de todas las tareas raíz del proyecto, activas y eliminadas
      */
-    List<Task> findByProjectIdAndParentTaskIsNull(Long projectId);
+    @Query("SELECT t FROM Task t WHERE t.project.id = :projectId AND t.parentTask IS NULL")
+    List<Task> findByProjectIdAndParentTaskIsNull(@Param("projectId") Long projectId);
 
     /**
      * Comprueba si un proyecto tiene tareas activas con un estado distinto a los indicados.
