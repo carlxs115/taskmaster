@@ -186,6 +186,18 @@ public class ProjectController {
     }
 
     /**
+     * DELETE /api/projects/trash/empty
+     * Elimina permanentemente todos los proyectos en la papelera del usuario.
+     */
+    @DeleteMapping("/trash/empty")
+    public ResponseEntity<Void> emptyProjectTrash(
+            @AuthenticationPrincipal UserDetails userDetails) {
+        Long userId = getUserId(userDetails);
+        projectService.emptyTrash(userId);
+        return ResponseEntity.noContent().build();
+    }
+
+    /**
      * Extrae el identificador del usuario autenticado.
      *
      * @param userDetails usuario autenticado inyectado por Spring Security

@@ -13,6 +13,14 @@
         <Region HBox.hgrow="ALWAYS"/>
         <FontIcon iconLiteral="fas-clock" styleClass="trash-retention-icon"/>
         <Label fx:id="retentionLabel" styleClass="trash-retention-label"/>
+        <Button text="%trash.empty.all"
+                onAction="#handleEmptyTrash"
+                styleClass="btn-danger"
+                contentDisplay="LEFT" graphicTextGap="6">
+            <graphic>
+                <FontIcon iconLiteral="fas-trash-alt" styleClass="btn-danger-icon"/>
+            </graphic>
+        </Button>
     </HBox>
 
     <TabPane fx:id="tabPane" VBox.vgrow="ALWAYS"

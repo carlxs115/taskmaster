@@ -450,6 +450,34 @@ public class TrashController {
     }
 
     /**
+     * Muestra confirmación y vacía toda la papelera (tareas y proyectos).
+     */
+    @FXML
+    private void handleEmptyTrash() {
+        Alert confirm = new Alert(Alert.AlertType.CONFIRMATION);
+        confirm.setTitle(lm.get("trash.empty.confirm.title"));
+        confirm.setHeaderText(null);
+        confirm.setContentText(lm.get("trash.empty.confirm.content"));
+        confirm.showAndWait().ifPresent(response -> {
+            if (response == ButtonType.OK) {
+                new Thread(() -> {
+                    try {
+                        AppContext.getInstance().getApiService().delete("/api/tasks/trash/empty");
+                        AppContext.getInstance().getApiService().delete("/api/projects/trash/empty");
+                        Platform.runLater(() -> {
+                            loadTrashTasks();
+                            loadTrashProjects();
+                            if (onTrashChanged != null) onTrashChanged.run();
+                        });
+                    } catch (Exception e) {
+                        Platform.runLater(() -> showAlert(lm.get("error.title"), lm.get("error.connection")));
+                    }
+                }).start();
+            }
+        });
+    }
+
+    /**
      * Recarga tanto las tareas como los proyectos eliminados desde el backend.
      * Puede llamarse desde el controlador padre para forzar una actualización.
      */

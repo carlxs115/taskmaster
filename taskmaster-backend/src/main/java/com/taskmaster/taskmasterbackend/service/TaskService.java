@@ -437,4 +437,23 @@ public class TaskService {
                 title
         );
     }
+
+    /**
+     * Elimina definitivamente todas las tareas en la papelera del usuario.
+     *
+     * @param userId identificador del usuario
+     */
+    public void emptyTrash(Long userId) {
+        List<Task> deleted = getDeletedTasksByUser(userId);
+        for (Task task : deleted) {
+            taskRepository.delete(task);
+            activityLogService.log(
+                    userId,
+                    ActionType.TASK_PERMANENTLY_DELETED,
+                    "TASK",
+                    task.getId(),
+                    task.getTitle()
+            );
+        }
+    }
 }

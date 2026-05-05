@@ -233,4 +233,24 @@ public class ProjectService {
         List<Project> expired = projectRepository.findByDeletedTrueAndDeletedAtBefore(cutoff);
         projectRepository.deleteAll(expired);
     }
+
+    /**
+     * Elimina definitivamente todos los proyectos en la papelera del usuario.
+     *
+     * @param userId identificador del usuario
+     */
+    public void emptyTrash(Long userId) {
+        List<Project> deleted = getDeletedProjectsByUser(userId);
+        for (Project project : deleted) {
+            String name = project.getName();
+            projectRepository.deleteById(project.getId());
+            activityLogService.log(
+                    userId,
+                    ActionType.PROJECT_PERMANENTLY_DELETED,
+                    "PROJECT",
+                    project.getId(),
+                    name
+            );
+        }
+    }
 }

@@ -362,6 +362,18 @@ public class TaskController {
     }
 
     /**
+     * DELETE /api/tasks/trash/empty
+     * Elimina permanentemente todas las tareas en la papelera del usuario.
+     */
+    @DeleteMapping("/trash/empty")
+    public ResponseEntity<Void> emptyTaskTrash(
+            @AuthenticationPrincipal UserDetails userDetails) {
+        Long userId = securityUtils.getUserId(userDetails);
+        taskService.emptyTrash(userId);
+        return ResponseEntity.noContent().build();
+    }
+
+    /**
      * PUT /api/tasks/{id}/restore
      * Restaura una tarea desde la papelera.
      *
