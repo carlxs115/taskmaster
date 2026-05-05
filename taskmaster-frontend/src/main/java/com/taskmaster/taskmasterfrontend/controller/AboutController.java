@@ -7,7 +7,6 @@ import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
-import javafx.scene.layout.FlowPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
@@ -32,22 +31,8 @@ public class AboutController {
     @FXML private Label versionLabel;
     @FXML private Label  descriptionLabel;
     @FXML private Label  copyrightLabel;
-    @FXML private FlowPane techBadges;
 
     private final LanguageManager lm = LanguageManager.getInstance();
-
-    /**
-     * Datos de los badges tecnológicos mostrados en la vista.
-     * Cada entrada contiene: nombre, color de fondo (hex) y color de texto (hex).
-     */
-    private static final String[][] TECH_DATA = {
-            { "JavaFX 21.0.6", "#dbeafe", "#1e40af" },
-            { "Spring Boot 3", "#dcfce7", "#166534" },
-            { "JDK 25",        "#f3e8ff", "#6b21a8" },
-            { "H2 / PostgreSQL","#fef3c7", "#92400e" },
-            { "Maven",         "#fee2e2", "#991b1b" },
-            { "IntelliJ IDEA", "#e0f2fe", "#0c4a6e" },
-    };
 
     /**
      * Inicializa la vista con los textos localizados, el año de copyright
@@ -63,27 +48,6 @@ public class AboutController {
         String mutedColor = dark ? "#6b6b8a" : "#aaaaaa";
         versionLabel.setStyle("-fx-text-fill: " + mutedColor + ";");
         copyrightLabel.setStyle("-fx-text-fill: " + mutedColor + ";");
-
-        buildTechBadges();
-    }
-
-    /**
-     * Construye y añade al {@code FlowPane} los badges visuales
-     * de cada tecnología definida en {@link #TECH_DATA}.
-     */
-    private void buildTechBadges() {
-        techBadges.getChildren().clear();
-        for (String[] tech : TECH_DATA) {
-            Label badge = new Label(tech[0]);
-            badge.setStyle(
-                    "-fx-font-size: 11px; " +
-                            "-fx-padding: 4 10 4 10; " +
-                            "-fx-background-radius: 10px; " +
-                            "-fx-background-color: " + tech[1] + "; " +
-                            "-fx-text-fill: " + tech[2] + ";"
-            );
-            techBadges.getChildren().add(badge);
-        }
     }
 
     /**

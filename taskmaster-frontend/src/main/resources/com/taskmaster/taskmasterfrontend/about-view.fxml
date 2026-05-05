@@ -58,18 +58,6 @@
                     </VBox>
                     <Separator/>
 
-                    <!-- Tecnologías -->
-                    <VBox spacing="10" alignment="CENTER_LEFT"
-                          style="-fx-padding: 16 20 16 20;">
-                        <HBox alignment="CENTER_LEFT" spacing="6">
-                            <FontIcon iconLiteral="fas-code" styleClass="about-chip-icon"/>
-                            <Label text="%about.tech.label" styleClass="about-section-chip"/>
-                        </HBox>
-                        <FlowPane fx:id="techBadges" hgap="8" vgap="8"
-                                  alignment="CENTER_LEFT"/>
-                    </VBox>
-                    <Separator/>
-
                     <!-- Botones legales -->
                     <VBox spacing="8" alignment="CENTER_LEFT"
                           style="-fx-padding: 16 20 16 20;">
