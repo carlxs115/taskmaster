@@ -67,6 +67,13 @@ public class NewProjectController {
                 lm.get("priority.low"), lm.get("priority.medium"),
                 lm.get("priority.high"), lm.get("priority.urgent")));
         priorityCombo.setValue(lm.get("priority.medium"));
+
+        nameField.setOnKeyPressed(e -> {
+            if (e.getCode() == javafx.scene.input.KeyCode.ENTER) handleCreate();
+        });
+        descriptionField.setOnKeyPressed(e -> {
+            if (e.getCode() == javafx.scene.input.KeyCode.ENTER) handleCreate();
+        });
     }
 
     /**

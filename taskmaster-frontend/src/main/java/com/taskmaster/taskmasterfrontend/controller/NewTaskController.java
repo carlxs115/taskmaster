@@ -94,6 +94,13 @@ public class NewTaskController {
                     categoryBox.setManaged(!hasProject);
                 }
         );
+
+        titleField.setOnKeyPressed(e -> {
+            if (e.getCode() == javafx.scene.input.KeyCode.ENTER) handleCreate();
+        });
+        descriptionField.setOnKeyPressed(e -> {
+            if (e.getCode() == javafx.scene.input.KeyCode.ENTER) handleCreate();
+        });
     }
 
     /**

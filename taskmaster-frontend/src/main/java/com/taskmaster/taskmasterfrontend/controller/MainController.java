@@ -549,7 +549,13 @@ public class MainController {
             barBg.getStyleClass().add("progress-bar-bg");
             barBg.setMinHeight(5); barBg.setMaxHeight(5);
             HBox barFill = new HBox();
-            String barColor = getCategoryColor(pCategory);
+
+            String barColor;
+            if (pct >= 100)      barColor = "#22c55e";
+            else if (pct >= 67)  barColor = "#3b82f6";
+            else if (pct >= 34)  barColor = "#f59e0b";
+            else                 barColor = "#ef4444";
+
             barFill.setStyle("-fx-background-color: " + barColor + "; -fx-background-radius: 2px;");
             barFill.setMinHeight(5); barFill.setMaxHeight(5);
             barFill.setMaxWidth(Double.MAX_VALUE);
@@ -2261,21 +2267,6 @@ public class MainController {
      */
     private Label createBadge(String text, String style) {
         Label badge = new Label(text); badge.setStyle(style); return badge;
-    }
-
-    /**
-     * Devuelve el color hex de acento asociado a una categoría.
-     *
-     * @param c Código de categoría.
-     * @return Color en formato hex.
-     */
-    private String getCategoryColor(String c) {
-        return switch (c) {
-            case "PERSONAL" -> COLOR_PERSONAL;
-            case "ESTUDIOS" -> COLOR_ESTUDIOS;
-            case "TRABAJO"  -> COLOR_TRABAJO;
-            default -> COLOR_PERSONAL;
-        };
     }
 
     /**

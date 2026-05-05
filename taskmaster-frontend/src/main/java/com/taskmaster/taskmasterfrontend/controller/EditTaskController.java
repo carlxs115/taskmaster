@@ -73,6 +73,10 @@ public class EditTaskController {
                 lm.get("priority.low"), lm.get("priority.medium"),
                 lm.get("priority.high"), lm.get("priority.urgent")));
         priorityCombo.setValue(lm.get("priority.medium"));
+
+        titleField.setOnKeyPressed(e -> {
+            if (e.getCode() == javafx.scene.input.KeyCode.ENTER) handleSave();
+        });
     }
 
     /**

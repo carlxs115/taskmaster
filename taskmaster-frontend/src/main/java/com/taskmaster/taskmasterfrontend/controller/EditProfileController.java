@@ -54,6 +54,13 @@ public class EditProfileController {
     @FXML
     public void initialize() {
         loadProfile();
+
+        usernameField.setOnKeyPressed(e -> {
+            if (e.getCode() == javafx.scene.input.KeyCode.ENTER) handleSave();
+        });
+        emailField.setOnKeyPressed(e -> {
+            if (e.getCode() == javafx.scene.input.KeyCode.ENTER) handleSave();
+        });
     }
 
     /**
