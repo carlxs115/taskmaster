@@ -23,13 +23,17 @@ import java.util.List;
  *
  * @author Carlos
  */
+@Slf4j
 @Service
 @RequiredArgsConstructor
-@Slf4j
 public class ActivityLogService {
 
     private final ActivityLogRepository activityLogRepository;
     private final UserRepository userRepository;
+
+    // -------------------------------------------------------------------------
+    // Registro de eventos - métodos sobrecargados por nivel de detalle
+    // -------------------------------------------------------------------------
 
     /**
      * Registra un evento de actividad con todos sus detalles.
@@ -45,6 +49,9 @@ public class ActivityLogService {
     public void log(Long userId, ActionType actionType, String entityType, Long entityId,
                     String entityName, String oldValue, String newValue) {
 
+        // Usamos getReferenceById en lugar de findById para evitar una query SELECT
+        // innecesaria: solo necesitamos la referencia para la FK, no los datos del usuario.
+        // JPA resolverá la referencia solo si realmente se accede al objeto.
         User user = userRepository.getReferenceById(userId);
 
         ActivityLog entry = ActivityLog.builder()
@@ -62,7 +69,8 @@ public class ActivityLogService {
 
     /**
      * Registra un evento de actividad sin valores anterior ni nuevo.
-     * Útil para acciones que no implican cambio de estado (crear, editar, eliminar).
+     * Útil para acciones que no implican cambio de un valor concreto
+     * (crear, eliminar, restaurar).
      *
      * @param userId     identificador del usuario
      * @param actionType tipo de acción realizada
@@ -77,7 +85,8 @@ public class ActivityLogService {
 
     /**
      * Registra un evento de actividad sin entidad asociada.
-     * Útil para acciones de perfil o autenticación (login, logout, cambio de contraseña).
+     * Útil para acciones de perfil o autenticación
+     * (login, logout, cambio de contraseña, actualización de perfil).
      *
      * @param userId     identificador del usuario
      * @param actionType tipo de acción realizada
@@ -86,8 +95,13 @@ public class ActivityLogService {
         log(userId, actionType, null, null, null, null, null);
     }
 
+    // -------------------------------------------------------------------------
+    // Consultas de historial
+    // -------------------------------------------------------------------------
+
     /**
-     * Devuelve el historial de actividad de un usuario, excluyendo eventos de autenticación.
+     * Devuelve el historial de actividad de un usuario, excluyendo eventos
+     * de autenticación (login, logout, cambio de contraseña).
      *
      * @param userId identificador del usuario
      * @return lista de registros ordenada del más reciente al más antiguo
@@ -110,7 +124,7 @@ public class ActivityLogService {
     }
 
     /**
-     * Devuelve el historial de accesos de un usuario (solo eventos LOGIN y LOGOUT).
+     * Devuelve el historial de accesos de un usuario (solo eventos LOGIN, LOGOUT y PASSWORD_CHANGED).
      * Se usa en la sección de seguridad del perfil.
      *
      * @param userId identificador del usuario
@@ -137,8 +151,34 @@ public class ActivityLogService {
     }
 
     /**
+     * Devuelve todos los registros de actividad de un usuario para una lista
+     * de entidades del mismo tipo, ordenados por fecha descendente.
+     * Se usa para cargar el historial completo de un proyecto con todas sus tareas.
+     *
+     * @param userId     identificador del usuario
+     * @param entityType tipo de entidad
+     * @param entityIds  lista de identificadores de entidades a consultar
+     * @return lista de registros ordenada por fecha, o lista vacía si {@code entityIds} está vacía
+     */
+    public List<ActivityLog> getHistoryForEntities(Long userId, String entityType, List<Long> entityIds) {
+
+        // Evitamos lanzar una query innecesaria si la lista está vacía
+        if (entityIds.isEmpty()) return List.of();
+
+        return activityLogRepository
+                .findByUserIdAndEntityTypeAndEntityIdInOrderByCreatedAtDesc(userId, entityType, entityIds);
+    }
+
+    // -------------------------------------------------------------------------
+    // Limpieza automática
+    // -------------------------------------------------------------------------
+
+    /**
      * Elimina automáticamente los registros de actividad con más de 7 días de antigüedad.
-     * Se ejecuta cada día a las 3:00 AM.
+     * Se ejecuta cada día a las 3:00 AM según el cron configurado.
+     *
+     * <p>Esto evita que la tabla {@code activity_log} crezca indefinidamente
+     * en una app de escritorio de uso continuo.</p>
      */
     @Scheduled(cron = "0 0 3 * * *")
     @Transactional
@@ -146,20 +186,5 @@ public class ActivityLogService {
         LocalDateTime cutoff = LocalDateTime.now().minusDays(7);
         activityLogRepository.deleteByCreatedAtBefore(cutoff);
         log.info("ActivityLog limpiado: entradas anteriores a {}", cutoff);
-    }
-
-    /**
-     * Devuelve todos los registros de actividad de un usuario para una lista de entidades
-     * del mismo tipo, ordenados por fecha descendente.
-     *
-     * @param userId     identificador del usuario
-     * @param entityType tipo de entidad
-     * @param entityIds  lista de identificadores de entidades
-     * @return lista de registros ordenada por fecha
-     */
-    public List<ActivityLog> getHistoryForEntities(Long userId, String entityType, List<Long> entityIds) {
-        if (entityIds.isEmpty()) return List.of();
-        return activityLogRepository
-                .findByUserIdAndEntityTypeAndEntityIdInOrderByCreatedAtDesc(userId, entityType, entityIds);
     }
 }
