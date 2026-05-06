@@ -38,15 +38,29 @@ public class WorkLog {
     @Column(nullable = false)
     private ActivityType activityType;
 
-    /** Número de horas dedicadas. Admite hasta 6 dígitos con 2 decimales. */
+    /**
+     * Número de horas dedicadas a la tarea.
+     * Formato: hasta 4 dígitos enteros y 2 decimales (máx. 9999.99h).
+     * La validación de que sea positivo y razonable se delega al DTO de entrada.
+     */
     @Column(nullable = false, precision = 6, scale = 2)
     private BigDecimal hours;
 
-    /** Nota opcional con detalles adicionales sobre el trabajo realizado. */
+    /**
+     * Nota opcional con detalles adicionales sobre el trabajo realizado.
+     * Se almacena como TEXT para permitir descripciones largas sin límite fijo.
+     */
     @Column(columnDefinition = "TEXT")
     private String note;
 
-    /** Tarea a la que pertenece este registro de trabajo. */
+    /**
+     * Tarea a la que pertenece este registro de trabajo.
+     * Carga lazy para no traer la tarea completa al listar worklogs.
+     *
+     * <p>{@code @ToString.Exclude} y {@code @EqualsAndHashCode.Exclude} evitan
+     * referencias circulares cuando Lombok genera estos métodos, ya que
+     * {@code Task} también tiene una lista de {@code WorkLog}.</p>
+     */
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "task_id", nullable = false)
     @ToString.Exclude
