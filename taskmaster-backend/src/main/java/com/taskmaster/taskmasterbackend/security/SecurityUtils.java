@@ -23,17 +23,25 @@ public class SecurityUtils {
     private final UserRepository userRepository;
 
     /**
-     * Obtiene el identificador del usuario autenticado a partir de su {@link UserDetails}.
+     * Obtiene el identificador numérico del usuario autenticado a partir
+     * de su {@link UserDetails}, consultando la base de datos por username.
      *
-     * @param userDetails usuario autenticado inyectado por Spring Security
+     * <p>Este método se usa en los controladores para obtener el userId
+     * del usuario que está haciendo la petición, sin tener que repetir
+     * la lógica de búsqueda en cada endpoint.</p>
+     *
+     * @param userDetails usuario autenticado inyectado automáticamente por Spring Security
      * @return identificador del usuario
-     * @throws UsernameNotFoundException si no existe ningún usuario con ese username
+     * @throws UsernameNotFoundException si el usuario autenticado ya no existe en la BD
+     *         (caso extremo: usuario eliminado mientras tenía sesión activa)
      */
     public Long getUserId(UserDetails userDetails) {
         return userRepository.findByUsername(userDetails.getUsername())
                 .map(User::getId)
-                .orElseThrow(() -> new UsernameNotFoundException(
-                        "Usuario no encontrado: " + userDetails.getUsername()
-                ));
+
+                // SEGURIDAD: mensaje genérico para no confirmar qué usernames existen.
+                // Este caso es prácticamente imposible en uso normal (el usuario
+                // está autenticado, por tanto existe), pero lo manejamos igualmente.
+                .orElseThrow(() -> new UsernameNotFoundException("Usuario no encontrado"));
     }
 }
