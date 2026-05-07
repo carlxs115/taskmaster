@@ -423,15 +423,17 @@ public class TaskService {
      * @param retentionDays días de retención configurados en {@link com.taskmaster.taskmasterbackend.model.UserSettings}
      */
     @Transactional
-    public void purgeExpiredTasks(int retentionDays) {
+    public void purgeExpiredTasks(Long userId, int retentionDays) {
 
         // Calculamos la fecha límite: tareas eliminadas antes de esta fecha se purgan
         LocalDateTime cutoff = LocalDateTime.now().minusDays(retentionDays);
-        List<Task> expired = taskRepository.findByDeletedTrueAndDeletedAtBefore(cutoff);
+
+        // Filtramos por userId además de por fecha para no afectar a otros usuarios
+        List<Task> expired = taskRepository.findByUserIdAndDeletedTrueAndDeletedAtBefore(userId, cutoff);
 
         if (!expired.isEmpty()) {
-            log.info("Purgando {} tareas expiradas (retención: {} días)",
-                    expired.size(), retentionDays);
+            log.info("Purgando {} tareas expiradas del usuario {} (retención: {} días)",
+                    expired.size(), userId, retentionDays);
             taskRepository.deleteAll(expired);
         }
     }

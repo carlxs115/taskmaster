@@ -36,14 +36,16 @@ public interface ProjectRepository extends JpaRepository<Project, Long> {
     List<Project> findByUserIdAndDeletedTrue(Long userId);
 
     /**
-     * Devuelve los proyectos en papelera cuya fecha de eliminación es anterior a la indicada.
-     * Usado por {@link com.taskmaster.taskmasterbackend.TrashScheduler} para el vaciado
-     * automático según el periodo de retención configurado por el usuario.
+     * Devuelve los proyectos en papelera de un usuario concreto cuya fecha de
+     * eliminación es anterior a la indicada.
+     * Usado por {@link com.taskmaster.taskmasterbackend.TrashScheduler} para
+     * purgar solo los proyectos del usuario correspondiente, sin afectar a otros.
      *
+     * @param userId     identificador del usuario propietario de los proyectos
      * @param cutoffDate fecha límite; se devuelven los proyectos eliminados antes de esta fecha
-     * @return lista de proyectos a eliminar definitivamente
+     * @return lista de proyectos del usuario a eliminar definitivamente
      */
-    List<Project> findByDeletedTrueAndDeletedAtBefore(LocalDateTime cutoffDate);
+    List<Project> findByUserIdAndDeletedTrueAndDeletedAtBefore(Long userId, LocalDateTime cutoffDate);
 
     /**
      * Cuenta los proyectos activos de un usuario.

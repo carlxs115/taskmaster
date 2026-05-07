@@ -241,13 +241,15 @@ public class ProjectService {
      * @param retentionDays días de retención configurados en {@link com.taskmaster.taskmasterbackend.model.UserSettings}
      */
     @Transactional
-    public void purgeExpiredProjects(int retentionDays) {
+    public void purgeExpiredProjects(Long userId, int retentionDays) {
         LocalDateTime cutoff = LocalDateTime.now().minusDays(retentionDays);
-        List<Project> expired = projectRepository.findByDeletedTrueAndDeletedAtBefore(cutoff);
+
+        // Filtramos por userId además de por fecha para no afectar a otros usuarios
+        List<Project> expired = projectRepository.findByUserIdAndDeletedTrueAndDeletedAtBefore(userId, cutoff);
 
         if (!expired.isEmpty()) {
-            log.info("Purgando {} proyectos expirados (retención: {} días)",
-                    expired.size(), retentionDays);
+            log.info("Purgando {} proyectos expirados del usuario {} (retención: {} días)",
+                    expired.size(), userId, retentionDays);
             projectRepository.deleteAll(expired);
         }
     }

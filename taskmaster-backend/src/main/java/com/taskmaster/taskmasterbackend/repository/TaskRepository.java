@@ -172,14 +172,16 @@ public interface TaskRepository extends JpaRepository<Task, Long> {
     List<Task> findByUserIdAndProjectIsNullAndDeletedTrue(Long userId);
 
     /**
-     * Devuelve las tareas en papelera cuya fecha de eliminación es anterior a la indicada.
-     * Usado por {@link com.taskmaster.taskmasterbackend.TrashScheduler} para el vaciado
-     * automático según el periodo de retención del usuario.
+     * Devuelve las tareas en papelera de un usuario concreto cuya fecha de
+     * eliminación es anterior a la indicada.
+     * Usado por {@link com.taskmaster.taskmasterbackend.TrashScheduler} para
+     * purgar solo las tareas del usuario correspondiente, sin afectar a otros.
      *
+     * @param userId     identificador del usuario propietario de las tareas
      * @param cutoffDate fecha límite; se devuelven las tareas eliminadas antes de esta fecha
-     * @return lista de tareas a eliminar definitivamente
+     * @return lista de tareas del usuario a eliminar definitivamente
      */
-    List<Task> findByDeletedTrueAndDeletedAtBefore(LocalDateTime cutoffDate);
+    List<Task> findByUserIdAndDeletedTrueAndDeletedAtBefore(Long userId, LocalDateTime cutoffDate);
 
     /**
      * Devuelve las tareas de proyectos del usuario que están en la papelera.
