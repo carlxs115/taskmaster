@@ -19,6 +19,8 @@ public interface UserSettingsRepository extends JpaRepository<UserSettings, Long
 
     /**
      * Busca la configuración de un usuario por su identificador.
+     * Usado en {@code UserSettingsService.getSettingsByUserId} para cargar
+     * y actualizar las preferencias del usuario autenticado.
      *
      * @param userId identificador del usuario
      * @return {@link Optional} con la configuración si existe, vacío en caso contrario

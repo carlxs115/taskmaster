@@ -16,18 +16,24 @@ import java.util.List;
 /**
  * Repositorio de acceso a datos para la entidad {@link Task}.
  *
- * <p>Proporciona consultas para recuperar tareas de proyecto, tareas,
+ * <p>Proporciona consultas para recuperar tareas de proyecto, tareas personales,
  * subtareas, elementos en papelera y estadísticas de usuario.</p>
+ *
+ * <p>Todas las queries se derivan automáticamente por Spring Data JPA a partir
+ * del nombre del método, sin necesidad de JPQL explícito.</p>
  *
  * @author Carlos
  */
 @Repository
 public interface TaskRepository extends JpaRepository<Task, Long> {
 
-    // ── Tareas de proyecto ────────────────────────────────────────────────────
+    // -------------------------------------------------------------------------
+    // Tareas de proyecto
+    // -------------------------------------------------------------------------
 
     /**
      * Devuelve las tareas raíz activas de un proyecto (sin tarea padre).
+     * Usa el índice {@code idx_tasks_project_id} definido en la entidad.
      *
      * @param projectId identificador del proyecto
      * @return lista de tareas raíz activas del proyecto
@@ -35,12 +41,15 @@ public interface TaskRepository extends JpaRepository<Task, Long> {
     List<Task> findByProjectIdAndParentTaskIsNullAndDeletedFalse(Long projectId);
 
     /**
-     * Devuelve las subtareas activas de una tarea padre.
+     * Devuelve todas las tareas raíz de un proyecto, incluyendo las eliminadas.
+     * Se usa para cargar el historial de actividad completo del proyecto,
+     * ya que las tareas eliminadas siguen teniendo registros en el log.
      *
-     * @param parentTaskId identificador de la tarea padre
-     * @return lista de subtareas activas
+     * @param projectId identificador del proyecto
+     * @return lista de todas las tareas raíz del proyecto, activas y eliminadas
      */
-    List<Task> findByParentTaskIdAndDeletedFalse(Long parentTaskId);
+    @Query("SELECT t FROM Task t WHERE t.project.id = :projectId AND t.parentTask IS NULL")
+    List<Task> findByProjectIdAndParentTaskIsNull(@Param("projectId") Long projectId);
 
     /**
      * Devuelve las tareas activas de un proyecto filtradas por estado.
@@ -61,28 +70,23 @@ public interface TaskRepository extends JpaRepository<Task, Long> {
     List<Task> findByProjectIdAndPriorityAndDeletedFalse(Long projectId, TaskPriority priority);
 
     /**
-     * Comprueba si una tarea padre tiene subtareas activas con un estado distinto al indicado.
-     * Se usa para determinar si una tarea padre puede marcarse como completada.
+     * Comprueba si un proyecto tiene tareas activas con un estado distinto a los indicados.
+     * Se usa en {@code ProjectService.updateProject} para validar que todas las tareas
+     * estén completadas o canceladas antes de marcar el proyecto como {@code DONE}.
      *
-     * @param parentTaskId identificador de la tarea padre
-     * @param status       estado a excluir de la comprobación
-     * @return {@code true} si existe alguna subtarea activa con estado distinto
+     * @param projectId identificador del proyecto
+     * @param statuses  lista de estados a excluir de la comprobación
+     * @return {@code true} si existe alguna tarea activa con estado distinto
      */
-    boolean existsByParentTaskIdAndStatusNotAndDeletedFalse(Long parentTaskId, TaskStatus status);
+    boolean existsByProjectIdAndStatusNotInAndDeletedFalse(Long projectId, List<TaskStatus> statuses);
 
-
-    // ── Tareas sin proyecto ─────────────────────────────────────────────────────
+    // -------------------------------------------------------------------------
+    // Tareas personales (sin proyecto)
+    // -------------------------------------------------------------------------
 
     /**
-     * Devuelve las tareas en papelera de un usuario.
-     *
-     * @param userId identificador del usuario
-     * @return lista de tareas personales eliminadas
-     */
-    List<Task> findByUserIdAndProjectIsNullAndDeletedTrue(Long userId);
-
-    /**
-     * Devuelve las tareas raíz activas de un usuario (sin proyecto ni tarea padre).
+     * Devuelve las tareas raíz activas de un usuario sin proyecto ni tarea padre.
+     * Usa el índice {@code idx_tasks_user_id} definido en la entidad.
      *
      * @param userId identificador del usuario
      * @return lista de tareas personales raíz activas
@@ -90,49 +94,109 @@ public interface TaskRepository extends JpaRepository<Task, Long> {
     List<Task> findByUserIdAndProjectIsNullAndParentTaskIsNullAndDeletedFalse(Long userId);
 
     /**
-     * Devuelve las tareas raíz activas de un usuario filtradas por categoría.
+     * Devuelve las tareas raíz activas de un usuario filtradas por categoría,
+     * excluyendo las que pertenecen a un proyecto.
      *
      * @param userId   identificador del usuario
      * @param category categoría por la que filtrar
      * @return lista de tareas personales raíz activas con esa categoría
      */
-    List<Task> findByUserIdAndCategoryAndProjectIsNullAndParentTaskIsNullAndDeletedFalse(Long userId, TaskCategory category);
+    List<Task> findByUserIdAndCategoryAndProjectIsNullAndParentTaskIsNullAndDeletedFalse(
+            Long userId, TaskCategory category);
 
     /**
-     * Devuelve las tareas activas de un usuario con dueDate en un rango de fechas.
-     * Excluye subtareas (parentTask == null) y tareas eliminadas.
+     * Devuelve las tareas activas de un usuario con {@code dueDate} en un rango de fechas.
+     * Excluye subtareas y tareas eliminadas. Se usa para poblar la vista de calendario.
      *
      * @param userId    identificador del usuario
-     * @param startDate inicio del rango (inclusive)
-     * @param endDate   fin del rango (inclusive)
+     * @param startDate inicio del rango (inclusive), primer día del mes
+     * @param endDate   fin del rango (inclusive), último día del mes
      * @return lista de tareas con fecha límite en ese rango
      */
     List<Task> findByUserIdAndDueDateBetweenAndParentTaskIsNullAndDeletedFalse(
             Long userId, LocalDate startDate, LocalDate endDate);
 
-    // ── Papelera ──────────────────────────────────────────────────────────────
+    // -------------------------------------------------------------------------
+    // Subtareas
+    // -------------------------------------------------------------------------
+
+    /**
+     * Devuelve las subtareas activas de una tarea padre.
+     *
+     * @param parentTaskId identificador de la tarea padre
+     * @return lista de subtareas activas
+     */
+    List<Task> findByParentTaskIdAndDeletedFalse(Long parentTaskId);
+
+    /**
+     * Devuelve todas las subtareas de una tarea padre, incluyendo las eliminadas.
+     * Se usa para cargar el historial de actividad completo de una tarea.
+     *
+     * @param parentTaskId identificador de la tarea padre
+     * @return lista de todas las subtareas, activas y eliminadas
+     */
+    List<Task> findByParentTaskId(Long parentTaskId);
+
+    /**
+     * Comprueba si una tarea padre tiene subtareas activas con un estado distinto al indicado.
+     * Se usa en {@code TaskService.changeStatus} para validar que todas las subtareas
+     * estén completadas antes de marcar la tarea padre como {@code DONE}.
+     *
+     * @param parentTaskId identificador de la tarea padre
+     * @param status       estado a excluir de la comprobación (normalmente {@code DONE})
+     * @return {@code true} si existe alguna subtarea activa con estado distinto
+     */
+    boolean existsByParentTaskIdAndStatusNotAndDeletedFalse(Long parentTaskId, TaskStatus status);
+
+    /**
+     * Comprueba si una tarea padre tiene subtareas activas con un estado distinto a los indicados.
+     * Se usa en {@code TaskService.updateTask} para validar que todas las subtareas
+     * estén completadas o canceladas antes de marcar la tarea padre como {@code DONE}.
+     *
+     * @param parentTaskId identificador de la tarea padre
+     * @param statuses     lista de estados a excluir (normalmente {@code DONE} y {@code CANCELLED})
+     * @return {@code true} si existe alguna subtarea activa con estado distinto
+     */
+    boolean existsByParentTaskIdAndStatusNotInAndDeletedFalse(Long parentTaskId, List<TaskStatus> statuses);
+
+    // -------------------------------------------------------------------------
+    // Papelera
+    // -------------------------------------------------------------------------
+
+    /**
+     * Devuelve las tareas personales en papelera de un usuario (sin proyecto).
+     *
+     * @param userId identificador del usuario
+     * @return lista de tareas personales eliminadas
+     */
+    List<Task> findByUserIdAndProjectIsNullAndDeletedTrue(Long userId);
+
+    /**
+     * Devuelve las tareas en papelera cuya fecha de eliminación es anterior a la indicada.
+     * Usado por {@link com.taskmaster.taskmasterbackend.TrashScheduler} para el vaciado
+     * automático según el periodo de retención del usuario.
+     *
+     * @param cutoffDate fecha límite; se devuelven las tareas eliminadas antes de esta fecha
+     * @return lista de tareas a eliminar definitivamente
+     */
+    List<Task> findByDeletedTrueAndDeletedAtBefore(LocalDateTime cutoffDate);
 
     /**
      * Devuelve las tareas de proyectos del usuario que están en la papelera.
+     * Navega la relación {@code Task → Project → User} para filtrar por usuario.
      *
      * @param userId identificador del usuario propietario del proyecto
      * @return lista de tareas de proyecto eliminadas
      */
     List<Task> findByProjectUserIdAndDeletedTrue(Long userId);
 
-    /**
-     * Devuelve las tareas en papelera cuya fecha de eliminación es anterior a la indicada.
-     * Se usa para el vaciado automático por el scheduler.
-     *
-     * @param cutoffDate fecha límite
-     * @return lista de tareas a eliminar definitivamente
-     */
-    List<Task> findByDeletedTrueAndDeletedAtBefore(LocalDateTime cutoffDate);
-
-    // ── Estadísticas ──────────────────────────────────────────────────────────
+    // -------------------------------------------------------------------------
+    // Estadísticas
+    // -------------------------------------------------------------------------
 
     /**
      * Cuenta las tareas activas de un usuario.
+     * Usa el índice {@code idx_tasks_user_id} para mayor eficiencia.
      *
      * @param userId identificador del usuario
      * @return número de tareas activas
@@ -141,53 +205,12 @@ public interface TaskRepository extends JpaRepository<Task, Long> {
 
     /**
      * Cuenta las tareas activas de un usuario con un estado concreto.
+     * Llamado múltiples veces desde {@code UserService.getStats}
+     * para cada estado (TODO, IN_PROGRESS, DONE, CANCELLED).
      *
      * @param userId identificador del usuario
      * @param status estado por el que filtrar
      * @return número de tareas activas con ese estado
      */
     long countByUserIdAndStatusAndDeletedFalse(Long userId, TaskStatus status);
-
-    // ── Subtareas y tareas incluyendo eliminadas ───────────────────────────────
-
-    /**
-     * Devuelve todas las subtareas de una tarea padre, incluyendo las eliminadas.
-     * Se usa para cargar el historial de actividad completo de una tarea,
-     * ya que las subtareas eliminadas siguen teniendo registros en el log.
-     *
-     * @param parentTaskId identificador de la tarea padre
-     * @return lista de todas las subtareas, activas y eliminadas
-     */
-    List<Task> findByParentTaskId(Long parentTaskId);
-
-    /**
-     * Devuelve todas las tareas raíz de un proyecto, incluyendo las eliminadas.
-     * Se usa para cargar el historial de actividad completo de un proyecto,
-     * ya que las tareas eliminadas siguen teniendo registros en el log.
-     *
-     * @param projectId identificador del proyecto
-     * @return lista de todas las tareas raíz del proyecto, activas y eliminadas
-     */
-    @Query("SELECT t FROM Task t WHERE t.project.id = :projectId AND t.parentTask IS NULL")
-    List<Task> findByProjectIdAndParentTaskIsNull(@Param("projectId") Long projectId);
-
-    /**
-     * Comprueba si un proyecto tiene tareas activas con un estado distinto a los indicados.
-     * Se usa para validar que todas las tareas estén completadas antes de cerrar el proyecto.
-     *
-     * @param projectId  identificador del proyecto
-     * @param statuses   lista de estados a excluir de la comprobación
-     * @return {@code true} si existe alguna tarea activa con estado distinto
-     */
-    boolean existsByProjectIdAndStatusNotInAndDeletedFalse(Long projectId, List<TaskStatus> statuses);
-
-    /**
-     * Comprueba si una tarea padre tiene subtareas activas con un estado distinto a los indicados.
-     * Se usa para validar que todas las subtareas estén completadas o canceladas antes de cerrar la tarea.
-     *
-     * @param parentTaskId identificador de la tarea padre
-     * @param statuses     lista de estados a excluir de la comprobación
-     * @return {@code true} si existe alguna subtarea activa con estado distinto
-     */
-    boolean existsByParentTaskIdAndStatusNotInAndDeletedFalse(Long parentTaskId, List<TaskStatus> statuses);
 }
