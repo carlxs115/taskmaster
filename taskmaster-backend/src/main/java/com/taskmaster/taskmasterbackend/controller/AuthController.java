@@ -25,8 +25,8 @@ import org.springframework.web.bind.annotation.*;
 /**
  * Controlador REST que gestiona la autenticación y el perfil de usuario.
  *
- * <p>Los endpoints de registro y login son públicos. El resto requieren
- * autenticación previa mediante Basic Auth.</p>
+ * <p>Los endpoints {@code /register} y {@code /login} son públicos (no requieren
+ * autenticación). El resto requieren Basic Auth válido.</p>
  *
  * @author Carlos
  */
@@ -40,12 +40,17 @@ public class AuthController {
     private final SecurityUtils securityUtils;
     private final ActivityLogService activityLogService;
 
+    // -------------------------------------------------------------------------
+    // Endpoints públicos
+    // -------------------------------------------------------------------------
+
     /**
      * POST /api/auth/register
      * Registra un nuevo usuario en el sistema.
+     * No requiere autenticación previa.
      *
-     * @param request datos del nuevo usuario validados
-     * @return usuario creado con código 201 Created
+     * @param request datos del nuevo usuario validados con {@code @Valid}
+     * @return 201 Created con los datos del usuario creado
      */
     @PostMapping("/register")
     public ResponseEntity<UserResponse> register(@Valid @RequestBody RegisterRequest request) {
@@ -60,22 +65,23 @@ public class AuthController {
 
     /**
      * POST /api/auth/login
-     * Autentica al usuario con username y password.
+     * Autentica al usuario con username o email y contraseña.
      * Registra el evento de login en el historial de actividad.
      *
-     * @param request credenciales del usuario
-     * @return datos del usuario autenticado, o 401 si las credenciales son incorrectas
+     * <p>El proceso de autenticación que realiza Spring Security internamente:</p>
+     * <ol>
+     *   <li>Llama a {@code UserDetailsServiceImpl.loadUserByUsername()}</li>
+     *   <li>Compara la contraseña introducida con el hash BCrypt almacenado en BD</li>
+     *   <li>Si son correctas devuelve un objeto {@code Authentication}</li>
+     *   <li>Si no, lanza {@code AuthenticationException}</li>
+     * </ol>
+     *
+     * @param request credenciales del usuario (username/email y contraseña)
+     * @return 200 OK con los datos del usuario, o 401 si las credenciales son incorrectas
      */
     @PostMapping("/login")
-    public ResponseEntity<?> login(@Valid @RequestBody LoginRequest request) {
+    public ResponseEntity<UserResponse> login(@Valid @RequestBody LoginRequest request) {
         try {
-            /**
-             * authenticationManager.authenticate() hace todo el trabajo:
-             *      1. Llama a UserDetailsServiceImpl.loadUserByUsername()
-             *      2. Compara la contraseña introducida con la cifrada en BD
-             *      3. Si son correctas devuelve un objeto Authentication
-             *      4. Si no, lanza AuthenticationException
-             */
             Authentication authentication = authenticationManager.authenticate(
                     new UsernamePasswordAuthenticationToken(
                             request.getUsername(),
@@ -83,22 +89,32 @@ public class AuthController {
                     )
             );
 
-            // Usamos el username real resuelto por Spring Security, no el identificador del request
+            // Usamos el username resuelto por Spring Security, no el del request,
+            // porque el usuario puede haber introducido su email en lugar del username
             String resolvedUsername = authentication.getName();
             User user = userService.findByUsername(resolvedUsername);
+
+            // Registramos el login en el historial de actividad
             activityLogService.log(user.getId(), ActionType.LOGIN);
+
             return ResponseEntity.ok(toResponse(user));
 
         } catch (AuthenticationException e) {
-            // Credenciales incorrectas = 401 Unauthorized
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                    .body("Credenciales incorrectas");
+            // SEGURIDAD: devolvemos 401 sin detalles para no confirmar
+            // si el usuario existe o si la contraseña es incorrecta
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
     }
+
+    // -------------------------------------------------------------------------
+    // Endpoints autenticados
+    // -------------------------------------------------------------------------
 
     /**
      * POST /api/auth/logout
      * Registra el evento de logout en el historial de actividad.
+     * En HTTP Basic no hay sesión que invalidar en el servidor,
+     * el cliente simplemente deja de enviar las credenciales.
      *
      * @param userDetails usuario autenticado inyectado por Spring Security
      * @return 200 OK
@@ -112,103 +128,98 @@ public class AuthController {
 
     /**
      * GET /api/auth/profile
-     * Devuelve los datos del usuario autenticado.
+     * Devuelve los datos del perfil del usuario autenticado.
      *
      * @param userDetails usuario autenticado inyectado por Spring Security
-     * @return datos del usuario
+     * @return 200 OK con los datos del usuario
      */
     @GetMapping("/profile")
-    public ResponseEntity<UserResponse> getProfile(
-            @AuthenticationPrincipal UserDetails userDetails) {
-
+    public ResponseEntity<UserResponse> getProfile(@AuthenticationPrincipal UserDetails userDetails) {
         Long userId = securityUtils.getUserId(userDetails);
         User user = userService.findById(userId);
-
         return ResponseEntity.ok(toResponse(user));
     }
 
     /**
      * PUT /api/auth/profile
      * Actualiza el username, email y fecha de nacimiento del usuario autenticado.
+     * Los errores de validación y de negocio son manejados por
+     * {@link com.taskmaster.taskmasterbackend.exception.GlobalExceptionHandler}.
      *
-     * @param request     nuevos datos del perfil validados
+     * @param request     nuevos datos del perfil validados con {@code @Valid}
      * @param userDetails usuario autenticado inyectado por Spring Security
-     * @return usuario actualizado, o 400 si los datos ya están en uso
+     * @return 200 OK con el usuario actualizado
      */
     @PutMapping("/profile")
-    public ResponseEntity<?> updateProfile(
+    public ResponseEntity<UserResponse> updateProfile(
             @Valid @RequestBody UpdateProfileRequest request,
             @AuthenticationPrincipal UserDetails userDetails) {
 
-        try {
-            Long userId = securityUtils.getUserId(userDetails);
-            User user = userService.updateProfile(
-                    userId,
-                    request.getUsername(),
-                    request.getEmail(),
-                    request.getBirthDate()
-            );
-
-            return ResponseEntity.ok(toResponse(user));
-        } catch (RuntimeException e) {
-            return ResponseEntity.badRequest().body(e.getMessage());
-        }
+        Long userId = securityUtils.getUserId(userDetails);
+        User user = userService.updateProfile(
+                userId,
+                request.getUsername(),
+                request.getEmail(),
+                request.getBirthDate()
+        );
+        return ResponseEntity.ok(toResponse(user));
     }
 
     /**
      * PATCH /api/auth/password
-     * Cambia la contraseña del usuario autenticado.
+     * Cambia la contraseña del usuario autenticado tras verificar la actual.
+     * Los errores son manejados por
+     * {@link com.taskmaster.taskmasterbackend.exception.GlobalExceptionHandler}.
      *
-     * @param request     contraseña actual y nueva contraseña validadas
+     * @param request     contraseña actual y nueva contraseña validadas con {@code @Valid}
      * @param userDetails usuario autenticado inyectado por Spring Security
-     * @return 200 OK, o 400 si la contraseña actual es incorrecta
+     * @return 200 OK si el cambio fue exitoso
      */
     @PatchMapping("/password")
-    public ResponseEntity<?> changePassword(
+    public ResponseEntity<Void> changePassword(
             @Valid @RequestBody ChangePasswordRequest request,
             @AuthenticationPrincipal UserDetails userDetails) {
 
-        try {
-            Long userId = securityUtils.getUserId(userDetails);
-            userService.changePassword(userId, request.getCurrentPassword(), request.getNewPassword());
-            return ResponseEntity.ok().build();
-        } catch (RuntimeException e) {
-            return ResponseEntity.badRequest().body(e.getMessage());
-        }
+        Long userId = securityUtils.getUserId(userDetails);
+        userService.changePassword(
+                userId,
+                request.getCurrentPassword(),
+                request.getNewPassword()
+        );
+        return ResponseEntity.ok().build();
     }
 
     /**
      * DELETE /api/auth/account
-     * Elimina permanentemente la cuenta del usuario autenticado.
-     * Requiere confirmación con la contraseña actual.
+     * Elimina permanentemente la cuenta del usuario autenticado y todos sus datos.
+     * Requiere confirmación con la contraseña actual para evitar borrados accidentales.
+     * Los errores son manejados por
+     * {@link com.taskmaster.taskmasterbackend.exception.GlobalExceptionHandler}.
      *
      * @param password    contraseña actual para confirmar la operación
      * @param userDetails usuario autenticado inyectado por Spring Security
-     * @return 204 No Content, o 400 si la contraseña es incorrecta
+     * @return 204 No Content si la cuenta fue eliminada correctamente
      */
-    @RequestMapping(value = "/account", method = RequestMethod.DELETE)
-    public ResponseEntity<?> deleteAccount(
+    @DeleteMapping(value = "/account")
+    public ResponseEntity<Void> deleteAccount(
             @RequestParam String password,
             @AuthenticationPrincipal UserDetails userDetails) {
-        try {
-            Long userId = securityUtils.getUserId(userDetails);
-            userService.deleteAccount(userId, password);
 
-            return ResponseEntity.noContent().build();
-        } catch (RuntimeException e) {
-            e.printStackTrace();
-            if (e.getMessage().contains("contraseña")) {
-                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
-            }
-            return ResponseEntity.badRequest().body(e.getMessage());
-        }
+        Long userId = securityUtils.getUserId(userDetails);
+        userService.deleteAccount(userId, password);
+        return ResponseEntity.noContent().build();
     }
 
+    // -------------------------------------------------------------------------
+    // Métodos privados
+    // -------------------------------------------------------------------------
+
     /**
-     * Convierte una entidad {@link User} a su DTO de respuesta.
+     * Convierte una entidad {@link User} al DTO de respuesta {@link UserResponse}.
+     * La contraseña nunca se incluye en la respuesta.
      *
-     * @param user entidad a convertir
-     * @return DTO con los datos del usuario
+     * @param user entidad usuario a convertir
+     * @return DTO con los datos del usuario listos para serializar a JSON
      */
     private UserResponse toResponse(User user) {
         return UserResponse.builder()
@@ -217,6 +228,7 @@ public class AuthController {
                 .email(user.getEmail())
                 .birthDate(user.getBirthDate())
                 .createdAt(user.getCreatedAt())
+                // hasAvatar evita exponer la ruta del fichero al cliente
                 .hasAvatar(user.getAvatarPath() != null)
                 .build();
     }

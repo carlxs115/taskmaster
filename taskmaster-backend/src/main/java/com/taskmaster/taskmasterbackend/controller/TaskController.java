@@ -28,7 +28,8 @@ import java.util.stream.Collectors;
  * Controlador REST que gestiona el CRUD de tareas, subtareas y la pantalla de inicio.
  *
  * <p>Todos los endpoints requieren autenticación. El usuario autenticado
- * solo puede acceder y modificar sus propias tareas.</p>
+ * solo puede acceder y modificar sus propias tareas, ya que el {@code userId}
+ * se extrae siempre del token de autenticación.</p>
  *
  * @author Carlos
  */
@@ -41,7 +42,9 @@ public class TaskController {
     private final TaskService taskService;
     private final SecurityUtils securityUtils;
 
-    // ── Home ──────────────────────────────────────────────────────────────────
+    // -------------------------------------------------------------------------
+    // Home
+    // -------------------------------------------------------------------------
 
     /**
      * GET /api/tasks/home
@@ -49,7 +52,7 @@ public class TaskController {
      * proyectos con sus tareas y tareas personales agrupadas por categoría.
      *
      * @param userDetails usuario autenticado inyectado por Spring Security
-     * @return datos de la pantalla de inicio
+     * @return 200 OK con los datos de la pantalla de inicio
      */
     @GetMapping("/home")
     public ResponseEntity<HomeResponse> getHome(
@@ -57,6 +60,7 @@ public class TaskController {
 
         Long userId = securityUtils.getUserId(userDetails);
 
+        // Cargamos los proyectos activos del usuario con sus tareas raíz
         List<Project> projects = projectService.getProjectByUser(userId);
         List<ProjectWithTasksResponse> projectsWithTasks = projects.stream()
                 .map(p -> ProjectWithTasksResponse.builder()
@@ -71,7 +75,7 @@ public class TaskController {
                         .build())
                 .toList();
 
-        // Ahora filtradas por userId — ya no mezcla usuarios
+        // Cargamos las tareas personales agrupadas por categoría
         List<TaskResponse> personalTasks = taskService
                 .getTasksByCategory(TaskCategory.PERSONAL, userId)
                 .stream().map(this::toResponse).toList();
@@ -82,73 +86,94 @@ public class TaskController {
                 .getTasksByCategory(TaskCategory.TRABAJO, userId)
                 .stream().map(this::toResponse).toList();
 
-        HomeResponse homeResponse = HomeResponse.builder()
+        return ResponseEntity.ok(HomeResponse.builder()
                 .projects(projectsWithTasks)
                 .personalTasks(personalTasks)
                 .estudiosTasks(estudiosTasks)
                 .trabajoTasks(trabajoTasks)
-                .build();
-
-        return ResponseEntity.ok(homeResponse);
+                .build());
     }
 
-    // ── Lectura ───────────────────────────────────────────────────────────────
+    // -------------------------------------------------------------------------
+    // Lectura
+    // -------------------------------------------------------------------------
 
     /**
      * GET /api/tasks/{id}
-     * Devuelve una tarea concreta por su identificador.
+     * Devuelve una tarea concreta validando que pertenece al usuario autenticado.
      *
      * @param id          identificador de la tarea
      * @param userDetails usuario autenticado inyectado por Spring Security
-     * @return tarea encontrada
+     * @return 200 OK con la tarea encontrada
      */
     @GetMapping("/{id}")
     public ResponseEntity<TaskResponse> getTaskById(
             @PathVariable Long id,
             @AuthenticationPrincipal UserDetails userDetails) {
+
         Long userId = securityUtils.getUserId(userDetails);
         Task task = taskService.findById(id);
+
+        // SEGURIDAD: verificamos que la tarea pertenece al usuario autenticado
+        // para evitar que un usuario consulte tareas de otro conociendo su id
+        if (!task.getUser().getId().equals(userId)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
+
         return ResponseEntity.ok(toResponse(task));
     }
 
     /**
      * GET /api/tasks?projectId={projectId}
      * Devuelve las tareas raíz activas de un proyecto.
+     * Valida que el proyecto pertenece al usuario antes de devolver sus tareas.
      *
      * @param projectId   identificador del proyecto
      * @param userDetails usuario autenticado inyectado por Spring Security
-     * @return lista de tareas del proyecto
+     * @return 200 OK con la lista de tareas del proyecto
      */
     @GetMapping
     public ResponseEntity<List<TaskResponse>> getTasksByProject(
             @RequestParam Long projectId,
             @AuthenticationPrincipal UserDetails userDetails) {
+
         Long userId = securityUtils.getUserId(userDetails);
         return ResponseEntity.ok(toResponseList(taskService.getTasksByProject(projectId, userId)));
     }
 
     /**
      * GET /api/tasks/{id}/subtasks
-     * Devuelve las subtareas activas de una tarea.
+     * Devuelve las subtareas activas de una tarea padre.
+     * Valida que la tarea padre pertenece al usuario autenticado.
      *
      * @param id          identificador de la tarea padre
      * @param userDetails usuario autenticado inyectado por Spring Security
-     * @return lista de subtareas
+     * @return 200 OK con la lista de subtareas activas
      */
     @GetMapping("/{id}/subtasks")
     public ResponseEntity<List<TaskResponse>> getSubTasks(
             @PathVariable Long id,
             @AuthenticationPrincipal UserDetails userDetails) {
+        Long userId = securityUtils.getUserId(userDetails);
+        Task parentTask = taskService.findById(id);
+
+        // SEGURIDAD: verificamos que la tarea padre pertenece al usuario autenticado
+        if (!parentTask.getUser().getId().equals(userId)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
+
         return ResponseEntity.ok(toResponseList(taskService.getSubTasks(id)));
     }
 
     /**
+     * GET /api/tasks/calendar?year={year}&month={month}
      * Devuelve las tareas activas del usuario con fecha límite en el mes indicado.
      * Se usa para poblar la vista de calendario en el frontend.
      *
-     * @param year  año del mes a consultar
-     * @param month mes a consultar (1-12)
-     * @return lista de tareas del calendario
+     * @param year        año del mes a consultar
+     * @param month       mes a consultar (1-12)
+     * @param userDetails usuario autenticado inyectado por Spring Security
+     * @return 200 OK con la lista de tareas del calendario
      */
     @GetMapping("/calendar")
     public ResponseEntity<List<CalendarTaskDTO>> getCalendarTasks(
@@ -157,70 +182,75 @@ public class TaskController {
             @AuthenticationPrincipal UserDetails userDetails) {
 
         Long userId = securityUtils.getUserId(userDetails);
-        List<CalendarTaskDTO> tasks = taskService.getTasksForCalendar(userId, year, month);
-        return ResponseEntity.ok(tasks);
+        return ResponseEntity.ok(taskService.getTasksForCalendar(userId, year, month));
     }
 
     /**
      * GET /api/tasks/trash
-     * Devuelve todas las tareas en la papelera del usuario autenticado.
+     * Devuelve todas las tareas en la papelera del usuario autenticado,
+     * tanto personales como de proyectos.
      *
      * @param userDetails usuario autenticado inyectado por Spring Security
-     * @return lista de tareas eliminadas
+     * @return 200 OK con la lista de tareas eliminadas
      */
     @GetMapping("/trash")
     public ResponseEntity<List<TaskResponse>> getDeletedTasks(
             @AuthenticationPrincipal UserDetails userDetails) {
+
         Long userId = securityUtils.getUserId(userDetails);
         return ResponseEntity.ok(toResponseList(taskService.getDeletedTasksByUser(userId)));
     }
 
     /**
-     * GET /api/tasks/filter/status
+     * GET /api/tasks/filter/status?projectId={id}&status={status}
      * Devuelve las tareas de un proyecto filtradas por estado.
      *
      * @param projectId   identificador del proyecto
      * @param status      estado por el que filtrar
      * @param userDetails usuario autenticado inyectado por Spring Security
-     * @return lista de tareas filtradas
+     * @return 200 OK con la lista de tareas filtradas
      */
     @GetMapping("/filter/status")
     public ResponseEntity<List<TaskResponse>> getTasksByStatus(
             @RequestParam Long projectId,
             @RequestParam TaskStatus status,
             @AuthenticationPrincipal UserDetails userDetails) {
+
         Long userId = securityUtils.getUserId(userDetails);
         return ResponseEntity.ok(toResponseList(taskService.getTasksByStatus(projectId, status, userId)));
     }
 
     /**
-     * GET /api/tasks/filter/priority
+     * GET /api/tasks/filter/priority?projectId={id}&priority={priority}
      * Devuelve las tareas de un proyecto filtradas por prioridad.
      *
      * @param projectId   identificador del proyecto
      * @param priority    prioridad por la que filtrar
      * @param userDetails usuario autenticado inyectado por Spring Security
-     * @return lista de tareas filtradas
+     * @return 200 OK con la lista de tareas filtradas
      */
     @GetMapping("/filter/priority")
     public ResponseEntity<List<TaskResponse>> getTasksByPriority(
             @RequestParam Long projectId,
             @RequestParam TaskPriority priority,
             @AuthenticationPrincipal UserDetails userDetails) {
+
         Long userId = securityUtils.getUserId(userDetails);
         return ResponseEntity.ok(toResponseList(taskService.getTasksByPriority(projectId, priority, userId)));
     }
 
     /**
      * GET /api/tasks/personal
-     * Devuelve las tareas personales raíz activas del usuario autenticado.
+     * Devuelve las tareas personales raíz activas del usuario autenticado
+     * (sin proyecto ni tarea padre).
      *
      * @param userDetails usuario autenticado inyectado por Spring Security
-     * @return lista de tareas personales
+     * @return 200 OK con la lista de tareas personales
      */
     @GetMapping("/personal")
     public ResponseEntity<List<TaskResponse>> getPersonalTasks(
             @AuthenticationPrincipal UserDetails userDetails) {
+
         Long userId = securityUtils.getUserId(userDetails);
         return ResponseEntity.ok(toResponseList(taskService.getPersonalTasks(userId)));
     }
@@ -231,7 +261,7 @@ public class TaskController {
      *
      * @param category    categoría por la que filtrar
      * @param userDetails usuario autenticado inyectado por Spring Security
-     * @return lista de tareas de esa categoría
+     * @return 200 OK con la lista de tareas de esa categoría
      */
     @GetMapping("/category/{category}")
     public ResponseEntity<List<TaskResponse>> getTasksByCategory(
@@ -244,42 +274,68 @@ public class TaskController {
     /**
      * GET /api/tasks/{id}/subtasks/all
      * Devuelve todas las subtareas de una tarea, incluidas las eliminadas.
+     * Valida que la tarea padre pertenece al usuario autenticado.
      *
-     * @param id identificador de la tarea padre
-     * @return lista de todas las subtareas
+     * @param id          identificador de la tarea padre
+     * @param userDetails usuario autenticado inyectado por Spring Security
+     * @return 200 OK con la lista de todas las subtareas
      */
     @GetMapping("/{id}/subtasks/all")
-    public ResponseEntity<List<TaskResponse>> getAllSubTasks(@PathVariable Long id) {
+    public ResponseEntity<List<TaskResponse>> getAllSubTasks(
+            @PathVariable Long id,
+            @AuthenticationPrincipal UserDetails userDetails) {
+        Long userId = securityUtils.getUserId(userDetails);
+        Task parentTask = taskService.findById(id);
+
+        // SEGURIDAD: verificamos que la tarea padre pertenece al usuario autenticado
+        if (!parentTask.getUser().getId().equals(userId)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
+
         return ResponseEntity.ok(toResponseList(taskService.getAllSubTasks(id)));
     }
 
     /**
      * GET /api/tasks/project/{id}/all
      * Devuelve todas las tareas raíz de un proyecto, incluyendo las eliminadas.
+     * Valida que el proyecto pertenece al usuario autenticado.
      * Se usa para cargar el historial de actividad completo del proyecto.
      *
-     * @param id identificador del proyecto
-     * @return lista de todas las tareas raíz del proyecto
+     * @param id          identificador del proyecto
+     * @param userDetails usuario autenticado inyectado por Spring Security
+     * @return 200 OK con la lista de todas las tareas raíz del proyecto
      */
     @GetMapping("/project/{id}/all")
-    public ResponseEntity<List<TaskResponse>> getAllTasksByProject(@PathVariable Long id) {
+    public ResponseEntity<List<TaskResponse>> getAllTasksByProject(
+            @PathVariable Long id,
+            @AuthenticationPrincipal UserDetails userDetails) {
+        Long userId = securityUtils.getUserId(userDetails);
+
+        // SEGURIDAD: validamos que el proyecto pertenece al usuario autenticado
+        // antes de devolver sus tareas, incluso las eliminadas
+        projectService.getProjectByIdAndUser(id, userId);
+
         return ResponseEntity.ok(toResponseList(taskService.getAllTasksByProject(id)));
     }
 
-    // ── Escritura ─────────────────────────────────────────────────────────────
+    // -------------------------------------------------------------------------
+    // Escritura
+    // -------------------------------------------------------------------------
 
     /**
      * POST /api/tasks
      * Crea una nueva tarea o subtarea para el usuario autenticado.
+     * Si pertenece a un proyecto, hereda su categoría automáticamente.
      *
-     * @param request     datos de la tarea validados
+     * @param request     datos de la tarea validados con {@code @Valid}
      * @param userDetails usuario autenticado inyectado por Spring Security
-     * @return tarea creada con código 201 Created
+     * @return 201 Created con la tarea creada
      */
     @PostMapping
     public ResponseEntity<TaskResponse> createTask(
             @Valid @RequestBody TaskRequest request,
             @AuthenticationPrincipal UserDetails userDetails) {
+
         Long userId = securityUtils.getUserId(userDetails);
         Task task = taskService.createTask(
                 request.getTitle(), request.getDescription(), request.getPriority(),
@@ -290,18 +346,20 @@ public class TaskController {
 
     /**
      * PUT /api/tasks/{id}
-     * Actualiza los datos de una tarea del usuario autenticado.
+     * Actualiza los datos editables de una tarea del usuario autenticado.
+     * Valida que la tarea pertenece al usuario antes de modificarla.
      *
      * @param id          identificador de la tarea
-     * @param request     nuevos datos de la tarea validados
+     * @param request     nuevos datos de la tarea validados con {@code @Valid}
      * @param userDetails usuario autenticado inyectado por Spring Security
-     * @return tarea actualizada
+     * @return 200 OK con la tarea actualizada
      */
     @PutMapping("/{id}")
     public ResponseEntity<TaskResponse> updateTask(
             @PathVariable Long id,
             @Valid @RequestBody TaskRequest request,
             @AuthenticationPrincipal UserDetails userDetails) {
+
         Long userId = securityUtils.getUserId(userDetails);
         Task task = taskService.updateTask(id, request.getTitle(), request.getDescription(),
                 request.getStatus(), request.getPriority(), request.getDueDate(), userId);
@@ -311,25 +369,26 @@ public class TaskController {
     /**
      * PATCH /api/tasks/{id}/status
      * Cambia el estado de una tarea.
+     * No permite marcar como completada si tiene subtareas pendientes.
      *
      * @param id          identificador de la tarea
-     * @param status      nuevo estado
+     * @param status      nuevo estado a aplicar
      * @param userDetails usuario autenticado inyectado por Spring Security
-     * @return tarea actualizada
+     * @return 200 OK con la tarea actualizada
      */
     @PatchMapping("/{id}/status")
     public ResponseEntity<TaskResponse> changeStatus(
             @PathVariable Long id,
             @RequestParam TaskStatus status,
             @AuthenticationPrincipal UserDetails userDetails) {
+
         Long userId = securityUtils.getUserId(userDetails);
-        Task task = taskService.changeStatus(id, status, userId);
-        return ResponseEntity.ok(toResponse(task));
+        return ResponseEntity.ok(toResponse(taskService.changeStatus(id, status, userId)));
     }
 
     /**
      * DELETE /api/tasks/{id}
-     * Envía una tarea y sus subtareas a la papelera (soft delete).
+     * Envía una tarea y todas sus subtareas a la papelera (soft delete recursivo).
      *
      * @param id          identificador de la tarea
      * @param userDetails usuario autenticado inyectado por Spring Security
@@ -339,6 +398,7 @@ public class TaskController {
     public ResponseEntity<Void> deleteTask(
             @PathVariable Long id,
             @AuthenticationPrincipal UserDetails userDetails) {
+
         Long userId = securityUtils.getUserId(userDetails);
         taskService.deleteTask(id, userId);
         return ResponseEntity.noContent().build();
@@ -347,6 +407,7 @@ public class TaskController {
     /**
      * DELETE /api/tasks/{id}/permanent
      * Elimina definitivamente una tarea de la base de datos.
+     * Operación irreversible: no se puede deshacer.
      *
      * @param id          identificador de la tarea
      * @param userDetails usuario autenticado inyectado por Spring Security
@@ -356,6 +417,7 @@ public class TaskController {
     public ResponseEntity<Void> permanentlyDeleteTask(
             @PathVariable Long id,
             @AuthenticationPrincipal UserDetails userDetails) {
+
         Long userId = securityUtils.getUserId(userDetails);
         taskService.deletePermanently(id, userId);
         return ResponseEntity.noContent().build();
@@ -364,10 +426,15 @@ public class TaskController {
     /**
      * DELETE /api/tasks/trash/empty
      * Elimina permanentemente todas las tareas en la papelera del usuario.
+     * Operación irreversible: vacía la papelera completa.
+     *
+     * @param userDetails usuario autenticado inyectado por Spring Security
+     * @return 204 No Content
      */
     @DeleteMapping("/trash/empty")
     public ResponseEntity<Void> emptyTaskTrash(
             @AuthenticationPrincipal UserDetails userDetails) {
+
         Long userId = securityUtils.getUserId(userDetails);
         taskService.emptyTrash(userId);
         return ResponseEntity.noContent().build();
@@ -375,28 +442,32 @@ public class TaskController {
 
     /**
      * PUT /api/tasks/{id}/restore
-     * Restaura una tarea desde la papelera.
+     * Restaura una tarea desde la papelera, limpiando su fecha de eliminación.
      *
      * @param id          identificador de la tarea
      * @param userDetails usuario autenticado inyectado por Spring Security
-     * @return tarea restaurada
+     * @return 200 OK con la tarea restaurada
      */
     @PutMapping("/{id}/restore")
     public ResponseEntity<TaskResponse> restoreTask(
             @PathVariable Long id,
             @AuthenticationPrincipal UserDetails userDetails) {
+
         Long userId = securityUtils.getUserId(userDetails);
-        Task task = taskService.restoreTask(id, userId);
-        return ResponseEntity.ok(toResponse(task));
+        return ResponseEntity.ok(toResponse(taskService.restoreTask(id, userId)));
     }
 
-    // ── Mapeo ─────────────────────────────────────────────────────────────────
+    // -------------------------------------------------------------------------
+    // Métodos privados
+    // -------------------------------------------------------------------------
 
     /**
-     * Convierte una entidad {@link Task} a su DTO de respuesta.
+     * Convierte una entidad {@link Task} al DTO de respuesta {@link TaskResponse}.
+     * Omite la referencia al usuario y resuelve las FK de proyecto y tarea padre
+     * a sus identificadores para evitar referencias circulares en la serialización.
      *
-     * @param task entidad a convertir
-     * @return DTO con los datos de la tarea
+     * @param task entidad tarea a convertir
+     * @return DTO con los datos de la tarea listos para serializar a JSON
      */
     private TaskResponse toResponse(Task task) {
         return TaskResponse.builder()
@@ -407,6 +478,7 @@ public class TaskController {
                 .priority(task.getPriority())
                 .dueDate(task.getDueDate())
                 .createdAt(task.getCreatedAt())
+                // Resolvemos las FK a IDs para no serializar los objetos completos
                 .projectId(task.getProject() != null ? task.getProject().getId() : null)
                 .parentTaskId(task.getParentTask() != null ? task.getParentTask().getId() : null)
                 .deleted(task.isDeleted())
@@ -416,12 +488,12 @@ public class TaskController {
     }
 
     /**
-     * Convierte una lista de entidades {@link Task} a una lista de DTOs.
+     * Convierte una lista de entidades {@link Task} a una lista de DTOs {@link TaskResponse}.
      *
      * @param tasks lista de entidades a convertir
      * @return lista de DTOs
      */
     private List<TaskResponse> toResponseList(List<Task> tasks) {
-        return tasks.stream().map(this::toResponse).collect(Collectors.toList());
+        return tasks.stream().map(this::toResponse).toList();
     }
 }
