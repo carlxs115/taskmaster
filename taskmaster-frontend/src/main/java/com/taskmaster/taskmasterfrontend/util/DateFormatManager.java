@@ -13,13 +13,16 @@ import java.util.prefs.Preferences;
  * {@link DateTimeFormatter} correspondiente al formato activo como
  * la etiqueta localizada para mostrar en el combo de ajustes.</p>
  *
+ * <p><b>Nota de concurrencia:</b> no es thread-safe por diseño,
+ * ya que se usa exclusivamente desde el hilo de JavaFX.</p>
+ *
  * @author Carlos
  */
 public class DateFormatManager {
 
     /**
      * Formatos de fecha disponibles para el usuario.
-     * El comentario de cada valor indica un ejemplo con la fecha 11/03/2026.
+     * El comentario de cada valor muestra un ejemplo con la fecha 11/03/2026.
      */
     public enum DateFormat {
         DD_MM_YYYY,   // 11/03/2026
@@ -45,6 +48,7 @@ public class DateFormatManager {
         try {
             currentFormat = DateFormat.valueOf(saved);
         } catch (IllegalArgumentException e) {
+            // Si el valor guardado es inválido (migración, corrupción) usamos el por defecto
             currentFormat = DateFormat.DD_MM_YYYY;
         }
     }
@@ -52,7 +56,7 @@ public class DateFormatManager {
     /**
      * Devuelve la instancia única del singleton, creándola si aún no existe.
      *
-     * @return Instancia global de {@link DateFormatManager}.
+     * @return instancia global de {@link DateFormatManager}
      */
     public static DateFormatManager getInstance() {
         if (instance == null) instance = new DateFormatManager();
@@ -62,14 +66,15 @@ public class DateFormatManager {
     /**
      * Devuelve el formato de fecha actualmente activo.
      *
-     * @return Formato activo.
+     * @return formato activo
      */
     public DateFormat getCurrentFormat() { return currentFormat; }
 
     /**
-     * Establece un nuevo formato de fecha y lo persiste en {@link java.util.prefs.Preferences}.
+     * Establece un nuevo formato de fecha y lo persiste en
+     * {@link java.util.prefs.Preferences} para que se mantenga entre sesiones.
      *
-     * @param format Formato a aplicar y guardar.
+     * @param format formato a aplicar y guardar
      */
     public void setFormat(DateFormat format) {
         this.currentFormat = format;
@@ -78,9 +83,10 @@ public class DateFormatManager {
 
     /**
      * Devuelve el {@link DateTimeFormatter} correspondiente al formato activo,
-     * usando el locale del {@link LanguageManager} para formatos con nombre de mes.
+     * usando el locale del {@link LanguageManager} para formatos con nombre de mes
+     * (p.ej. {@code DD_MMM_YYYY} produce "11 mar 2026" en español).
      *
-     * @return Formateador de fecha listo para usar.
+     * @return formateador de fecha listo para usar
      */
     public DateTimeFormatter getFormatter() {
         Locale locale = LanguageManager.getInstance().getCurrentLocale();
@@ -97,8 +103,8 @@ public class DateFormatManager {
     /**
      * Formatea una fecha según el formato activo.
      *
-     * @param date Fecha a formatear, o {@code null}.
-     * @return Cadena con la fecha formateada, o cadena vacía si la fecha es {@code null}.
+     * @param date fecha a formatear, o {@code null}
+     * @return cadena con la fecha formateada, o cadena vacía si la fecha es {@code null}
      */
     public String format(LocalDate date) {
         if (date == null) return "";
@@ -107,10 +113,10 @@ public class DateFormatManager {
 
     /**
      * Devuelve la etiqueta localizada de un formato de fecha para mostrar
-     * en el combo de ajustes.
+     * en el combo de ajustes de la pantalla de configuración.
      *
-     * @param format Formato del que se quiere obtener la etiqueta.
-     * @return Etiqueta localizada correspondiente al formato.
+     * @param format formato del que se quiere obtener la etiqueta
+     * @return etiqueta localizada correspondiente al formato
      */
     public static String getLabel(DateFormat format) {
         LanguageManager lm = LanguageManager.getInstance();

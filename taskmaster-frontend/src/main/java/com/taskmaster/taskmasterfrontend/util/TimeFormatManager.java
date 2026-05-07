@@ -1,9 +1,14 @@
 package com.taskmaster.taskmasterfrontend.util;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
+import java.util.Locale;
 import java.util.prefs.Preferences;
-
 
 /**
  * Singleton que gestiona el formato de hora preferido por el usuario.
@@ -14,9 +19,14 @@ import java.util.prefs.Preferences;
  * de 12 horas con indicador AM/PM. La preferencia se persiste entre sesiones
  * mediante {@link java.util.prefs.Preferences}.</p>
  *
+ * <p><b>Nota de concurrencia:</b> no es thread-safe por diseño,
+ * ya que se usa exclusivamente desde el hilo de JavaFX.</p>
+ *
  * @author Carlos
  */
 public class TimeFormatManager {
+
+    private static final Logger log = LoggerFactory.getLogger(TimeFormatManager.class);
 
     /** Formatos de hora disponibles para el usuario. */
     public enum TimeFormat {
@@ -43,6 +53,7 @@ public class TimeFormatManager {
         try {
             currentFormat = TimeFormat.valueOf(saved);
         } catch (IllegalArgumentException e) {
+            // Si el valor guardado es inválido usamos el por defecto
             currentFormat = TimeFormat.SYSTEM;
         }
     }
@@ -50,7 +61,7 @@ public class TimeFormatManager {
     /**
      * Devuelve la instancia única del singleton, creándola si aún no existe.
      *
-     * @return Instancia global de {@link TimeFormatManager}.
+     * @return instancia global de {@link TimeFormatManager}
      */
     public static TimeFormatManager getInstance() {
         if (instance == null) instance = new TimeFormatManager();
@@ -60,14 +71,15 @@ public class TimeFormatManager {
     /**
      * Devuelve el formato de hora actualmente activo.
      *
-     * @return Formato activo.
+     * @return formato activo
      */
     public TimeFormat getCurrentFormat() { return currentFormat; }
 
     /**
-     * Establece un nuevo formato de hora y lo persiste en {@link java.util.prefs.Preferences}.
+     * Establece un nuevo formato de hora y lo persiste en
+     * {@link java.util.prefs.Preferences} para que se mantenga entre sesiones.
      *
-     * @param format Formato a aplicar y guardar.
+     * @param format formato a aplicar y guardar
      */
     public void setFormat(TimeFormat format) {
         this.currentFormat = format;
@@ -79,12 +91,13 @@ public class TimeFormatManager {
      * En modo {@link TimeFormat#SYSTEM}, detecta si el sistema usa convenio
      * de 12 o 24 horas y aplica el patrón correspondiente.
      *
-     * @return Formateador de hora listo para usar.
+     * @return formateador de hora listo para usar
      */
     public DateTimeFormatter getFormatter() {
         return switch (currentFormat) {
             case H24    -> DateTimeFormatter.ofPattern("HH:mm");
             case H12    -> DateTimeFormatter.ofPattern("hh:mm a");
+            // En modo SYSTEM delegamos la detección al sistema operativo
             case SYSTEM -> isSystemUsing12h()
                     ? DateTimeFormatter.ofPattern("hh:mm a")
                     : DateTimeFormatter.ofPattern("HH:mm");
@@ -94,33 +107,41 @@ public class TimeFormatManager {
     /**
      * Formatea una hora según el formato activo.
      *
-     * @param time Hora a formatear, o {@code null}.
-     * @return Cadena con la hora formateada, o cadena vacía si la hora es {@code null}.
+     * @param time hora a formatear, o {@code null}
+     * @return cadena con la hora formateada, o cadena vacía si la hora es {@code null}
      */
     public String format(LocalTime time) {
         if (time == null) return "";
         return time.format(getFormatter());
     }
 
+    // -------------------------------------------------------------------------
+    // Métodos privados
+    // -------------------------------------------------------------------------
+
     /**
      * Detecta si el sistema operativo usa la convención de 12 horas
-     * inspeccionando el patrón del {@link java.text.SimpleDateFormat} por defecto.
-     * En caso de error devuelve {@code false} (24 horas como valor seguro).
+     * inspeccionando el patrón del {@link SimpleDateFormat} por defecto.
      *
-     * @return {@code true} si el sistema usa convenio de 12 horas.
+     * <p>La detección se basa en que el patrón de 12 horas contiene
+     * {@code 'h'} minúscula y el de 24 horas contiene {@code 'H'} mayúscula.</p>
+     *
+     * @return {@code true} si el sistema usa convenio de 12 horas,
+     *         {@code false} si usa 24 horas o no se puede detectar
      */
     private boolean isSystemUsing12h() {
         try {
-            java.text.DateFormat df = java.text.DateFormat.getTimeInstance(
-                    java.text.DateFormat.SHORT, java.util.Locale.getDefault());
-            if (df instanceof java.text.SimpleDateFormat sdf) {
+            DateFormat df = DateFormat.getTimeInstance(
+                    DateFormat.SHORT, Locale.getDefault());
+            if (df instanceof SimpleDateFormat sdf) {
                 String pattern = sdf.toPattern();
-                // 'h' minúscula = 12h, 'H' mayúscula = 24h
+                // 'h' minúscula = 12 horas, 'H' mayúscula = 24 horas
                 return pattern.contains("h") && !pattern.contains("H");
             }
         } catch (Exception e) {
-            // fallback seguro
+            // Si no se puede detectar el formato del sistema usamos 24h como valor seguro
+            log.warn("No se pudo detectar el formato de hora del sistema: {}", e.getMessage());
         }
-        return false; // si no se puede detectar, 24h por defecto
+        return false;
     }
 }

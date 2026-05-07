@@ -12,6 +12,15 @@ import java.time.LocalDate;
  * y estado del avatar). Todos los controladores acceden a esta instancia
  * mediante {@link #getInstance()}.</p>
  *
+ * <p><b>Nota de seguridad:</b> la contraseña se mantiene en memoria en texto
+ * plano porque HTTP Basic requiere enviarla en cada petición. Este riesgo es
+ * aceptable para una app de escritorio monousuario local, donde el proceso
+ * está aislado en la máquina del propio usuario.</p>
+ *
+ * <p><b>Nota de concurrencia:</b> este singleton no es thread-safe por diseño,
+ * ya que JavaFX es monohilo y todas las interacciones ocurren en el hilo
+ * de la aplicación (JavaFX Application Thread).</p>
+ *
  * @author Carlos
  */
 public class AppContext {
@@ -25,9 +34,7 @@ public class AppContext {
     private Long currentUserId;
     private String currentUsername;
     private String currentPassword;
-
     private LocalDate currentBirthDate;
-
     private boolean hasAvatar;
 
     /**
@@ -41,7 +48,7 @@ public class AppContext {
     /**
      * Devuelve la instancia única del singleton, creándola si aún no existe.
      *
-     * @return Instancia global de {@link AppContext}.
+     * @return instancia global de {@link AppContext}
      */
     public static AppContext getInstance() {
         if (instance == null) {
@@ -53,7 +60,7 @@ public class AppContext {
     /**
      * Devuelve el {@link ApiService} para realizar peticiones al backend.
      *
-     * @return Instancia del servicio HTTP.
+     * @return instancia del servicio HTTP
      */
     public ApiService getApiService() {
         return apiService;
@@ -62,13 +69,17 @@ public class AppContext {
     /**
      * Devuelve el identificador del usuario autenticado.
      *
-     * @return Identificador del usuario, o {@code null} si no hay sesión activa.
+     * @return identificador del usuario, o {@code null} si no hay sesión activa
      */
     public Long getCurrentUserId() {
         return currentUserId;
     }
 
-    /** @param currentUserId Identificador del usuario autenticado. */
+    /**
+     * Establece el identificador del usuario autenticado.
+     *
+     * @param currentUserId identificador del usuario
+     */
     public void setCurrentUserId(Long currentUserId) {
         this.currentUserId = currentUserId;
     }
@@ -76,38 +87,51 @@ public class AppContext {
     /**
      * Devuelve el nombre de usuario del usuario autenticado.
      *
-     * @return Nombre de usuario, o {@code null} si no hay sesión activa.
+     * @return nombre de usuario, o {@code null} si no hay sesión activa
      */
     public String getCurrentUsername() {
         return currentUsername;
     }
 
-    /** @param currentUsername Nombre de usuario autenticado. */
+    /**
+     * Establece el nombre de usuario autenticado.
+     *
+     * @param currentUsername nombre de usuario
+     */
     public void setCurrentUsername(String currentUsername) {
         this.currentUsername = currentUsername;
     }
 
     /**
-     * Devuelve la contraseña en texto plano del usuario autenticado,
-     * necesaria para renovar las credenciales HTTP Basic tras un cambio de datos.
+     * Devuelve la contraseña en texto plano del usuario autenticado.
+     * Es necesaria para construir la cabecera HTTP Basic en cada petición,
+     * ya que el protocolo no tiene estado y no usa cookies de sesión.
      *
-     * @return Contraseña actual, o {@code null} si no hay sesión activa.
+     * @return contraseña actual, o {@code null} si no hay sesión activa
      */
     public String getCurrentPassword() { return currentPassword; }
 
-    /** @param currentPassword Contraseña actual del usuario autenticado. */
+    /**
+     * Establece la contraseña del usuario autenticado.
+     *
+     * @param currentPassword contraseña en texto plano
+     */
     public void setCurrentPassword(String currentPassword) { this.currentPassword = currentPassword; }
 
     /**
      * Devuelve la fecha de nacimiento del usuario autenticado.
      *
-     * @return Fecha de nacimiento, o {@code null} si no se ha cargado.
+     * @return fecha de nacimiento, o {@code null} si no se ha cargado
      */
     public LocalDate getCurrentBirthDate() {
         return currentBirthDate;
     }
 
-    /** @param birthDate Fecha de nacimiento del usuario autenticado. */
+    /**
+     * Establece la fecha de nacimiento del usuario autenticado.
+     *
+     * @param birthDate fecha de nacimiento
+     */
     public void setCurrentBirthDate(LocalDate birthDate) {
         this.currentBirthDate = birthDate;
     }
@@ -115,23 +139,31 @@ public class AppContext {
     /**
      * Indica si el usuario autenticado tiene una foto de avatar subida.
      *
-     * @return {@code true} si el usuario tiene avatar.
+     * @return {@code true} si el usuario tiene avatar
      */
     public boolean hasAvatar() { return hasAvatar; }
 
-    /** @param hasAvatar {@code true} si el usuario tiene avatar subido. */
+    /**
+     * Establece si el usuario autenticado tiene avatar subido.
+     *
+     * @param hasAvatar {@code true} si el usuario tiene avatar
+     */
     public void setHasAvatar(boolean hasAvatar) { this.hasAvatar = hasAvatar; }
 
     /**
-     * Limpia todos los datos de la sesión activa al cerrar sesión,
-     * incluyendo credenciales y datos del usuario.
+     * Limpia todos los datos de la sesión activa al cerrar sesión.
+     * Elimina credenciales, datos del usuario y el estado del avatar.
+     * El {@link ApiService} también limpia sus credenciales internas.
      */
     public void logout() {
         this.currentUserId = null;
         this.currentUsername = null;
-        this.apiService.setCredentials(null, null);
         this.currentPassword = null;
         this.currentBirthDate = null;
         this.hasAvatar = false;
+
+        // Limpiamos las credenciales del ApiService para que las siguientes
+        // peticiones no se envíen con las credenciales del usuario anterior
+        this.apiService.setCredentials(null, null);
     }
 }

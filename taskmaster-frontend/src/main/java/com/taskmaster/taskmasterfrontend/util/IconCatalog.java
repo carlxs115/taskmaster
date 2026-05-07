@@ -1,15 +1,30 @@
 package com.taskmaster.taskmasterfrontend.util;
 
 /**
- * Catálogo centralizado de iconos de la aplicación.
- * Usa identificadores Ikonli (FontAwesome 5).
- * Si quieres cambiar un icono globalmente, modifícalo aquí.
+ * Catálogo centralizado de iconos de la aplicación usando identificadores
+ * Ikonli con el pack FontAwesome 5.
+ *
+ * <p>Todos los iconos de la interfaz se definen aquí como constantes.
+ * Para cambiar un icono globalmente basta con modificar su constante en esta clase,
+ * sin necesidad de buscar todas las apariciones en los controladores.</p>
+ *
+ * <p>Prefijos usados:</p>
+ * <ul>
+ *   <li>{@code fas-} - FontAwesome Solid</li>
+ *   <li>{@code far-} - FontAwesome Regular</li>
+ * </ul>
+ *
+ * @author Carlos
  */
 public class IconCatalog {
 
-    private IconCatalog() {} // Clase de utilidad, no instanciable
+    /** Clase de utilidad, no instanciable. */
+    private IconCatalog() {}
 
-    // ===== Sidebar =====
+    // -------------------------------------------------------------------------
+    // Sidebar
+    // -------------------------------------------------------------------------
+
     public static final String SIDEBAR_HOME        = "fas-home";
     public static final String SIDEBAR_TASKS       = "fas-tasks";
     public static final String SIDEBAR_PROJECTS    = "fas-folder";
@@ -18,25 +33,37 @@ public class IconCatalog {
     public static final String SIDEBAR_STATS       = "fas-chart-bar";
     public static final String SIDEBAR_SETTINGS    = "fas-cog";
 
-    // ===== Acciones CRUD =====
+    // -------------------------------------------------------------------------
+    // Acciones CRUD
+    // -------------------------------------------------------------------------
+
     public static final String ACTION_CREATE       = "fas-plus";
     public static final String ACTION_EDIT         = "fas-pen";
     public static final String ACTION_DELETE       = "fas-trash";
     public static final String ACTION_SAVE         = "fas-check";
     public static final String ACTION_CANCEL       = "fas-times";
 
-    // ===== Prioridad de tareas =====
+    // -------------------------------------------------------------------------
+    // Prioridad de tareas
+    // -------------------------------------------------------------------------
+
     public static final String PRIORITY_HIGH       = "fas-exclamation-circle";
     public static final String PRIORITY_MEDIUM     = "fas-minus-circle";
     public static final String PRIORITY_LOW        = "fas-arrow-down";
 
-    // ===== Estado de tareas =====
+    // -------------------------------------------------------------------------
+    // Estado de tareas
+    // -------------------------------------------------------------------------
+
     public static final String STATUS_PENDING      = "far-circle";
     public static final String STATUS_IN_PROGRESS  = "fas-spinner";
     public static final String STATUS_COMPLETED    = "fas-check-circle";
     public static final String STATUS_CANCELLED    = "fas-ban";
 
-    // ===== Categorías =====
+    // -------------------------------------------------------------------------
+    // Categorías
+    // -------------------------------------------------------------------------
+
     public static final String CATEGORY_WORK       = "fas-briefcase";
     public static final String CATEGORY_PERSONAL   = "fas-user";
     public static final String CATEGORY_STUDIES    = "fas-graduation-cap";
@@ -45,7 +72,10 @@ public class IconCatalog {
     public static final String CATEGORY_SHOPPING   = "fas-shopping-cart";
     public static final String CATEGORY_OTHER      = "fas-tag";
 
-    // ===== Usuario / Perfil =====
+    // -------------------------------------------------------------------------
+    // Usuario y perfil
+    // -------------------------------------------------------------------------
+
     public static final String USER_AVATAR         = "fas-user-circle";
     public static final String USER_PROFILE        = "fas-id-card";
     public static final String USER_PASSWORD       = "fas-key";
@@ -53,7 +83,10 @@ public class IconCatalog {
     public static final String USER_DELETE_ACCOUNT = "fas-user-times";
     public static final String USER_LOGOUT         = "fas-sign-out-alt";
 
-    // ===== UI general =====
+    // -------------------------------------------------------------------------
+    // UI general
+    // -------------------------------------------------------------------------
+
     public static final String UI_SEARCH           = "fas-search";
     public static final String UI_FILTER           = "fas-filter";
     public static final String UI_SORT             = "fas-sort";
