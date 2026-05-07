@@ -6,8 +6,9 @@ import lombok.Data;
 /**
  * DTO de respuesta con las estadísticas de actividad del usuario.
  *
- * <p>Los valores se calculan en tiempo real en la capa de servicio,
- * sin necesidad de una entidad de estadísticas en la base de datos.</p>
+ * <p>Los valores se calculan en tiempo real en {@code UserService.getStats},
+ * consultando directamente los contadores en base de datos sin necesidad
+ * de una entidad de estadísticas persistida.</p>
  *
  * @author Carlos
  */
@@ -15,24 +16,28 @@ import lombok.Data;
 @Builder
 public class UserStatsResponse {
 
-    /** Número total de tareas activas del usuario. */
+    /** Número total de tareas activas del usuario (no eliminadas). */
     private long totalTasks;
 
-    /** Número de tareas completadas. */
+    /** Número de tareas en estado {@code DONE}. */
     private long completedTasks;
 
-    /** Número de tareas pendientes (en estado TODO). */
+    /** Número de tareas en estado {@code TODO} (pendientes de iniciar). */
     private long pendingTasks;
 
-    /** Número de tareas en curso. */
+    /** Número de tareas en estado {@code IN_PROGRESS}. */
     private long inProgressTasks;
 
-    /** Número de tareas canceladas. */
+    /** Número de tareas en estado {@code CANCELLED}. */
     private long cancelledTasks;
 
-    /** Número total de proyectos activos del usuario. */
+    /** Número total de proyectos activos del usuario (no eliminados). */
     private long totalProjects;
 
-    /** Porcentaje de tareas completadas sobre el total (0-100). */
+    /**
+     * Porcentaje de tareas completadas sobre el total (0-100).
+     * Devuelve {@code 0} cuando {@code totalTasks} es 0 para evitar
+     * división por cero.
+     */
     private int completionRate;
 }

@@ -12,6 +12,10 @@ import java.time.LocalDate;
 /**
  * DTO para la solicitud de actualización del perfil de usuario.
  *
+ * <p>Permite actualizar username, email y fecha de nacimiento.
+ * La unicidad del nuevo username y email se valida en
+ * {@code UserService.updateProfile}.</p>
+ *
  * @author Carlos
  */
 @Data
@@ -19,11 +23,17 @@ import java.time.LocalDate;
 @AllArgsConstructor
 public class UpdateProfileRequest {
 
-    /** Nuevo nombre de usuario. */
+    /**
+     * Nuevo nombre de usuario.
+     * Debe ser único en el sistema si ha cambiado respecto al actual.
+     */
     @NotBlank(message = "El nombre de usuario es obligatorio")
     private String username;
 
-    /** Nuevo correo electrónico. */
+    /**
+     * Nuevo correo electrónico.
+     * Debe ser único en el sistema si ha cambiado respecto al actual.
+     */
     @Email(message = "El email no es válido")
     @NotBlank(message = "El email es obligatorio")
     private String email;

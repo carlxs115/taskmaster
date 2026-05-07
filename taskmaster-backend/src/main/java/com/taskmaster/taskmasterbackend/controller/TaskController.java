@@ -22,7 +22,6 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-import java.util.stream.Collectors;
 
 /**
  * Controlador REST que gestiona el CRUD de tareas, subtareas y la pantalla de inicio.
@@ -66,9 +65,9 @@ public class TaskController {
                 .map(p -> ProjectWithTasksResponse.builder()
                         .id(p.getId())
                         .name(p.getName())
-                        .category(p.getCategory().name())
-                        .status(p.getStatus().name())
-                        .priority(p.getPriority().name())
+                        .category(p.getCategory())
+                        .status(p.getStatus())
+                        .priority(p.getPriority())
                         .description(p.getDescription())
                         .tasks(taskService.getTasksByProject(p.getId(), userId)
                                 .stream().map(this::toResponse).toList())
