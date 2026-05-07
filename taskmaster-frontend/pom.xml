@@ -12,7 +12,8 @@
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <junit.version>5.12.1</junit.version>
-        <jackson.version>2.17.0</jackson.version>
+        <jackson.version>2.18.7</jackson.version>
+        <logback.version>1.5.32</logback.version>
     </properties>
 
     <dependencies>
@@ -51,11 +52,6 @@
                     <artifactId>*</artifactId>
                 </exclusion>
             </exclusions>
-        </dependency>
-        <dependency>
-            <groupId>org.kordamp.ikonli</groupId>
-            <artifactId>ikonli-javafx</artifactId>
-            <version>12.3.1</version>
         </dependency>
         <dependency>
             <groupId>org.kordamp.bootstrapfx</groupId>
@@ -101,6 +97,13 @@
             <groupId>org.kordamp.ikonli</groupId>
             <artifactId>ikonli-fontawesome5-pack</artifactId>
             <version>12.3.1</version>
+        </dependency>
+
+        <!-- Implementación Logback -->
+        <dependency>
+            <groupId>ch.qos.logback</groupId>
+            <artifactId>logback-classic</artifactId>
+            <version>${logback.version}</version>
         </dependency>
     </dependencies>
 

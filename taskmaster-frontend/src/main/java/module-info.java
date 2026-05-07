@@ -12,11 +12,11 @@ module com.taskmaster.taskmasterfrontend {
     requires javafx.swing;
     requires java.prefs;
     requires org.kordamp.ikonli.fontawesome5;
-
+    requires org.slf4j;
+    requires ch.qos.logback.classic;
     opens com.taskmaster.taskmasterfrontend to javafx.fxml;
     opens com.taskmaster.taskmasterfrontend.controller to javafx.fxml;
     opens com.taskmaster.taskmasterfrontend.util to com.fasterxml.jackson.databind;
-
     exports com.taskmaster.taskmasterfrontend;
     exports com.taskmaster.taskmasterfrontend.controller;
 }
