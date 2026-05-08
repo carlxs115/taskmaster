@@ -1,7 +1,6 @@
 package com.taskmaster.taskmasterfrontend.controller;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.taskmaster.taskmasterfrontend.util.AppContext;
 import com.taskmaster.taskmasterfrontend.util.LanguageManager;
 import javafx.application.Platform;
@@ -37,7 +36,6 @@ public class AddWorkLogController {
     private Long editingLogId = null;
     private Runnable onWorkLogAdded;
 
-    private final ObjectMapper objectMapper = new ObjectMapper();
     private final LanguageManager lm = LanguageManager.getInstance();
 
     /**
@@ -115,34 +113,38 @@ public class AddWorkLogController {
                 .ifPresent(e -> activityTypeCombo.setValue(e.getKey()));
     }
 
-    /**
-     * Valida el formulario y envía los datos al backend para crear o actualizar
-     * el worklog. Cierra el diálogo si la operación es exitosa.
-     */
     @FXML
     private void handleSave() {
         if (!validate()) return;
         hideError();
 
-        BigDecimal hours = new BigDecimal(hoursField.getText().trim());
-        String activityType = getActivityTypes().get(activityTypeCombo.getValue());
-
+        BigDecimal hours       = new BigDecimal(hoursField.getText().trim());
+        String activityType    = getActivityTypes().get(activityTypeCombo.getValue());
         Map<String, Object> body = new LinkedHashMap<>();
-        body.put("date", datePicker.getValue().toString());
+        body.put("date",         datePicker.getValue().toString());
         body.put("activityType", activityType);
-        body.put("hours", hours);
-        body.put("note", noteField.getText().trim());
+        body.put("hours",        hours);
+        body.put("note",         noteField.getText().trim());
 
         String endpoint = editingLogId == null
                 ? "/api/worklogs/task/" + taskId
                 : "/api/worklogs/" + editingLogId;
 
-        new Thread(() -> {
+        saveWorkLogAsync(endpoint, body);
+    }
+
+    /**
+     * Envía los datos del worklog al backend en un hilo secundario.
+     *
+     * @param endpoint ruta del endpoint (crear o actualizar según {@code editingLogId})
+     * @param body     datos del worklog a enviar
+     */
+    private void saveWorkLogAsync(String endpoint, Map<String, Object> body) {
+        Thread thread = new Thread(() -> {
             try {
                 HttpResponse<String> response = editingLogId == null
                         ? AppContext.getInstance().getApiService().postWithAuth(endpoint, body)
                         : AppContext.getInstance().getApiService().put(endpoint, body);
-
                 Platform.runLater(() -> {
                     if (response.statusCode() == 201 || response.statusCode() == 200) {
                         if (onWorkLogAdded != null) onWorkLogAdded.run();
@@ -154,7 +156,9 @@ public class AddWorkLogController {
             } catch (Exception e) {
                 Platform.runLater(() -> showError(lm.get("error.connection")));
             }
-        }).start();
+        }, "worklog-save");
+        thread.setDaemon(true);
+        thread.start();
     }
 
     /**

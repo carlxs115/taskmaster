@@ -8,17 +8,20 @@ import com.taskmaster.taskmasterfrontend.util.LanguageManager;
 import javafx.application.Platform;
 import javafx.fxml.FXML;
 import javafx.geometry.Pos;
-import javafx.scene.control.Alert;
-import javafx.scene.control.Button;
-import javafx.scene.control.ButtonType;
-import javafx.scene.control.Label;
+import javafx.scene.control.*;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.Region;
 import javafx.scene.layout.VBox;
 import org.kordamp.ikonli.javafx.FontIcon;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.net.http.HttpResponse;
+import java.text.MessageFormat;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 
 /**
  * Controlador de la pantalla de papelera.
@@ -30,6 +33,8 @@ import java.net.http.HttpResponse;
  * @author Carlos
  */
 public class TrashController {
+
+    private static final Logger log = LoggerFactory.getLogger(TrashController.class);
 
     @FXML private VBox trashTaskContainer;
     @FXML private VBox trashProjectContainer;
@@ -45,11 +50,19 @@ public class TrashController {
 
     private final LanguageManager lm = LanguageManager.getInstance();
 
+    /** Formato de fecha para mostrar fechas de eliminación y purga. */
+    private final DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern(
+            "d MMM yyyy", LanguageManager.getInstance().getCurrentLocale());
+
+    // -------------------------------------------------------------------------
+    // Inicialización
+    // -------------------------------------------------------------------------
+
     /**
      * Registra el callback que se ejecutará al restaurar un elemento,
      * para que el controlador padre pueda refrescar su vista.
      *
-     * @param callback Acción a ejecutar al detectar un cambio en la papelera.
+     * @param callback acción a ejecutar al detectar un cambio en la papelera
      */
     public void setOnTrashChanged(Runnable callback) {
         this.onTrashChanged = callback;
@@ -66,80 +79,88 @@ public class TrashController {
         loadRetentionDays();
     }
 
+    // -------------------------------------------------------------------------
+    // Carga de datos
+    // -------------------------------------------------------------------------
+
     /**
      * Obtiene los días de retención de la papelera desde los ajustes del backend
      * y actualiza la etiqueta informativa.
      */
     private void loadRetentionDays() {
-        new Thread(() -> {
+        Thread thread = new Thread(() -> {
             try {
                 HttpResponse<String> response = AppContext.getInstance()
-                        .getApiService()
-                        .get("/api/settings");
+                        .getApiService().get("/api/settings");
 
                 if (response.statusCode() == 200) {
                     JsonNode settings = objectMapper.readTree(response.body());
                     int days = settings.get("trashRetentionDays").asInt();
                     Platform.runLater(() -> {
                         retentionDays = days;
-                        retentionLabel.setText(java.text.MessageFormat.format(lm.get("trash.retention"), days));
+                        retentionLabel.setText(MessageFormat.format(lm.get("trash.retention"), days));
                     });
                 }
             } catch (Exception e) {
-
+                log.error("Error al cargar los días de retención: {}", e.getMessage());
             }
-        }).start();
+        }, "trash-load-retention");
+        thread.setDaemon(true);
+        thread.start();
     }
 
     /**
      * Obtiene las tareas eliminadas del backend y las renderiza en la vista.
      */
     private void loadTrashTasks() {
-        new Thread(() -> {
+        Thread thread = new Thread(() -> {
             try {
                 HttpResponse<String> response = AppContext.getInstance()
-                        .getApiService()
-                        .get("/api/tasks/trash");
-
+                        .getApiService().get("/api/tasks/trash");
                 if (response.statusCode() == 200) {
                     JsonNode tasks = objectMapper.readTree(response.body());
                     Platform.runLater(() -> renderTrashTasks(tasks));
                 }
-
             } catch (Exception e) {
+                log.error("Error al cargar las tareas de la papelera: {}", e.getMessage());
                 Platform.runLater(() ->
                         showAlert(lm.get("error.title"), lm.get("trash.error.load.tasks")));
             }
-        }).start();
+        }, "trash-load-tasks");
+        thread.setDaemon(true);
+        thread.start();
     }
 
     /**
      * Obtiene los proyectos eliminados del backend y los renderiza en la vista.
      */
     private void loadTrashProjects() {
-        new Thread(() -> {
+        Thread thread = new Thread(() -> {
             try {
                 HttpResponse<String> response = AppContext.getInstance()
-                        .getApiService()
-                        .get("/api/projects/trash");
-
+                        .getApiService().get("/api/projects/trash");
                 if (response.statusCode() == 200) {
                     JsonNode projects = objectMapper.readTree(response.body());
                     Platform.runLater(() -> renderTrashProjects(projects));
                 }
-
             } catch (Exception e) {
+                log.error("Error al cargar los proyectos de la papelera: {}", e.getMessage());
                 Platform.runLater(() ->
                         showAlert(lm.get("error.title"), lm.get("trash.error.load.projects")));
             }
-        }).start();
+        }, "trash-load-projects");
+        thread.setDaemon(true);
+        thread.start();
     }
 
+    // -------------------------------------------------------------------------
+    // Renderizado
+    // -------------------------------------------------------------------------
+
     /**
-     * Renderiza la lista de tareas eliminadas o muestra el mensaje de vacío
-     * si no hay ninguna.
+     * Renderiza la lista de tareas eliminadas o muestra el mensaje de vacío.
      *
-     * @param tasks Array JSON con las tareas eliminadas.
+     * @param tasks array JSON con las tareas eliminadas
      */
     private void renderTrashTasks(JsonNode tasks) {
         trashTaskContainer.getChildren().clear();
@@ -157,10 +178,9 @@ public class TrashController {
     }
 
     /**
-     * Renderiza la lista de proyectos eliminados o muestra el mensaje de vacío
-     * si no hay ninguno.
+     * Renderiza la lista de proyectos eliminados o muestra el mensaje de vacío.
      *
-     * @param projects Array JSON con los proyectos eliminados.
+     * @param projects array JSON con los proyectos eliminados
      */
     private void renderTrashProjects(JsonNode projects) {
         trashProjectContainer.getChildren().clear();
@@ -179,18 +199,14 @@ public class TrashController {
 
     /**
      * Construye la tarjeta visual de una tarea eliminada con su título,
-     * badge de prioridad y botones de restaurar y eliminar permanentemente.
+     * badges de prioridad y categoría, fechas de eliminación/purga y
+     * botones de restaurar y eliminar permanentemente.
      *
-     * @param task Nodo JSON con los datos de la tarea.
-     * @return {@link HBox} con el contenido visual de la tarjeta.
+     * @param task nodo JSON con los datos de la tarea
+     * @return {@link HBox} con el contenido visual de la tarjeta
      */
     private HBox createTrashTaskCard(JsonNode task) {
-        HBox card = new HBox();
-        card.setSpacing(12);
-        card.setAlignment(Pos.CENTER_LEFT);
-        card.getStyleClass().add("task-card");
-
-        Long taskId = task.get("id").asLong();
+        long taskId = task.get("id").asLong();
         String title = task.get("title").asText();
         String priority = task.get("priority").asText();
         String category = task.has("category") && !task.get("category").isNull()
@@ -205,66 +221,34 @@ public class TrashController {
         Label categoryBadge = new Label(translateCategory(category));
         categoryBadge.getStyleClass().add("detail-section-count");
 
-        Button restoreBtn = new Button(lm.get("trash.restore"));
-        restoreBtn.getStyleClass().add("btn-small-primary");
-        FontIcon restoreIcon = new FontIcon("fas-undo");
-        restoreIcon.getStyleClass().add("btn-small-primary-icon");
-        restoreBtn.setStyle("-fx-padding: 7 16 7 16;");
-        restoreBtn.setGraphic(restoreIcon);
-        restoreBtn.setContentDisplay(javafx.scene.control.ContentDisplay.LEFT);
-        restoreBtn.setGraphicTextGap(6);
-        restoreBtn.setOnAction(e -> restoreTask(taskId));
-
-        Button deleteBtn = new Button(lm.get("trash.delete"));
-        deleteBtn.getStyleClass().add("btn-danger");
-        FontIcon deleteIcon = new FontIcon("fas-times");
-        deleteIcon.getStyleClass().add("btn-danger-icon");
-        deleteBtn.setGraphic(deleteIcon);
-        deleteBtn.setContentDisplay(javafx.scene.control.ContentDisplay.LEFT);
-        deleteBtn.setGraphicTextGap(6);
-        deleteBtn.setOnAction(e -> permanentlyDeleteTask(taskId));
+        Button restoreBtn = buildRestoreButton(() -> restoreTask(taskId));
+        Button deleteBtn  = buildDeleteButton(() -> permanentlyDeleteTask(taskId));
 
         Region spacer = new Region();
         HBox.setHgrow(spacer, Priority.ALWAYS);
 
-        Label datesLabel = new Label();
-        datesLabel.setStyle("-fx-font-size: 10px; -fx-text-fill: #aaaaaa;");
-        if (task.has("deletedAt") && !task.get("deletedAt").isNull()) {
-            try {
-                java.time.LocalDateTime deletedAt = java.time.LocalDateTime.parse(task.get("deletedAt").asText());
-                java.time.LocalDate purgeDate = deletedAt.toLocalDate().plusDays(retentionDays);
-                datesLabel.setText(
-                        lm.get("trash.deleted.on") + " " + deletedAt.toLocalDate().format(
-                                java.time.format.DateTimeFormatter.ofPattern("d MMM yyyy",
-                                        LanguageManager.getInstance().getCurrentLocale())) +
-                                "  ·  " + lm.get("trash.purge.on") + " " + purgeDate.format(
-                                java.time.format.DateTimeFormatter.ofPattern("d MMM yyyy",
-                                        LanguageManager.getInstance().getCurrentLocale()))
-                );
-            } catch (Exception ignored) {}
-        }
+        Label datesLabel = buildDatesLabel(task);
 
-        card.getChildren().addAll(titleLabel, priorityBadge, categoryBadge, spacer, datesLabel, restoreBtn, deleteBtn);
+        HBox card = new HBox(12, titleLabel, priorityBadge, categoryBadge,
+                spacer, datesLabel, restoreBtn, deleteBtn);
+        card.setAlignment(Pos.CENTER_LEFT);
+        card.getStyleClass().add("task-card");
+
         return card;
     }
 
     /**
      * Construye la tarjeta visual de un proyecto eliminado con su nombre,
-     * badge de categoría y botones de restaurar y eliminar permanentemente.
+     * badges de prioridad y categoría, fechas y botones de acción.
      *
-     * @param project Nodo JSON con los datos del proyecto.
-     * @return {@link HBox} con el contenido visual de la tarjeta.
+     * @param project nodo JSON con los datos del proyecto
+     * @return {@link HBox} con el contenido visual de la tarjeta
      */
     private HBox createTrashProjectCard(JsonNode project) {
-        HBox card = new HBox();
-        card.setSpacing(12);
-        card.setAlignment(Pos.CENTER_LEFT);
-        card.getStyleClass().add("task-card");
-
-        Long projectId = project.get("id").asLong();
-        String name = project.get("name").asText();
-        String category = project.get("category").asText();
-        String priority = project.has("priority") && !project.get("priority").isNull()
+        long   projectId = project.get("id").asLong();
+        String name      = project.get("name").asText();
+        String category  = project.get("category").asText();
+        String priority  = project.has("priority") && !project.get("priority").isNull()
                 ? project.get("priority").asText() : "MEDIUM";
 
         FontIcon folderIcon = new FontIcon("fas-folder");
@@ -282,61 +266,35 @@ public class TrashController {
         Label categoryBadge = new Label(translateCategory(category));
         categoryBadge.getStyleClass().add("detail-section-count");
 
-        Button restoreBtn = new Button(lm.get("trash.restore"));
-        restoreBtn.getStyleClass().add("btn-small-primary");
-        FontIcon restoreIcon = new FontIcon("fas-undo");
-        restoreIcon.getStyleClass().add("btn-small-primary-icon");
-        restoreBtn.setStyle("-fx-padding: 7 16 7 16;");
-        restoreBtn.setGraphic(restoreIcon);
-        restoreBtn.setContentDisplay(javafx.scene.control.ContentDisplay.LEFT);
-        restoreBtn.setGraphicTextGap(6);
-        restoreBtn.setOnAction(e -> restoreProject(projectId));
-
-        Button deleteBtn = new Button(lm.get("trash.delete"));
-        deleteBtn.getStyleClass().add("btn-danger");
-        FontIcon deleteIcon = new FontIcon("fas-times");
-        deleteIcon.getStyleClass().add("btn-danger-icon");
-        deleteBtn.setGraphic(deleteIcon);
-        deleteBtn.setContentDisplay(javafx.scene.control.ContentDisplay.LEFT);
-        deleteBtn.setGraphicTextGap(6);
-        deleteBtn.setOnAction(e -> permanentlyDeleteProject(projectId));
+        Button restoreBtn = buildRestoreButton(() -> restoreProject(projectId));
+        Button deleteBtn  = buildDeleteButton(() -> permanentlyDeleteProject(projectId));
 
         Region spacer = new Region();
         HBox.setHgrow(spacer, Priority.ALWAYS);
 
-        Label datesLabel = new Label();
-        datesLabel.setStyle("-fx-font-size: 10px; -fx-text-fill: #aaaaaa;");
-        if (project.has("deletedAt") && !project.get("deletedAt").isNull()) {
-            try {
-                java.time.LocalDateTime deletedAt = java.time.LocalDateTime.parse(project.get("deletedAt").asText());
-                java.time.LocalDate purgeDate = deletedAt.toLocalDate().plusDays(retentionDays);
-                datesLabel.setText(
-                        lm.get("trash.deleted.on") + " " + deletedAt.toLocalDate().format(
-                                java.time.format.DateTimeFormatter.ofPattern("d MMM yyyy",
-                                        LanguageManager.getInstance().getCurrentLocale())) +
-                                "  ·  " + lm.get("trash.purge.on") + " " + purgeDate.format(
-                                java.time.format.DateTimeFormatter.ofPattern("d MMM yyyy",
-                                        LanguageManager.getInstance().getCurrentLocale()))
-                );
-            } catch (Exception ignored) {}
-        }
+        Label datesLabel = buildDatesLabel(project);
 
-        card.getChildren().addAll(titleBox, priorityBadge, categoryBadge, spacer, datesLabel, restoreBtn, deleteBtn);
+        HBox card = new HBox(12, titleBox, priorityBadge, categoryBadge,
+                spacer, datesLabel, restoreBtn, deleteBtn);
+        card.setAlignment(Pos.CENTER_LEFT);
+        card.getStyleClass().add("task-card");
         return card;
     }
 
+    // -------------------------------------------------------------------------
+    // Acciones
+    // -------------------------------------------------------------------------
+
     /**
-     * Restaura una tarea eliminada enviando la solicitud al backend
-     * y recarga la lista si la operación es exitosa.
+     * Restaura una tarea eliminada y recarga la lista si la operación es exitosa.
      *
-     * @param taskId Identificador de la tarea a restaurar.
+     * @param taskId identificador de la tarea a restaurar
      */
     private void restoreTask(Long taskId) {
-        new Thread(() -> {
+        Thread thread = new Thread(() -> {
             try {
                 HttpResponse<String> response = AppContext.getInstance()
-                        .getApiService()
-                        .putNoBody("/api/tasks/" + taskId + "/restore");
+                        .getApiService().putNoBody("/api/tasks/" + taskId + "/restore");
 
                 Platform.runLater(() -> {
                     if (response.statusCode() == 200) {
@@ -347,59 +305,53 @@ public class TrashController {
                     }
                 });
             } catch (Exception e) {
-                Platform.runLater(() -> showAlert(lm.get("error.title"), lm.get("error.connection")));
+                log.error("Error al restaurar tarea {}: {}", taskId, e.getMessage());
+                Platform.runLater(() ->
+                        showAlert(lm.get("error.title"), lm.get("error.connection")));
             }
-        }).start();
+        }, "trash-restore-task");
+        thread.setDaemon(true);
+        thread.start();
     }
 
     /**
-     * Muestra un diálogo de confirmación y, si el usuario acepta, elimina
-     * permanentemente una tarea del backend y recarga la lista.
+     * Muestra confirmación y elimina permanentemente una tarea.
      *
-     * @param taskId Identificador de la tarea a eliminar permanentemente.
+     * @param taskId identificador de la tarea a eliminar permanentemente
      */
-    private void permanentlyDeleteTask(Long taskId) {
-        Alert confirm = new Alert(Alert.AlertType.CONFIRMATION);
-        confirm.setTitle(lm.get("trash.delete.confirm.title"));
-        confirm.setHeaderText(null);
-        confirm.setContentText(lm.get("trash.delete.confirm.content"));
-
-        confirm.showAndWait().ifPresent(response -> {
-            if (response == ButtonType.OK) {
-                new Thread(() -> {
-                    try {
-                        HttpResponse<String> httpResponse = AppContext.getInstance()
-                                .getApiService()
-                                .delete("/api/tasks/" + taskId + "/permanent");
-
-                        Platform.runLater(() -> {
-                            if (httpResponse.statusCode() == 200 || httpResponse.statusCode() == 204) {
-                                loadTrashTasks();
-                            } else {
-                                showAlert(lm.get("error.title"), lm.get("error.delete.task"));
-                            }
-                        });
-                    } catch (Exception e) {
-                        Platform.runLater(() -> showAlert(lm.get("error.title"), lm.get("settings.connection.error")));
+    private void permanentlyDeleteTask(long taskId) {
+        if (userCancelledDelete()) return;
+        Thread thread = new Thread(() -> {
+            try {
+                HttpResponse<String> r = AppContext.getInstance()
+                        .getApiService().delete("/api/tasks/" + taskId + "/permanent");
+                Platform.runLater(() -> {
+                    if (r.statusCode() == 200 || r.statusCode() == 204) {
+                        loadTrashTasks();
+                    } else {
+                        showAlert(lm.get("error.title"), lm.get("error.delete.task"));
                     }
-                }).start();
+                });
+            } catch (Exception e) {
+                log.error("Error al eliminar tarea {}: {}", taskId, e.getMessage());
+                Platform.runLater(() ->
+                        showAlert(lm.get("error.title"), lm.get("settings.connection.error")));
             }
-        });
+        }, "trash-delete-task");
+        thread.setDaemon(true);
+        thread.start();
     }
 
     /**
-     * Restaura un proyecto eliminado enviando la solicitud al backend
-     * y recarga la lista si la operación es exitosa.
+     * Restaura un proyecto eliminado y recarga la lista si la operación es exitosa.
      *
-     * @param projectId Identificador del proyecto a restaurar.
+     * @param projectId identificador del proyecto a restaurar
      */
-    private void restoreProject(Long projectId) {
-        new Thread(() -> {
+    private void restoreProject(long projectId) {
+        Thread thread = new Thread(() -> {
             try {
                 HttpResponse<String> response = AppContext.getInstance()
-                        .getApiService()
-                        .putNoBody("/api/projects/" + projectId + "/restore");
-
+                        .getApiService().putNoBody("/api/projects/" + projectId + "/restore");
                 Platform.runLater(() -> {
                     if (response.statusCode() == 200) {
                         loadTrashProjects();
@@ -409,45 +361,43 @@ public class TrashController {
                     }
                 });
             } catch (Exception e) {
-                Platform.runLater(() -> showAlert(lm.get("error.title"), lm.get("error.connection")));
+                log.error("Error al restaurar proyecto {}: {}", projectId, e.getMessage());
+                Platform.runLater(() ->
+                        showAlert(lm.get("error.title"), lm.get("error.connection")));
             }
-        }).start();
+        }, "trash-restore-project");
+        thread.setDaemon(true);
+        thread.start();
     }
 
     /**
-     * Muestra un diálogo de confirmación y, si el usuario acepta, elimina
-     * permanentemente un proyecto del backend y recarga la lista.
+     * Muestra confirmación y elimina permanentemente un proyecto.
      *
-     * @param projectId Identificador del proyecto a eliminar permanentemente.
+     * @param projectId identificador del proyecto a eliminar permanentemente
      */
-    private void permanentlyDeleteProject(Long projectId) {
-        Alert confirm = new Alert(Alert.AlertType.CONFIRMATION);
-        confirm.setTitle(lm.get("trash.delete.confirm.title"));
-        confirm.setHeaderText(null);
-        confirm.setContentText(lm.get("trash.delete.confirm.content"));
-
-        confirm.showAndWait().ifPresent(response -> {
-            if (response == ButtonType.OK) {
-                new Thread(() -> {
-                    try {
-                        HttpResponse<String> httpResponse = AppContext.getInstance()
-                                .getApiService()
-                                .delete("/api/projects/" + projectId + "/permanent");
-
-                        Platform.runLater(() -> {
-                            if (httpResponse.statusCode() == 200 || httpResponse.statusCode() == 204) {
-                                loadTrashProjects();
-                            } else {
-                                showAlert(lm.get("error.title"), lm.get("error.delete.project"));
-                            }
-                        });
-                    } catch (Exception e) {
-                        Platform.runLater(() -> showAlert(lm.get("error.title"), lm.get("settings.connection.error")));
+    private void permanentlyDeleteProject(long projectId) {
+        if (userCancelledDelete()) return;
+        Thread thread = new Thread(() -> {
+            try {
+                HttpResponse<String> r = AppContext.getInstance()
+                        .getApiService().delete("/api/projects/" + projectId + "/permanent");
+                Platform.runLater(() -> {
+                    if (r.statusCode() == 200 || r.statusCode() == 204) {
+                        loadTrashProjects();
+                    } else {
+                        showAlert(lm.get("error.title"), lm.get("error.delete.project"));
                     }
-                }).start();
+                });
+            } catch (Exception e) {
+                log.error("Error al eliminar proyecto {}: {}", projectId, e.getMessage());
+                Platform.runLater(() ->
+                        showAlert(lm.get("error.title"), lm.get("settings.connection.error")));
             }
-        });
+        }, "trash-delete-project");
+        thread.setDaemon(true);
+        thread.start();
     }
+
 
     /**
      * Muestra confirmación y vacía toda la papelera (tareas y proyectos).
@@ -460,19 +410,25 @@ public class TrashController {
         confirm.setContentText(lm.get("trash.empty.confirm.content"));
         confirm.showAndWait().ifPresent(response -> {
             if (response == ButtonType.OK) {
-                new Thread(() -> {
+                Thread thread = new Thread(() -> {
                     try {
-                        AppContext.getInstance().getApiService().delete("/api/tasks/trash/empty");
-                        AppContext.getInstance().getApiService().delete("/api/projects/trash/empty");
+                        AppContext.getInstance().getApiService()
+                                .delete("/api/tasks/trash/empty");
+                        AppContext.getInstance().getApiService()
+                                .delete("/api/projects/trash/empty");
                         Platform.runLater(() -> {
                             loadTrashTasks();
                             loadTrashProjects();
                             if (onTrashChanged != null) onTrashChanged.run();
                         });
                     } catch (Exception e) {
-                        Platform.runLater(() -> showAlert(lm.get("error.title"), lm.get("error.connection")));
+                        log.error("Error al vaciar la papelera: {}", e.getMessage());
+                        Platform.runLater(() ->
+                                showAlert(lm.get("error.title"), lm.get("error.connection")));
                     }
-                }).start();
+                }, "trash-empty");
+                thread.setDaemon(true);
+                thread.start();
             }
         });
     }
@@ -486,11 +442,96 @@ public class TrashController {
         loadTrashProjects();
     }
 
+    // -------------------------------------------------------------------------
+    // Métodos privados de construcción de UI
+    // -------------------------------------------------------------------------
+
+    /**
+     * Construye el botón de restaurar con icono y estilo estándar.
+     *
+     * @param action acción a ejecutar al pulsar el botón
+     * @return botón configurado
+     */
+    private Button buildRestoreButton(Runnable action) {
+        Button btn = new Button(lm.get("trash.restore"));
+        btn.getStyleClass().add("btn-small-primary");
+        FontIcon icon = new FontIcon("fas-undo");
+        icon.getStyleClass().add("btn-small-primary-icon");
+        btn.setGraphic(icon);
+        btn.setStyle("-fx-padding: 7 16 7 16;");
+        btn.setContentDisplay(ContentDisplay.LEFT);
+        btn.setGraphicTextGap(6);
+        btn.setOnAction(e -> action.run());
+        return btn;
+    }
+
+    /**
+     * Construye el botón de eliminar permanentemente con icono y estilo de peligro.
+     *
+     * @param action acción a ejecutar al pulsar el botón
+     * @return botón configurado
+     */
+    private Button buildDeleteButton(Runnable action) {
+        Button btn = new Button(lm.get("trash.delete"));
+        btn.getStyleClass().add("btn-danger");
+        FontIcon icon = new FontIcon("fas-times");
+        icon.getStyleClass().add("btn-danger-icon");
+        btn.setGraphic(icon);
+        btn.setContentDisplay(ContentDisplay.LEFT);
+        btn.setGraphicTextGap(6);
+        btn.setOnAction(e -> action.run());
+        return btn;
+    }
+
+    /**
+     * Construye la etiqueta con las fechas de eliminación y purga prevista
+     * de un elemento de la papelera.
+     *
+     * @param node nodo JSON con el campo {@code deletedAt}
+     * @return etiqueta con las fechas formateadas, o etiqueta vacía si no hay fecha
+     */
+    private Label buildDatesLabel(JsonNode node) {
+        Label label = new Label();
+        label.setStyle("-fx-font-size: 10px; -fx-text-fill: #aaaaaa;");
+        if (node.has("deletedAt") && !node.get("deletedAt").isNull()) {
+            try {
+                LocalDateTime deletedAt = LocalDateTime.parse(node.get("deletedAt").asText());
+                LocalDate purgeDate     = deletedAt.toLocalDate().plusDays(retentionDays);
+                label.setText(
+                        lm.get("trash.deleted.on") + " "
+                                + deletedAt.toLocalDate().format(dateFormatter)
+                                + "  ·  "
+                                + lm.get("trash.purge.on") + " "
+                                + purgeDate.format(dateFormatter));
+            } catch (Exception ignored) {}
+        }
+        return label;
+    }
+
+    // -------------------------------------------------------------------------
+    // Métodos privados de utilidad
+    // -------------------------------------------------------------------------
+
+    /**
+     * Muestra el diálogo de confirmación de eliminación permanente.
+     *
+     * @return {@code true} si el usuario confirma, {@code false} si cancela
+     */
+    private boolean userCancelledDelete() {
+        Alert confirm = new Alert(Alert.AlertType.CONFIRMATION);
+        confirm.setTitle(lm.get("trash.delete.confirm.title"));
+        confirm.setHeaderText(null);
+        confirm.setContentText(lm.get("trash.delete.confirm.content"));
+        return confirm.showAndWait()
+                .map(r -> r != ButtonType.OK)
+                .orElse(true);
+    }
+
     /**
      * Traduce un código de prioridad del backend a su etiqueta localizada.
      *
-     * @param priority Código de prioridad (p.ej. {@code "HIGH"}).
-     * @return Etiqueta localizada correspondiente.
+     * @param priority código de prioridad (p.ej. {@code "HIGH"})
+     * @return etiqueta localizada
      */
     private String translatePriority(String priority) {
         return switch (priority) {
@@ -505,8 +546,8 @@ public class TrashController {
     /**
      * Traduce un código de categoría del backend a su etiqueta localizada.
      *
-     * @param category Código de categoría (p.ej. {@code "PERSONAL"}).
-     * @return Etiqueta localizada correspondiente.
+     * @param category código de categoría (p.ej. {@code "PERSONAL"})
+     * @return etiqueta localizada
      */
     private String translateCategory(String category) {
         return switch (category) {
@@ -520,8 +561,8 @@ public class TrashController {
     /**
      * Muestra un diálogo de información con el título y mensaje indicados.
      *
-     * @param title   Título del diálogo.
-     * @param message Mensaje a mostrar.
+     * @param title   título del diálogo
+     * @param message mensaje a mostrar
      */
     private void showAlert(String title, String message) {
         Alert alert = new Alert(Alert.AlertType.INFORMATION);

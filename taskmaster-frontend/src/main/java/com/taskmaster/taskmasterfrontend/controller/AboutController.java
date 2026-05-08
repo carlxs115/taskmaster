@@ -2,6 +2,7 @@ package com.taskmaster.taskmasterfrontend.controller;
 
 import com.taskmaster.taskmasterfrontend.util.LanguageManager;
 import com.taskmaster.taskmasterfrontend.util.ThemeManager;
+import javafx.beans.property.SimpleStringProperty;
 import javafx.fxml.FXML;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
@@ -14,6 +15,7 @@ import javafx.stage.Modality;
 import javafx.stage.Stage;
 
 import java.time.Year;
+import java.util.List;
 
 /**
  * Controlador de la pantalla "Acerca de TaskMaster".
@@ -36,7 +38,7 @@ public class AboutController {
 
     /**
      * Inicializa la vista con los textos localizados, el año de copyright
-     * y los badges de tecnología.
+     * y el color apropiado según el tema activo.
      */
     @FXML
     public void initialize() {
@@ -44,6 +46,7 @@ public class AboutController {
         descriptionLabel.setText(lm.get("about.description"));
         copyrightLabel.setText("© " + Year.now().getValue() + " Carlos Riera · TaskMaster TFG DAM");
 
+        // Adaptamos el color de los textos secundarios al tema activo
         boolean dark = ThemeManager.getInstance().isDark();
         String mutedColor = dark ? "#6b6b8a" : "#aaaaaa";
         versionLabel.setStyle("-fx-text-fill: " + mutedColor + ";");
@@ -55,10 +58,7 @@ public class AboutController {
      */
     @FXML
     private void handleTerms() {
-        showInfoDialog(
-                lm.get("about.btn.terms"),
-                lm.get("about.terms.content")
-        );
+        showInfoDialog(lm.get("about.btn.terms"), lm.get("about.terms.content"));
     }
 
     /**
@@ -66,10 +66,7 @@ public class AboutController {
      */
     @FXML
     private void handlePrivacy() {
-        showInfoDialog(
-                lm.get("about.btn.privacy"),
-                lm.get("about.privacy.content")
-        );
+        showInfoDialog(lm.get("about.btn.privacy"), lm.get("about.privacy.content"));
     }
 
     /**
@@ -85,44 +82,32 @@ public class AboutController {
      */
     @FXML
     private void handleAcknowledgements() {
-        showInfoDialog(
-                lm.get("about.btn.acknowledgements"),
-                lm.get("about.acknowledgements.content")
-        );
+        showInfoDialog(lm.get("about.btn.acknowledgements"), lm.get("about.acknowledgements.content"));
     }
+
+    // -------------------------------------------------------------------------
+    // Diálogos modales
+    // -------------------------------------------------------------------------
 
     /**
      * Muestra un diálogo modal genérico con un título y un cuerpo de texto.
      *
-     * @param title Título del diálogo.
-     * @param body  Contenido de texto que se mostrará en el área de texto.
+     * @param title título del diálogo
+     * @param body  contenido de texto que se mostrará en el área de texto
      */
     private void showInfoDialog(String title, String body) {
         Stage dialog = buildDialogStage(title, 520, 440);
 
-        // Cabecera
-        HBox header = new HBox();
-        header.setAlignment(Pos.CENTER_LEFT);
-        header.getStyleClass().add("dialog-header");
-        Label titleLabel = new Label(title);
-        titleLabel.getStyleClass().add("dialog-header-title");
-        header.getChildren().add(titleLabel);
+        HBox header = buildDialogHeader(title);
 
-        // Cuerpo con scroll
+        // Área de texto de solo lectura con scroll automático
         TextArea textArea = new TextArea(body);
         textArea.setEditable(false);
         textArea.setWrapText(true);
         textArea.getStyleClass().add("about-text-area");
         VBox.setVgrow(textArea, Priority.ALWAYS);
 
-        // Botón cerrar
-        Button closeBtn = new Button(lm.get("common.close"));
-        closeBtn.getStyleClass().add("btn-confirm-accent");
-        closeBtn.setOnAction(e -> dialog.close());
-
-        HBox footer = new HBox(closeBtn);
-        footer.setAlignment(Pos.CENTER_RIGHT);
-        footer.setPadding(new Insets(12, 20, 16, 20));
+        HBox footer = buildDialogFooter(dialog);
 
         VBox root = new VBox(header, textArea, footer);
         VBox.setVgrow(textArea, Priority.ALWAYS);
@@ -139,32 +124,26 @@ public class AboutController {
     private void showLicensesDialog() {
         Stage dialog = buildDialogStage(lm.get("about.btn.licenses"), 600, 460);
 
-        // Cabecera
-        HBox header = new HBox();
-        header.setAlignment(Pos.CENTER_LEFT);
-        header.getStyleClass().add("dialog-header");
-        Label titleLabel = new Label(lm.get("about.btn.licenses"));
-        titleLabel.getStyleClass().add("dialog-header-title");
-        header.getChildren().add(titleLabel);
+        HBox header = buildDialogHeader(lm.get("about.btn.licenses"));
 
-        // Tabla
+        // Tabla de licencias con tres columnas
         TableView<String[]> table = new TableView<>();
-        table.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
+        table.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY_FLEX_LAST_COLUMN);
         table.getStyleClass().add("activity-table");
         VBox.setVgrow(table, Priority.ALWAYS);
 
         TableColumn<String[], String> colLib = new TableColumn<>(lm.get("about.licenses.col.library"));
-        colLib.setCellValueFactory(c -> new javafx.beans.property.SimpleStringProperty(c.getValue()[0]));
+        colLib.setCellValueFactory(c -> new SimpleStringProperty(c.getValue()[0]));
         colLib.setPrefWidth(200);
 
         TableColumn<String[], String> colLic = new TableColumn<>(lm.get("about.licenses.col.license"));
-        colLic.setCellValueFactory(c -> new javafx.beans.property.SimpleStringProperty(c.getValue()[1]));
+        colLic.setCellValueFactory(c -> new SimpleStringProperty(c.getValue()[1]));
         colLic.setPrefWidth(120);
 
         TableColumn<String[], String> colNote = new TableColumn<>(lm.get("about.licenses.col.note"));
-        colNote.setCellValueFactory(c -> new javafx.beans.property.SimpleStringProperty(c.getValue()[2]));
+        colNote.setCellValueFactory(c -> new SimpleStringProperty(c.getValue()[2]));
 
-        table.getColumns().addAll(colLib, colLic, colNote);
+        table.getColumns().addAll(List.of(colLib, colLic, colNote));
 
         // Datos de licencias
         String[][] licenseData = {
@@ -184,14 +163,7 @@ public class AboutController {
             table.getItems().add(row);
         }
 
-        // Botón cerrar
-        Button closeBtn = new Button(lm.get("common.close"));
-        closeBtn.getStyleClass().add("btn-confirm-accent");
-        closeBtn.setOnAction(e -> dialog.close());
-
-        HBox footer = new HBox(closeBtn);
-        footer.setAlignment(Pos.CENTER_RIGHT);
-        footer.setPadding(new Insets(12, 20, 16, 20));
+        HBox footer = buildDialogFooter(dialog);
 
         VBox tableWrapper = new VBox(table);
         tableWrapper.setPadding(new Insets(12, 20, 0, 20));
@@ -206,12 +178,48 @@ public class AboutController {
     }
 
     /**
+     * Construye la cabecera estándar de un diálogo con el título indicado.
+     *
+     * @param title título a mostrar en la cabecera
+     * @return {@link HBox} con la cabecera configurada
+     */
+    private HBox buildDialogHeader(String title) {
+        HBox header = new HBox();
+        header.setAlignment(Pos.CENTER_LEFT);
+        header.getStyleClass().add("dialog-header");
+
+        Label titleLabel = new Label(title);
+        titleLabel.getStyleClass().add("dialog-header-title");
+        header.getChildren().add(titleLabel);
+
+        return header;
+    }
+
+    /**
+     * Construye el pie de diálogo estándar con el botón Cerrar.
+     *
+     * @param dialog diálogo que se cerrará al pulsar el botón
+     * @return {@link HBox} con el pie configurado
+     */
+    private HBox buildDialogFooter(Stage dialog) {
+        Button closeBtn = new Button(lm.get("common.close"));
+        closeBtn.getStyleClass().add("btn-confirm-accent");
+        closeBtn.setOnAction(e -> dialog.close());
+
+        HBox footer = new HBox(closeBtn);
+        footer.setAlignment(Pos.CENTER_RIGHT);
+        footer.setPadding(new Insets(12, 20, 16, 20));
+
+        return footer;
+    }
+
+    /**
      * Construye y configura un {@link Stage} modal con las dimensiones indicadas.
      *
-     * @param title Título de la ventana del diálogo.
-     * @param w     Anchura de la ventana en píxeles.
-     * @param h     Altura de la ventana en píxeles.
-     * @return El {@link Stage} configurado, listo para recibir su escena.
+     * @param title título de la ventana del diálogo
+     * @param w     anchura en píxeles
+     * @param h     altura en píxeles
+     * @return {@link Stage} configurado listo para recibir su escena
      */
     private Stage buildDialogStage(String title, double w, double h) {
         Stage dialog = new Stage();
@@ -219,24 +227,23 @@ public class AboutController {
         dialog.initModality(Modality.APPLICATION_MODAL);
         dialog.initOwner(aboutRoot.getScene().getWindow());
         dialog.setResizable(false);
+
         return dialog;
     }
 
     /**
      * Aplica la escena al diálogo, hereda los estilos CSS activos
-     * del scene principal y muestra el diálogo bloqueante.
+     * del scene principal y muestra el diálogo de forma bloqueante.
      *
-     * @param dialog El {@link Stage} del diálogo.
-     * @param root   Contenido raíz a mostrar.
-     * @param w      Anchura de la escena en píxeles.
-     * @param h      Altura de la escena en píxeles.
+     * @param dialog diálogo al que aplicar la escena
+     * @param root   contenido raíz a mostrar
+     * @param w      anchura de la escena en píxeles
+     * @param h      altura de la escena en píxeles
      */
     private void showDialog(Stage dialog, VBox root, double w, double h) {
         Scene scene = new Scene(root, w, h);
-        // Inyectar el mismo CSS activo que usa el Scene principal
-        scene.getStylesheets().addAll(
-                aboutRoot.getScene().getStylesheets()
-        );
+        // Heredamos el CSS activo del scene principal para que el tema se aplique al diálogo
+        scene.getStylesheets().addAll(aboutRoot.getScene().getStylesheets());
         dialog.setScene(scene);
         dialog.showAndWait();
     }

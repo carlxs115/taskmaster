@@ -13,6 +13,8 @@ import javafx.scene.layout.StackPane;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Circle;
 import javafx.stage.Stage;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
@@ -36,6 +38,8 @@ public class AvatarCropController {
     @FXML private Slider zoomSlider;
     @FXML private Button saveButton;
     @FXML private Button cancelButton;
+
+    private static final Logger log = LoggerFactory.getLogger(AvatarCropController.class);
 
     /** Tamaño en píxeles del avatar resultante (ancho y alto). */
     private static final int OUTPUT_SIZE = 256;
@@ -145,7 +149,7 @@ public class AvatarCropController {
             saved = true;
             close();
         } catch (Exception e) {
-            e.printStackTrace();
+            log.error("Error al renderizar el recorte de avatar: {}", e.getMessage());
         }
     }
 
@@ -158,6 +162,9 @@ public class AvatarCropController {
         close();
     }
 
+    /**
+     * Cierra el diálogo de recorte.
+     */
     private void close() {
         ((Stage) cancelButton.getScene().getWindow()).close();
     }
