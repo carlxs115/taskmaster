@@ -1,6 +1,5 @@
 package com.taskmaster.taskmasterfrontend.controller;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.taskmaster.taskmasterfrontend.util.AppContext;
 import com.taskmaster.taskmasterfrontend.util.LanguageManager;
 import javafx.application.Platform;
@@ -10,6 +9,7 @@ import javafx.scene.control.ComboBox;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextArea;
 import javafx.scene.control.TextField;
+import javafx.scene.input.KeyCode;
 
 import java.net.http.HttpResponse;
 import java.util.HashMap;
@@ -20,7 +20,7 @@ import java.util.Map;
  *
  * <p>Hereda el identificador de la tarea padre, el proyecto y la categoría
  * de la tarea que la contiene. Si la tarea padre pertenece a un proyecto,
- * la subtarea se asocia al mismo proyecto; si no, hereda la categoría.</p>
+ * la subtarea se asocia al mismo; si no, hereda la categoría.</p>
  *
  * @author Carlos
  */
@@ -36,13 +36,16 @@ public class NewSubtaskController {
     private String category;
     private Runnable onSubtaskCreated;
 
-    private final ObjectMapper objectMapper = new ObjectMapper();
     private final LanguageManager lm = LanguageManager.getInstance();
+
+    // -------------------------------------------------------------------------
+    // Inicialización
+    // -------------------------------------------------------------------------
 
     /**
      * Registra el callback que se ejecutará tras crear la subtarea correctamente.
      *
-     * @param callback Acción a ejecutar al completar la creación.
+     * @param callback acción a ejecutar al completar la creación
      */
     public void setOnSubtaskCreated(Runnable callback) {
         this.onSubtaskCreated = callback;
@@ -51,35 +54,38 @@ public class NewSubtaskController {
     /**
      * Establece los datos heredados de la tarea padre.
      *
-     * @param parentTaskId Identificador de la tarea padre.
-     * @param projectId    Identificador del proyecto asociado, o {@code null} si no tiene.
-     * @param category     Categoría de la tarea padre, usada si no hay proyecto.
+     * @param parentTaskId identificador de la tarea padre
+     * @param projectId    identificador del proyecto, o {@code null} si no tiene
+     * @param category     categoría de la tarea padre, usada si no hay proyecto
      */
     public void initData(Long parentTaskId, Long projectId, String category) {
         this.parentTaskId = parentTaskId;
-        this.projectId    = projectId;
-        this.category     = category;
+        this.projectId = projectId;
+        this.category = category;
     }
 
     /**
-     * Inicializa el combo de prioridad con sus valores localizados
-     * y configura el envío del formulario con la tecla Enter.
+     * Inicializa el combo de prioridad y configura el envío con Enter.
      */
     @FXML
     public void initialize() {
         priorityCombo.setItems(FXCollections.observableArrayList(
-                lm.get("priority.low"), lm.get("priority.medium"),
-                lm.get("priority.high"), lm.get("priority.urgent")));
+                lm.get("priority.low"),
+                lm.get("priority.medium"),
+                lm.get("priority.high"),
+                lm.get("priority.urgent")));
         priorityCombo.setValue(lm.get("priority.medium"));
 
-        titleField.setOnKeyPressed(e -> {
-            if (e.getCode() == javafx.scene.input.KeyCode.ENTER) handleCreate();
-        });
+        titleField.setOnKeyPressed(e -> {if (e.getCode() == KeyCode.ENTER) handleCreate();});
     }
 
+    // -------------------------------------------------------------------------
+    // Acciones
+    // -------------------------------------------------------------------------
+
     /**
-     * Valida el formulario y envía la solicitud de creación de la subtarea
-     * al backend. Si la operación es exitosa, ejecuta el callback y cierra el diálogo.
+     * Valida el formulario y envía la solicitud de creación de la subtarea al backend.
+     * Si la operación es exitosa, ejecuta el callback y cierra el diálogo.
      */
     @FXML
     private void handleCreate() {
@@ -90,27 +96,46 @@ public class NewSubtaskController {
         }
         hideError();
 
+        // Convertimos la prioridad localizada a su código de backend
         String p = priorityCombo.getValue();
         String priorityEnum;
-        if (p.equals(lm.get("priority.low")))         priorityEnum = "LOW";
+        if (p.equals(lm.get("priority.low"))) priorityEnum = "LOW";
         else if (p.equals(lm.get("priority.medium"))) priorityEnum = "MEDIUM";
-        else if (p.equals(lm.get("priority.high")))   priorityEnum = "HIGH";
+        else if (p.equals(lm.get("priority.high"))) priorityEnum = "HIGH";
         else if (p.equals(lm.get("priority.urgent"))) priorityEnum = "URGENT";
         else priorityEnum = "MEDIUM";
 
         Map<String, Object> body = new HashMap<>();
-        body.put("title",       title);
+        body.put("title", title);
         body.put("description", descriptionField.getText().trim());
-        body.put("priority",    priorityEnum);
+        body.put("priority", priorityEnum);
         body.put("parentTaskId", parentTaskId);
 
-        if (projectId != null) {
-            body.put("projectId", projectId);
-        } else if (category != null) {
-            body.put("category", category);
-        }
+        if (projectId != null) body.put("projectId", projectId);
+        else if (category != null) body.put("category", category);
 
-        new Thread(() -> {
+        createSubtaskAsync(body);
+    }
+
+    /**
+     * Cierra el diálogo sin crear la subtarea.
+     */
+    @FXML
+    private void handleCancel() {
+        closeDialog();
+    }
+
+    // -------------------------------------------------------------------------
+    // Métodos privados
+    // -------------------------------------------------------------------------
+
+    /**
+     * Envía la solicitud de creación de la subtarea al backend en un hilo secundario.
+     *
+     * @param body cuerpo de la petición con los datos de la subtarea
+     */
+    private void createSubtaskAsync(Map<String, Object> body) {
+        Thread thread = new Thread(() -> {
             try {
                 HttpResponse<String> response = AppContext.getInstance()
                         .getApiService().postWithAuth("/api/tasks", body);
@@ -125,15 +150,9 @@ public class NewSubtaskController {
             } catch (Exception e) {
                 Platform.runLater(() -> showError(lm.get("error.connection")));
             }
-        }).start();
-    }
-
-    /**
-     * Cierra el diálogo sin crear la subtarea.
-     */
-    @FXML
-    private void handleCancel() {
-        closeDialog();
+        }, "new-subtask-create");
+        thread.setDaemon(true);
+        thread.start();
     }
 
     /**

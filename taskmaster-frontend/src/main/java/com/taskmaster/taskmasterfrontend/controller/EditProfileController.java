@@ -10,6 +10,7 @@ import javafx.fxml.FXML;
 import javafx.scene.control.DatePicker;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextField;
+import javafx.scene.input.KeyCode;
 import javafx.stage.Stage;
 
 import java.net.http.HttpResponse;
@@ -35,40 +36,45 @@ public class EditProfileController {
     @FXML private Label errorLabel;
 
     private Runnable onProfileUpdated;
+
     private final ObjectMapper objectMapper = new ObjectMapper()
             .registerModule(new JavaTimeModule());
     private final LanguageManager lm = LanguageManager.getInstance();
 
+    // -------------------------------------------------------------------------
+    // Inicialización
+    // -------------------------------------------------------------------------
+
     /**
      * Registra el callback que se ejecutará tras actualizar el perfil correctamente.
      *
-     * @param callback Acción a ejecutar al completar la actualización.
+     * @param callback acción a ejecutar al completar la actualización
      */
     public void setOnProfileUpdated(Runnable callback) {
         this.onProfileUpdated = callback;
     }
 
     /**
-     * Inicializa el diálogo cargando los datos actuales del perfil.
+     * Inicializa el diálogo cargando los datos actuales del perfil
+     * y configurando el envío con Enter.
      */
     @FXML
     public void initialize() {
         loadProfile();
-
-        usernameField.setOnKeyPressed(e -> {
-            if (e.getCode() == javafx.scene.input.KeyCode.ENTER) handleSave();
-        });
-        emailField.setOnKeyPressed(e -> {
-            if (e.getCode() == javafx.scene.input.KeyCode.ENTER) handleSave();
-        });
+        usernameField.setOnKeyPressed(e -> {if (e.getCode() == KeyCode.ENTER) handleSave();});
+        emailField.setOnKeyPressed(e -> {if (e.getCode() == KeyCode.ENTER) handleSave();});
     }
+
+    // -------------------------------------------------------------------------
+    // Acciones
+    // -------------------------------------------------------------------------
 
     /**
      * Obtiene el perfil del usuario autenticado desde el backend y rellena
      * los campos del formulario con los datos recibidos.
      */
     private void loadProfile() {
-        new Thread(() -> {
+        Thread thread = new Thread(() -> {
             try {
                 HttpResponse<String> response = AppContext.getInstance()
                         .getApiService().get("/api/auth/profile");
@@ -89,7 +95,9 @@ public class EditProfileController {
             } catch (Exception e) {
                 Platform.runLater(() -> showError(lm.get("edit.profile.error.load")));
             }
-        }).start();
+        }, "edit-profile-load");
+        thread.setDaemon(true);
+        thread.start();
     }
 
     /**
@@ -99,8 +107,8 @@ public class EditProfileController {
      */
     @FXML
     private void handleSave() {
-        String username  = usernameField.getText().trim();
-        String email     = emailField.getText().trim();
+        String username = usernameField.getText().trim();
+        String email = emailField.getText().trim();
         LocalDate birthDate = birthDatePicker.getValue();
 
         if (username.isEmpty() || email.isEmpty() || birthDate == null) {
@@ -122,20 +130,18 @@ public class EditProfileController {
                 "birthDate", birthDate.format(DateTimeFormatter.ISO_LOCAL_DATE)
         );
 
-        new Thread(() -> {
+        Thread thread = new Thread(() -> {
             try {
                 HttpResponse<String> response = AppContext.getInstance()
                         .getApiService().put("/api/auth/profile", body);
 
                 Platform.runLater(() -> {
                     if (response.statusCode() == 200) {
-                        // Actualizamos el username en AppContext si ha cambiado
                         try {
                             JsonNode user = objectMapper.readTree(response.body());
                             String newUsername = user.get("username").asText();
+                            // Actualizamos el username en AppContext y las credenciales HTTP Basic
                             AppContext.getInstance().setCurrentUsername(newUsername);
-
-                            // Actualizar credenciales con el nuevo username
                             AppContext.getInstance().getApiService().setCredentials(
                                     newUsername,
                                     AppContext.getInstance().getCurrentPassword()
@@ -156,7 +162,9 @@ public class EditProfileController {
             } catch (Exception e) {
                 Platform.runLater(() -> showError(lm.get("error.connection")));
             }
-        }).start();
+        }, "edit-profile-save");
+        thread.setDaemon(true);
+        thread.start();
     }
 
     /**
@@ -166,6 +174,10 @@ public class EditProfileController {
     private void handleCancel() {
         closeDialog();
     }
+
+    // -------------------------------------------------------------------------
+    // Métodos privados
+    // -------------------------------------------------------------------------
 
     /**
      * Muestra un mensaje de error en la etiqueta de error del formulario.

@@ -2,17 +2,18 @@ package com.taskmaster.taskmasterfrontend.controller;
 
 import com.taskmaster.taskmasterfrontend.util.AppContext;
 import com.taskmaster.taskmasterfrontend.util.LanguageManager;
+import javafx.application.Platform;
 import javafx.collections.FXCollections;
 import javafx.fxml.FXML;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextArea;
 import javafx.scene.control.TextField;
+import javafx.scene.input.KeyCode;
 
+import java.net.URLEncoder;
 import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
-import java.util.HashMap;
-import java.util.Map;
 
 /**
  * Controlador del diálogo de creación de nuevo proyecto.
@@ -33,11 +34,14 @@ public class NewProjectController {
     @FXML private ComboBox<String> statusCombo;
     @FXML private ComboBox<String> priorityCombo;
 
-    // Callback que se ejecuta cuando el proyecto se crea correctamente
-    // Permite notificar al MainController sin acoplamiento directo
+    // Callback que notifica al MainController sin acoplamiento directo
     private Runnable onProjectCreated;
 
     private final LanguageManager lm = LanguageManager.getInstance();
+
+    // -------------------------------------------------------------------------
+    // Inicialización
+    // -------------------------------------------------------------------------
 
     /**
      * Registra el callback que se ejecutará tras crear el proyecto correctamente.
@@ -49,36 +53,41 @@ public class NewProjectController {
     }
 
     /**
-     * Inicializa los combos de categoría, estado y prioridad con sus
-     * valores localizados y sus selecciones por defecto.
+     * Inicializa los combos con sus valores localizados y selecciones por defecto.
      */
     @FXML
     private void initialize() {
         categoryCombo.setItems(FXCollections.observableArrayList(
-                lm.get("category.PERSONAL"), lm.get("category.ESTUDIOS"), lm.get("category.TRABAJO")));
+                lm.get("category.PERSONAL"),
+                lm.get("category.ESTUDIOS"),
+                lm.get("category.TRABAJO")));
         categoryCombo.setValue(lm.get("category.PERSONAL"));
 
         statusCombo.setItems(FXCollections.observableArrayList(
-                lm.get("status.todo"), lm.get("status.inprogress"),
-                lm.get("status.done"), lm.get("status.cancelled")));
+                lm.get("status.todo"),
+                lm.get("status.inprogress"),
+                lm.get("status.done"),
+                lm.get("status.cancelled")));
         statusCombo.setValue(lm.get("status.todo"));
 
         priorityCombo.setItems(FXCollections.observableArrayList(
-                lm.get("priority.low"), lm.get("priority.medium"),
-                lm.get("priority.high"), lm.get("priority.urgent")));
+                lm.get("priority.low"),
+                lm.get("priority.medium"),
+                lm.get("priority.high"),
+                lm.get("priority.urgent")));
         priorityCombo.setValue(lm.get("priority.medium"));
 
-        nameField.setOnKeyPressed(e -> {
-            if (e.getCode() == javafx.scene.input.KeyCode.ENTER) handleCreate();
-        });
-        descriptionField.setOnKeyPressed(e -> {
-            if (e.getCode() == javafx.scene.input.KeyCode.ENTER) handleCreate();
-        });
+        nameField.setOnKeyPressed(e -> {if (e.getCode() == KeyCode.ENTER) handleCreate();});
+        descriptionField.setOnKeyPressed(e -> {if (e.getCode() == KeyCode.ENTER) handleCreate();});
     }
 
+    // -------------------------------------------------------------------------
+    // Acciones
+    // -------------------------------------------------------------------------
+
     /**
-     * Valida el formulario y envía la solicitud de creación del proyecto
-     * al backend. Si la operación es exitosa, ejecuta el callback y cierra el diálogo.
+     * Valida el formulario y envía la solicitud de creación al backend.
+     * Si la operación es exitosa, ejecuta el callback y cierra el diálogo.
      */
     @FXML
     private void handleCreate() {
@@ -86,27 +95,24 @@ public class NewProjectController {
         String description = descriptionField.getText().trim();
 
         if (name.isEmpty()) {
-            showError(lm.get("new.project.error.name")); return;
+            showError(lm.get("new.project.error.name"));
+            return;
         }
 
-        new Thread(() -> {
+        Thread thread = new Thread(() -> {
             try {
-                Map<String, String> params = new HashMap<>();
-                params.put("name", name);
-                params.put("description", description);
+                String url = "/api/projects"
+                        + "?name="        + URLEncoder.encode(name, StandardCharsets.UTF_8)
+                        + "&description=" + URLEncoder.encode(description, StandardCharsets.UTF_8)
+                        + "&category="    + categoryToEnum(categoryCombo.getValue())
+                        + "&status="      + statusToEnum(statusCombo.getValue())
+                        + "&priority="    + priorityToEnum(priorityCombo.getValue());
 
                 HttpResponse<String> response = AppContext.getInstance()
-                        .getApiService()
-                        .postWithAuthNoBody("/api/projects?name=" +
-                                java.net.URLEncoder.encode(name, StandardCharsets.UTF_8) + "&description=" +
-                                java.net.URLEncoder.encode(description, StandardCharsets.UTF_8) +
-                                "&category=" + categoryToEnum(categoryCombo.getValue()) +
-                                "&status="   + statusToEnum(statusCombo.getValue()) +
-                                "&priority=" + priorityToEnum(priorityCombo.getValue()));
+                        .getApiService().postWithAuthNoBody(url);
 
-                javafx.application.Platform.runLater(() -> {
+                Platform.runLater(() -> {
                     if (response.statusCode() == 201) {
-                        // Notificamos al MainController y cerramos el diálogo
                         if (onProjectCreated != null) onProjectCreated.run();
                         closeDialog();
                     } else {
@@ -114,9 +120,11 @@ public class NewProjectController {
                     }
                 });
             } catch (Exception e) {
-                javafx.application.Platform.runLater(() -> showError(lm.get("error.connection")));
+                Platform.runLater(() -> showError(lm.get("error.connection")));
             }
-        }).start();
+        }, "new-project-create");
+        thread.setDaemon(true);
+        thread.start();
     }
 
     /**
@@ -126,6 +134,10 @@ public class NewProjectController {
     private void handleCancel() {
         closeDialog();
     }
+
+    // -------------------------------------------------------------------------
+    // Métodos privados
+    // -------------------------------------------------------------------------
 
     /**
      * Cierra el diálogo actual.
@@ -153,7 +165,7 @@ public class NewProjectController {
     private String categoryToEnum(String label) {
         if (label.equals(lm.get("category.PERSONAL"))) return "PERSONAL";
         if (label.equals(lm.get("category.ESTUDIOS"))) return "ESTUDIOS";
-        if (label.equals(lm.get("category.TRABAJO")))  return "TRABAJO";
+        if (label.equals(lm.get("category.TRABAJO"))) return "TRABAJO";
         return label;
     }
 
@@ -164,10 +176,10 @@ public class NewProjectController {
      * @return Código de estado ({@code "TODO"}, {@code "IN_PROGRESS"}, {@code "DONE"} o {@code "CANCELLED"}).
      */
     private String statusToEnum(String label) {
-        if (label.equals(lm.get("status.todo")))       return "TODO";
+        if (label.equals(lm.get("status.todo"))) return "TODO";
         if (label.equals(lm.get("status.inprogress"))) return "IN_PROGRESS";
-        if (label.equals(lm.get("status.done")))       return "DONE";
-        if (label.equals(lm.get("status.cancelled")))  return "CANCELLED";
+        if (label.equals(lm.get("status.done"))) return "DONE";
+        if (label.equals(lm.get("status.cancelled"))) return "CANCELLED";
         return label;
     }
 
@@ -178,9 +190,9 @@ public class NewProjectController {
      * @return Código de prioridad ({@code "LOW"}, {@code "MEDIUM"}, {@code "HIGH"} o {@code "URGENT"}).
      */
     private String priorityToEnum(String label) {
-        if (label.equals(lm.get("priority.low")))    return "LOW";
+        if (label.equals(lm.get("priority.low"))) return "LOW";
         if (label.equals(lm.get("priority.medium"))) return "MEDIUM";
-        if (label.equals(lm.get("priority.high")))   return "HIGH";
+        if (label.equals(lm.get("priority.high"))) return "HIGH";
         if (label.equals(lm.get("priority.urgent"))) return "URGENT";
         return label;
     }

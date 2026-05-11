@@ -11,11 +11,14 @@ import javafx.fxml.FXMLLoader;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.input.KeyCode;
+import javafx.scene.paint.Color;
 import javafx.stage.Stage;
 
 import java.io.IOException;
 import java.net.http.HttpResponse;
+import java.text.MessageFormat;
 import java.time.LocalDate;
+import java.util.HashMap;
 
 /**
  * Controlador de la pantalla de inicio de sesión.
@@ -36,6 +39,11 @@ public class LoginController {
     @FXML private Button loginButton;
 
     private final LanguageManager lm = LanguageManager.getInstance();
+    private final ObjectMapper    objectMapper  = new ObjectMapper();
+
+    // -------------------------------------------------------------------------
+    // Inicialización
+    // -------------------------------------------------------------------------
 
     /**
      * Inicializa la pantalla configurando el envío del formulario
@@ -43,17 +51,13 @@ public class LoginController {
      */
     @FXML
     private void initialize() {
-        usernameField.setOnKeyPressed(e -> {
-            if (e.getCode() == KeyCode.ENTER) {
-                handleLogin();
-            }
-        });
-        passwordField.setOnKeyPressed(e -> {
-            if (e.getCode() == KeyCode.ENTER) {
-                handleLogin();
-            }
-        });
+        usernameField.setOnKeyPressed(e -> {if (e.getCode() == KeyCode.ENTER) {handleLogin();}});
+        passwordField.setOnKeyPressed(e -> {if (e.getCode() == KeyCode.ENTER) {handleLogin();}});
     }
+
+    // -------------------------------------------------------------------------
+    // Acciones
+    // -------------------------------------------------------------------------
 
     /**
      * Autentica al usuario contra el backend con las credenciales introducidas.
@@ -75,56 +79,46 @@ public class LoginController {
         loginButton.setDisable(true);
         errorLabel.setVisible(false);
 
-        new Thread(() -> {
+        Thread thread = new Thread(() -> {
             try {
-                var credentials = new java.util.HashMap<String, String>();
+                // Spring Security espera el campo "username" aunque sea un email
+                var credentials = new HashMap<String, String>();
                 credentials.put("username", identifier);   // Spring Security espera este key
                 credentials.put("password", password);
 
                 HttpResponse<String> response = AppContext.getInstance()
-                        .getApiService()
-                        .post("/api/auth/login", credentials);
+                        .getApiService().post("/api/auth/login", credentials);
 
                 if (response.statusCode() == 200) {
-                    ObjectMapper mapper = new ObjectMapper();
-                    JsonNode jsonNode = mapper.readTree(response.body());
-                    Long userId = jsonNode.get("id").asLong();
-                    String returnedUsername = jsonNode.get("username").asText();
+                    JsonNode json = objectMapper.readTree(response.body());
+                    long userId = json.get("id").asLong();
+                    String username = json.get("username").asText();
+                    boolean  hasAvatar    = json.has("hasAvatar")
+                            && json.get("hasAvatar").asBoolean(false);
 
-                    // Guardamos siempre el username real devuelto por el backend
-                    AppContext.getInstance().getApiService().setCredentials(returnedUsername, password);
+                    // Guardamos el username real devuelto por el backend,
+                    // no el identificador introducido (puede haber sido el email)
+                    AppContext.getInstance().getApiService().setCredentials(username, password);
                     AppContext.getInstance().setCurrentUserId(userId);
-                    AppContext.getInstance().setCurrentUsername(returnedUsername);
+                    AppContext.getInstance().setCurrentUsername(username);
                     AppContext.getInstance().setCurrentPassword(password);
+                    AppContext.getInstance().setHasAvatar(hasAvatar);
 
-                    AppContext.getInstance().setHasAvatar(
-                            jsonNode.has("hasAvatar") && jsonNode.get("hasAvatar").asBoolean(false));
-
-                    if (jsonNode.has("birthDate") && !jsonNode.get("birthDate").isNull()) {
+                    if (json.has("birthDate") && !json.get("birthDate").isNull()) {
                         try {
                             LocalDate birthDate = LocalDate.parse(
-                                    jsonNode.get("birthDate").asText().substring(0, 10));
+                                    json.get("birthDate").asText().substring(0, 10));
                             AppContext.getInstance().setCurrentBirthDate(birthDate);
                         } catch (Exception ignored) {}
                     }
 
-                    try {
-                        HttpResponse<String> settingsResp = AppContext.getInstance()
-                                .getApiService().get("/api/settings");
-                        if (settingsResp.statusCode() == 200) {
-                            JsonNode settings = mapper.readTree(settingsResp.body());
-                            String themeName = settings.has("theme")
-                                    ? settings.get("theme").asText()
-                                    : "AMATISTA";
-                            ThemeManager.Theme theme = ThemeManager.fromString(themeName);
-                            Platform.runLater(() -> ThemeManager.getInstance().applyTheme(theme));
-                        }
-                    } catch (Exception ignored) {}
+                    applyUserTheme();
 
                     Platform.runLater(() -> {
                         navigateToMain();
                         checkBirthday();
                     });
+
                 } else {
                     Platform.runLater(() -> {
                         showError(lm.get("login.error.credentials"));
@@ -137,40 +131,9 @@ public class LoginController {
                     loginButton.setDisable(false);
                 });
             }
-        }).start();
-    }
-
-    /**
-     * Carga la vista principal y reemplaza la escena actual con ella,
-     * aplicando el tema activo y maximizando la ventana.
-     */
-    private void navigateToMain() {
-        try {
-            FXMLLoader loader = new FXMLLoader(
-                    getClass().getResource("/com/taskmaster/taskmasterfrontend/main-view.fxml"),
-                    LanguageManager.getInstance().getBundle()
-            );
-            Scene scene = new Scene(loader.load(), 900, 600);
-
-            // ── Registrar el nuevo Scene en ThemeManager y aplicar tema ──
-            ThemeManager.getInstance().setMainScene(scene);
-
-            scene.setFill(javafx.scene.paint.Color.web(
-                    com.taskmaster.taskmasterfrontend.util.ThemeManager.getInstance().getBgApp()
-            ));
-
-            Stage stage = (Stage) usernameField.getScene().getWindow();
-            stage.setScene(scene);
-            stage.setMaximized(true);
-            stage.setMinWidth(900);
-            stage.setMinHeight(600);
-            stage.setTitle("TaskMaster");
-        } catch (Exception e) {
-            Platform.runLater(() -> {
-                showError(lm.get("error.open.dialog"));
-                loginButton.setDisable(false);
-            });
-        }
+        }, "login-request");
+        thread.setDaemon(true);
+        thread.start();
     }
 
     /**
@@ -185,11 +148,8 @@ public class LoginController {
             );
             Scene scene = new Scene(loader.load(), 400, 660);
 
-            // Tema Amatista fijo para register
-            String css = getClass().getResource(
-                    "/com/taskmaster/taskmasterfrontend/themes/theme-amatista.css"
-            ).toExternalForm();
-            scene.getStylesheets().add(css);
+            String cssUrl = getAmatistaThemeUrl();
+            if (cssUrl != null) scene.getStylesheets().add(cssUrl);
 
             Stage stage = (Stage) usernameField.getScene().getWindow();
             stage.setWidth(400);
@@ -201,23 +161,73 @@ public class LoginController {
         }
     }
 
+    // -------------------------------------------------------------------------
+    // Métodos privados
+    // -------------------------------------------------------------------------
+
+    /**
+     * Carga el tema guardado en los ajustes del backend y lo aplica.
+     * Se ejecuta en el hilo secundario del login, justo antes de navegar.
+     */
+    private void applyUserTheme() {
+        try {
+            HttpResponse<String> settingsResp = AppContext.getInstance()
+                    .getApiService().get("/api/settings");
+            if (settingsResp.statusCode() == 200) {
+                JsonNode settings  = objectMapper.readTree(settingsResp.body());
+                String   themeName = settings.has("theme")
+                        ? settings.get("theme").asText() : "AMATISTA";
+                ThemeManager.Theme theme = ThemeManager.fromString(themeName);
+                Platform.runLater(() -> ThemeManager.getInstance().applyTheme(theme));
+            }
+        } catch (Exception ignored) {}
+    }
+
+    /**
+     * Carga la vista principal y reemplaza la escena actual con ella,
+     * aplicando el tema activo y maximizando la ventana.
+     */
+    private void navigateToMain() {
+        try {
+            FXMLLoader loader = new FXMLLoader(
+                    getClass().getResource("/com/taskmaster/taskmasterfrontend/main-view.fxml"),
+                    LanguageManager.getInstance().getBundle());
+            Scene scene = new Scene(loader.load(), 900, 600);
+
+            // Registramos el scene en ThemeManager para que aplique el CSS activo
+            ThemeManager.getInstance().setMainScene(scene);
+
+            scene.setFill(Color.web(ThemeManager.getInstance().getBgApp()));
+
+            Stage stage = (Stage) usernameField.getScene().getWindow();
+            stage.setScene(scene);
+            stage.setMaximized(true);
+            stage.setMinWidth(900);
+            stage.setMinHeight(600);
+            stage.setTitle("TaskMaster");
+
+        } catch (Exception e) {
+            Platform.runLater(() -> {
+                showError(lm.get("error.open.dialog"));
+                loginButton.setDisable(false);
+            });
+        }
+    }
+
     /**
      * Comprueba si la fecha de nacimiento del usuario coincide con el día
      * de hoy y, en ese caso, muestra un diálogo de felicitación.
      */
     private void checkBirthday() {
         LocalDate birthDate = AppContext.getInstance().getCurrentBirthDate();
+        if (birthDate == null) return;
 
-        if (birthDate == null) {
-            return;
-        }
         LocalDate today = LocalDate.now();
-
         if (birthDate.getMonthValue() == today.getMonthValue()
                 && birthDate.getDayOfMonth() == today.getDayOfMonth()) {
             Alert alert = new Alert(Alert.AlertType.INFORMATION);
             alert.setTitle(lm.get("birthday.title"));
-            alert.setHeaderText(java.text.MessageFormat.format(
+            alert.setHeaderText(MessageFormat.format(
                     lm.get("birthday.header"),
                     AppContext.getInstance().getCurrentUsername()));
             alert.setContentText(lm.get("birthday.message"));
@@ -225,6 +235,18 @@ public class LoginController {
             alert.getButtonTypes().setAll(btn);
             alert.showAndWait();
         }
+    }
+
+    /**
+     * Devuelve la URL externa del CSS del tema Amatista.
+     * Usado como tema por defecto en las pantallas de login, registro y seguridad.
+     *
+     * @return URL externa del fichero CSS, o {@code null} si no se encuentra
+     */
+    private String getAmatistaThemeUrl() {
+        var resource = getClass().getResource(
+                "/com/taskmaster/taskmasterfrontend/themes/theme-amatista.css");
+        return resource != null ? resource.toExternalForm() : null;
     }
 
     /**

@@ -15,8 +15,11 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.Region;
 import javafx.scene.layout.VBox;
+import javafx.scene.paint.Color;
 import javafx.stage.Stage;
 import org.kordamp.ikonli.javafx.FontIcon;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.net.URLEncoder;
 import java.net.http.HttpResponse;
@@ -28,14 +31,16 @@ import java.util.Map;
 /**
  * Controlador de la pantalla de seguridad.
  *
- * <p>Muestra el historial de accesos (login/logout) del usuario y de cambio de contrseña, además permite
- * cambiar la contraseña de la cuenta. También gestiona la eliminación
- * permanente de la cuenta tras doble confirmación, redirigiendo al login
- * si la operación es exitosa.</p>
+ * <p>Muestra el historial de accesos (login/logout/cambio de contraseña) del
+ * usuario y permite cambiar la contraseña de la cuenta. También gestiona la
+ * eliminación permanente de la cuenta tras doble confirmación, redirigiendo
+ * al login si la operación es exitosa.</p>
  *
  * @author Carlos
  */
 public class SecurityController {
+
+    private static final Logger log = LoggerFactory.getLogger(SecurityController.class);
 
     @FXML private VBox accessLogContainer;
     @FXML private Label accessLogEmpty;
@@ -46,22 +51,29 @@ public class SecurityController {
 
     private final ObjectMapper objectMapper = new ObjectMapper()
             .registerModule(new JavaTimeModule());
-
     private final LanguageManager lm = LanguageManager.getInstance();
 
+    // -------------------------------------------------------------------------
+    // Inicialización
+    // -------------------------------------------------------------------------
+
     /**
-     * Inicializa la pantalla cargando el historial de accesos y de cambios de contraseña del usuario.
+     * Inicializa la pantalla cargando el historial de accesos del usuario.
      */
     @FXML
     public void initialize() {
         loadAccessLog();
     }
 
+    // -------------------------------------------------------------------------
+    // Historial de accesos
+    // -------------------------------------------------------------------------
+
     /**
      * Obtiene el historial de accesos del backend y lo renderiza en la vista.
      */
     private void loadAccessLog() {
-        new Thread(() -> {
+        Thread thread = new Thread(() -> {
             try {
                 HttpResponse<String> response = AppContext.getInstance()
                         .getApiService().get("/api/access-log");
@@ -70,16 +82,18 @@ public class SecurityController {
                     Platform.runLater(() -> renderAccessLog(entries));
                 }
             } catch (Exception e) {
-                e.printStackTrace();
+                log.error("Error al cargar el historial de accesos: {}", e.getMessage());
             }
-        }).start();
+        }, "security-load-access-log");
+        thread.setDaemon(true);
+        thread.start();
     }
 
     /**
-     * Renderiza las últimas 10 entradas del historial de accesos, mostrando
-     * el tipo de acción (login/logout/cambio de contraseña), su icono de color y la fecha formateada.
+     * Renderiza las últimas 10 entradas del historial de accesos con icono,
+     * etiqueta de acción y fecha formateada.
      *
-     * @param entries Array JSON con las entradas del historial de accesos.
+     * @param entries array JSON con las entradas del historial
      */
     private void renderAccessLog(JsonNode entries) {
         accessLogContainer.getChildren().clear();
@@ -87,6 +101,7 @@ public class SecurityController {
             accessLogContainer.getChildren().add(accessLogEmpty);
             return;
         }
+
         int max = Math.min(entries.size(), 10);
         for (int i = 0; i < max; i++) {
             JsonNode entry = entries.get(i);
@@ -99,38 +114,42 @@ public class SecurityController {
             String iconLiteral = isPasswordChange ? "fas-key"
                     : isLogin          ? "fas-sign-in-alt"
                     : "fas-sign-out-alt";
+
             String label = isPasswordChange ? lm.get("common.password.changed")
                     : isLogin          ? lm.get("security.access.login")
                     : lm.get("security.access.logout");
+
             String color = isPasswordChange ? "#f59e0b"
                     : isLogin          ? "#22c55e"
                     : "#9999bb";
 
             LocalDateTime dt = LocalDateTime.parse(createdAt);
-            String dateStr = dt.format(DateTimeFormatter.ofPattern("d MMM yyyy, HH:mm",
-                    LanguageManager.getInstance().getCurrentLocale()));
-
-            HBox row = new HBox(12);
-            row.setAlignment(Pos.CENTER_LEFT);
-            row.getStyleClass().add("security-access-row");
+            String dateStr = dt.format(DateTimeFormatter.ofPattern("d MMM yyyy, HH:mm", lm.getCurrentLocale()));
 
             FontIcon iconNode = new FontIcon(iconLiteral);
             iconNode.setIconSize(14);
-            iconNode.setIconColor(javafx.scene.paint.Color.web(color));
+            iconNode.setIconColor(Color.web(color));
 
             Label actionLabel = new Label(label);
             actionLabel.getStyleClass().add("profile-field-value");
 
-            Region spacer = new Region();
-            HBox.setHgrow(spacer, Priority.ALWAYS);
-
             Label dateLabel = new Label(dateStr);
             dateLabel.getStyleClass().add("profile-field-label");
 
-            row.getChildren().addAll(iconNode, actionLabel, spacer, dateLabel);
+            Region spacer = new Region();
+            HBox.setHgrow(spacer, Priority.ALWAYS);
+
+            HBox row = new HBox(12, iconNode, actionLabel, spacer, dateLabel);
+            row.setAlignment(Pos.CENTER_LEFT);
+            row.getStyleClass().add("security-access-row");
+
             accessLogContainer.getChildren().add(row);
         }
     }
+
+    // -------------------------------------------------------------------------
+    // Cambio de contraseña
+    // -------------------------------------------------------------------------
 
     /**
      * Valida los campos del formulario de cambio de contraseña y, si son
@@ -156,23 +175,27 @@ public class SecurityController {
             return;
         }
 
-        new Thread(() -> {
+        Thread thread = new Thread(() -> {
             try {
                 String body = objectMapper.writeValueAsString(
                         Map.of("currentPassword", current, "newPassword", newPass));
-                // PATCH /api/auth/password (no PUT, no /api/users/password)
+
                 HttpResponse<String> response = AppContext.getInstance()
                         .getApiService().patch("/api/auth/password", body);
+
                 Platform.runLater(() -> {
                     if (response.statusCode() == 200) {
                         currentPasswordField.clear();
                         newPasswordField.clear();
                         confirmPasswordField.clear();
                         hideError();
-                        // Actualizar contraseña en AppContext para que HTTP Basic siga funcionando
+
+                        // Actualizamos la contraseña en AppContext para que
+                        // HTTP Basic siga funcionando con la nueva contraseña
                         AppContext.getInstance().setCurrentPassword(newPass);
-                        AppContext.getInstance().getApiService()
-                                .setCredentials(AppContext.getInstance().getCurrentUsername(), newPass);
+                        AppContext.getInstance().getApiService().setCredentials(
+                                AppContext.getInstance().getCurrentUsername(), newPass);
+
                         showInfo(lm.get("security.password.success"));
                         loadAccessLog();
                     } else {
@@ -182,8 +205,14 @@ public class SecurityController {
             } catch (Exception e) {
                 Platform.runLater(() -> showError(lm.get("security.password.error.generic")));
             }
-        }).start();
+        }, "security-change-password");
+        thread.setDaemon(true);
+        thread.start();
     }
+
+    // -------------------------------------------------------------------------
+    // Eliminación de cuenta
+    // -------------------------------------------------------------------------
 
     /**
      * Solicita la contraseña actual mediante un diálogo, pide confirmación
@@ -192,14 +221,10 @@ public class SecurityController {
      */
     @FXML
     private void handleDeleteAccount() {
-        // Diálogo personalizado con PasswordField
         PasswordField pf = new PasswordField();
         pf.setPromptText(lm.get("common.password"));
 
-        VBox content = new VBox(8);
-        content.getChildren().addAll(
-                new Label(lm.get("security.delete.header")), pf
-        );
+        VBox content = new VBox(8, new Label(lm.get("security.delete.header")), pf);
 
         Alert dialog = new Alert(Alert.AlertType.CONFIRMATION);
         dialog.setTitle(lm.get("common.delete.account"));
@@ -221,6 +246,7 @@ public class SecurityController {
                 return;
             }
 
+            // Segunda confirmación antes de la operación irreversible
             Alert confirm = new Alert(Alert.AlertType.CONFIRMATION);
             confirm.setTitle(lm.get("common.delete.account"));
             confirm.setHeaderText(lm.get("security.delete.confirm.header"));
@@ -234,30 +260,48 @@ public class SecurityController {
             confirm.showAndWait().ifPresent(r -> {
                 if (r != ButtonType.OK) return;
                 Stage stage = (Stage) accessLogContainer.getScene().getWindow();
-                new Thread(() -> {
-                    try {
-                        String encodedPassword = URLEncoder.encode(password, StandardCharsets.UTF_8);
-                        HttpResponse<String> response = AppContext.getInstance()
-                                .getApiService().delete("/api/auth/account?password=" + encodedPassword);
-                        Platform.runLater(() -> {
-                            if (response.statusCode() == 200 || response.statusCode() == 204) {
-                                navigateToLogin(stage);
-                                AppContext.getInstance().logout();
-                            } else {
-                                showInfo(lm.get("security.delete.error"));
-                            }
-                        });
-                    } catch (Exception e) {
-                        Platform.runLater(() -> showInfo(lm.get("security.delete.error.generic")));
-                    }
-                }).start();
+                deleteAccountAsync(password, stage);
             });
         });
     }
 
     /**
+     * Ejecuta la eliminación de cuenta en un hilo secundario.
+     *
+     * @param password contraseña confirmada por el usuario
+     * @param stage    ventana principal para navegar al login tras el borrado
+     */
+    private void deleteAccountAsync(String password, Stage stage) {
+        Thread thread = new Thread(() -> {
+            try {
+                String encodedPassword = URLEncoder.encode(password, StandardCharsets.UTF_8);
+                HttpResponse<String> response = AppContext.getInstance()
+                        .getApiService()
+                        .delete("/api/auth/account?password=" + encodedPassword);
+
+                Platform.runLater(() -> {
+                    if (response.statusCode() == 200 || response.statusCode() == 204) {
+                        AppContext.getInstance().logout();
+                        navigateToLogin(stage);
+                    } else {
+                        showInfo(lm.get("security.delete.error"));
+                    }
+                });
+            } catch (Exception e) {
+                log.error("Error al eliminar la cuenta: {}", e.getMessage());
+                Platform.runLater(() -> showInfo(lm.get("security.delete.error.generic")));
+            }
+        }, "security-delete-account");
+        thread.setDaemon(true);
+        thread.start();
+    }
+
+
+    /**
      * Carga la vista de login y reemplaza la escena actual con ella
      * tras la eliminación exitosa de la cuenta.
+     *
+     * @param stage ventana principal de la aplicación
      */
     private void navigateToLogin(Stage stage) {
         try {
@@ -265,10 +309,10 @@ public class SecurityController {
                     getClass().getResource("/com/taskmaster/taskmasterfrontend/login-view.fxml"),
                     LanguageManager.getInstance().getBundle()
             );
-            Scene scene = new Scene(loader.load(), 400, 500);
-            String baseUrl = getClass().getResource(
-                    "/com/taskmaster/taskmasterfrontend/themes/theme-amatista.css").toExternalForm();
-            scene.getStylesheets().add(baseUrl);
+            Scene scene = new Scene(loader.load(), 400, 520);
+            String cssUrl = getAmatistaThemeUrl();
+            if (cssUrl != null) scene.getStylesheets().add(cssUrl);
+
             stage.setScene(scene);
             stage.setWidth(400);
             stage.setHeight(520);
@@ -276,11 +320,26 @@ public class SecurityController {
             stage.setMinHeight(520);
             stage.setResizable(false);
             stage.centerOnScreen();
-            stage.setScene(scene);
             stage.setTitle("TaskMaster");
         } catch (Exception e) {
-            e.printStackTrace();
+            log.error("Error al navegar al login: {}", e.getMessage());
         }
+    }
+
+    // -------------------------------------------------------------------------
+    // Métodos privados
+    // -------------------------------------------------------------------------
+
+    /**
+     * Devuelve la URL externa del CSS del tema Amatista.
+     * Usado como tema por defecto en las pantallas de login, registro y seguridad.
+     *
+     * @return URL externa del fichero CSS, o {@code null} si no se encuentra
+     */
+    private String getAmatistaThemeUrl() {
+        var resource = getClass().getResource(
+                "/com/taskmaster/taskmasterfrontend/themes/theme-amatista.css");
+        return resource != null ? resource.toExternalForm() : null;
     }
 
     /**

@@ -6,34 +6,37 @@ import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.taskmaster.taskmasterfrontend.util.AppContext;
 import com.taskmaster.taskmasterfrontend.util.AvatarView;
 import com.taskmaster.taskmasterfrontend.util.LanguageManager;
+import com.taskmaster.taskmasterfrontend.util.ThemeManager;
 import javafx.application.Platform;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.geometry.Pos;
+import javafx.geometry.Side;
 import javafx.scene.Cursor;
+import javafx.scene.Node;
 import javafx.scene.Scene;
-import javafx.scene.control.Alert;
-import javafx.scene.control.ButtonType;
-import javafx.scene.control.Label;
-import javafx.scene.control.Separator;
+import javafx.scene.control.*;
 import javafx.scene.image.Image;
-import javafx.scene.layout.HBox;
-import javafx.scene.layout.Priority;
-import javafx.scene.layout.StackPane;
-import javafx.scene.layout.VBox;
+import javafx.scene.layout.*;
+import javafx.scene.paint.Color;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
 import javafx.stage.FileChooser;
 import org.kordamp.ikonli.javafx.FontIcon;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.FileInputStream;
 import java.net.http.HttpResponse;
+import java.text.MessageFormat;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 
 /**
  * Controlador de la pantalla de perfil de usuario.
@@ -47,6 +50,8 @@ import java.util.Locale;
  */
 public class ProfileController {
 
+    private static final Logger log = LoggerFactory.getLogger(ProfileController.class);
+
     @FXML private Label usernameLabel;
     @FXML private Label usernameValueLabel;
     @FXML private Label emailLabel;
@@ -58,24 +63,27 @@ public class ProfileController {
     @FXML private VBox activityLogContainer;
     @FXML private Label activityLogEmpty;
     @FXML private StackPane avatarContainer;
-    private AvatarView avatarView;
 
+    private AvatarView avatarView;
     private Runnable onProfileUpdated;
 
+    private final ObjectMapper    objectMapper = new ObjectMapper()
+            .registerModule(new JavaTimeModule());
+    private final LanguageManager lm           = LanguageManager.getInstance();
+    private final Locale          locale       = LanguageManager.getInstance().getCurrentLocale();
+
+    // -------------------------------------------------------------------------
+    // Inicialización
+    // -------------------------------------------------------------------------
+
     /**
-     * Registra el callback que se ejecutará tras actualizar el perfil o el avatar,
-     * para que el controlador padre pueda refrescar la UI si es necesario.
+     * Registra el callback que se ejecutará tras actualizar el perfil o el avatar.
      *
-     * @param callback Acción a ejecutar al completar la actualización.
+     * @param callback acción a ejecutar al completar la actualización
      */
     public void setOnProfileUpdated(Runnable callback) {
         this.onProfileUpdated = callback;
     }
-
-    private final ObjectMapper objectMapper = new ObjectMapper()
-            .registerModule(new JavaTimeModule());
-    private final LanguageManager lm = LanguageManager.getInstance();
-    Locale locale = LanguageManager.getInstance().getCurrentLocale();
 
     /**
      * Inicializa la pantalla configurando el avatar y cargando el perfil,
@@ -89,6 +97,10 @@ public class ProfileController {
         loadActivityLog();
     }
 
+    // -------------------------------------------------------------------------
+    // Avatar
+    // -------------------------------------------------------------------------
+
     /**
      * Crea el componente {@link AvatarView}, lo carga para el usuario actual
      * y añade el icono de cámara superpuesto para gestionar la foto de perfil.
@@ -97,7 +109,7 @@ public class ProfileController {
         avatarView = new AvatarView(80);
         avatarView.loadForCurrentUser();
 
-        // Icono de cámara sobre el avatar (esquina inferior derecha)
+        // Icono de cámara en la esquina inferior derecha del avatar
         StackPane cameraButton = new StackPane();
         cameraButton.getStyleClass().add("btn-camera-icon");
         FontIcon cameraIcon = new FontIcon("fas-camera");
@@ -111,28 +123,28 @@ public class ProfileController {
     }
 
     /**
-     * Muestra un menú contextual con las opciones "Cambiar foto" y,
-     * si el usuario tiene avatar, "Eliminar foto".
+     * Muestra un menú contextual con las opciones de cambiar y eliminar avatar.
+     * La opción de eliminar solo aparece si el usuario tiene avatar asignado.
      *
-     * @param anchor Nodo sobre el que se ancla el menú contextual.
+     * @param anchor nodo sobre el que se ancla el menú
      */
-    private void showAvatarMenu(javafx.scene.Node anchor) {
-        javafx.scene.control.ContextMenu menu = new javafx.scene.control.ContextMenu();
+    private void showAvatarMenu(Node anchor) {
+        ContextMenu menu = new ContextMenu();
 
-        javafx.scene.control.MenuItem change = new javafx.scene.control.MenuItem(lm.get("profile.avatar.change"));
+        MenuItem change = new MenuItem(lm.get("profile.avatar.change"));
         change.setGraphic(new FontIcon("fas-camera"));
         change.setOnAction(e -> handleChangePhoto());
         menu.getItems().add(change);
 
         if (AppContext.getInstance().hasAvatar()) {
-            javafx.scene.control.MenuItem remove = new javafx.scene.control.MenuItem(lm.get("profile.avatar.remove"));
+            MenuItem remove = new MenuItem(lm.get("profile.avatar.remove"));
             remove.setGraphic(new FontIcon("fas-trash"));
             remove.getStyleClass().add("menu-item-danger");
             remove.setOnAction(e -> handleRemovePhoto());
             menu.getItems().add(remove);
         }
 
-        menu.show(anchor, javafx.geometry.Side.BOTTOM, 0, 4);
+        menu.show(anchor, Side.BOTTOM, 0, 4);
     }
 
     /**
@@ -148,7 +160,7 @@ public class ProfileController {
         File selected = fileChooser.showOpenDialog(avatarContainer.getScene().getWindow());
         if (selected == null) return;
 
-        // Validación de tamaño local (2 MB) antes de abrir el diálogo
+        // Validación de tamaño local antes de abrir el diálogo de recorte
         if (selected.length() > 2 * 1024 * 1024) {
             showAlert(lm.get("error.title"), lm.get("profile.avatar.too.large"));
             return;
@@ -163,24 +175,22 @@ public class ProfileController {
             openCropDialog(image);
         } catch (Exception e) {
             showAlert(lm.get("error.title"),
-                    java.text.MessageFormat.format(lm.get("profile.avatar.error.open"), e.getMessage()));
+                    MessageFormat.format(lm.get("profile.avatar.error.open"), e.getMessage()));
         }
     }
 
     /**
-     * Abre el diálogo modal de recorte circular con la imagen seleccionada
-     * y, si el usuario confirma, inicia la subida del avatar al backend.
+     * Abre el diálogo modal de recorte circular y, si el usuario confirma,
+     * inicia la subida del avatar al backend.
      *
-     * @param image Imagen fuente seleccionada por el usuario.
+     * @param image imagen fuente seleccionada por el usuario
      */
     private void openCropDialog(Image image) {
         try {
             FXMLLoader loader = new FXMLLoader(
                     getClass().getResource("/com/taskmaster/taskmasterfrontend/avatar-crop-dialog.fxml"),
-                    LanguageManager.getInstance().getBundle()
-            );
+                    LanguageManager.getInstance().getBundle());
             VBox root = loader.load();
-
             AvatarCropController cropController = loader.getController();
             cropController.setImage(image);
 
@@ -192,28 +202,25 @@ public class ProfileController {
             Scene scene = new Scene(root);
             applyThemeToScene(scene);
             dialog.setScene(scene);
-
             dialog.setResizable(false);
             dialog.showAndWait();
 
             byte[] croppedPng = cropController.getCroppedImageBytes();
-            if (croppedPng != null) {
-                uploadAvatar(croppedPng);
-            }
+            if (croppedPng != null) uploadAvatar(croppedPng);
+
         } catch (Exception e) {
             showAlert(lm.get("error.title"),
-                    java.text.MessageFormat.format(lm.get("profile.avatar.error.open"), e.getMessage()));
+                    MessageFormat.format(lm.get("profile.avatar.error.open"), e.getMessage()));
         }
     }
 
     /**
-     * Sube los bytes PNG del avatar recortado al backend en un hilo secundario
-     * y refresca el avatar y el historial si la operación es exitosa.
+     * Sube los bytes PNG del avatar recortado al backend en un hilo secundario.
      *
-     * @param pngBytes Bytes de la imagen recortada en formato PNG.
+     * @param pngBytes bytes de la imagen recortada en formato PNG
      */
     private void uploadAvatar(byte[] pngBytes) {
-        new Thread(() -> {
+        Thread thread = new Thread(() -> {
             try {
                 HttpResponse<String> response = AppContext.getInstance().getApiService()
                         .postMultipart("/api/users/me/avatar", "file",
@@ -227,19 +234,20 @@ public class ProfileController {
                         if (onProfileUpdated != null) onProfileUpdated.run();
                     } else {
                         showAlert(lm.get("error.title"),
-                                java.text.MessageFormat.format(lm.get("profile.avatar.error.upload"), response.statusCode()));
+                                MessageFormat.format(lm.get("profile.avatar.error.upload"), response.statusCode()));
                     }
                 });
             } catch (Exception e) {
                 Platform.runLater(() -> showAlert(lm.get("error.title"),
-                        java.text.MessageFormat.format(lm.get("profile.avatar.error.connection"), e.getMessage())));
+                        MessageFormat.format(lm.get("profile.avatar.error.connection"), e.getMessage())));
             }
-        }).start();
+        }, "profile-upload-avatar");
+        thread.setDaemon(true);
+        thread.start();
     }
 
     /**
-     * Muestra un diálogo de confirmación y, si el usuario acepta, elimina
-     * el avatar del backend y refresca la UI.
+     * Muestra confirmación y, si el usuario acepta, elimina el avatar del backend.
      */
     private void handleRemovePhoto() {
         Alert confirm = new Alert(Alert.AlertType.CONFIRMATION);
@@ -248,7 +256,7 @@ public class ProfileController {
         confirm.setContentText(lm.get("profile.avatar.delete.content"));
         confirm.showAndWait().ifPresent(r -> {
             if (r == ButtonType.OK) {
-                new Thread(() -> {
+                Thread thread = new Thread(() -> {
                     try {
                         HttpResponse<String> response = AppContext.getInstance().getApiService()
                                 .delete("/api/users/me/avatar");
@@ -265,17 +273,22 @@ public class ProfileController {
                     } catch (Exception e) {
                         Platform.runLater(() -> showAlert(lm.get("error.title"), lm.get("error.connection")));
                     }
-                }).start();
+                }, "profile-remove-avatar");
+                thread.setDaemon(true);
+                thread.start();
             }
         });
     }
 
+    // -------------------------------------------------------------------------
+    // Carga de datos
+    // -------------------------------------------------------------------------
+
     /**
-     * Obtiene los datos del perfil del usuario desde el backend
-     * y los renderiza en la vista.
+     * Obtiene los datos del perfil del usuario desde el backend.
      */
     private void loadProfile() {
-        new Thread(() -> {
+        Thread thread = new Thread(() -> {
             try {
                 HttpResponse<String> response = AppContext.getInstance()
                         .getApiService().get("/api/auth/profile");
@@ -286,19 +299,19 @@ public class ProfileController {
             } catch (Exception e) {
                 Platform.runLater(() -> showAlert(lm.get("error.title"), lm.get("profile.error.load")));
             }
-        }).start();
+        }, "profile-load-profile");
+        thread.setDaemon(true);
+        thread.start();
     }
 
     /**
-     * Obtiene las estadísticas de tareas y proyectos del usuario desde
-     * el backend y las renderiza en la vista.
+     * Obtiene las estadísticas de tareas y proyectos del usuario desde el backend.
      */
     private void loadStats() {
-        new Thread(() -> {
+        Thread thread = new Thread(() -> {
             try {
                 HttpResponse<String> response = AppContext.getInstance()
                         .getApiService().get("/api/users/stats");
-
                 if (response.statusCode() == 200) {
                     JsonNode stats = objectMapper.readTree(response.body());
                     Platform.runLater(() -> renderStats(stats));
@@ -306,15 +319,16 @@ public class ProfileController {
             } catch (Exception e) {
                 Platform.runLater(() -> showAlert(lm.get("error.title"), lm.get("profile.error.stats")));
             }
-        }).start();
+        }, "profile-load-stats");
+        thread.setDaemon(true);
+        thread.start();
     }
 
     /**
-     * Obtiene el historial de actividad global del usuario desde el backend
-     * y lo renderiza agrupado por fecha.
+     * Obtiene el historial de actividad global del usuario desde el backend.
      */
     private void loadActivityLog() {
-        new Thread(() -> {
+        Thread thread = new Thread(() -> {
             try {
                 HttpResponse<String> response = AppContext.getInstance()
                         .getApiService().get("/api/activity-log");
@@ -323,19 +337,26 @@ public class ProfileController {
                     Platform.runLater(() -> renderActivityLog(entries));
                 }
             } catch (Exception e) {
-                e.printStackTrace();
+                log.error("Error al cargar el historial de actividad: {}", e.getMessage());
             }
-        }).start();
+        }, "profile-load-activity");
+        thread.setDaemon(true);
+        thread.start();
     }
 
+    // -------------------------------------------------------------------------
+    // Renderizado
+    // -------------------------------------------------------------------------
+
     /**
-     * Rellena los campos de la vista con los datos del perfil recibidos del backend.
+     * Rellena los campos de la vista con los datos del perfil.
      *
-     * @param user Nodo JSON con los datos del usuario.
+     * @param user nodo JSON con los datos del usuario
      */
     private void renderProfile(JsonNode user) {
         String username = user.get("username").asText();
         String email = user.get("email").asText();
+
         usernameLabel.setText(username);
         usernameValueLabel.setText(username);
         emailLabel.setText(email);
@@ -344,7 +365,6 @@ public class ProfileController {
         if (user.has("birthDate") && !user.get("birthDate").isNull()) {
             try {
                 LocalDate bd = LocalDate.parse(user.get("birthDate").asText().substring(0, 10));
-
                 birthDateLabel.setText(bd.format(
                         DateTimeFormatter.ofPattern("d MMMM yyyy", locale)));
             } catch (Exception ignored) {
@@ -365,10 +385,9 @@ public class ProfileController {
     }
 
     /**
-     * Construye las tarjetas de estadísticas y actualiza la barra de progreso
-     * de completado con los datos recibidos del backend.
+     * Construye las tarjetas de estadísticas y actualiza la barra de progreso.
      *
-     * @param stats Nodo JSON con las estadísticas del usuario.
+     * @param stats nodo JSON con las estadísticas del usuario
      */
     private void renderStats(JsonNode stats) {
         long total      = stats.get("totalTasks").asLong();
@@ -387,16 +406,19 @@ public class ProfileController {
                 createStatCard(String.valueOf(cancelled),  lm.get("profile.stats.cancelled"),  "#e74c3c"),
                 createStatCard(String.valueOf(projects),   lm.get("common.projects"),   "#ec4899")
         );
-        for (javafx.scene.Node c : statsRow.getChildren())
+
+        for (javafx.scene.Node c : statsRow.getChildren()) {
             HBox.setHgrow(c, Priority.ALWAYS);
+        }
 
         // Barra de progreso
         completionRateLabel.setText(rate + "% " + lm.get("profile.stats.rate").toLowerCase());
         completionBarFill.prefWidthProperty().bind(
-                completionBarFill.getParent() instanceof javafx.scene.layout.Region parent
+                completionBarFill.getParent() instanceof Region parent
                         ? parent.widthProperty().multiply(rate / 100.0)
                         : null
         );
+
         // Ancho de la barra via estilo
         completionBarFill.setStyle(
                 "-fx-background-color: #22c55e; -fx-background-radius: 4px; " +
@@ -404,10 +426,9 @@ public class ProfileController {
     }
 
     /**
-     * Construye el historial de actividad agrupado por fecha (Hoy, Ayer,
-     * Esta semana, Anteriores) y lo muestra en el contenedor de la vista.
+     * Construye el historial de actividad agrupado por fecha y lo muestra en la vista.
      *
-     * @param entries Array JSON con las entradas del historial de actividad.
+     * @param entries array JSON con las entradas del historial
      */
     private void renderActivityLog(JsonNode entries) {
         activityLogContainer.getChildren().clear();
@@ -417,13 +438,11 @@ public class ProfileController {
             return;
         }
 
-        // Agrupar por fecha
         LocalDate today    = LocalDate.now();
         LocalDate yesterday = today.minusDays(1);
 
-        // Construir grupos en orden: Hoy, Ayer, Esta semana, Anteriores
-        java.util.LinkedHashMap<String, List<JsonNode>> groups = new java.util.LinkedHashMap<>();
-
+        // Agrupamos las entradas por período de tiempo
+        LinkedHashMap<String, List<JsonNode>> groups = new LinkedHashMap<>();
         for (JsonNode entry : entries) {
             LocalDate date = LocalDateTime.parse(entry.get("createdAt").asText()).toLocalDate();
             String group;
@@ -436,7 +455,7 @@ public class ProfileController {
         }
 
         boolean firstGroup = true;
-        for (java.util.Map.Entry<String, List<JsonNode>> group : groups.entrySet()) {
+        for (Map.Entry<String, List<JsonNode>> group : groups.entrySet()) {
             // Separador entre grupos
             if (!firstGroup) {
                 Separator sep = new Separator();
@@ -469,16 +488,12 @@ public class ProfileController {
                 LocalDateTime dt = LocalDateTime.parse(entry.get("createdAt").asText());
                 String timeStr   = dt.format(DateTimeFormatter.ofPattern("HH:mm"));
 
-                HBox row = new HBox(12);
-                row.setAlignment(javafx.geometry.Pos.CENTER_LEFT);
                 boolean isLast = i == groupEntries.size() - 1;
-                row.setStyle("-fx-padding: 9 20 9 20;" +
-                        (!isLast ? "-fx-border-color: transparent transparent #f5f5f5 transparent;" +
-                                "-fx-border-width: 0 0 1 0;" : ""));
 
                 FontIcon iconNode = new FontIcon(iconLiteral);
                 iconNode.setIconSize(13);
-                iconNode.setIconColor(javafx.scene.paint.Color.web(color));
+                iconNode.setIconColor(Color.web(color));
+
                 StackPane iconWrap = new StackPane(iconNode);
                 iconWrap.setMinWidth(20);
                 iconWrap.setAlignment(Pos.CENTER);
@@ -486,101 +501,113 @@ public class ProfileController {
                 Label descLabel = new Label(desc);
                 descLabel.getStyleClass().add("profile-field-value");
                 descLabel.setWrapText(true);
-                HBox.setHgrow(descLabel, javafx.scene.layout.Priority.ALWAYS);
+                HBox.setHgrow(descLabel, Priority.ALWAYS);
 
                 Label timeLabel = new Label(timeStr);
                 timeLabel.setStyle("-fx-font-size: 11px; -fx-text-fill: #aaaaaa;");
 
-                row.getChildren().addAll(iconWrap, descLabel, timeLabel);
+                HBox row = new HBox(12, iconWrap, descLabel, timeLabel);
+                row.setAlignment(Pos.CENTER_LEFT);
+                row.setStyle("-fx-padding: 9 20 9 20;" +
+                        (!isLast ? "-fx-border-color: transparent transparent #f5f5f5 transparent;" +
+                                "-fx-border-width: 0 0 1 0;" : ""));
+
                 activityLogContainer.getChildren().add(row);
             }
         }
     }
 
     /**
-     * Crea una tarjeta de estadística con un número destacado y una etiqueta descriptiva.
+     * Crea una tarjeta de estadística con un número destacado y etiqueta descriptiva.
      *
-     * @param number Valor numérico a mostrar.
-     * @param label  Etiqueta descriptiva del valor.
-     * @param color  Color hex del número destacado.
-     * @return {@link VBox} con el contenido de la tarjeta.
+     * @param number valor numérico a mostrar
+     * @param label  etiqueta descriptiva
+     * @param color  color hex del número
+     * @return {@link VBox} con la tarjeta
      */
     private VBox createStatCard(String number, String label, String color) {
         VBox card = new VBox(4);
         card.setAlignment(Pos.CENTER);
         card.getStyleClass().add("stat-card");
-        card.setAlignment(Pos.CENTER);
+
         Label num = new Label(number);
         num.setStyle("-fx-font-size: 22px; -fx-font-weight: bold; -fx-text-fill: " + color + ";");
+
         Label lbl = new Label(label);
         lbl.setStyle("-fx-font-size: 10px; -fx-text-fill: #888888;");
         lbl.setWrapText(true);
         lbl.setAlignment(Pos.CENTER);
+
         card.getChildren().addAll(num, lbl);
         return card;
     }
 
+    // -------------------------------------------------------------------------
+    // Diálogos
+    // -------------------------------------------------------------------------
+
     /**
-     * Abre el diálogo modal de edición de perfil y, al cerrarlo,
-     * recarga el perfil y el historial de actividad.
+     * Abre el diálogo de edición de perfil y recarga los datos al cerrarlo.
      */
     @FXML
     private void handleEditProfile() {
         try {
             FXMLLoader loader = new FXMLLoader(
                     getClass().getResource("/com/taskmaster/taskmasterfrontend/edit-profile-dialog.fxml"),
-                    LanguageManager.getInstance().getBundle()
-            );
+                    LanguageManager.getInstance().getBundle());
             VBox root = loader.load();
             EditProfileController controller = loader.getController();
             controller.setOnProfileUpdated(() -> {
                 loadProfile();
                 loadActivityLog();
-                if (onProfileUpdated != null) {
-                    onProfileUpdated.run();
-                }
+                if (onProfileUpdated != null) onProfileUpdated.run();
             });
 
             Stage dialog = new Stage();
             dialog.setTitle(lm.get("profile.edit.dialog.title"));
-
             Scene scene = new Scene(root, 400, 380);
             applyThemeToScene(scene);
             dialog.setScene(scene);
-
             dialog.initModality(Modality.APPLICATION_MODAL);
             dialog.showAndWait();
+
         } catch (Exception e) {
             showAlert(lm.get("error.title"), lm.get("error.open.dialog"));
         }
     }
 
+    // -------------------------------------------------------------------------
+    // Métodos privados de utilidad
+    // -------------------------------------------------------------------------
+
     /**
-     * Aplica el tema activo del {@link com.taskmaster.taskmasterfrontend.util.ThemeManager}
-     * a la escena indicada, cargando primero el CSS base y luego el tema seleccionado.
+     * Aplica el tema activo del {@link ThemeManager} a la escena indicada,
+     * cargando primero el CSS base y luego el CSS del tema activo si es distinto.
      *
-     * @param scene Escena a la que aplicar el tema.
+     * @param scene escena a la que aplicar el tema
      */
     private void applyThemeToScene(Scene scene) {
-        com.taskmaster.taskmasterfrontend.util.ThemeManager tm =
-                com.taskmaster.taskmasterfrontend.util.ThemeManager.getInstance();
-        // Cargar siempre el CSS base primero
-        String baseUrl = getClass().getResource(
-                "/com/taskmaster/taskmasterfrontend/themes/theme-amatista.css") != null
-                ? getClass().getResource(
-                "/com/taskmaster/taskmasterfrontend/themes/theme-amatista.css").toExternalForm()
-                : null;
-        if (baseUrl != null) scene.getStylesheets().add(baseUrl);
-        // Luego el tema activo si no es Amatista
-        String cssFile = "/com/taskmaster/taskmasterfrontend/themes/"
+        ThemeManager tm = ThemeManager.getInstance();
+
+        // CSS base siempre primero
+        var baseResource = getClass().getResource(
+                "/com/taskmaster/taskmasterfrontend/themes/theme-amatista.css");
+        if (baseResource != null) {
+            scene.getStylesheets().add(baseResource.toExternalForm());
+        }
+
+        // CSS del tema activo si es distinto al base
+        String cssPath = "/com/taskmaster/taskmasterfrontend/themes/"
                 + tm.getCssFileNamePublic();
-        String themeUrl = getClass().getResource(cssFile) != null
-                ? getClass().getResource(cssFile).toExternalForm()
-                : null;
-        if (themeUrl != null && !themeUrl.equals(baseUrl))
-            scene.getStylesheets().add(themeUrl);
-        // Fondo del Scene
-        scene.setFill(javafx.scene.paint.Color.web(tm.getBgApp()));
+        var themeResource = getClass().getResource(cssPath);
+        if (themeResource != null
+                && (baseResource == null
+                || !themeResource.toExternalForm().equals(
+                baseResource.toExternalForm()))) {
+            scene.getStylesheets().add(themeResource.toExternalForm());
+        }
+
+        scene.setFill(Color.web(tm.getBgApp()));
     }
 
     /**
@@ -591,18 +618,17 @@ public class ProfileController {
      */
     private String getActivityIcon(String actionType) {
         return switch (actionType) {
-            case "TASK_CREATED", "SUBTASK_CREATED"      -> "fas-plus-circle";
-            case "TASK_EDITED", "SUBTASK_EDITED"        -> "fas-pen";
-            case "TASK_DELETED", "SUBTASK_DELETED"      -> "fas-trash";
-            case "TASK_PERMANENTLY_DELETED"             -> "fas-times-circle";
-            case "TASK_RESTORED"                        -> "fas-undo";
-            case "TASK_STATUS_CHANGED"                  -> "fas-sync-alt";
+            case "TASK_CREATED",   "SUBTASK_CREATED"   -> "fas-plus-circle";
+            case "TASK_EDITED",    "SUBTASK_EDITED",
+                 "PROJECT_EDITED"                       -> "fas-pen";
+            case "TASK_DELETED",   "SUBTASK_DELETED",
+                 "PROJECT_DELETED"                      -> "fas-trash";
+            case "TASK_PERMANENTLY_DELETED",
+                 "PROJECT_PERMANENTLY_DELETED"          -> "fas-times-circle";
+            case "TASK_RESTORED",  "PROJECT_RESTORED"  -> "fas-undo";
+            case "TASK_STATUS_CHANGED",
+                 "PROJECT_STATUS_CHANGED"               -> "fas-sync-alt";
             case "PROJECT_CREATED"                      -> "fas-folder-plus";
-            case "PROJECT_EDITED"                       -> "fas-pen";
-            case "PROJECT_DELETED"                      -> "fas-trash";
-            case "PROJECT_PERMANENTLY_DELETED"          -> "fas-times-circle";
-            case "PROJECT_RESTORED"                     -> "fas-undo";
-            case "PROJECT_STATUS_CHANGED"               -> "fas-sync-alt";
             case "PROFILE_UPDATED"                      -> "fas-user-edit";
             case "PASSWORD_CHANGED"                     -> "fas-key";
             default                                     -> "fas-circle";
@@ -627,14 +653,13 @@ public class ProfileController {
     }
 
     /**
-     * Construye el texto descriptivo de una entrada del historial de actividad
-     * a partir del tipo de acción, el nombre de la entidad y los valores de cambio.
+     * Construye el texto descriptivo de una entrada del historial.
      *
-     * @param actionType Código del tipo de acción.
-     * @param entityName Nombre de la entidad afectada.
-     * @param oldValue   Valor anterior al cambio, o {@code null} si no aplica.
-     * @param newValue   Valor posterior al cambio, o {@code null} si no aplica.
-     * @return Texto descriptivo localizado de la acción.
+     * @param actionType código del tipo de acción
+     * @param entityName nombre de la entidad afectada
+     * @param oldValue   valor anterior, o {@code null}
+     * @param newValue   valor posterior, o {@code null}
+     * @return texto descriptivo localizado
      */
     private String getActivityDescription(String actionType, String entityName,
                                           String oldValue, String newValue) {

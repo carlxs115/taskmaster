@@ -15,9 +15,9 @@ import javafx.scene.control.TextField;
 import javafx.scene.input.KeyCode;
 import javafx.stage.Stage;
 
-import java.io.IOException;
 import java.net.http.HttpResponse;
 import java.time.LocalDate;
+import java.util.HashMap;
 
 /**
  * Controlador de la pantalla de registro de nuevos usuarios.
@@ -37,36 +37,33 @@ public class RegisterController {
     @FXML private Label errorLabel;
 
     private final LanguageManager lm = LanguageManager.getInstance();
+    private final ObjectMapper    objectMapper = new ObjectMapper();
+
+    // -------------------------------------------------------------------------
+    // Inicialización
+    // -------------------------------------------------------------------------
 
     /**
      * Inicializa la pantalla configurando el envío del formulario
-     * con la tecla Enter en los campos de usuario, email y contraseña.
+     * con la tecla Enter en los campos de texto.
      */
     @FXML
     private void initialize() {
-        usernameField.setOnKeyPressed(e -> {
-            if (e.getCode() == KeyCode.ENTER) {
-                handleRegister();
-            }
-        });
-        emailField.setOnKeyPressed(e -> {
-            if (e.getCode() == KeyCode.ENTER) {
-                handleRegister();
-            }
-        });
-        passwordField.setOnKeyPressed(e -> {
-            if (e.getCode() == KeyCode.ENTER) {
-                handleRegister();
-            }
-        });
+        usernameField.setOnKeyPressed(e -> {if (e.getCode() == KeyCode.ENTER) {handleRegister();}});
+        emailField.setOnKeyPressed(e -> {if (e.getCode() == KeyCode.ENTER) {handleRegister();}});
+        passwordField.setOnKeyPressed(e -> {if (e.getCode() == KeyCode.ENTER) {handleRegister();}});
     }
+
+    // -------------------------------------------------------------------------
+    // Acciones
+    // -------------------------------------------------------------------------
 
     /**
      * Valida el formulario y envía la solicitud de registro al backend.
      *
      * <p>Comprueba que todos los campos estén rellenos, que se haya
-     * seleccionado una fecha de nacimiento y que el usuario tenga al
-     * menos 12 años. Si el registro es exitoso, navega a la pantalla de login.</p>
+     * seleccionado una fecha de nacimiento y que el usuario tenga al menos
+     * 12 años. Si el registro es exitoso, navega a la pantalla de login.</p>
      */
     @FXML
     private void handleRegister() {
@@ -75,7 +72,6 @@ public class RegisterController {
         String password = passwordField.getText().trim();
         LocalDate birthDate = birthDatePicker.getValue();
 
-        // Validaciones básicas
         if (username.isEmpty() || email.isEmpty() || password.isEmpty()) {
             showError(lm.get("error.fields.required"));
             return;
@@ -86,30 +82,31 @@ public class RegisterController {
             return;
         }
 
+        // Validamos edad mínima de 12 años
         if (birthDate.isAfter(LocalDate.now().minusYears(12))) {
             showError(lm.get("register.error.age"));
             return;
         }
 
-        new Thread(() -> {
+        Thread thread = new Thread(() -> {
             try {
-                var body = new java.util.HashMap<String, Object>();
+                var body = new HashMap<String, Object>();
                 body.put("username", username);
                 body.put("email", email);
                 body.put("password", password);
                 body.put("birthDate", birthDate.toString());
 
                 HttpResponse<String> response = AppContext.getInstance()
-                        .getApiService()
-                        .post("/api/auth/register", body);
+                        .getApiService().post("/api/auth/register", body);
 
                 Platform.runLater(() -> {
                     if (response.statusCode() == 201) {
+                        // Registro exitoso: navegamos al login
                         handleGoToLogin();
                     } else {
+                        // Intentamos mostrar el mensaje de error del backend
                         try {
-                            ObjectMapper mapper = new ObjectMapper();
-                            JsonNode json = mapper.readTree(response.body());
+                            JsonNode json = objectMapper.readTree(response.body());
                             String msg = json.has("message")
                                     ? json.get("message").asText()
                                     : lm.get("register.error.generic");
@@ -122,8 +119,9 @@ public class RegisterController {
             } catch (Exception e) {
                 Platform.runLater(() -> showError(lm.get("error.connection")));
             }
-        }).start();
-
+        }, "register-request");
+        thread.setDaemon(true);
+        thread.start();
     }
 
     /**
@@ -134,15 +132,10 @@ public class RegisterController {
         try {
             FXMLLoader loader = new FXMLLoader(
                     getClass().getResource("/com/taskmaster/taskmasterfrontend/login-view.fxml"),
-                    LanguageManager.getInstance().getBundle()
-            );
+                    LanguageManager.getInstance().getBundle());
             Scene scene = new Scene(loader.load(), 400, 520);
-
-            // Tema Amatista fijo para login
-            String css = getClass().getResource(
-                    "/com/taskmaster/taskmasterfrontend/themes/theme-amatista.css"
-            ).toExternalForm();
-            scene.getStylesheets().add(css);
+            String cssUrl = getAmatistaThemeUrl();
+            if (cssUrl != null) scene.getStylesheets().add(cssUrl);
 
             Stage stage = (Stage) usernameField.getScene().getWindow();
             stage.setWidth(400);
@@ -150,8 +143,24 @@ public class RegisterController {
             stage.setScene(scene);
             stage.centerOnScreen();
         } catch (Exception e) {
-            e.printStackTrace();
+            showError(lm.get("error.open.dialog"));
         }
+    }
+
+    // -------------------------------------------------------------------------
+    // Métodos privados
+    // -------------------------------------------------------------------------
+
+    /**
+     * Devuelve la URL externa del CSS del tema Amatista.
+     * Usado como tema por defecto en las pantallas de login, registro y seguridad.
+     *
+     * @return URL externa del fichero CSS, o {@code null} si no se encuentra
+     */
+    private String getAmatistaThemeUrl() {
+        var resource = getClass().getResource(
+                "/com/taskmaster/taskmasterfrontend/themes/theme-amatista.css");
+        return resource != null ? resource.toExternalForm() : null;
     }
 
     /**

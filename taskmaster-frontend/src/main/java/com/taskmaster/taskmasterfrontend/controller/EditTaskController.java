@@ -7,6 +7,7 @@ import javafx.application.Platform;
 import javafx.collections.FXCollections;
 import javafx.fxml.FXML;
 import javafx.scene.control.*;
+import javafx.scene.input.KeyCode;
 
 import java.net.http.HttpResponse;
 import java.time.LocalDate;
@@ -39,10 +40,14 @@ public class EditTaskController {
 
     private final LanguageManager lm = LanguageManager.getInstance();
 
+    // -------------------------------------------------------------------------
+    // Inicialización
+    // -------------------------------------------------------------------------
+
     /**
      * Registra el callback que se ejecutará tras actualizar la tarea correctamente.
      *
-     * @param callback Acción a ejecutar al completar la actualización.
+     * @param callback acción a ejecutar al completar la actualización
      */
     public void setOnTaskUpdated(Runnable callback) {
         this.onTaskUpdated = callback;
@@ -51,33 +56,38 @@ public class EditTaskController {
     /**
      * Establece el título mostrado en la cabecera del diálogo.
      *
-     * @param title Texto a mostrar como título del diálogo.
+     * @param title texto a mostrar como título
      */
     public void setDialogTitle(String title) {
         dialogTitleLabel.setText(title);
     }
 
     /**
-     * Inicializa los combos de estado y prioridad con sus valores
-     * localizados y sus selecciones por defecto.
+     * Inicializa los combos con sus valores localizados y selecciones por defecto.
      */
     @FXML
     public void initialize() {
         statusCombo.setItems(FXCollections.observableArrayList(
-                lm.get("status.todo"), lm.get("status.inprogress"),
-                lm.get("status.done"), lm.get("status.submitted"),
+                lm.get("status.todo"),
+                lm.get("status.inprogress"),
+                lm.get("status.done"),
+                lm.get("status.submitted"),
                 lm.get("status.cancelled")));
         statusCombo.setValue(lm.get("status.todo"));
 
         priorityCombo.setItems(FXCollections.observableArrayList(
-                lm.get("priority.low"), lm.get("priority.medium"),
-                lm.get("priority.high"), lm.get("priority.urgent")));
+                lm.get("priority.low"),
+                lm.get("priority.medium"),
+                lm.get("priority.high"),
+                lm.get("priority.urgent")));
         priorityCombo.setValue(lm.get("priority.medium"));
 
-        titleField.setOnKeyPressed(e -> {
-            if (e.getCode() == javafx.scene.input.KeyCode.ENTER) handleSave();
-        });
+        titleField.setOnKeyPressed(e -> {if (e.getCode() == KeyCode.ENTER) handleSave();});
     }
+
+    // -------------------------------------------------------------------------
+    // Carga de datos
+    // -------------------------------------------------------------------------
 
     /**
      * Rellena el formulario con los datos actuales de la tarea recibida.
@@ -87,11 +97,14 @@ public class EditTaskController {
     public void initData(JsonNode task) {
         this.taskId = task.get("id").asLong();
         titleField.setText(task.get("title").asText());
+
         if (task.has("description") && !task.get("description").isNull()) {
             descriptionField.setText(task.get("description").asText());
         }
+
         statusCombo.setValue(translateStatus(task.get("status").asText()));
         priorityCombo.setValue(translatePriority(task.get("priority").asText()));
+
         if (task.has("dueDate") && !task.get("dueDate").isNull()) {
             dueDatePicker.setValue(LocalDate.parse(task.get("dueDate").asText()));
         }
@@ -104,14 +117,17 @@ public class EditTaskController {
     }
 
     /**
-     * Registra el callback que se ejecutará al pulsar cancelar,
-     * en lugar del comportamiento por defecto de cerrar el diálogo.
+     * Registra el callback que se ejecutará al pulsar cancelar.
      *
-     * @param callback Acción a ejecutar al cancelar.
+     * @param callback acción a ejecutar al cancelar
      */
     public void setOnCancel(Runnable callback) {
         this.onCancel = callback;
     }
+
+    // -------------------------------------------------------------------------
+    // Acciones
+    // -------------------------------------------------------------------------
 
     /**
      * Valida el formulario y envía los datos actualizados al backend.
@@ -125,20 +141,19 @@ public class EditTaskController {
             return;
         }
 
-        new Thread(() -> {
+        Thread thread = new Thread(() -> {
             try {
                 Map<String, Object> body = new HashMap<>();
-                body.put("title", title);
+                body.put("title",       title);
                 body.put("description", descriptionField.getText().trim());
-                body.put("status",   reverseStatus(statusCombo.getValue()));
-                body.put("priority", reversePriority(priorityCombo.getValue()));
+                body.put("status",      reverseStatus(statusCombo.getValue()));
+                body.put("priority",    reversePriority(priorityCombo.getValue()));
                 if (dueDatePicker.getValue() != null) {
                     body.put("dueDate", dueDatePicker.getValue().toString());
                 }
 
                 HttpResponse<String> response = AppContext.getInstance()
-                        .getApiService()
-                        .put("/api/tasks/" + taskId, body);
+                        .getApiService().put("/api/tasks/" + taskId, body);
 
                 Platform.runLater(() -> {
                     if (response.statusCode() == 200) {
@@ -150,11 +165,12 @@ public class EditTaskController {
                         showError(lm.get("common.error.save"));
                     }
                 });
-
             } catch (Exception e) {
                 Platform.runLater(() -> showError(lm.get("error.connection")));
             }
-        }).start();
+        }, "edit-task-save");
+        thread.setDaemon(true);
+        thread.start();
     }
 
     /**
@@ -166,6 +182,10 @@ public class EditTaskController {
         if (onCancel != null) onCancel.run();
         else closeDialog();
     }
+
+    // -------------------------------------------------------------------------
+    // Métodos privados
+    // -------------------------------------------------------------------------
 
     /**
      * Cierra el diálogo actual.
@@ -182,12 +202,12 @@ public class EditTaskController {
      */
     private String translateStatus(String s) {
         return switch (s) {
-            case "TODO"        -> lm.get("status.todo");
+            case "TODO" -> lm.get("status.todo");
             case "IN_PROGRESS" -> lm.get("status.inprogress");
-            case "DONE"        -> lm.get("status.done");
-            case "SUBMITTED"   -> lm.get("status.submitted");
-            case "CANCELLED"   -> lm.get("status.cancelled");
-            default            -> s;
+            case "DONE" -> lm.get("status.done");
+            case "SUBMITTED" -> lm.get("status.submitted");
+            case "CANCELLED" -> lm.get("status.cancelled");
+            default -> s;
         };
     }
 
@@ -199,11 +219,11 @@ public class EditTaskController {
      */
     private String translatePriority(String p) {
         return switch (p) {
-            case "LOW"    -> lm.get("priority.low");
+            case "LOW" -> lm.get("priority.low");
             case "MEDIUM" -> lm.get("priority.medium");
-            case "HIGH"   -> lm.get("priority.high");
+            case "HIGH" -> lm.get("priority.high");
             case "URGENT" -> lm.get("priority.urgent");
-            default       -> p;
+            default -> p;
         };
     }
 
@@ -214,9 +234,9 @@ public class EditTaskController {
      * @return Código de estado del backend.
      */
     private String reverseStatus(String s) {
-        if (s.equals(lm.get("status.inprogress")))          return "IN_PROGRESS";
-        else if (s.equals(lm.get("status.done")))      return "DONE";
-        else if (s.equals(lm.get("status.submitted")))      return "SUBMITTED";
+        if (s.equals(lm.get("status.inprogress"))) return "IN_PROGRESS";
+        else if (s.equals(lm.get("status.done"))) return "DONE";
+        else if (s.equals(lm.get("status.submitted"))) return "SUBMITTED";
         else if (s.equals(lm.get("status.cancelled"))) return "CANCELLED";
         else return "TODO";
     }

@@ -1,5 +1,7 @@
 package com.taskmaster.taskmasterfrontend.controller;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.taskmaster.taskmasterfrontend.util.AppContext;
 import com.taskmaster.taskmasterfrontend.util.LanguageManager;
 import javafx.application.Platform;
@@ -9,8 +11,11 @@ import javafx.scene.control.ComboBox;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextArea;
 import javafx.scene.control.TextField;
+import javafx.scene.input.KeyCode;
 
+import java.net.URLEncoder;
 import java.net.http.HttpResponse;
+import java.nio.charset.StandardCharsets;
 
 /**
  * Controlador del diálogo de edición de proyecto.
@@ -34,105 +39,85 @@ public class EditProjectController {
     private Long projectId;
     private Runnable onProjectUpdated;
 
+    private final ObjectMapper objectMapper = new ObjectMapper();
     private final LanguageManager lm = LanguageManager.getInstance();
+
+    // -------------------------------------------------------------------------
+    // Inicialización
+    // -------------------------------------------------------------------------
 
     /**
      * Registra el callback que se ejecutará tras actualizar el proyecto correctamente.
      *
-     * @param callback Acción a ejecutar al completar la actualización.
+     * @param callback acción a ejecutar al completar la actualización
      */
     public void setOnProjectUpdated(Runnable callback) {
         this.onProjectUpdated = callback;
     }
 
     /**
-     * Inicializa los combos de categoría, estado y prioridad con sus
-     * valores localizados y sus selecciones por defecto.
+     * Inicializa los combos con sus valores localizados y selecciones por defecto.
      */
     @FXML
     public void initialize() {
         categoryCombo.setItems(FXCollections.observableArrayList(
-                lm.get("category.PERSONAL"), lm.get("category.ESTUDIOS"), lm.get("category.TRABAJO")));
+                lm.get("category.PERSONAL"),
+                lm.get("category.ESTUDIOS"),
+                lm.get("category.TRABAJO")));
         categoryCombo.setValue(lm.get("category.PERSONAL"));
 
         statusCombo.setItems(FXCollections.observableArrayList(
-                lm.get("status.todo"), lm.get("status.inprogress"),
-                lm.get("status.done.project"), lm.get("status.cancelled.project")));
+                lm.get("status.todo"),
+                lm.get("status.inprogress"),
+                lm.get("status.done.project"),
+                lm.get("status.cancelled.project")));
         statusCombo.setValue(lm.get("status.todo"));
 
         priorityCombo.setItems(FXCollections.observableArrayList(
-                lm.get("priority.low"), lm.get("priority.medium"),
-                lm.get("priority.high"), lm.get("priority.urgent")));
+                lm.get("priority.low"),
+                lm.get("priority.medium"),
+                lm.get("priority.high"),
+                lm.get("priority.urgent")));
         priorityCombo.setValue(lm.get("priority.medium"));
 
-        nameField.setOnKeyPressed(e -> {
-            if (e.getCode() == javafx.scene.input.KeyCode.ENTER) handleSave();
-        });
+        nameField.setOnKeyPressed(e -> {if (e.getCode() == KeyCode.ENTER) handleSave();});
     }
+
+    // -------------------------------------------------------------------------
+    // Carga de datos
+    // -------------------------------------------------------------------------
 
     /**
      * Precarga el formulario con el nombre del proyecto e inicia la carga
      * asíncrona del resto de datos desde el backend.
      *
-     * @param projectId   Identificador del proyecto a editar.
-     * @param projectName Nombre actual del proyecto.
+     * @param projectId   identificador del proyecto a editar
+     * @param projectName nombre actual del proyecto
      */
     public void initData(Long projectId, String projectName) {
         this.projectId = projectId;
         nameField.setText(projectName);
 
         // Cargamos los datos completos del proyecto desde el backend
-        new Thread(() -> {
+        Thread thread = new Thread(() -> {
             try {
                 HttpResponse<String> response = AppContext.getInstance()
-                        .getApiService()
-                        .get("/api/projects/" + projectId);
-
+                        .getApiService().get("/api/projects/" + projectId);
                 if (response.statusCode() == 200) {
-                    com.fasterxml.jackson.databind.JsonNode project =
-                            new com.fasterxml.jackson.databind.ObjectMapper()
-                                    .readTree(response.body());
-
-                    javafx.application.Platform.runLater(() -> {
-                        if (project.has("description") && !project.get("description").isNull()) {
-                            descriptionField.setText(project.get("description").asText());
-                        }
-                        if (project.has("category") && !project.get("category").isNull()) {
-                            String cat = project.get("category").asText();
-                            categoryCombo.setValue(switch (cat) {
-                                case "ESTUDIOS" -> lm.get("category.ESTUDIOS");
-                                case "TRABAJO"  -> lm.get("category.TRABAJO");
-                                default         -> lm.get("category.PERSONAL");
-                            });
-                        }
-                        if (project.has("status") && !project.get("status").isNull()) {
-                            String status = project.get("status").asText();
-                            statusCombo.setValue(switch (status) {
-                                case "IN_PROGRESS" -> lm.get("status.inprogress");
-                                case "DONE"        -> lm.get("status.done.project");
-                                case "CANCELLED"   -> lm.get("status.cancelled.project");
-                                default            -> lm.get("status.todo");
-                            });
-                        }
-                        if (project.has("priority") && !project.get("priority").isNull()) {
-                            String priority = project.get("priority").asText();
-                            priorityCombo.setValue(switch (priority) {
-                                case "LOW"    -> lm.get("priority.low");
-                                case "HIGH"   -> lm.get("priority.high");
-                                case "URGENT" -> lm.get("priority.urgent");
-                                default       -> lm.get("priority.medium");
-                            });
-                        }
-                        nameField.deselect();
-                        nameField.getParent().requestFocus();
-                    });
+                    JsonNode project = objectMapper.readTree(response.body());
+                    Platform.runLater(() -> populateForm(project));
                 }
             } catch (Exception e) {
-                javafx.application.Platform.runLater(() ->
-                        showError(lm.get("edit.project.error.load")));
+                Platform.runLater(() -> showError(lm.get("edit.project.error.load")));
             }
-        }).start();
+        }, "edit-project-load");
+        thread.setDaemon(true);
+        thread.start();
     }
+
+    // -------------------------------------------------------------------------
+    // Acciones
+    // -------------------------------------------------------------------------
 
     /**
      * Valida el formulario y envía los datos actualizados al backend.
@@ -151,19 +136,18 @@ public class EditProjectController {
             return;
         }
 
-        new Thread(() -> {
+        Thread thread = new Thread(() -> {
             try {
-                String url = "/api/projects/" + projectId +
-                        "?name=" + java.net.URLEncoder.encode(name, "UTF-8") +
-                        "&description=" + java.net.URLEncoder.encode(
-                        descriptionField.getText().trim(), "UTF-8") +
-                        "&category=" + mapCategory(categoryCombo.getValue()) +
-                        "&status=" + mapStatus(statusCombo.getValue()) +
-                        "&priority=" + mapPriority(priorityCombo.getValue());
+                String url = "/api/projects/" + projectId
+                        + "?name="        + URLEncoder.encode(name, StandardCharsets.UTF_8)
+                        + "&description=" + URLEncoder.encode(
+                        descriptionField.getText().trim(), StandardCharsets.UTF_8)
+                        + "&category="    + mapCategory(categoryCombo.getValue())
+                        + "&status="      + mapStatus(statusCombo.getValue())
+                        + "&priority="    + mapPriority(priorityCombo.getValue());
 
                 HttpResponse<String> response = AppContext.getInstance()
-                        .getApiService()
-                        .putNoBody(url);
+                        .getApiService().putNoBody(url);
 
                 Platform.runLater(() -> {
                     if (response.statusCode() == 200) {
@@ -175,11 +159,12 @@ public class EditProjectController {
                         showError(lm.get("common.error.save"));
                     }
                 });
-
             } catch (Exception e) {
                 Platform.runLater(() -> showError(lm.get("error.connection")));
             }
-        }).start();
+        }, "edit-project-save");
+        thread.setDaemon(true);
+        thread.start();
     }
 
     /**
@@ -188,6 +173,46 @@ public class EditProjectController {
     @FXML
     private void handleCancel() {
         closeDialog();
+    }
+
+    // -------------------------------------------------------------------------
+    // Métodos privados
+    // -------------------------------------------------------------------------
+
+    /**
+     * Rellena el formulario con los datos del proyecto recibidos del backend.
+     *
+     * @param project nodo JSON con los datos del proyecto
+     */
+    private void populateForm(JsonNode project) {
+        if (project.has("description") && !project.get("description").isNull()) {
+            descriptionField.setText(project.get("description").asText());
+        }
+        if (project.has("category") && !project.get("category").isNull()) {
+            categoryCombo.setValue(switch (project.get("category").asText()) {
+                case "ESTUDIOS" -> lm.get("category.ESTUDIOS");
+                case "TRABAJO"  -> lm.get("category.TRABAJO");
+                default         -> lm.get("category.PERSONAL");
+            });
+        }
+        if (project.has("status") && !project.get("status").isNull()) {
+            statusCombo.setValue(switch (project.get("status").asText()) {
+                case "IN_PROGRESS" -> lm.get("status.inprogress");
+                case "DONE"        -> lm.get("status.done.project");
+                case "CANCELLED"   -> lm.get("status.cancelled.project");
+                default            -> lm.get("status.todo");
+            });
+        }
+        if (project.has("priority") && !project.get("priority").isNull()) {
+            priorityCombo.setValue(switch (project.get("priority").asText()) {
+                case "LOW"    -> lm.get("priority.low");
+                case "HIGH"   -> lm.get("priority.high");
+                case "URGENT" -> lm.get("priority.urgent");
+                default       -> lm.get("priority.medium");
+            });
+        }
+        nameField.deselect();
+        nameField.getParent().requestFocus();
     }
 
     /**
@@ -204,8 +229,8 @@ public class EditProjectController {
      * @return Código de categoría ({@code "PERSONAL"}, {@code "ESTUDIOS"} o {@code "TRABAJO"}).
      */
     private String mapCategory(String label) {
-        if (label.equals(lm.get("category.ESTUDIOS")))      return "ESTUDIOS";
-        else if (label.equals(lm.get("category.TRABAJO")))  return "TRABAJO";
+        if (label.equals(lm.get("category.ESTUDIOS"))) return "ESTUDIOS";
+        else if (label.equals(lm.get("category.TRABAJO"))) return "TRABAJO";
         else return "PERSONAL";
     }
 
@@ -216,8 +241,8 @@ public class EditProjectController {
      * @return Código de estado ({@code "TODO"}, {@code "IN_PROGRESS"}, {@code "DONE"} o {@code "CANCELLED"}).
      */
     private String mapStatus(String label) {
-        if (label.equals(lm.get("status.inprogress")))           return "IN_PROGRESS";
-        else if (label.equals(lm.get("status.done.project")))    return "DONE";
+        if (label.equals(lm.get("status.inprogress"))) return "IN_PROGRESS";
+        else if (label.equals(lm.get("status.done.project"))) return "DONE";
         else if (label.equals(lm.get("status.cancelled.project"))) return "CANCELLED";
         else return "TODO";
     }
@@ -229,8 +254,8 @@ public class EditProjectController {
      * @return Código de prioridad ({@code "LOW"}, {@code "MEDIUM"}, {@code "HIGH"} o {@code "URGENT"}).
      */
     private String mapPriority(String label) {
-        if (label.equals(lm.get("priority.low")))         return "LOW";
-        else if (label.equals(lm.get("priority.high")))   return "HIGH";
+        if (label.equals(lm.get("priority.low"))) return "LOW";
+        else if (label.equals(lm.get("priority.high"))) return "HIGH";
         else if (label.equals(lm.get("priority.urgent"))) return "URGENT";
         else return "MEDIUM";
     }

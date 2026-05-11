@@ -3,16 +3,26 @@ package com.taskmaster.taskmasterfrontend.controller;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.taskmaster.taskmasterfrontend.util.*;
+import javafx.animation.PauseTransition;
 import javafx.application.Platform;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
+import javafx.geometry.Insets;
+import javafx.geometry.Pos;
+import javafx.scene.Cursor;
+import javafx.scene.Node;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.Label;
 import javafx.scene.control.RadioButton;
 import javafx.scene.layout.FlowPane;
 import javafx.scene.layout.HBox;
+import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
+import javafx.scene.paint.Color;
 import javafx.scene.shape.Circle;
+import javafx.util.Duration;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.net.http.HttpResponse;
 import java.util.Locale;
@@ -28,6 +38,8 @@ import java.util.Locale;
  * @author Carlos
  */
 public class SettingsController {
+
+    private static final Logger log = LoggerFactory.getLogger(SettingsController.class);
 
     // ── Papelera ──
     @FXML private RadioButton days7;
@@ -58,9 +70,8 @@ public class SettingsController {
     private final LanguageManager lm = LanguageManager.getInstance();
 
     /**
-     * Datos de cada tema disponible.
-     * Cada entrada contiene: enum del tema, nombre visible, color de acento,
-     * color de fondo y color de acento secundario.
+     * Datos de cada tema disponible: enum, nombre, color acento, color fondo,
+     * color acento secundario.
      */
     private static final Object[][] THEME_DATA = {
             { ThemeManager.Theme.AMATISTA,        "Amatista",      "#7c3aed", "#ffffff", "#a78bfa" },
@@ -79,6 +90,10 @@ public class SettingsController {
             { ThemeManager.Theme.LUZ,             "Luz",           "#ec4899", "#080808", "#f472b6" },
     };
 
+    // -------------------------------------------------------------------------
+    // Inicialización
+    // -------------------------------------------------------------------------
+
     /**
      * Inicializa la pantalla cargando los ajustes del backend, preseleccionando
      * el idioma y el formato de hora actuales, configurando el combo de formato
@@ -88,44 +103,42 @@ public class SettingsController {
     public void initialize() {
         loadSettings();
 
-        // Idioma actual
-        if (LanguageManager.getInstance().isSpanish()) {
-            langEs.setSelected(true);
-        } else {
-            langEn.setSelected(true);
+        // Preseleccionamos el idioma activo
+        if (lm.isSpanish()) langEs.setSelected(true);
+        else langEn.setSelected(true);
+
+        // Preseleccionamos el formato de hora activo
+        switch (TimeFormatManager.getInstance().getCurrentFormat()) {
+            case H24 -> time24h.setSelected(true);
+            case H12 -> time12h.setSelected(true);
+            default -> timeSystem.setSelected(true);
         }
 
-        // Formato de horas actual
-        TimeFormatManager tfm = TimeFormatManager.getInstance();
-        switch (tfm.getCurrentFormat()) {
-            case H24    -> time24h.setSelected(true);
-            case H12    -> time12h.setSelected(true);
-            default     -> timeSystem.setSelected(true);
-        }
-
-        // Listener de cambio de idioma
+        // Ocultamos las etiquetas de estado al cambiar de idioma
         lm.bundleProperty().addListener((obs, oldBundle, newBundle) -> {
             languageStatusLabel.setVisible(false);
             retentionStatusLabel.setVisible(false);
             timeFormatStatusLabel.setVisible(false);
         });
 
-        // ComboBox de formato de fecha
+        // Combo de formato de fecha
         for (DateFormatManager.DateFormat fmt : DateFormatManager.DateFormat.values()) {
             dateFormatCombo.getItems().add(DateFormatManager.getLabel(fmt));
         }
         dateFormatCombo.getSelectionModel().select(
                 DateFormatManager.getInstance().getCurrentFormat().ordinal());
 
-        // Construir selector de temas
         buildThemeSelector();
     }
 
+    // -------------------------------------------------------------------------
+    // Selector de temas
+    // -------------------------------------------------------------------------
+
     /**
      * Construye las tarjetas de selección de tema en el {@link FlowPane}.
-     * Cada tarjeta muestra el nombre del tema y dos círculos de color
-     * (acento y fondo), o corazones en el caso del tema Luz.
-     * La tarjeta del tema activo aparece resaltada con borde y sombra.
+     * Cada tarjeta muestra el nombre y dos círculos de color (acento y fondo),
+     * o corazones en el caso del tema Luz. La tarjeta activa aparece resaltada.
      */
     private void buildThemeSelector() {
         ThemeManager.Theme current = ThemeManager.getInstance().getCurrentTheme();
@@ -141,18 +154,17 @@ public class SettingsController {
             boolean isLuz                 = theme == ThemeManager.Theme.LUZ;
 
             VBox card = new VBox(6);
-            card.setAlignment(javafx.geometry.Pos.CENTER);
+            card.setAlignment(Pos.CENTER);
             card.setPrefWidth(90);
-            card.setPadding(new javafx.geometry.Insets(10, 8, 10, 8));
+            card.setPadding(new Insets(10, 8, 10, 8));
             card.setStyle(buildCardStyle(bg, accent, isSelected));
             card.setUserData(theme);
-            card.setCursor(javafx.scene.Cursor.HAND);
+            card.setCursor(Cursor.HAND);
 
-            // Preview: tres puntos o tres corazones para Luz
+            // Preview con círculos de color o corazones para el tema Luz
             HBox dots = new HBox(4);
-            dots.setAlignment(javafx.geometry.Pos.CENTER);
+            dots.setAlignment(Pos.CENTER);
             String[] dotColors = { accent, accentLight };
-
             for (String dotColor : dotColors) {
                 if (isLuz) {
                     Label heart = new Label("♥");
@@ -160,7 +172,7 @@ public class SettingsController {
                     dots.getChildren().add(heart);
                 } else {
                     Circle dot = new Circle(7);
-                    dot.setFill(javafx.scene.paint.Color.web(dotColor));
+                    dot.setFill(Color.web(dotColor));
                     dots.getChildren().add(dot);
                 }
             }
@@ -170,7 +182,7 @@ public class SettingsController {
                     "-fx-text-fill: " + (isDarkBg(bg) ? "#ffffff" : "#2d2d2d") + "; " +
                     "-fx-wrap-text: true; -fx-text-alignment: center;");
             nameLabel.setMaxWidth(80);
-            nameLabel.setAlignment(javafx.geometry.Pos.CENTER);
+            nameLabel.setAlignment(Pos.CENTER);
 
             card.getChildren().addAll(dots, nameLabel);
             card.setOnMouseClicked(e -> handleThemeSelected(theme, card));
@@ -181,10 +193,10 @@ public class SettingsController {
     /**
      * Genera el estilo CSS inline de una tarjeta de tema.
      *
-     * @param bg       Color de fondo del tema en formato hex.
-     * @param accent   Color de acento del tema en formato hex.
-     * @param selected {@code true} si la tarjeta corresponde al tema activo.
-     * @return Cadena de estilo CSS con borde, radio, fondo y sombra opcional.
+     * @param bg       color de fondo en hex
+     * @param accent   color de acento en hex
+     * @param selected {@code true} si es el tema activo
+     * @return cadena de estilo CSS
      */
     private String buildCardStyle(String bg, String accent, boolean selected) {
         String border = selected ? accent : "#e0e0e0";
@@ -200,15 +212,14 @@ public class SettingsController {
     }
 
     /**
-     * Determina si un color de fondo es oscuro para elegir el color
-     * del texto de la tarjeta (blanco sobre oscuro, gris sobre claro).
+     * Determina si un color de fondo es oscuro para elegir el color del texto.
      *
-     * @param hex Color en formato hex.
-     * @return {@code true} si la luminancia calculada es inferior a 0.5.
+     * @param hex color en formato hex
+     * @return {@code true} si la luminancia es inferior a 0.5
      */
     private boolean isDarkBg(String hex) {
         try {
-            javafx.scene.paint.Color c = javafx.scene.paint.Color.web(hex);
+            Color c = Color.web(hex);
             double luminance = 0.299 * c.getRed() + 0.587 * c.getGreen() + 0.114 * c.getBlue();
             return luminance < 0.5;
         } catch (Exception e) {
@@ -217,71 +228,49 @@ public class SettingsController {
     }
 
     /**
-     * Aplica el tema seleccionado visualmente, actualiza el estilo de todas
-     * las tarjetas y guarda el tema en el backend en un hilo secundario.
+     * Aplica el tema seleccionado, actualiza los estilos de todas las tarjetas
+     * y guarda el tema en el backend en un hilo secundario.
      *
-     * @param theme        Tema seleccionado por el usuario.
-     * @param selectedCard Tarjeta pulsada, usada para actualizar los estilos.
+     * @param theme        tema seleccionado
+     * @param selectedCard tarjeta pulsada
      */
     private void handleThemeSelected(ThemeManager.Theme theme, VBox selectedCard) {
         ThemeManager.getInstance().applyTheme(theme);
 
+        // Actualizamos el estilo de todas las tarjetas
         for (var node : themesContainer.getChildren()) {
             if (node instanceof VBox card) {
                 ThemeManager.Theme cardTheme = (ThemeManager.Theme) card.getUserData();
                 for (Object[] data : THEME_DATA) {
                     if (data[0] == cardTheme) {
-                        boolean sel = card == selectedCard;
-                        card.setStyle(buildCardStyle((String) data[3], (String) data[2], sel));
+                        card.setStyle(buildCardStyle(
+                                (String) data[3],
+                                (String) data[2],
+                                card == selectedCard));
                         break;
                     }
                 }
             }
         }
-
-        new Thread(() -> {
-            try {
-                HttpResponse<String> response = AppContext.getInstance()
-                        .getApiService()
-                        .patch("/api/settings/theme?theme=" + theme.name(), null);
-                System.out.println("PATCH tema respuesta: " + response.statusCode() + " - " + response.body());
-                Platform.runLater(() -> {
-                    if (response.statusCode() == 200) {
-                        themeStatusLabel.setText(lm.get("settings.saved"));
-                        themeStatusLabel.setStyle("-fx-font-size: 12px; -fx-text-fill: #2ecc71;");
-                        themeStatusLabel.setVisible(true);
-                    }
-                });
-            } catch (Exception e) {
-                Platform.runLater(() -> {
-                    themeStatusLabel.setText(lm.get("settings.connection.error"));
-                    themeStatusLabel.setStyle("-fx-font-size: 12px; -fx-text-fill: #e74c3c;");
-                    themeStatusLabel.setVisible(true);
-                });
-            }
-        }).start();
+        saveThemeAsync(theme);
     }
 
+    // -------------------------------------------------------------------------
+    // Carga de ajustes
+    // -------------------------------------------------------------------------
+
     /**
-     * Obtiene los ajustes del usuario desde el backend, preselecciona los días
-     * de retención de la papelera y reconstruye el selector de temas con el
-     * tema guardado ya marcado.
+     * Obtiene los ajustes del usuario desde el backend y preselecciona
+     * los días de retención y el tema guardado.
      */
     private void loadSettings() {
-        new Thread(() -> {
+        Thread thread = new Thread(() -> {
             try {
                 HttpResponse<String> response = AppContext.getInstance()
-                        .getApiService()
-                        .get("/api/settings");
+                        .getApiService().get("/api/settings");
                 if (response.statusCode() == 200) {
                     JsonNode settings = objectMapper.readTree(response.body());
                     int days = settings.get("trashRetentionDays").asInt();
-
-                    // Cargar tema guardado
-                    String themeName = settings.has("theme")
-                            ? settings.get("theme").asText()
-                            : "AMATISTA";
-                    ThemeManager.Theme savedTheme = ThemeManager.fromString(themeName);
 
                     Platform.runLater(() -> {
                         if (days == 7) days7.setSelected(true);
@@ -290,20 +279,59 @@ public class SettingsController {
                         buildThemeSelector();
                     });
                 }
-            } catch (Exception e) {}
-        }).start();
+            } catch (Exception e) {
+                log.error("Error al cargar los ajustes: {}", e.getMessage());
+            }
+        }, "settings-load");
+        thread.setDaemon(true);
+        thread.start();
+    }
+
+    // -------------------------------------------------------------------------
+    // Acciones de guardado
+    // -------------------------------------------------------------------------
+
+    /**
+     * Guarda el tema seleccionado en el backend en un hilo secundario.
+     *
+     * @param theme tema a guardar
+     */
+    private void saveThemeAsync(ThemeManager.Theme theme) {
+        Thread thread = new Thread(() -> {
+            try {
+                HttpResponse<String> response = AppContext.getInstance()
+                        .getApiService()
+                        .patch("/api/settings/theme?theme=" + theme.name(), null);
+                Platform.runLater(() -> {
+                    if (response.statusCode() == 200) {
+                        themeStatusLabel.setText(lm.get("settings.saved"));
+                        themeStatusLabel.setStyle(
+                                "-fx-font-size: 12px; -fx-text-fill: #2ecc71;");
+                        themeStatusLabel.setVisible(true);
+                    }
+                });
+            } catch (Exception e) {
+                log.error("Error al guardar el tema: {}", e.getMessage());
+                Platform.runLater(() -> {
+                    themeStatusLabel.setText(lm.get("settings.connection.error"));
+                    themeStatusLabel.setStyle(
+                            "-fx-font-size: 12px; -fx-text-fill: #e74c3c;");
+                    themeStatusLabel.setVisible(true);
+                });
+            }
+        }, "settings-save-theme");
+        thread.setDaemon(true);
+        thread.start();
     }
 
     /**
-     * Aplica el formato de fecha seleccionado en el combo al {@link DateFormatManager}
-     * y muestra la confirmación de guardado.
+     * Aplica el formato de fecha seleccionado y muestra confirmación.
      */
     @FXML
     private void handleSaveDateFormat() {
         int idx = dateFormatCombo.getSelectionModel().getSelectedIndex();
         if (idx < 0) return;
-        DateFormatManager.DateFormat[] values = DateFormatManager.DateFormat.values();
-        DateFormatManager.getInstance().setFormat(values[idx]);
+        DateFormatManager.getInstance().setFormat(DateFormatManager.DateFormat.values()[idx]);
 
         dateFormatStatusLabel.setText(lm.get("settings.saved"));
         dateFormatStatusLabel.setStyle("-fx-font-size: 12px; -fx-text-fill: #2ecc71;");
@@ -311,15 +339,14 @@ public class SettingsController {
     }
 
     /**
-     * Aplica el formato de hora seleccionado con los radio buttons al
-     * {@link TimeFormatManager} y muestra la confirmación de guardado.
+     * Aplica el formato de hora seleccionado y muestra confirmación.
      */
     @FXML
     private void handleSaveTimeFormat() {
         TimeFormatManager tfm = TimeFormatManager.getInstance();
-        if (time24h.isSelected())     tfm.setFormat(TimeFormatManager.TimeFormat.H24);
+        if (time24h.isSelected()) tfm.setFormat(TimeFormatManager.TimeFormat.H24);
         else if (time12h.isSelected()) tfm.setFormat(TimeFormatManager.TimeFormat.H12);
-        else                           tfm.setFormat(TimeFormatManager.TimeFormat.SYSTEM);
+        else tfm.setFormat(TimeFormatManager.TimeFormat.SYSTEM);
 
         timeFormatStatusLabel.setText(lm.get("settings.saved"));
         timeFormatStatusLabel.setStyle("-fx-font-size: 12px; -fx-text-fill: #2ecc71;");
@@ -334,12 +361,11 @@ public class SettingsController {
     private void handleSaveRetention () {
         int days = days7.isSelected() ? 7 : days15.isSelected() ? 15 : 30;
 
-        new Thread(() -> {
+        Thread thread = new Thread(() -> {
             try {
                 HttpResponse<String> response = AppContext.getInstance()
                         .getApiService()
                         .patch("/api/settings/trash-retention?days=" + days, null);
-
                 Platform.runLater(() -> {
                     if (response.statusCode() == 200) {
                         retentionStatusLabel.setText(lm.get("settings.saved"));
@@ -351,23 +377,26 @@ public class SettingsController {
                     }
                 });
             } catch (Exception e) {
+                log.error("Error al guardar la retención: {}", e.getMessage());
                 Platform.runLater(() -> {
                     retentionStatusLabel.setText(lm.get("settings.connection.error"));
                     retentionStatusLabel.setStyle("-fx-text-fill: #e74c3c;");
                     retentionStatusLabel.setVisible(true);
                 });
             }
-        }).start();
+        }, "settings-save-retention");
+        thread.setDaemon(true);
+        thread.start();
     }
 
     /**
      * Aplica el idioma seleccionado, lo persiste localmente y recarga
-     * la vista de ajustes tras una breve pausa para que el mensaje de
-     * confirmación sea visible.
+     * la vista de ajustes tras una breve pausa para que el mensaje sea visible.
      */
     @FXML
     private void handleSaveLanguage() {
-        Locale locale = langEs.isSelected() ? new Locale("es") : Locale.ENGLISH;
+        // Locale.of() es la forma correcta en Java 19+
+        Locale locale = langEs.isSelected() ? Locale.of("es") : Locale.ENGLISH;
         lm.setLocale(locale);
         lm.saveLocalePreference(locale);
 
@@ -376,9 +405,7 @@ public class SettingsController {
         languageStatusLabel.setVisible(true);
 
         // Esperar 500ms para que el mensaje sea visible antes de recargar la vista
-        javafx.animation.PauseTransition pause = new javafx.animation.PauseTransition(
-                javafx.util.Duration.millis(500)
-        );
+        PauseTransition pause = new PauseTransition(Duration.millis(500));
         pause.setOnFinished(e -> reloadThisView());
         pause.play();
     }
@@ -389,24 +416,21 @@ public class SettingsController {
      */
     private void reloadThisView() {
         try {
-            javafx.scene.Node currentView = retentionStatusLabel.getScene()
-                    .lookup("#settingsRoot"); // añadiremos fx:id abajo
-            javafx.scene.layout.HBox parent =
-                    (javafx.scene.layout.HBox) currentView.getParent();
+            Node currentView = retentionStatusLabel.getScene().lookup("#settingsRoot");
+            HBox parent = (HBox) currentView.getParent();
 
             FXMLLoader loader = new FXMLLoader(
-                    getClass().getResource(
-                            "/com/taskmaster/taskmasterfrontend/settings-view.fxml"),
-                    lm.getBundle()
-            );
-            javafx.scene.layout.VBox newView = loader.load();
-            javafx.scene.layout.HBox.setHgrow(newView, javafx.scene.layout.Priority.ALWAYS);
+                    getClass().getResource("/com/taskmaster/taskmasterfrontend/settings-view.fxml"),
+                    lm.getBundle());
+            VBox newView = loader.load();
+            HBox.setHgrow(newView, Priority.ALWAYS);
             newView.setUserData("settings");
 
             int idx = parent.getChildren().indexOf(currentView);
             parent.getChildren().set(idx, newView);
+
         } catch (Exception e) {
-            e.printStackTrace();
+            log.error("Error al recargar la vista de ajustes: {}", e.getMessage());
         }
     }
 }
