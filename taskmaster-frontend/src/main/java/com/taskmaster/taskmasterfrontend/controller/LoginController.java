@@ -9,11 +9,13 @@ import com.taskmaster.taskmasterfrontend.util.ThemeManager;
 import javafx.application.Platform;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
+import javafx.geometry.Rectangle2D;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.input.KeyCode;
 import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
+import javafx.stage.Screen;
 import javafx.stage.Stage;
 import org.kordamp.ikonli.javafx.FontIcon;
 
@@ -210,7 +212,15 @@ public class LoginController {
             stage.setMinHeight(600);
             stage.setTitle("TaskMaster");
             // Diferir el maximizado para que funcione en Linux
-            Platform.runLater(() -> stage.setMaximized(true));
+            Platform.runLater(() -> {
+                Rectangle2D screenBounds =
+                        Screen.getPrimary().getVisualBounds();
+                stage.setX(screenBounds.getMinX());
+                stage.setY(screenBounds.getMinY());
+                stage.setWidth(screenBounds.getWidth());
+                stage.setHeight(screenBounds.getHeight());
+                stage.setMaximized(true);
+            });
 
         } catch (Exception e) {
             Platform.runLater(() -> {
