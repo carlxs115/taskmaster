@@ -135,7 +135,7 @@ public class CalendarController {
         monthYearLabel.setText(
                 monthName.substring(0, 1).toUpperCase() + monthName.substring(1) + " " + year);
 
-        Thread thread = new Thread(() -> {
+        Thread t = new Thread(() -> {
             try {
                 HttpResponse<String> r = AppContext.getInstance()
                         .getApiService().get("/api/tasks/calendar?year=" + year + "&month=" + month);
@@ -149,8 +149,8 @@ public class CalendarController {
                 Platform.runLater(() -> renderGrid(objectMapper.createArrayNode()));
             }
         }, "calendar-loader");
-        thread.setDaemon(true);
-        thread.start();
+        t.setDaemon(true);
+        t.start();
     }
 
     // -------------------------------------------------------------------------

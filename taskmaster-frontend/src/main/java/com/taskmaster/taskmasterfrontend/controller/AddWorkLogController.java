@@ -140,7 +140,7 @@ public class AddWorkLogController {
      * @param body     datos del worklog a enviar
      */
     private void saveWorkLogAsync(String endpoint, Map<String, Object> body) {
-        Thread thread = new Thread(() -> {
+        Thread t = new Thread(() -> {
             try {
                 HttpResponse<String> response = editingLogId == null
                         ? AppContext.getInstance().getApiService().postWithAuth(endpoint, body)
@@ -157,8 +157,8 @@ public class AddWorkLogController {
                 Platform.runLater(() -> showError(lm.get("error.connection")));
             }
         }, "worklog-save");
-        thread.setDaemon(true);
-        thread.start();
+        t.setDaemon(true);
+        t.start();
     }
 
     /**

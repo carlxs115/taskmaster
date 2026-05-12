@@ -141,7 +141,7 @@ public class EditTaskController {
             return;
         }
 
-        Thread thread = new Thread(() -> {
+        Thread t = new Thread(() -> {
             try {
                 Map<String, Object> body = new HashMap<>();
                 body.put("title",       title);
@@ -169,8 +169,8 @@ public class EditTaskController {
                 Platform.runLater(() -> showError(lm.get("error.connection")));
             }
         }, "edit-task-save");
-        thread.setDaemon(true);
-        thread.start();
+        t.setDaemon(true);
+        t.start();
     }
 
     /**

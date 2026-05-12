@@ -88,7 +88,7 @@ public class RegisterController {
             return;
         }
 
-        Thread thread = new Thread(() -> {
+        Thread t = new Thread(() -> {
             try {
                 var body = new HashMap<String, Object>();
                 body.put("username", username);
@@ -120,8 +120,8 @@ public class RegisterController {
                 Platform.runLater(() -> showError(lm.get("error.connection")));
             }
         }, "register-request");
-        thread.setDaemon(true);
-        thread.start();
+        t.setDaemon(true);
+        t.start();
     }
 
     /**

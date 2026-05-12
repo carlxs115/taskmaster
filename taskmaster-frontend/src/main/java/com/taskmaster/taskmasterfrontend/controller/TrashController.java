@@ -88,7 +88,7 @@ public class TrashController {
      * y actualiza la etiqueta informativa.
      */
     private void loadRetentionDays() {
-        Thread thread = new Thread(() -> {
+        Thread t = new Thread(() -> {
             try {
                 HttpResponse<String> response = AppContext.getInstance()
                         .getApiService().get("/api/settings");
@@ -105,15 +105,15 @@ public class TrashController {
                 log.error("Error al cargar los días de retención: {}", e.getMessage());
             }
         }, "trash-load-retention");
-        thread.setDaemon(true);
-        thread.start();
+        t.setDaemon(true);
+        t.start();
     }
 
     /**
      * Obtiene las tareas eliminadas del backend y las renderiza en la vista.
      */
     private void loadTrashTasks() {
-        Thread thread = new Thread(() -> {
+        Thread t = new Thread(() -> {
             try {
                 HttpResponse<String> response = AppContext.getInstance()
                         .getApiService().get("/api/tasks/trash");
@@ -127,8 +127,8 @@ public class TrashController {
                         showAlert(lm.get("error.title"), lm.get("trash.error.load.tasks")));
             }
         }, "trash-load-tasks");
-        thread.setDaemon(true);
-        thread.start();
+        t.setDaemon(true);
+        t.start();
     }
 
     /**
@@ -412,19 +412,15 @@ public class TrashController {
             if (response == ButtonType.OK) {
                 Thread thread = new Thread(() -> {
                     try {
-                        AppContext.getInstance().getApiService()
-                                .delete("/api/tasks/trash/empty");
-                        AppContext.getInstance().getApiService()
-                                .delete("/api/projects/trash/empty");
+                        AppContext.getInstance().getApiService().delete("/api/tasks/trash/empty");
+                        AppContext.getInstance().getApiService().delete("/api/projects/trash/empty");
                         Platform.runLater(() -> {
                             loadTrashTasks();
                             loadTrashProjects();
-                            if (onTrashChanged != null) onTrashChanged.run();
                         });
                     } catch (Exception e) {
                         log.error("Error al vaciar la papelera: {}", e.getMessage());
-                        Platform.runLater(() ->
-                                showAlert(lm.get("error.title"), lm.get("error.connection")));
+                        Platform.runLater(() -> showAlert(lm.get("error.title"), lm.get("error.connection")));
                     }
                 }, "trash-empty");
                 thread.setDaemon(true);

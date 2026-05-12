@@ -9,33 +9,40 @@ import javafx.collections.FXCollections;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.geometry.Pos;
+import javafx.geometry.Side;
 import javafx.scene.Node;
+import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.MenuItem;
-import javafx.scene.control.ScrollPane;
 import javafx.scene.control.TextField;
 import javafx.scene.layout.*;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
+import javafx.scene.paint.Color;
 import org.kordamp.ikonli.javafx.FontIcon;
 
 import java.awt.*;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
+import java.net.URLEncoder;
 import java.net.http.HttpResponse;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
+import java.text.MessageFormat;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.time.format.TextStyle;
-import java.util.ArrayList;
+import java.time.temporal.ChronoUnit;
+import java.util.*;
 import java.util.List;
-import java.util.Locale;
+import java.util.function.Predicate;
+import java.util.stream.Collectors;
 
 /**
  * Controlador principal de la aplicación TaskMaster.
@@ -51,9 +58,13 @@ import java.util.Locale;
  *
  * @author Carlos
  */
+
 public class MainController {
 
-    // ── FXML refs ─────────────────────────────────────────────────────────────
+    // -------------------------------------------------------------------------
+    // Referencias FXML
+    // -------------------------------------------------------------------------
+
     @FXML private Label userMenuButton;
     @FXML private Button btnHome;
     @FXML private Button btnAllTasks;
@@ -84,26 +95,48 @@ public class MainController {
     @FXML private FontIcon sortDirectionIcon;
     @FXML private Button btnCalendar;
 
+    // -------------------------------------------------------------------------
+    // Componentes no-FXML
+    // -------------------------------------------------------------------------
+
     private AvatarView sidebarAvatar;
 
-    private final java.util.Deque<Runnable> navigationStack = new java.util.ArrayDeque<>();
+    /** Pila de navegación para poder volver a la vista anterior. */
+    private final Deque<Runnable> navigationStack = new ArrayDeque<>();
+
+    /** Controlador del detalle de proyecto activo, o null si no hay ninguno. */
     private ProjectDetailController activeProjectDetailController;
+
     private final LanguageManager lm = LanguageManager.getInstance();
 
-    // ── Filtros y orden ───────────────────────────────────────────────────────
+    // -------------------------------------------------------------------------
+    // Filtros y orden
+    // -------------------------------------------------------------------------
+
+    /** Lista original de tareas sobre la que se aplican filtros y orden. */
     private List<JsonNode> currentTasks = new ArrayList<>();
+
+    /** Dirección de orden: true = ascendente, false = descendente. */
     private boolean sortAscending = true;
 
-    // ── Estado ────────────────────────────────────────────────────────────────
+    // -------------------------------------------------------------------------
+    // Estado de navegación
+    // -------------------------------------------------------------------------
+
     private Long   selectedProjectId;
     private String selectedCategory;
     private boolean viewingAllTasks = false;
+
+    /** Referencia al controlador de papelera para poder refrescarlo tras operaciones. */
     private TrashController trashController;
 
     private final ObjectMapper objectMapper = new ObjectMapper()
             .registerModule(new JavaTimeModule());
 
-    // ── Colores de categoría ──────────────────────────────────────────────────
+    // -------------------------------------------------------------------------
+    // Colores de categoría
+    // -------------------------------------------------------------------------
+
     /** Color de acento de la categoría Personal. */
     private static final String COLOR_PERSONAL = "#a78bfa";
 
@@ -113,6 +146,28 @@ public class MainController {
     /** Color de acento de la categoría Trabajo. */
     private static final String COLOR_TRABAJO  = "#fb923c";
 
+    // -------------------------------------------------------------------------
+    // Clases CSS del sidebar
+    // -------------------------------------------------------------------------
+
+    private static final String SIDEBAR_ACTIVE   = "sidebar-btn-active";
+    private static final String SIDEBAR_INACTIVE = "sidebar-btn";
+
+    /**
+     * Predicado que identifica nodos overlay (papelera, ajustes, perfil, detalle)
+     * por su userData. Se usa en {@link #clearOverlays()} para limpiar el centro
+     * del BorderPane.
+     */
+    private static final Predicate<Node> IS_OVERLAY = n -> {
+        Object ud = n.getUserData();
+        return "trash".equals(ud) || "settings".equals(ud)
+                || "profile".equals(ud) || "detail".equals(ud);
+    };
+
+    // -------------------------------------------------------------------------
+    // Inicialización
+    // -------------------------------------------------------------------------
+
     /**
      * Inicializa la pantalla principal: configura el avatar del sidebar,
      * el menú de usuario, los combos de filtros y orden, carga los proyectos
@@ -120,49 +175,61 @@ public class MainController {
      */
     @FXML
     public void initialize() {
+        // Crear y mostrar el avatar del usuario en el sidebar
         sidebarAvatar = new AvatarView(32);
         sidebarAvatarContainer.getChildren().setAll(sidebarAvatar);
         sidebarAvatar.loadForCurrentUser();
 
+        // Mostrar el nombre de usuario en el botón del menú superior
         String username = AppContext.getInstance().getCurrentUsername();
-
-        String initials = username.length() >= 2
-                ? username.substring(0, 2).toUpperCase()
-                : username.toUpperCase();
         userMenuButton.setText(username);
 
+        // Configurar ComboBox de filtro de estado
         statusFilter.setItems(FXCollections.observableArrayList(
-                lm.get("common.all"), lm.get("status.todo"), lm.get("status.inprogress"),
-                lm.get("status.done"), lm.get("status.cancelled")));
+                lm.get("common.all"),
+                lm.get("status.todo"),
+                lm.get("status.inprogress"),
+                lm.get("status.done"),
+                lm.get("status.cancelled")));
         statusFilter.setPromptText(lm.get("common.status"));
         statusFilter.getSelectionModel().selectedItemProperty().addListener(
                 (obs, o, n) -> applyFiltersAndSort());
 
+        // Configurar ComboBox de filtro de prioridad
         priorityFilter.setItems(FXCollections.observableArrayList(
-                lm.get("common.all"), lm.get("priority.low"), lm.get("priority.medium"),
-                lm.get("priority.high"), lm.get("priority.urgent")));
+                lm.get("common.all"),
+                lm.get("priority.low"),
+                lm.get("priority.medium"),
+                lm.get("priority.high"),
+                lm.get("priority.urgent")));
         priorityFilter.setPromptText(lm.get("common.priority"));
         priorityFilter.getSelectionModel().selectedItemProperty().addListener(
                 (obs, o, n) -> applyFiltersAndSort());
 
+        // Configurar ComboBox de criterio de orden
         sortFilter.setItems(FXCollections.observableArrayList(
-                lm.get("sort.title"), lm.get("id"),
-                lm.get("common.duedate"), lm.get("common.priority")));
+                lm.get("sort.title"),
+                lm.get("id"),
+                lm.get("common.duedate"),
+                lm.get("common.priority")));
         sortFilter.setPromptText(lm.get("sort.criteria"));
         sortFilter.getSelectionModel().selectedItemProperty().addListener(
                 (obs, o, n) -> applyFiltersAndSort());
+
+        // Cargar proyectos del sidebar y mostrar home
         loadProjects();
         loadHome();
-        LanguageManager.getInstance().bundleProperty().addListener((obs, oldBundle, newBundle) -> {
-            refreshSidebar();
-        });
 
-        Platform.runLater(() ->
-                System.out.println("Stylesheets: " + btnHome.getScene().getStylesheets())
+        // Refrescar textos del sidebar cuando cambie el idioma
+        LanguageManager.getInstance().bundleProperty().addListener(
+                (obs, oldBundle, newBundle) ->
+            refreshSidebar()
         );
     }
 
-    // ── Menú de usuario ───────────────────────────────────────────────────────
+    // -------------------------------------------------------------------------
+    // Menú de usuario
+    // -------------------------------------------------------------------------
 
     /**
      * Muestra el menú contextual del usuario con las opciones
@@ -184,14 +251,15 @@ public class MainController {
         logout.setOnAction(e -> handleLogout());
 
         menu.getItems().addAll(viewProfile, sep, logout);
-        menu.show(userMenuButton, javafx.geometry.Side.BOTTOM, 0, 4);
+        menu.show(userMenuButton, Side.BOTTOM, 0, 4);
     }
 
     /**
-     * Navega a la vista de perfil del usuario, limpia la selección
-     * del sidebar y registra el callback para refrescar el username
-     * y el avatar al actualizar el perfil.
+     * Navega a la vista de perfil del usuario.
+     * Limpia la selección del sidebar y registra el callback para refrescar
+     * el username y el avatar al actualizar el perfil.
      */
+
     private void handleViewProfile() {
         clearSidebarSelection();
         try {
@@ -202,35 +270,41 @@ public class MainController {
             VBox profileView = loader.load();
             HBox.setHgrow(profileView, Priority.ALWAYS);
             profileView.setUserData("profile");
+
             ProfileController controller = loader.getController();
             controller.setOnProfileUpdated(() -> {
-                String username = AppContext.getInstance().getCurrentUsername();
-                userMenuButton.setText(username);
+                // Refrescar username en la barra superior y el avatar del sidebar
+                userMenuButton.setText(AppContext.getInstance().getCurrentUsername());
                 if (sidebarAvatar != null) sidebarAvatar.refresh();
                 loadHome();
             });
+
             swapMainAreaWith(profileView);
         } catch (IOException e) {
-            showAlert("error.title", "error.open.profile");
+            showAlert("error.open.profile");
         }
     }
 
-    // ── Botón crear ───────────────────────────────────────────────────────────
+    // -------------------------------------------------------------------------
+    // Botón crear
+    // -------------------------------------------------------------------------
 
     /**
-     * Gestiona el botón de creación. En la vista home muestra un menú
-     * contextual con las opciones "Nuevo proyecto" y "Nueva tarea";
-     * en el resto de vistas abre directamente el diálogo de nueva tarea.
+     * Gestiona el botón de creación.
+     * En la vista home muestra un menú contextual con "Nuevo proyecto" y
+     * "Nueva tarea"; en el resto de vistas abre directamente el diálogo de nueva tarea.
      */
     @FXML
     private void handleCreateMenu() {
         boolean isHome = selectedProjectId == null && selectedCategory == null && !viewingAllTasks;
 
         if (!isHome) {
+            // Fuera del home, crear siempre una tarea directamente
             handleNewTask();
             return;
         }
 
+        // En el home, ofrecer crear proyecto o tarea
         ContextMenu menu = new ContextMenu();
 
         MenuItem newProject = new MenuItem(lm.get("topbar.new.project"));
@@ -242,10 +316,12 @@ public class MainController {
         newTask.setOnAction(e -> handleNewTask());
 
         menu.getItems().addAll(newProject, newTask);
-        menu.show(createButton, javafx.geometry.Side.BOTTOM, 0, 4);
+        menu.show(createButton, Side.BOTTOM, 0, 4);
     }
 
-    // ── Proyectos — sidebar ───────────────────────────────────────────────────
+    // -------------------------------------------------------------------------
+    // Proyectos - sidebar
+    // -------------------------------------------------------------------------
 
     /**
      * Obtiene los proyectos del usuario desde el backend y los renderiza
@@ -253,27 +329,35 @@ public class MainController {
      * una actualización.
      */
     public void loadProjects() {
-        new Thread(() -> {
+        Thread t = new Thread(() -> {
             try {
-                HttpResponse<String> response = AppContext.getInstance()
-                        .getApiService().get("/api/projects");
+                HttpResponse<String> response = AppContext.getInstance().getApiService().get("/api/projects");
+
                 if (response.statusCode() == 200) {
                     JsonNode projects = objectMapper.readTree(response.body());
-                    List<String> names = new ArrayList<>();
-                    List<Long>   ids   = new ArrayList<>();
-                    List<JsonNode> nodes    = new ArrayList<>();
+
+                    // Extraer listas paralelas de nombre, id y nodo completo
+                    List<String>   names = new ArrayList<>();
+                    List<Long>     ids   = new ArrayList<>();
+                    List<JsonNode> nodes = new ArrayList<>();
+
                     for (JsonNode p : projects) {
                         names.add(p.get("name").asText());
                         ids.add(p.get("id").asLong());
                         nodes.add(p);
                     }
+
                     Platform.runLater(() -> renderSidebar(names, ids, nodes));
                 }
             } catch (Exception e) {
-                Platform.runLater(() -> showAlert("error.title", "error.load.projects"));
+                Platform.runLater(() -> showAlert("error.load.projects"));
             }
-        }).start();
+        });
+        t.setName("taskmaster-load-projects");
+        t.setDaemon(true);
+        t.start();
     }
+
 
     /**
      * Construye las filas del sidebar de proyectos con el indicador de color,
@@ -281,43 +365,50 @@ public class MainController {
      * Configura también los efectos de hover y la selección activa.
      *
      * @param names Nombres de los proyectos.
-     * @param ids   Identificadores de los proyectos.
+     * @param ids Identificadores de los proyectos.
      * @param nodes Nodos JSON de cada proyecto, usados al abrir el detalle.
      */
     private void renderSidebar(List<String> names, List<Long> ids, List<JsonNode> nodes) {
         projectListContainer.getChildren().clear();
+
         for (int i = 0; i < names.size(); i++) {
-            final Long   pid  = ids.get(i);
+            final Long pid = ids.get(i);
             final String name = names.get(i);
             final JsonNode pNode = nodes.get(i);
 
+            // Color rotatorio entre los colores de categoría disponibles
             String dotColor = getCategoryColorForIndex(i);
 
             HBox row = new HBox(4);
             row.setUserData(pid);
             row.setAlignment(Pos.CENTER_LEFT);
 
+            // Punto de color identificador del proyecto
             Label dot = new Label("●");
             dot.setStyle("-fx-text-fill: " + dotColor + "; -fx-font-size: 9px; -fx-padding: 0 0 0 16;");
 
+            // Botón con el nombre del proyecto
             Button btn = new Button(name);
             btn.setMaxWidth(Double.MAX_VALUE);
             HBox.setHgrow(btn, Priority.ALWAYS);
             btn.getStyleClass().add("sidebar-project-btn");
 
+            // Botón de puntos suspensivos con menú editar/eliminar
             Button menuBtn = new Button();
             menuBtn.getStyleClass().add("sidebar-project-dots");
             FontIcon dotsIcon = new FontIcon("fas-ellipsis-h");
             dotsIcon.getStyleClass().add("sidebar-project-dots-icon");
             menuBtn.setGraphic(dotsIcon);
 
+            // Al pulsar el nombre, abrir detalle del proyecto
             btn.setOnAction(e -> {
                 selectedProjectId = pid;
-                selectedCategory  = null;
+                selectedCategory = null;
                 setSidebarProjectActive(pid);
                 openProjectDetail(pNode);
             });
 
+            // Al pulsar los puntos, mostrar menú contextual
             menuBtn.setOnAction(e -> {
                 ContextMenu cm = new ContextMenu();
 
@@ -331,9 +422,10 @@ public class MainController {
                 delete.setOnAction(ev -> handleDeleteProject(pid, name));
 
                 cm.getItems().addAll(edit, delete);
-                cm.show(menuBtn, javafx.geometry.Side.BOTTOM, 0, 0);
+                cm.show(menuBtn, Side.BOTTOM, 0, 0);
             });
 
+            // Efectos de hover: cambiar estilo del botón y mostrar/ocultar puntos
             row.setOnMouseEntered(e -> {
                 if (!pid.equals(selectedProjectId)) {
                     btn.getStyleClass().removeAll("sidebar-project-btn");
@@ -359,13 +451,15 @@ public class MainController {
         }
     }
 
-    // ── Home ──────────────────────────────────────────────────────────────────
+    // -------------------------------------------------------------------------
+    // Home
+    // -------------------------------------------------------------------------
 
     /**
      * Obtiene los datos de la vista home desde el backend y los renderiza.
      */
     private void loadHome() {
-        new Thread(() -> {
+        Thread t = new Thread(() -> {
             try {
                 HttpResponse<String> response = AppContext.getInstance()
                         .getApiService().get("/api/tasks/home");
@@ -374,9 +468,13 @@ public class MainController {
                     Platform.runLater(() -> renderHome(home));
                 }
             } catch (Exception e) {
-                Platform.runLater(() -> showAlert("error.title", "error.load.home"));
+                Platform.runLater(() -> showAlert("error.load.home"));
             }
-        }).start();
+        });
+        t.setName("taskmaster-load-home");
+        t.setDaemon(true);
+        t.start();
+
     }
 
     /**
@@ -390,58 +488,64 @@ public class MainController {
         taskContainer.getChildren().clear();
         hideFilters();
 
-        // ── Saludo + fecha ────────────────────────────────────────────────────
-        String username = AppContext.getInstance().getCurrentUsername();
+        // Saludo + fecha
+
         LocalDate today = LocalDate.now();
         Locale locale = LanguageManager.getInstance().getBundle().getLocale();
+
+        // Capitalizar nombre del día de la semana según el idioma activo
         String dayName = today.getDayOfWeek().getDisplayName(TextStyle.FULL, locale);
         String dateStr = dayName.substring(0, 1).toUpperCase() + dayName.substring(1)
                 + ", " + today.format(DateTimeFormatter.ofPattern(lm.get("home.date.pattern"), locale));
+
+        // Construir texto de tareas pendientes (singular/plural/al día)
         int pending = countPendingTasks(home);
         String pendingStr = pending > 1
-                ? java.text.MessageFormat.format(lm.get("home.pending.tasks.plural"), pending)
-                : pending == 1
-                ? java.text.MessageFormat.format(lm.get("home.pending.tasks"), pending)
-                : lm.get("home.up.to.date");
+                ? MessageFormat.format(lm.get("home.pending.tasks.plural"), pending) : pending == 1
+                ? MessageFormat.format(lm.get("home.pending.tasks"), pending) : lm.get("home.up.to.date");
+
         String subText = dateStr + "  ·  " + pendingStr;
 
         HBox greetingBox = new HBox();
         greetingBox.getStyleClass().add("home-greeting-box");
         greetingBox.setAlignment(Pos.CENTER_LEFT);
+
         VBox greetingText = new VBox(3);
         Label greetingLabel = new Label(
-                java.text.MessageFormat.format(lm.get("home.greeting"),
+                MessageFormat.format(lm.get("home.greeting"),
                         AppContext.getInstance().getCurrentUsername()));
         greetingLabel.getStyleClass().add("home-greeting-label");
+
         Label subLabel = new Label(subText);
         subLabel.getStyleClass().add("home-greeting-sub");
+
         greetingText.getChildren().addAll(greetingLabel, subLabel);
         greetingBox.getChildren().add(greetingText);
         taskContainer.getChildren().add(greetingBox);
 
         // Banner de cumpleaños
         LocalDate birthDate = AppContext.getInstance().getCurrentBirthDate();
-        if (birthDate != null) {
-            if (birthDate.getMonthValue() == today.getMonthValue()
-                    && birthDate.getDayOfMonth() == today.getDayOfMonth()) {
-                HBox birthdayBanner = new HBox(10);
-                birthdayBanner.getStyleClass().add("birthday-banner");
-                birthdayBanner.setAlignment(Pos.CENTER_LEFT);
+        if (birthDate != null
+                && birthDate.getMonthValue() == today.getMonthValue()
+                && birthDate.getDayOfMonth() == today.getDayOfMonth()) {
 
-                FontIcon cakeIcon = new FontIcon("fas-birthday-cake");
-                cakeIcon.getStyleClass().add("birthday-banner-icon");
+            HBox birthdayBanner = new HBox(10);
+            birthdayBanner.getStyleClass().add("birthday-banner");
+            birthdayBanner.setAlignment(Pos.CENTER_LEFT);
 
-                Label birthdayLabel = new Label(
-                        java.text.MessageFormat.format(lm.get("birthday.header"),
-                                AppContext.getInstance().getCurrentUsername()));
-                birthdayLabel.getStyleClass().add("birthday-banner-label");
+            FontIcon cakeIcon = new FontIcon("fas-birthday-cake");
+            cakeIcon.getStyleClass().add("birthday-banner-icon");
 
-                birthdayBanner.getChildren().addAll(cakeIcon, birthdayLabel);
-                taskContainer.getChildren().add(birthdayBanner);
-            }
+            Label birthdayLabel = new Label(
+                    MessageFormat.format(lm.get("birthday.header"),
+                            AppContext.getInstance().getCurrentUsername()));
+            birthdayLabel.getStyleClass().add("birthday-banner-label");
+
+            birthdayBanner.getChildren().addAll(cakeIcon, birthdayLabel);
+            taskContainer.getChildren().add(birthdayBanner);
         }
 
-        // ── Stats ─────────────────────────────────────────────────────────────
+        // Tarjetas de estadísticas
         int[] stats = computeStats(home);
         HBox statsRow = new HBox(10);
         statsRow.setStyle("-fx-padding: 16 20 8 20;");
@@ -451,16 +555,18 @@ public class MainController {
                 createStatCard(String.valueOf(stats[2]), lm.get("common.done"),       "#22c55e"),
                 createStatCard(String.valueOf(stats[3]), lm.get("common.active.projects"),   "#e11d48")
         );
-        for (javafx.scene.Node c : statsRow.getChildren()) HBox.setHgrow(c, Priority.ALWAYS);
+        for (Node c : statsRow.getChildren()) HBox.setHgrow(c, Priority.ALWAYS);
         taskContainer.getChildren().add(statsRow);
 
-        // ── Dos columnas ──────────────────────────────────────────────────────
+        // Dos columnas: proyectos activos + tareas próximas
         HBox twoCol = new HBox(14);
         twoCol.setStyle("-fx-padding: 8 20 20 20;");
+
         VBox projectsCol = buildProjectsColumn(home.get("projects"));
         VBox tasksCol    = buildUpcomingTasksColumn(home);
         HBox.setHgrow(projectsCol, Priority.ALWAYS);
         HBox.setHgrow(tasksCol,    Priority.ALWAYS);
+
         twoCol.getChildren().addAll(projectsCol, tasksCol);
         taskContainer.getChildren().add(twoCol);
 
@@ -487,10 +593,14 @@ public class MainController {
 
         HBox labelRow = new HBox(5);
         labelRow.setAlignment(Pos.CENTER_LEFT);
+
+        // Punto de color indicador del tipo de estadística
         Label dot = new Label("●");
         dot.setStyle("-fx-text-fill: " + dotColor + "; -fx-font-size: 8px;");
+
         Label lbl = new Label(label);
         lbl.getStyleClass().add("stat-card-label");
+
         labelRow.getChildren().addAll(dot, lbl);
         card.getChildren().addAll(num, labelRow);
         return card;
@@ -518,37 +628,47 @@ public class MainController {
 
         int idx = 0;
         for (JsonNode project : projects) {
-            String pName     = project.get("name").asText();
+            String pName = project.get("name").asText();
             String pCategory = project.has("category") ? project.get("category").asText() : "PERSONAL";
-            JsonNode tasks   = project.get("tasks");
+            JsonNode tasks = project.get("tasks");
+
+            // Calcular porcentaje de completitud del proyecto
             int total = (tasks != null && tasks.isArray()) ? tasks.size() : 0;
-            int done  = 0;
+            int done = 0;
             if (tasks != null && tasks.isArray())
                 for (JsonNode t : tasks)
                     if ("DONE".equals(t.has("status") ? t.get("status").asText() : "")) done++;
+
             double pct = total > 0 ? (double) done / total * 100 : 0;
 
+            // Separador entre proyectos (no antes del primero)
             if (idx++ > 0) panel.getChildren().add(new Separator());
 
             VBox item = new VBox(5);
             item.setMaxWidth(Double.MAX_VALUE);
             HBox.setHgrow(item, Priority.ALWAYS);
-            item.setStyle("-fx-padding: 10 0 10 0;");
+            item.setStyle("-fx-padding: 10 0 10 0; -fx-cursor: hand;");
+
+            // Fila con nombre del proyecto y porcentaje
             HBox nameRow = new HBox();
             nameRow.setMaxWidth(Double.MAX_VALUE);
             nameRow.setAlignment(Pos.CENTER_LEFT);
+
             Label nameLabel = new Label(pName);
             nameLabel.getStyleClass().add("home-panel-title");
+
             Region spacer = new Region();
             HBox.setHgrow(spacer, Priority.ALWAYS);
+
             Label pctLabel = new Label(Math.round(pct) + "%");
             pctLabel.getStyleClass().add("project-stat-label");
+
             nameRow.getChildren().addAll(nameLabel, spacer, pctLabel);
 
+            // Barra de progreso con color según porcentaje
             StackPane barBg = new StackPane();
             barBg.getStyleClass().add("progress-bar-bg");
             barBg.setMinHeight(5); barBg.setMaxHeight(5);
-            HBox barFill = new HBox();
 
             String barColor;
             if (pct >= 100)      barColor = "#22c55e";
@@ -556,35 +676,37 @@ public class MainController {
             else if (pct >= 34)  barColor = "#f59e0b";
             else                 barColor = "#ef4444";
 
+            HBox barFill = new HBox();
             barFill.setStyle("-fx-background-color: " + barColor + "; -fx-background-radius: 2px;");
             barFill.setMinHeight(5); barFill.setMaxHeight(5);
             barFill.setMaxWidth(Double.MAX_VALUE);
             barBg.getChildren().add(barFill);
+
+            // Ajustar anchura del relleno cuando cambie el tamaño del contenedor
             final double pctF = pct;
             barBg.widthProperty().addListener((obs, o, n) ->
                     barFill.setPrefWidth(n.doubleValue() * pctF / 100.0));
 
-            String pStatus   = project.has("status")   && !project.get("status").isNull()
-                    ? project.get("status").asText()   : "TODO";
+            // Badges de estado, prioridad, categoría y contador de tareas
+            String pStatus = project.has("status")   && !project.get("status").isNull()
+                    ? project.get("status").asText() : "TODO";
             String pPriority = project.has("priority") && !project.get("priority").isNull()
                     ? project.get("priority").asText() : "MEDIUM";
 
             HBox metaRow = new HBox(6);
             metaRow.setAlignment(Pos.CENTER_LEFT);
             metaRow.getChildren().addAll(
-                    createBadge(translateStatus(pStatus),   "-fx-font-size: 10px; -fx-padding: 2 7 2 7; " +
-                            "-fx-background-radius: 10px; -fx-text-fill: white; " +
-                            "-fx-background-color: " + getStatusColor(pStatus) + ";"),
-                    createBadge(translatePriority(pPriority), "-fx-font-size: 10px; -fx-padding: 2 7 2 7; " +
-                            "-fx-background-radius: 10px; -fx-text-fill: white; " +
-                            "-fx-background-color: " + getPriorityColor(pPriority) + ";"),
+                    createBadge(translateStatus(pStatus),
+                            badgeStyle(getStatusColor(pStatus))),
+                    createBadge(translatePriority(pPriority),
+                            badgeStyle(getPriorityColor(pPriority))),
                     createBadge(pCategory, getCategoryBadgeStyle(pCategory)),
-                    createBadge(total + " " + lm.get("common.tasks").toLowerCase(), "-fx-background-color: -tm-bg-app; " +
-                            "-fx-text-fill: -tm-text-secondary; -fx-background-radius: 10px; " +
-                            "-fx-font-size: 10px; -fx-padding: 2 7 2 7;"));
+                    createBadge(total + " " + lm.get("common.tasks").toLowerCase(),
+                            "-fx-background-color: -tm-bg-app; -fx-text-fill: -tm-text-secondary; "
+                                    + "-fx-background-radius: 10px; -fx-font-size: 10px; -fx-padding: 2 7 2 7;")
+            );
 
             item.getChildren().addAll(nameRow, barBg, metaRow);
-            item.setStyle("-fx-padding: 10 0 10 0; -fx-cursor: hand;");
             item.setOnMouseClicked(e -> openProjectDetail(project));
             panel.getChildren().add(item);
         }
@@ -601,6 +723,8 @@ public class MainController {
      */
     private VBox buildUpcomingTasksColumn(JsonNode home) {
         List<JsonNode> allTasks = new ArrayList<>();
+
+        // Recopilar tareas de proyectos activos
         JsonNode projects = home.get("projects");
         if (projects != null && projects.isArray())
             for (JsonNode p : projects) {
@@ -608,20 +732,28 @@ public class MainController {
                 if (tasks != null && tasks.isArray())
                     for (JsonNode t : tasks) allTasks.add(t);
             }
+
+        // Recopilar tareas de categorías sueltas (sin proyecto)
         for (String cat : new String[]{"personalTasks", "estudiosTasks", "trabajoTasks"}) {
             JsonNode ct = home.get(cat);
             if (ct != null && ct.isArray()) for (JsonNode t : ct) allTasks.add(t);
         }
+
+        // Excluir tareas ya completadas o canceladas
         allTasks.removeIf(t -> {
             String s = t.has("status") ? t.get("status").asText() : "";
             return "DONE".equals(s) || "CANCELLED".equals(s);
         });
+
+        // Ordenar por fecha límite ascendente; sin fecha al final
         allTasks.sort((a, b) -> {
             boolean aH = a.has("dueDate") && !a.get("dueDate").isNull();
             boolean bH = b.has("dueDate") && !b.get("dueDate").isNull();
             if (!aH && !bH) return 0; if (!aH) return 1; if (!bH) return -1;
             return a.get("dueDate").asText().compareTo(b.get("dueDate").asText());
         });
+
+        // Tomar solo las primeras 6
         List<JsonNode> upcoming = allTasks.subList(0, Math.min(6, allTasks.size()));
 
         VBox panel = createPanel();
@@ -637,116 +769,50 @@ public class MainController {
             return panel;
         }
 
-        LocalDate today = LocalDate.now();
+
         int idx = 0;
         for (JsonNode task : upcoming) {
             if (idx++ > 0) panel.getChildren().add(new Separator());
-            String title    = task.get("title").asText();
-            String status   = task.has("status")   ? task.get("status").asText()   : "TODO";
+
+            String title = task.get("title").asText();
+            String status = task.has("status")   ? task.get("status").asText()   : "TODO";
             String priority = task.has("priority") ? task.get("priority").asText() : "MEDIUM";
             String category = task.has("category") ? task.get("category").asText() : "PERSONAL";
-            Long   taskId   = task.get("id").asLong();
+            long taskId = task.get("id").asLong();
 
-            String dueLbl = ""; boolean isUrgentDate = false; boolean isOverdue = false;
-            boolean isDueSoon = false; // nueva variable de control
-            if (task.has("dueDate") && !task.get("dueDate").isNull()) {
-                try {
-                    LocalDate due = LocalDate.parse(task.get("dueDate").asText().substring(0, 10));
-                    long daysUntilDue = java.time.temporal.ChronoUnit.DAYS.between(today, due);
-                    if (due.isBefore(today)) {
-                        dueLbl = lm.get("date.overdue");
-                        isUrgentDate = true;
-                        isOverdue = true;
-                    } else if (due.equals(today)) {
-                        dueLbl = lm.get("common.date.today");
-                        isUrgentDate = true;
-                        isDueSoon = true;
-                    } else if (due.equals(today.plusDays(1))) {
-                        dueLbl = lm.get("date.tomorrow");
-                        isDueSoon = true;
-                    } else if (daysUntilDue <= 3) {
-                        dueLbl = due.format(DateTimeFormatter.ofPattern("d MMM", new Locale("es", "ES")));
-                        isDueSoon = true;
-                    } else {
-                        dueLbl = due.format(DateTimeFormatter.ofPattern("d MMM", new Locale("es", "ES")));
-                    }
-                } catch (Exception ignored) {}
-            }
+            // Calcular información de fecha límite usando el helper compartido
+            DueDateInfo ddi = computeDueDateInfo(task, status);
 
             HBox row = new HBox(10);
             row.setAlignment(Pos.CENTER_LEFT);
             row.setStyle("-fx-padding: 9 0 9 0;");
 
-            Label check = new Label();
-            check.setMinSize(16, 16); check.setMaxSize(16, 16);
-            check.setStyle("-fx-border-color: #cccccc; -fx-border-radius: 8px; " +
-                    "-fx-background-radius: 8px; -fx-cursor: hand;");
-            check.setOnMouseClicked(e -> new Thread(() -> {
-                try {
-                    AppContext.getInstance().getApiService()
-                            .patch("/api/tasks/" + taskId + "/status?status=DONE", null);
-                    Platform.runLater(this::loadHome);
-                } catch (Exception ex) {
-                    Platform.runLater(() -> showAlert("error.title", "error.update.task"));
-                }
-            }).start());
+            // Checkbox circular para marcar la tarea como completada
+            Label check = createUpcomingTaskCheck(taskId);
 
             Label titleLabel = new Label(title);
             titleLabel.getStyleClass().add("profile-field-value");
 
+            // Fila de badges: fecha, estado, prioridad, categoría
             HBox badges = new HBox(6);
             badges.setAlignment(Pos.CENTER_LEFT);
-
-            if (!dueLbl.isEmpty()) {
-                if (isOverdue) {
-                    Label dueLabel = new Label(dueLbl);
-                    dueLabel.setStyle("-fx-font-size: 10px; -fx-padding: 2 7 2 7; " +
-                            "-fx-background-radius: 10px; -fx-text-fill: #991b1b; " +
-                            "-fx-background-color: #fee2e2;");
-                    badges.getChildren().add(dueLabel);
-                } else if (isDueSoon) {
-                    HBox dueSoonBox = new HBox(3);
-                    dueSoonBox.setAlignment(Pos.CENTER_LEFT);
-                    FontIcon alertIcon = new FontIcon("fas-exclamation-triangle");
-                    alertIcon.setIconSize(11);
-                    alertIcon.setIconColor(javafx.scene.paint.Color.web("#dc2626"));
-                    Label dueLabel = new Label(dueLbl);
-                    dueLabel.setStyle("-fx-font-size: 11px; -fx-text-fill: #dc2626; -fx-font-weight: bold;");
-                    dueSoonBox.getChildren().addAll(alertIcon, dueLabel);
-                    badges.getChildren().add(dueSoonBox);
-                } else {
-                    Label dueLabel = new Label(dueLbl);
-                    dueLabel.setStyle("-fx-font-size: 11px; -fx-text-fill: #888888;");
-                    badges.getChildren().add(dueLabel);
-                }
-            }
-            badges.getChildren().add(createBadge(translateStatus(status), "-fx-font-size: 10px; -fx-padding: 2 7 2 7; " +
-                    "-fx-background-radius: 10px; -fx-text-fill: white; " +
-                    "-fx-background-color: " + getStatusColor(status) + ";"));
-
-            Label priBadge = new Label(translatePriority(priority));
-            priBadge.setStyle("-fx-font-size: 10px; -fx-padding: 2 7 2 7; " +
-                    "-fx-background-radius: 10px; -fx-text-fill: white; " +
-                    "-fx-background-color: " + getPriorityColor(priority) + ";");
-            badges.getChildren().add(priBadge);
-
+            badges.getChildren().add(buildDueDateWidget(ddi));  // widget de fecha reutilizable
+            badges.getChildren().add(createBadge(translateStatus(status), badgeStyle(getStatusColor(status))));
+            badges.getChildren().add(createBadge(translatePriority(priority), badgeStyle(getPriorityColor(priority))));
             badges.getChildren().add(createBadge(category, getCategoryBadgeStyle(category)));
 
-            Region spacer = new Region();
-            HBox.setHgrow(spacer, Priority.ALWAYS);
             row.getChildren().addAll(check, titleLabel, badges);
-            row.setOnMouseClicked(e -> {
-                if (e.getTarget() != check) {
-                    openTaskDetail(task);
-                }
-            });
+            // Clic en la fila (no en el checkbox) abre el detalle de la tarea
+            row.setOnMouseClicked(e -> {if (e.getTarget() != check) openTaskDetail(task);});
             row.setStyle("-fx-padding: 9 0 9 0; -fx-cursor: hand;");
             panel.getChildren().add(row);
         }
         return panel;
     }
 
-    // ── Lista de tareas ───────────────────────────────────────────────────────
+    // -------------------------------------------------------------------------
+    // Lista de tareas
+    // -------------------------------------------------------------------------
 
     /**
      * Renderiza la lista de tareas en el área principal y guarda los datos
@@ -755,31 +821,18 @@ public class MainController {
      * @param tasks Array JSON con las tareas a mostrar.
      */
     private void renderTasks(JsonNode tasks) {
-        taskContainer.getChildren().clear();
-        taskContainer.getChildren().add(emptyLabel);
-        if (!tasks.isArray() || tasks.isEmpty()) {
-            emptyLabel.setText(lm.get("tasks.empty.current"));
-            emptyLabel.setVisible(true);
-            emptyLabel.setManaged(true);
-            return;
-        }
-        emptyLabel.setVisible(false);
-        emptyLabel.setManaged(false);
+        // Convertir JsonNode a List para trabajar con los filtros
+        List<JsonNode> list = new ArrayList<>();
+        if (tasks != null && tasks.isArray())
+            tasks.forEach(list::add);
 
-        // Padding lateral para la lista
-        for (JsonNode task : tasks) {
-            HBox card = createTaskCard(task);
-            VBox wrapper = new VBox(card);
-            wrapper.setStyle("-fx-padding: 0 20 0 20;");
-            taskContainer.getChildren().add(wrapper);
-        }
+        // Guardar datos originales sin filtrar
+        currentTasks = new ArrayList<>(list);
 
-        // Guardar datos originales para filtros/orden
-        currentTasks.clear();
-        if (tasks.isArray()) {
-            for (JsonNode t : tasks) currentTasks.add(t);
-        }
-        applyFiltersAndSort(); // renderizar con filtros/orden actuales
+        // Renderizar con los filtros/orden activos
+        renderTaskList(list, "tasks.empty.current");
+        applyFiltersAndSort();
+
     }
 
     /**
@@ -791,7 +844,7 @@ public class MainController {
         String priorityVal = priorityFilter.getValue();
         String sortCrit    = sortFilter.getValue();
 
-        // 1. Filtrar desde los datos originales
+        // 1. Filtrar desde los datos originales sin modificarlos
         List<JsonNode> result = currentTasks.stream()
                 .filter(t -> {
                     if (statusVal == null || statusVal.equals(lm.get("common.all"))) return true;
@@ -801,67 +854,90 @@ public class MainController {
                     if (priorityVal == null || priorityVal.equals(lm.get("common.all"))) return true;
                     return matchesPriorityLabel(t.get("priority").asText(), priorityVal);
                 })
-                .collect(java.util.stream.Collectors.toList());
+                .collect(Collectors.toList());
 
-        // 2. Ordenar
+        // 2. Ordenar según el criterio seleccionado
         if (sortCrit != null) {
             result.sort((a, b) -> {
-                int cmp = 0;
+                final int cmp;
                 if (sortCrit.equals(lm.get("sort.title"))) {
                     cmp = a.get("title").asText().compareToIgnoreCase(b.get("title").asText());
                 } else if (sortCrit.equals(lm.get("id"))) {
                     cmp = Long.compare(a.get("id").asLong(), b.get("id").asLong());
                 } else if (sortCrit.equals(lm.get("common.duedate"))) {
+                    // Las tareas sin fecha límite van al final
                     boolean aH = a.has("dueDate") && !a.get("dueDate").isNull();
                     boolean bH = b.has("dueDate") && !b.get("dueDate").isNull();
-                    if (!aH && !bH)     cmp = 0;
-                    else if (!aH)       cmp = 1;
-                    else if (!bH)       cmp = -1;
+                    if (!aH && !bH) cmp = 0;
+                    else if (!aH) cmp = 1;
+                    else if (!bH) cmp = -1;
                     else cmp = a.get("dueDate").asText().compareTo(b.get("dueDate").asText());
                 } else if (sortCrit.equals(lm.get("common.priority"))) {
                     cmp = Integer.compare(
                             priorityOrder(a.has("priority") ? a.get("priority").asText() : "MEDIUM"),
                             priorityOrder(b.has("priority") ? b.get("priority").asText() : "MEDIUM")
                     );
+                } else {
+                    cmp = 0;
                 }
+                // Invertir si el orden es descendente
                 return sortAscending ? cmp : -cmp;
             });
         }
 
-        // 3. Renderizar
+        // 3. Renderizar la lista filtrada y ordenada
+        renderTaskList(result, "tasks.empty.filter");
+    }
+
+    /**
+     * Renderiza una lista de tareas en el contenedor principal.
+     * Si la lista está vacía muestra el mensaje indicado por {@code emptyKey}.
+     *
+     * <p>Este método unifica la lógica de renderizado usada tanto en la carga
+     * inicial ({@link #renderTasks}) como en la aplicación de filtros
+     * ({@link #applyFiltersAndSort}).</p>
+     *
+     * @param tasks    Tareas a renderizar.
+     * @param emptyKey Clave i18n del mensaje de lista vacía.
+     */
+    private void renderTaskList(List<JsonNode> tasks, String emptyKey) {
         taskContainer.getChildren().clear();
         taskContainer.getChildren().add(emptyLabel);
-        if (result.isEmpty()) {
-            emptyLabel.setText(lm.get("tasks.empty.filter"));
+
+        if (tasks.isEmpty()) {
+            emptyLabel.setText(lm.get(emptyKey));
             emptyLabel.setVisible(true);
             emptyLabel.setManaged(true);
             return;
         }
+
         emptyLabel.setVisible(false);
         emptyLabel.setManaged(false);
-        for (JsonNode task : result) {
-            HBox card = createTaskCard(task);
+
+        for (JsonNode task : tasks) {
+            HBox card    = createTaskCard(task);
             VBox wrapper = new VBox(card);
             wrapper.setStyle("-fx-padding: 0 20 0 20;");
             taskContainer.getChildren().add(wrapper);
         }
     }
 
+
     /**
      * Comprueba si el código de estado de una tarea coincide con la
      * etiqueta localizada seleccionada en el filtro.
      *
      * @param enumVal Código de estado (p.ej. {@code "IN_PROGRESS"}).
-     * @param label   Etiqueta localizada del filtro.
+     * @param label Etiqueta localizada del filtro.
      * @return {@code true} si coinciden.
      */
     private boolean matchesStatusLabel(String enumVal, String label) {
         return switch (enumVal) {
-            case "TODO"        -> label.equals(lm.get("status.todo"));
+            case "TODO" -> label.equals(lm.get("status.todo"));
             case "IN_PROGRESS" -> label.equals(lm.get("status.inprogress"));
-            case "DONE"        -> label.equals(lm.get("status.done"));
-            case "CANCELLED"   -> label.equals(lm.get("status.cancelled"));
-            default            -> false;
+            case "DONE" -> label.equals(lm.get("status.done"));
+            case "CANCELLED" -> label.equals(lm.get("status.cancelled"));
+            default -> false;
         };
     }
 
@@ -875,11 +951,11 @@ public class MainController {
      */
     private boolean matchesPriorityLabel(String enumVal, String label) {
         return switch (enumVal) {
-            case "LOW"    -> label.equals(lm.get("priority.low"));
+            case "LOW" -> label.equals(lm.get("priority.low"));
             case "MEDIUM" -> label.equals(lm.get("priority.medium"));
-            case "HIGH"   -> label.equals(lm.get("priority.high"));
+            case "HIGH" -> label.equals(lm.get("priority.high"));
             case "URGENT" -> label.equals(lm.get("priority.urgent"));
-            default       -> false;
+            default -> false;
         };
     }
 
@@ -889,11 +965,7 @@ public class MainController {
      */
     @FXML
     private void handleClearFilters() {
-        resetComboBox(statusFilter,   lm.get("common.status"));
-        resetComboBox(priorityFilter, lm.get("common.priority"));
-        resetComboBox(sortFilter,     lm.get("sort.criteria"));
-        sortAscending = true;
-        sortDirectionIcon.setIconLiteral("fas-arrow-up");
+        resetAllFilters();
         applyFiltersAndSort();
     }
 
@@ -908,33 +980,33 @@ public class MainController {
     private HBox createTaskCard(JsonNode task) {
         HBox card = new HBox(12);
         card.setAlignment(Pos.CENTER_LEFT);
-
         card.getStyleClass().add("task-card");
 
-        String status   = task.get("status").asText();
-        String title    = task.get("title").asText();
+        String status = task.get("status").asText();
+        String title = task.get("title").asText();
         String priority = task.get("priority").asText();
-        Long   taskId   = task.get("id").asLong();
+        Long taskId = task.get("id").asLong();
 
-        card.getProperties().put("status",   status);
+        // Almacenar datos en propiedades para búsqueda y filtros posteriores
+        card.getProperties().put("status", status);
         card.getProperties().put("priority", priority);
         card.getProperties().put("taskId", taskId);
 
+        // Checkbox para cambiar el estado de la tarea
         CheckBox checkBox = new CheckBox();
         checkBox.setSelected("DONE".equals(status));
 
         Label titleLabel = new Label(title);
         updateTitleStyle(titleLabel, "DONE".equals(status));
         HBox.setHgrow(titleLabel, Priority.ALWAYS);
-
         titleLabel.setOnMouseClicked(e -> openTaskDetail(task));
         titleLabel.getStyleClass().add("task-title");
 
+        // Badges de estado y prioridad
         Label statusBadge = new Label(translateStatus(status));
         statusBadge.setStyle("-fx-font-size: 11px; -fx-padding: 2 8 2 8; " +
                 "-fx-background-radius: 10px; -fx-text-fill: white; " +
                 "-fx-background-color: " + getStatusColor(status) + ";");
-
         Label priorityBadge = new Label(translatePriority(priority));
         priorityBadge.setStyle("-fx-font-size: 11px; -fx-padding: 2 8 2 8; " +
                 "-fx-background-radius: 10px; -fx-text-fill: white; " +
@@ -943,11 +1015,12 @@ public class MainController {
         Label idLabel = new Label("#" + taskId);
         idLabel.getStyleClass().add("task-id-label");
 
+        // Flag para evitar bucle de listener al revertir el checkbox por error
         final boolean[] updating = {false};
         checkBox.selectedProperty().addListener((obs, was, is) -> {
             if (updating[0]) return;
             String newStatus = is ? "DONE" : "TODO";
-            new Thread(() -> {
+            Thread th = new Thread(() -> {
                 try {
                     HttpResponse<String> resp = AppContext.getInstance().getApiService()
                             .patch("/api/tasks/" + taskId + "/status?status=" + newStatus, null);
@@ -955,92 +1028,177 @@ public class MainController {
                         if (resp.statusCode() == 200) {
                             reloadTasks();
                         } else if (resp.statusCode() == 400) {
+                            // No se puede completar si hay subtareas pendientes
                             updating[0] = true;
                             checkBox.setSelected(was);
                             updating[0] = false;
-                            showAlert("error.title", "task.error.pending.subtasks");
+                            showAlert("task.error.pending.subtasks");
                         } else {
                             updating[0] = true;
                             checkBox.setSelected(was);
                             updating[0] = false;
-                            showAlert("error.title", "error.update.status");
+                            showAlert("error.update.status");
                         }
                     });
                 } catch (Exception e) {
                     Platform.runLater(() -> checkBox.setSelected(was));
                 }
-            }).start();
+            });
+            th.setName("taskmaster-toggle-status");
+            th.setDaemon(true);
+            th.start();
         });
 
+        // Botón de menú contextual editar/eliminar
         Button menuBtn = MenuButtonFactory.createEditDeleteMenu(
                 lm.get("common.menu.edit"),
                 lm.get("common.menu.delete"),
-                () -> handleEditTask(taskId, task),
+                () -> handleEditTask(task),
                 () -> handleDeleteTask(taskId)
         );
 
-        boolean isOverdue = false;
-        boolean isDueSoon = false;
-        String dueLbl = "";
-        LocalDate today = LocalDate.now();
-
-        if (task.has("dueDate") && !task.get("dueDate").isNull()
-                && !"DONE".equals(status) && !"CANCELLED".equals(status)) {
-            try {
-                LocalDate dueDate = LocalDate.parse(task.get("dueDate").asText().substring(0, 10));
-                long daysUntilDue = java.time.temporal.ChronoUnit.DAYS.between(today, dueDate);
-                if (dueDate.isBefore(today)) {
-                    isOverdue = true;
-                    dueLbl = lm.get("date.overdue");
-                } else if (dueDate.equals(today)) {
-                    isDueSoon = true;
-                    dueLbl = lm.get("common.date.today");
-                } else if (dueDate.equals(today.plusDays(1))) {
-                    isDueSoon = true;
-                    dueLbl = lm.get("date.tomorrow");
-                } else if (daysUntilDue <= 3) {
-                    isDueSoon = true;
-                    dueLbl = dueDate.format(DateTimeFormatter.ofPattern("d MMM", new Locale("es", "ES")));
-                } else {
-                    dueLbl = dueDate.format(DateTimeFormatter.ofPattern("d MMM", new Locale("es", "ES")));
-                }
-            } catch (Exception ignored) {}
-        }
+        // Calcular información de fecha límite con el helper compartido
+        DueDateInfo ddi = computeDueDateInfo(task, status);
 
         Region spacer = new Region();
         HBox.setHgrow(spacer, Priority.ALWAYS);
 
-        if (isOverdue) {
+        // Aplicar estilo de tarjeta vencida y construir la fila según el estado de fecha
+        if (ddi.isOverdue()) {
+            // Tarjeta con fondo rojo si está vencida
             card.getStyleClass().removeAll("task-card");
             card.getStyleClass().add("task-card-overdue");
-            Label overdueLabel = new Label(dueLbl);
-            overdueLabel.setStyle("-fx-font-size: 10px; -fx-padding: 2 7 2 7; " +
-                    "-fx-background-radius: 10px; -fx-text-fill: #991b1b; " +
-                    "-fx-background-color: #fee2e2;");
-            card.getChildren().addAll(checkBox, idLabel, titleLabel, overdueLabel,
-                    statusBadge, priorityBadge, spacer, menuBtn);
-        } else if (isDueSoon) {
-            HBox dueSoonBox = new HBox(3);
-            dueSoonBox.setAlignment(Pos.CENTER_LEFT);
-            FontIcon alertIcon = new FontIcon("fas-exclamation-triangle");
-            alertIcon.setIconSize(11);
-            alertIcon.setIconColor(javafx.scene.paint.Color.web("#dc2626"));
-            Label dueLabel = new Label(dueLbl);
-            dueLabel.setStyle("-fx-font-size: 11px; -fx-text-fill: #dc2626; -fx-font-weight: bold;");
-            dueSoonBox.getChildren().addAll(alertIcon, dueLabel);
-            card.getChildren().addAll(checkBox, idLabel, titleLabel, dueSoonBox,
-                    statusBadge, priorityBadge, spacer, menuBtn);
-        } else if (!dueLbl.isEmpty()) {
-            Label dueLabel = new Label(dueLbl);
+
+            Label overdueLabel = createBadge(ddi.label(),
+                    "-fx-font-size: 10px; -fx-padding: 2 7 2 7; "
+                            + "-fx-background-radius: 10px; -fx-text-fill: #991b1b; "
+                            + "-fx-background-color: #fee2e2;");
+            card.getChildren().addAll(checkBox, idLabel, titleLabel,
+                    overdueLabel, statusBadge, priorityBadge, spacer, menuBtn);
+
+        } else if (ddi.isDueSoon()) {
+            // Widget con icono de alerta si vence pronto
+            card.getChildren().addAll(checkBox, idLabel, titleLabel,
+                    buildDueDateWidget(ddi), statusBadge, priorityBadge, spacer, menuBtn);
+
+        } else if (!ddi.label().isEmpty()) {
+            // Fecha lejana: mostrar como texto gris simple
+            Label dueLabel = new Label(ddi.label());
             dueLabel.setStyle("-fx-font-size: 11px; -fx-text-fill: #888888;");
-            card.getChildren().addAll(checkBox, idLabel, titleLabel, dueLabel,
-                    statusBadge, priorityBadge, spacer, menuBtn);
+            card.getChildren().addAll(checkBox, idLabel, titleLabel,
+                    dueLabel, statusBadge, priorityBadge, spacer, menuBtn);
+
         } else {
+            // Sin fecha límite
             card.getChildren().addAll(checkBox, idLabel, titleLabel,
                     statusBadge, priorityBadge, spacer, menuBtn);
         }
+
         return card;
     }
+
+    // -------------------------------------------------------------------------
+    // Fecha límite - helper compartido
+    // -------------------------------------------------------------------------
+
+    /**
+     * Resultado inmutable del análisis de fecha límite de una tarea.
+     *
+     * @param label     Texto localizado a mostrar (vacío si no hay fecha).
+     * @param isOverdue {@code true} si la tarea está vencida.
+     * @param isDueSoon {@code true} si vence hoy, mañana o en ≤3 días.
+     */
+    private record DueDateInfo(String label, boolean isOverdue, boolean isDueSoon) {}
+
+    /**
+     * Calcula el estado de la fecha límite de una tarea respecto a hoy.
+     *
+     * <p>Centraliza la lógica de fecha usada tanto en las tarjetas de tarea
+     * ({@link #createTaskCard}) como en la columna de tareas próximas
+     * ({@link #buildUpcomingTasksColumn}).</p>
+     *
+     * @param task   Nodo JSON de la tarea.
+     * @param status Estado actual de la tarea; si es DONE o CANCELLED devuelve vacío.
+     * @return {@link DueDateInfo} con la etiqueta y los flags de urgencia.
+     */
+    private DueDateInfo computeDueDateInfo(JsonNode task, String status) {
+        // Las tareas completadas o canceladas no necesitan indicador de fecha
+        if (!task.has("dueDate") || task.get("dueDate").isNull()) {
+            return new DueDateInfo("", false, false);
+        }
+        if ("DONE".equals(status) || "CANCELLED".equals(status)) {
+            return new DueDateInfo("", false, false);
+        }
+
+        try {
+            LocalDate today = LocalDate.now();
+            LocalDate due = LocalDate.parse(task.get("dueDate").asText().substring(0, 10));
+            long daysLeft = ChronoUnit.DAYS.between(today, due);
+            Locale esLocale = Locale.of("es", "ES");
+
+            if (due.isBefore(today)) {
+                return new DueDateInfo(lm.get("date.overdue"), true, false);
+            } else if (due.equals(today)) {
+                return new DueDateInfo(lm.get("common.date.today"), false, true);
+            } else if (due.equals(today.plusDays(1))) {
+                return new DueDateInfo(lm.get("date.tomorrow"), false, true);
+            } else if (daysLeft <= 3) {
+                return new DueDateInfo(
+                        due.format(DateTimeFormatter.ofPattern("d MMM", esLocale)), false, true);
+            } else {
+                return new DueDateInfo(
+                        due.format(DateTimeFormatter.ofPattern("d MMM", esLocale)), false, false);
+            }
+        } catch (Exception ignored) {
+            return new DueDateInfo("", false, false);
+        }
+    }
+
+    /**
+     * Construye el widget visual de fecha límite según el estado de urgencia.
+     * <ul>
+     *   <li>Vencida: badge rojo.</li>
+     *   <li>Próxima: icono de alerta + texto rojo en negrita.</li>
+     *   <li>Normal o vacía: nodo vacío ({@link Region}).</li>
+     * </ul>
+     *
+     * @param ddi Información de fecha calculada con {@link #computeDueDateInfo}.
+     * @return Nodo JavaFX listo para insertar en una HBox.
+     */
+    private Node buildDueDateWidget(DueDateInfo ddi) {
+        if (ddi.label().isEmpty()) {
+            return new Region(); // nodo vacío: no ocupa espacio relevante
+        }
+        if (ddi.isOverdue()) {
+            return createBadge(ddi.label(),
+                    "-fx-font-size: 10px; -fx-padding: 2 7 2 7; "
+                            + "-fx-background-radius: 10px; -fx-text-fill: #991b1b; "
+                            + "-fx-background-color: #fee2e2;");
+        }
+        if (ddi.isDueSoon()) {
+            // Icono de triángulo de alerta + etiqueta roja
+            HBox box = new HBox(3);
+            box.setAlignment(Pos.CENTER_LEFT);
+
+            FontIcon alertIcon = new FontIcon("fas-exclamation-triangle");
+            alertIcon.setIconSize(11);
+            alertIcon.setIconColor(javafx.scene.paint.Color.web("#dc2626"));
+
+            Label lbl = new Label(ddi.label());
+            lbl.setStyle("-fx-font-size: 11px; -fx-text-fill: #dc2626; -fx-font-weight: bold;");
+
+            box.getChildren().addAll(alertIcon, lbl);
+            return box;
+        }
+        // Fecha lejana: texto gris neutro
+        Label lbl = new Label(ddi.label());
+        lbl.setStyle("-fx-font-size: 11px; -fx-text-fill: #888888;");
+        return lbl;
+    }
+
+    // -------------------------------------------------------------------------
+    // Vistas de detalle
+    // -------------------------------------------------------------------------
 
     /**
      * Abre la vista de detalle de un proyecto en el área principal,
@@ -1059,15 +1217,17 @@ public class MainController {
             HBox.setHgrow(root, Priority.ALWAYS);
             root.setMaxWidth(Double.MAX_VALUE);
             root.setMaxHeight(Double.MAX_VALUE);
+
             ProjectDetailController controller = loader.getController();
             controller.initData(project);
             controller.setOnClose(this::navigateBack);
             activeProjectDetailController = controller;
 
+            // Al actualizar el proyecto, refrescar sidebar y volver a cargar el detalle
             controller.setOnProjectUpdated(() -> {
                 loadProjects();
                 reloadTasks();
-                new Thread(() -> {
+                Thread th = new Thread(() -> {
                     try {
                         HttpResponse<String> r = AppContext.getInstance()
                                 .getApiService().get("/api/projects/" + project.get("id").asLong());
@@ -1076,14 +1236,20 @@ public class MainController {
                             Platform.runLater(() -> activeProjectDetailController.initData(updated));
                         }
                     } catch (Exception ignored) {}
-                }).start();
+                });
+                th.setName("taskmaster-refresh-project");
+                th.setDaemon(true);
+                th.start();
+
             });
 
+            // Al pulsar una tarea del detalle, navegar a su vista con regreso al proyecto
             controller.setOnOpenTaskDetail(task -> {
                 navigationStack.push(() -> openProjectDetail(project));
                 openTaskDetail(task);
             });
 
+            // Al cerrar el detalle, limpiar referencia y volver atrás
             controller.setOnClose(() -> {
                 activeProjectDetailController = null;
                 navigateBack();
@@ -1092,72 +1258,66 @@ public class MainController {
             navigationStack.clear();
             swapMainAreaWith(root);
         } catch (IOException e) {
-            showAlert("error.title", "error.open.project.detail");
+            showAlert("error.open.project.detail");
         }
     }
 
     /**
-     * Abre la vista de detalle de una tarea en el área principal,
-     * configurando los callbacks de cierre y apertura de subtareas.
+     * Abre la vista de detalle de una tarea (normal o subtarea) en el área principal.
+     *
+     * @param task      Nodo JSON con los datos de la tarea.
+     * @param asSubtask {@code true} para inicializar como subtarea
+     *                  (sin callbacks de subtarea anidada).
+     */
+    private void openTaskDetailView(JsonNode task, boolean asSubtask) {
+        try {
+            FXMLLoader loader = new FXMLLoader(
+                    getClass().getResource(
+                            "/com/taskmaster/taskmasterfrontend/task-detail-view.fxml"),
+                    LanguageManager.getInstance().getBundle()
+            );
+            VBox root = loader.load();
+            root.setUserData("detail");
+            HBox.setHgrow(root, Priority.ALWAYS);
+            root.setMaxWidth(Double.MAX_VALUE);
+            root.setMaxHeight(Double.MAX_VALUE);
+
+            TaskDetailController controller = loader.getController();
+
+            if (asSubtask) {
+                // Las subtareas no tienen navegación adicional a sub-subtareas
+                controller.initDataAsSubtask(task);
+            } else {
+                controller.initData(task);
+                controller.setOnTaskChanged(() -> {});
+                // Al pulsar una subtarea, apilar el detalle actual y abrir la subtarea
+                controller.setOnOpenSubtaskDetail(subtask -> {
+                    navigationStack.push(() -> openTaskDetailView(task, false));
+                    openTaskDetailView(subtask, true);
+                });
+            }
+
+            controller.setOnClose(this::navigateBack);
+            swapMainAreaWith(root);
+        } catch (IOException e) {
+            showAlert(asSubtask ? "error.open.subtask.detail" : "error.open.task.detail");
+        }
+    }
+
+    /**
+     * Abre la vista de detalle de una tarea en el área principal.
      *
      * @param task Nodo JSON con los datos de la tarea a mostrar.
      */
     private void openTaskDetail(JsonNode task) {
-        try {
-            FXMLLoader loader = new FXMLLoader(
-                    getClass().getResource("/com/taskmaster/taskmasterfrontend/task-detail-view.fxml"),
-                    LanguageManager.getInstance().getBundle()
-            );
-            VBox root = loader.load();
-            root.setUserData("detail");
-            HBox.setHgrow(root, Priority.ALWAYS);
-            root.setMaxWidth(Double.MAX_VALUE);
-            root.setMaxHeight(Double.MAX_VALUE);
-            TaskDetailController controller = loader.getController();
-            controller.initData(task);
-            controller.setOnTaskChanged(() -> {});
-            controller.setOnClose(this::navigateBack);
-            controller.setOnOpenSubtaskDetail(subtask -> {
-                navigationStack.push(() -> openTaskDetail(task));
-                openSubtaskDetail(subtask);
-            });
-            swapMainAreaWith(root);
-        } catch (IOException e) {
-            showAlert("error.title", "error.open.task.detail");
-        }
-    }
-
-    /**
-     * Abre la vista de detalle de una subtarea en el área principal,
-     * configurando el callback de cierre.
-     *
-     * @param subtask Nodo JSON con los datos de la subtarea a mostrar.
-     */
-    private void openSubtaskDetail(JsonNode subtask) {
-        try {
-            FXMLLoader loader = new FXMLLoader(
-                    getClass().getResource("/com/taskmaster/taskmasterfrontend/task-detail-view.fxml"),
-                    LanguageManager.getInstance().getBundle()
-            );
-            VBox root = loader.load();
-            root.setUserData("detail");
-            HBox.setHgrow(root, Priority.ALWAYS);
-            root.setMaxWidth(Double.MAX_VALUE);
-            root.setMaxHeight(Double.MAX_VALUE);
-            TaskDetailController controller = loader.getController();
-            controller.initDataAsSubtask(subtask);
-            controller.setOnClose(this::navigateBack);
-            swapMainAreaWith(root);
-        } catch (IOException e) {
-            showAlert("error.title", "error.open.subtask.detail");
-        }
+        openTaskDetailView(task, false);
     }
 
     /**
      * Actualiza el estilo CSS del título de una tarjeta de tarea
      * según si está completada o no.
      *
-     * @param l    Etiqueta de título a actualizar.
+     * @param l Etiqueta de título a actualizar.
      * @param done {@code true} si la tarea está completada.
      */
     private void updateTitleStyle(Label l, boolean done) {
@@ -1165,7 +1325,9 @@ public class MainController {
         l.getStyleClass().add(done ? "task-title-done" : "task-title");
     }
 
-    // ── Navegación ────────────────────────────────────────────────────────────
+    // -------------------------------------------------------------------------
+    // Navegación principal
+    // -------------------------------------------------------------------------
 
     /**
      * Navega a la vista home, limpia el estado de selección y oculta los filtros.
@@ -1176,7 +1338,7 @@ public class MainController {
         selectedCategory  = null;
         viewingAllTasks = false;
         activeProjectDetailController = null;
-        areaTitle.setText(LanguageManager.getInstance().get("sidebar.home"));
+        areaTitle.setText(lm.get("sidebar.home"));
         removeOverlayPanels();
         showMainArea();
         hideFilters();
@@ -1195,57 +1357,63 @@ public class MainController {
         selectedProjectId = null;
         selectedCategory  = null;
         viewingAllTasks   = true;
-        areaTitle.setText(LanguageManager.getInstance().get("sidebar.all.tasks"));
+        areaTitle.setText(lm.get("sidebar.all.tasks"));
         showFilters();
         setSidebarActive(btnAllTasks);
-        new Thread(() -> {
+
+        Thread t = new Thread(() -> {
             try {
-                HttpResponse<String> r = AppContext.getInstance()
-                        .getApiService().get("/api/tasks/personal");
+                HttpResponse<String> r = AppContext.getInstance().getApiService().get("/api/tasks/personal");
                 if (r.statusCode() == 200) {
                     JsonNode tasks = objectMapper.readTree(r.body());
                     Platform.runLater(() -> renderTasks(tasks));
                 }
             } catch (Exception e) {
-                Platform.runLater(() -> showAlert("error.title", "error.load.tasks"));
+                Platform.runLater(() -> showAlert("error.load.tasks"));
             }
-        }).start();
+        });
+        t.setName("taskmaster-load-all-tasks");
+        t.setDaemon(true);
+        t.start();
+
     }
 
     /**
      * Navega a la vista de tareas de la categoría Personal.
      */
     @FXML private void handleCategoryPersonal() {
-        activeProjectDetailController = null;
-        viewingAllTasks = false;
-        removeOverlayPanels();
-        showMainArea();
-        loadTasksByCategory("PERSONAL", LanguageManager.getInstance().get("sidebar.personal"));
-        setSidebarActive(btnPersonal);
+        handleCategoryNav("PERSONAL", "sidebar.personal", btnPersonal);
     }
 
     /**
      * Navega a la vista de tareas de la categoría Estudios.
      */
     @FXML private void handleCategoryEstudios() {
-        activeProjectDetailController = null;
-        viewingAllTasks = false;
-        removeOverlayPanels();
-        showMainArea();
-        loadTasksByCategory("ESTUDIOS", LanguageManager.getInstance().get("sidebar.estudios"));
-        setSidebarActive(btnEstudios);
+        handleCategoryNav("ESTUDIOS", "sidebar.estudios", btnEstudios);
     }
 
     /**
      * Navega a la vista de tareas de la categoría Trabajo.
      */
     @FXML private void handleCategoryTrabajo()  {
+        handleCategoryNav("TRABAJO", "sidebar.trabajo", btnTrabajo);
+    }
+
+    /**
+     * Lógica común de navegación a una categoría de tareas.
+     * Evita duplicar el mismo bloque en los tres handlers de categoría.
+     *
+     * @param category Código de categoría ({@code "PERSONAL"}, {@code "ESTUDIOS"} o {@code "TRABAJO"}).
+     * @param langKey Clave i18n del título a mostrar en la cabecera.
+     * @param btn Botón del sidebar a marcar como activo.
+     */
+    private void handleCategoryNav(String category, String langKey, Button btn) {
         activeProjectDetailController = null;
         viewingAllTasks = false;
         removeOverlayPanels();
         showMainArea();
-        loadTasksByCategory("TRABAJO",  LanguageManager.getInstance().get("sidebar.trabajo"));
-        setSidebarActive(btnTrabajo);
+        loadTasksByCategory(category, lm.get(langKey));
+        setSidebarActive(btn);
     }
 
     /**
@@ -1262,6 +1430,7 @@ public class MainController {
         selectedProjectId = null;
         selectedCategory  = null;
         removeOverlayPanels();
+
         try {
             FXMLLoader loader = new FXMLLoader(
                     getClass().getResource("/com/taskmaster/taskmasterfrontend/calendar-view.fxml"),
@@ -1269,13 +1438,17 @@ public class MainController {
             );
             VBox calendarView = loader.load();
             HBox.setHgrow(calendarView, Priority.ALWAYS);
-            calendarView.setUserData("settings"); // usa "settings" para que swapMainAreaWith lo limpie
+            // Usar "settings" para que swapMainAreaWith lo limpie correctamente
+            calendarView.setUserData("settings");
+
             CalendarController controller = loader.getController();
-            controller.setOnOpenTask(task -> openTaskDetail(task));
+            controller.setOnOpenTask(this::openTaskDetail);
+
             setSidebarActive(btnCalendar);
             swapMainAreaWith(calendarView);
+
         } catch (Exception e) {
-            showAlert("error.title", "error.open.calendar");
+            showAlert("error.open.calendar");
         }
     }
 
@@ -1284,27 +1457,33 @@ public class MainController {
      * renderiza en el área principal con los filtros visibles.
      *
      * @param category Código de categoría ({@code "PERSONAL"}, {@code "ESTUDIOS"} o {@code "TRABAJO"}).
-     * @param title    Título a mostrar en la cabecera del área principal.
+     * @param title Título a mostrar en la cabecera del área principal.
      */
     private void loadTasksByCategory(String category, String title) {
         removeOverlayPanels();
         showMainArea();
         selectedProjectId = null;
-        selectedCategory  = category;
+        selectedCategory = category;
         areaTitle.setText(title);
         showFilters();
-        new Thread(() -> {
+
+        Thread t = new Thread(() -> {
             try {
+                // Codificar la categoría para evitar inyección en la URL
+                String encodedCat = URLEncoder.encode(category, StandardCharsets.UTF_8);
                 HttpResponse<String> r = AppContext.getInstance()
-                        .getApiService().get("/api/tasks/category/" + category);
+                        .getApiService().get("/api/tasks/category/" + encodedCat);
                 if (r.statusCode() == 200) {
                     JsonNode tasks = objectMapper.readTree(r.body());
                     Platform.runLater(() -> renderTasks(tasks));
                 }
             } catch (Exception e) {
-                Platform.runLater(() -> showAlert("error.title", "error.load.tasks"));
+                Platform.runLater(() -> showAlert("error.load.tasks"));
             }
-        }).start();
+        });
+        t.setName("taskmaster-load-category");
+        t.setDaemon(true);
+        t.start();
     }
 
     /**
@@ -1317,7 +1496,8 @@ public class MainController {
         removeOverlayPanels();
         showMainArea();
         showFilters();
-        new Thread(() -> {
+
+        Thread t = new Thread(() -> {
             try {
                 HttpResponse<String> r = AppContext.getInstance()
                         .getApiService().get("/api/tasks?projectId=" + projectId);
@@ -1326,132 +1506,18 @@ public class MainController {
                     Platform.runLater(() -> renderTasks(tasks));
                 }
             } catch (Exception e) {
-                Platform.runLater(() -> showAlert("error.title", "error.load.tasks"));
-            }
-        }).start();
-    }
-
-    // ── Filtros ───────────────────────────────────────────────────────────────
-
-    /**
-     * Aplica el filtro de estado seleccionado sobre la lista de tareas actual.
-     * Si hay un proyecto activo, consulta el backend; si no, filtra las tarjetas
-     * ya renderizadas en el contenedor.
-     */
-    @FXML
-    private void handleStatusFilter() {
-        String selected = statusFilter.getValue();
-        if (selected == null || selected.equals("Todos")) { reloadTasks(); return; }
-        if (selectedProjectId != null) {
-            new Thread(() -> {
-                try {
-                    HttpResponse<String> r = AppContext.getInstance().getApiService()
-                            .get("/api/tasks/filter/status?projectId=" + selectedProjectId + "&status=" + selected);
-                    if (r.statusCode() == 200) {
-                        JsonNode tasks = objectMapper.readTree(r.body());
-                        Platform.runLater(() -> renderTasks(tasks));
-                    }
-                } catch (Exception e) {
-                    Platform.runLater(() -> showAlert("error.title", "error.filter.tasks"));
-                }
-            }).start();
-        } else filterTaskCardsByStatus(selected);
-    }
-
-    /**
-     * Aplica el filtro de prioridad seleccionado sobre la lista de tareas actual.
-     * Si hay un proyecto activo, consulta el backend; si no, filtra las tarjetas
-     * ya renderizadas en el contenedor.
-     */
-    @FXML
-    private void handlePriorityFilter() {
-        String selected = priorityFilter.getValue();
-        if (selected == null || selected.equals("Todas")) { reloadTasks(); return; }
-        if (selectedProjectId != null) {
-            new Thread(() -> {
-                try {
-                    HttpResponse<String> r = AppContext.getInstance().getApiService()
-                            .get("/api/tasks/filter/priority?projectId=" + selectedProjectId + "&priority=" + selected);
-                    if (r.statusCode() == 200) {
-                        JsonNode tasks = objectMapper.readTree(r.body());
-                        Platform.runLater(() -> renderTasks(tasks));
-                    }
-                } catch (Exception e) {
-                    Platform.runLater(() -> showAlert("error.title", "error.filter.tasks"));
-                }
-            }).start();
-        } else filterTaskCardsByPriority(selected);
-    }
-
-    /**
-     * Filtra las tarjetas visibles del contenedor de tareas según el estado indicado.
-     *
-     * @param status Código de estado a mostrar.
-     */
-    private void filterTaskCardsByStatus(String status) {
-        taskContainer.getChildren().forEach(node -> {
-            if (node instanceof VBox wrapper && !wrapper.getChildren().isEmpty()
-                    && wrapper.getChildren().getFirst() instanceof HBox card) {
-                boolean match = status.equals(card.getProperties().get("status"));
-                wrapper.setVisible(match); wrapper.setManaged(match);
+                Platform.runLater(() -> showAlert("error.load.tasks"));
             }
         });
+        t.setName("taskmaster-load-project-tasks");
+        t.setDaemon(true);
+        t.start();
+
     }
 
-    /**
-     * Filtra las tarjetas visibles del contenedor de tareas según la prioridad indicada.
-     *
-     * @param priority Código de prioridad a mostrar.
-     */
-    private void filterTaskCardsByPriority(String priority) {
-        taskContainer.getChildren().forEach(node -> {
-            if (node instanceof VBox wrapper && !wrapper.getChildren().isEmpty()
-                    && wrapper.getChildren().getFirst() instanceof HBox card) {
-                boolean match = priority.equals(card.getProperties().get("priority"));
-                wrapper.setVisible(match); wrapper.setManaged(match);
-            }
-        });
-    }
-
-    /**
-     * Ordena las tarjetas del contenedor según el criterio seleccionado en el combo
-     * de orden (título, ID, fecha límite o prioridad).
-     */
-    private void handleSortFilter() {
-        String sort = sortFilter.getValue();
-        if (sort == null || sort.equals("Ordenar por")) return;
-
-        List<Node> wrappers = new ArrayList<>(taskContainer.getChildren());
-        wrappers.sort((a, b) -> {
-            if (!(a instanceof VBox va) || !(b instanceof VBox vb)) return 0;
-            if (va.getChildren().isEmpty() || vb.getChildren().isEmpty()) return 0;
-            if (!(va.getChildren().get(0) instanceof HBox ca) ||
-                    !(vb.getChildren().get(0) instanceof HBox cb)) return 0;
-
-            switch (sort) {
-                case "Título A-Z" -> {
-                    String ta = getCardTitle(ca);
-                    String tb = getCardTitle(cb);
-                    return ta.compareToIgnoreCase(tb);
-                }
-                case "Título Z-A" -> {
-                    String ta = getCardTitle(ca);
-                    String tb = getCardTitle(cb);
-                    return tb.compareToIgnoreCase(ta);
-                }
-                case "ID ↑" -> {
-                    long ia = getCardId(ca), ib = getCardId(cb);
-                    return Long.compare(ia, ib);
-                }
-                case "ID ↓" -> {
-                    long ia = getCardId(ca), ib = getCardId(cb);
-                    return Long.compare(ib, ia);
-                }
-            }
-            return 0;
-        });
-        taskContainer.getChildren().setAll(wrappers);
-    }
+    // -------------------------------------------------------------------------
+    // Filtros
+    // -------------------------------------------------------------------------
 
     /**
      * Alterna la dirección de orden (ascendente/descendente) y vuelve a
@@ -1460,7 +1526,7 @@ public class MainController {
     @FXML
     private void handleSortDirection() {
         sortAscending = !sortAscending;
-        // Actualizar texto del botón (necesitas el @FXML ref)
+        // Actualizar icono del botón según la dirección
         sortDirectionIcon.setIconLiteral(sortAscending ? "fas-arrow-up" : "fas-arrow-down");
         applyFiltersAndSort();
     }
@@ -1475,83 +1541,23 @@ public class MainController {
     private int priorityOrder(String p) {
         return switch (p) {
             case "URGENT" -> 0;
-            case "HIGH"   -> 1;
-            case "MEDIUM" -> 2;
-            case "LOW"    -> 3;
-            default       -> 2;
+            case "HIGH" -> 1;
+            case "LOW" -> 3;
+            default -> 2; // MEDIUM y cualquier desconocido
         };
     }
 
-    /**
-     * Renderiza una lista de tareas ya filtrada en el contenedor principal.
-     *
-     * @param tasks Lista de nodos JSON de tareas a mostrar.
-     */
-    private void renderFilteredTasks(List<JsonNode> tasks) {
-        taskContainer.getChildren().clear();
-        taskContainer.getChildren().add(emptyLabel);
-        if (tasks.isEmpty()) {
-            emptyLabel.setText(lm.get("tasks.empty.filter"));
-            emptyLabel.setVisible(true);
-            emptyLabel.setManaged(true);
-            return;
-        }
-        emptyLabel.setVisible(false);
-        emptyLabel.setManaged(false);
-        for (JsonNode task : tasks) {
-            HBox card = createTaskCard(task);
-            VBox wrapper = new VBox(card);
-            wrapper.setStyle("-fx-padding: 0 20 0 20;");
-            taskContainer.getChildren().add(wrapper);
-        }
-    }
-
-    /**
-     * Extrae el texto del título de una tarjeta de tarea buscando el
-     * {@link Label} con {@code HGrow=ALWAYS}.
-     *
-     * @param card Tarjeta de tarea.
-     * @return Texto del título, o cadena vacía si no se encuentra.
-     */
-    private String getCardTitle(HBox card) {
-        // El título es el Label con HGrow=ALWAYS (segundo hijo tras el checkbox)
-        return card.getChildren().stream()
-                .filter(n -> n instanceof Label && HBox.getHgrow(n) == Priority.ALWAYS)
-                .map(n -> ((Label) n).getText())
-                .findFirst().orElse("");
-    }
-
-    /**
-     * Extrae el identificador de tarea almacenado en las propiedades de la tarjeta.
-     *
-     * @param card Tarjeta de tarea.
-     * @return Identificador de la tarea, o {@code 0} si no está disponible.
-     */
-    private long getCardId(HBox card) {
-        Object id = card.getProperties().get("taskId");
-        return id instanceof Long l ? l : 0L;
-    }
-
-    // ── Overlays ──────────────────────────────────────────────────────────────
+    // -------------------------------------------------------------------------
+    // Vistas overlay (ajustes, seguridad, papelera, ayuda)
+    // -------------------------------------------------------------------------
 
     /**
      * Navega a la vista de ajustes y la muestra en el área principal.
      */
     @FXML
     private void handleSettings() {
-        try {
-            FXMLLoader loader = new FXMLLoader(
-                    getClass().getResource("/com/taskmaster/taskmasterfrontend/settings-view.fxml"),
-                    LanguageManager.getInstance().getBundle()
-            );
-            VBox settingsView = loader.load();
-            HBox.setHgrow(settingsView, Priority.ALWAYS);
-            settingsView.setUserData("settings");
-            setSidebarActive(btnSettings);
-            swapMainAreaWith(settingsView);
-        } catch (Exception e) {
-            showAlert("error.title", "error.open.settings");
-        }
+        openSettingsView(
+                "/com/taskmaster/taskmasterfrontend/settings-view.fxml", btnSettings);
     }
 
     /**
@@ -1559,18 +1565,32 @@ public class MainController {
      */
     @FXML
     private void handleSecurity() {
+        openSettingsView(
+                "/com/taskmaster/taskmasterfrontend/security-view.fxml", btnSecurity);
+    }
+
+    /**
+     * Lógica común para abrir vistas de tipo "ajustes" (settings, security).
+     * Carga el FXML indicado, le asigna userData {@code "settings"} para que
+     * {@link #clearOverlays()} lo elimine correctamente, y marca el botón activo.
+     *
+     * @param fxmlPath   Ruta del recurso FXML a cargar.
+     * @param sidebarBtn Botón del sidebar a marcar como activo.
+     * @param <T>        Tipo del nodo raíz del FXML (VBox, ScrollPane, etc.).
+     */
+    private <T extends Parent> void openSettingsView(String fxmlPath, Button sidebarBtn) {
         try {
             FXMLLoader loader = new FXMLLoader(
-                    getClass().getResource("/com/taskmaster/taskmasterfrontend/security-view.fxml"),
+                    getClass().getResource(fxmlPath),
                     LanguageManager.getInstance().getBundle()
             );
-            ScrollPane securityView = loader.load();
-            HBox.setHgrow(securityView, Priority.ALWAYS);
-            securityView.setUserData("settings");
-            setSidebarActive(btnSecurity);
-            swapMainAreaWith(securityView);
+            T view = loader.load();
+            HBox.setHgrow(view, Priority.ALWAYS);
+            view.setUserData("settings");
+            setSidebarActive(sidebarBtn);
+            swapMainAreaWith(view);
         } catch (Exception e) {
-            showAlert("error.title", "error.open.settings");
+            showAlert("error.open.settings");
         }
     }
 
@@ -1588,19 +1608,22 @@ public class MainController {
             VBox trashView = loader.load();
             HBox.setHgrow(trashView, Priority.ALWAYS);
             trashView.setUserData("trash");
+
             TrashController controller = loader.getController();
             trashController = controller;
+            // Al restaurar un elemento, refrescar el sidebar y la vista activa
             controller.setOnTrashChanged(() -> { loadProjects(); reloadTasks(); });
+
             setSidebarActive(btnTrash);
             swapMainAreaWith(trashView);
         } catch (IOException e) {
-            showAlert("error.title", "error.open.trash");
+            showAlert("error.open.trash");
         }
     }
 
     /**
-     * Muestra el menú contextual de ayuda con las opciones "Manual de usuario"
-     * y "Acerca de TaskMaster".
+     * Muestra el menú contextual de ayuda con las opciones
+     * "Manual de usuario" y "Acerca de TaskMaster".
      */
     @FXML
     private void handleHelp() {
@@ -1620,51 +1643,51 @@ public class MainController {
 
     /**
      * Abre el manual de usuario en el navegador predeterminado del sistema.
-     * <p>
-     * Extrae el archivo HTML del JAR a un fichero temporal y lo abre con
-     * {@link Desktop#browse(java.net.URI)}. El fichero temporal se elimina
-     * automáticamente al cerrar la aplicación.
-     * </p>
      *
-     * @throws IllegalStateException si el recurso del manual no se encuentra en el classpath
+     * <p>Extrae el archivo HTML y las imágenes del JAR a un directorio temporal
+     * y lo abre con {@link Desktop#browse(java.net.URI)}. Los ficheros temporales
+     * se eliminan automáticamente al cerrar la JVM.</p>
      */
     @FXML
     private void handleOpenManual() {
         try {
-            URL resource = getClass().getResource(
-                    "/com/taskmaster/taskmasterfrontend/help/manual_usuario.html"
-            );
+            URL resource = getClass().getResource("/com/taskmaster/taskmasterfrontend/help/manual_usuario.html");
             if (resource == null) {
                 throw new IllegalStateException("Manual de usuario no encontrado en el classpath");
             }
 
-            // Crear carpeta temporal para el manual
+            // Crear directorio temporal para el manual
             Path tempDir = Files.createTempDirectory("taskmaster_manual_");
             tempDir.toFile().deleteOnExit();
 
-            // Copiar el HTML
+            // Copiar el HTML principal
             Path tempHtml = tempDir.resolve("manual_usuario.html");
             try (InputStream is = resource.openStream()) {
                 Files.copy(is, tempHtml, StandardCopyOption.REPLACE_EXISTING);
             }
             tempHtml.toFile().deleteOnExit();
 
-            // Copiar las imágenes
+            // Copiar las imágenes al subdirectorio img/
             String[] imagenes = {
-                    "icon_128.png", "img-about.png", "img-all-tasks.png", "img-calendar.png", "img-help.png",
-                    "img-home.png", "img-login.png", "img-main.png", "img-new-project.png", "img-new-task.png",
-                    "img-new-worklog.png", "img-profile.png", "img-project-detail.png", "img-register.png",
-                    "img-security.png", "img-settings-1.png", "img-settings-2.png", "img-task-detail.png",
-                    "img-topbar.png", "img-trash.png"
+                    "icon_128.png", "img-about.png", "img-all-tasks.png", "img-calendar.png",
+                    "img-help.png", "img-home.png", "img-login.png", "img-main.png",
+                    "img-new-project.png", "img-new-task.png", "img-new-worklog.png",
+                    "img-profile.png", "img-project-detail.png", "img-register.png",
+                    "img-security.png", "img-settings-1.png", "img-settings-2.png",
+                    "img-task-detail.png", "img-topbar.png", "img-trash.png"
             };
+
             Path imgDir = tempDir.resolve("img");
             Files.createDirectories(imgDir);
             imgDir.toFile().deleteOnExit();
 
             for (String img : imagenes) {
+                // SEGURIDAD: validar que el nombre no contiene separadores de ruta
+                if (img.contains("/") || img.contains("\\") || img.contains("..")) {
+                    continue;
+                }
                 URL imgResource = getClass().getResource(
-                        "/com/taskmaster/taskmasterfrontend/help/img/" + img
-                );
+                        "/com/taskmaster/taskmasterfrontend/help/img/" + img);
                 if (imgResource != null) {
                     Path dest = imgDir.resolve(img);
                     try (InputStream is = imgResource.openStream()) {
@@ -1673,10 +1696,12 @@ public class MainController {
                     dest.toFile().deleteOnExit();
                 }
             }
+
             Desktop.getDesktop().browse(tempHtml.toFile().toURI());
 
         } catch (IllegalStateException | IOException e) {
-            e.printStackTrace();
+            // Informar al usuario sin exponer el stack trace en consola
+            showAlert("error.open.manual");
         }
     }
 
@@ -1686,41 +1711,43 @@ public class MainController {
     private void showAboutView() {
         try {
             FXMLLoader loader = new FXMLLoader(
-                    getClass().getResource(
-                            "/com/taskmaster/taskmasterfrontend/about-view.fxml"),
+                    getClass().getResource("/com/taskmaster/taskmasterfrontend/about-view.fxml"),
                     lm.getBundle()
             );
             VBox view = loader.load();
             HBox.setHgrow(view, Priority.ALWAYS);
-            view.setUserData("settings"); // reutilizamos "settings" para que swapMainAreaWith lo limpie
+            // Reutilizar "settings" para que swapMainAreaWith lo limpie
+            view.setUserData("settings");
             clearSidebarSelection();
             swapMainAreaWith(view);
         } catch (Exception e) {
-            e.printStackTrace();
-            showAlert("error.title", "error.open.dialog");
+            showAlert("error.open.dialog");
         }
     }
 
+    // -------------------------------------------------------------------------
+    // Gestión de overlays y área principal
+    // -------------------------------------------------------------------------
+
     /**
-     * Oculta el área principal, elimina cualquier overlay activo y añade
-     * el nuevo overlay al {@link HBox} central del layout.
+     * Sustituye el área principal por el overlay indicado.
+     * Oculta el área principal y elimina cualquier overlay previo antes de añadir el nuevo.
      *
      * @param overlay Nodo a mostrar como overlay en el área principal.
      */
-    private void swapMainAreaWith(javafx.scene.Node overlay) {
+    private void swapMainAreaWith(Node overlay) {
+        // Ocultar el área principal de tareas/home
         mainArea.setVisible(false);
         mainArea.setManaged(false);
+
+        // Limpiar overlays anteriores y añadir el nuevo
         HBox centerHBox = getCenterHBox();
-        centerHBox.getChildren().removeIf(n -> {
-            Object ud = n.getUserData();
-            return "trash".equals(ud) || "settings".equals(ud)
-                    || "profile".equals(ud) || "detail".equals(ud);
-        });
+        clearOverlays();
         centerHBox.getChildren().add(overlay);
     }
 
     /**
-     * Hace visible el área principal.
+     * Hace visible el área principal de tareas/home.
      */
     private void showMainArea() {
         mainArea.setVisible(true);
@@ -1728,15 +1755,20 @@ public class MainController {
     }
 
     /**
-     * Elimina todos los overlays activos (papelera, ajustes, perfil, detalle)
-     * del {@link HBox} central y muestra el área principal.
+     * Elimina todos los nodos overlay del HBox central y muestra el área principal.
+     * Usa el predicado {@link #IS_OVERLAY} para identificar qué nodos eliminar.
      */
     private void removeOverlayPanels() {
-        getCenterHBox().getChildren().removeIf(n -> {
-            Object ud = n.getUserData();
-            return "trash".equals(ud) || "settings".equals(ud) || "profile".equals(ud) || "detail".equals(ud);
-        });
+        clearOverlays();
         showMainArea();
+    }
+
+    /**
+     * Elimina todos los nodos overlay (papelera, ajustes, perfil, detalle)
+     * del {@link HBox} central del BorderPane raíz.
+     */
+    private void clearOverlays() {
+        getCenterHBox().getChildren().removeIf(IS_OVERLAY);
     }
 
     /**
@@ -1750,8 +1782,9 @@ public class MainController {
         return (HBox) root.getCenter();
     }
 
-    private static final String SIDEBAR_ACTIVE   = "sidebar-btn-active";
-    private static final String SIDEBAR_INACTIVE = "sidebar-btn";
+    // -------------------------------------------------------------------------
+    // Estado del sidebar
+    // -------------------------------------------------------------------------
 
     /**
      * Marca el botón del sidebar indicado como activo y desactiva el resto.
@@ -1760,8 +1793,8 @@ public class MainController {
      */
     private void setSidebarActive(Button active) {
         clearSidebarSelection();
-        active.getStyleClass().removeAll("sidebar-btn");
-        active.getStyleClass().add("sidebar-btn-active");
+        active.getStyleClass().removeAll(SIDEBAR_INACTIVE);
+        active.getStyleClass().add(SIDEBAR_ACTIVE);
     }
 
     /**
@@ -1771,55 +1804,115 @@ public class MainController {
      * @param projectId Identificador del proyecto activo.
      */
     private void setSidebarProjectActive(Long projectId) {
+        // Desactivar todos los botones fijos del sidebar
         for (Button btn : new Button[]{btnHome, btnAllTasks, btnPersonal,
                 btnEstudios, btnTrabajo, btnSettings, btnSecurity, btnTrash}) {
-            btn.getStyleClass().removeAll("sidebar-btn-active");
-            if (!btn.getStyleClass().contains("sidebar-btn"))
-                btn.getStyleClass().add("sidebar-btn");
+            btn.getStyleClass().removeAll(SIDEBAR_ACTIVE);
+            if (!btn.getStyleClass().contains(SIDEBAR_INACTIVE)) btn.getStyleClass().add(SIDEBAR_INACTIVE);
         }
+
+        // Actualizar filas de proyectos dinámicos
         for (Node node : projectListContainer.getChildren()) {
-            if (node instanceof HBox row) {
-                if (row.getChildren().size() >= 2 && row.getChildren().get(1) instanceof Button btn) {
-                    Object tag = row.getUserData();
-                    boolean isActive = tag instanceof Long pid && pid.equals(projectId);
-                    btn.getStyleClass().removeAll(
-                            "sidebar-project-btn", "sidebar-project-btn-hover", "sidebar-project-btn-active");
-                    btn.getStyleClass().add(isActive
-                            ? "sidebar-project-btn-active"
-                            : "sidebar-project-btn");
-                }
-                if (row.getChildren().size() >= 3 && row.getChildren().get(2) instanceof Button dots) {
-                    dots.getStyleClass().removeAll("sidebar-project-dots-visible");
-                    if (!dots.getStyleClass().contains("sidebar-project-dots"))
-                        dots.getStyleClass().add("sidebar-project-dots");
-                }
+            if (!(node instanceof HBox row)) continue;
+
+            if (row.getChildren().size() >= 2 && row.getChildren().get(1) instanceof Button btn) {
+                Object tag     = row.getUserData();
+                boolean active = tag instanceof Long pid && pid.equals(projectId);
+                btn.getStyleClass().removeAll(
+                        "sidebar-project-btn",
+                        "sidebar-project-btn-hover",
+                        "sidebar-project-btn-active");
+                btn.getStyleClass().add(active ? "sidebar-project-btn-active" : "sidebar-project-btn");
+            }
+
+            // Ocultar puntos suspensivos cuando no está en hover
+            if (row.getChildren().size() >= 3 && row.getChildren().get(2) instanceof Button dots) {
+                dots.getStyleClass().removeAll("sidebar-project-dots-visible");
+                if (!dots.getStyleClass().contains("sidebar-project-dots"))
+                    dots.getStyleClass().add("sidebar-project-dots");
             }
         }
     }
 
     /**
-     * Muestra la barra de filtros y el campo de búsqueda,
+     * Elimina la selección activa de todos los botones del sidebar
+     * y de todas las filas de proyectos dinámicos.
+     */
+    private void clearSidebarSelection() {
+        // Botones fijos del sidebar
+        for (Button btn : new Button[]{btnHome, btnAllTasks, btnPersonal, btnEstudios,
+                btnTrabajo, btnCalendar, btnSettings, btnSecurity, btnTrash, btnHelp}) {
+            btn.getStyleClass().removeAll(SIDEBAR_ACTIVE);
+            if (!btn.getStyleClass().contains(SIDEBAR_INACTIVE)) btn.getStyleClass().add(SIDEBAR_INACTIVE);
+        }
+
+        // Filas de proyectos dinámicos
+        for (Node node : projectListContainer.getChildren()) {
+            if (!(node instanceof HBox row)) continue;
+
+            if (row.getChildren().size() >= 2 && row.getChildren().get(1) instanceof Button b) {
+                b.getStyleClass().removeAll("sidebar-project-btn-active");
+                if (!b.getStyleClass().contains("sidebar-project-btn")) b.getStyleClass().add("sidebar-project-btn");
+            }
+
+            if (row.getChildren().size() >= 3 && row.getChildren().get(2) instanceof Button dots) {
+                dots.setStyle("-fx-background-color: transparent; -fx-text-fill: transparent; "
+                        + "-fx-font-size: 10px; -fx-font-weight: bold; -fx-cursor: hand; "
+                        + "-fx-padding: 2 6 2 6; -fx-background-radius: 6px;");
+            }
+        }
+    }
+
+    // -------------------------------------------------------------------------
+    // Barra de filtros y búsqueda
+    // -------------------------------------------------------------------------
+
+    /**
+     * Muestra la barra de filtros y el campo de búsqueda, restablece todos los filtros a sus valores por defecto
      * y actualiza el texto del botón de creación a "Nueva tarea".
      */
     private void showFilters() {
-        resetComboBox(statusFilter,   lm.get("common.status"));
-        resetComboBox(priorityFilter, lm.get("common.priority"));
-        resetComboBox(sortFilter,     lm.get("sort.criteria"));
-        sortAscending = true;
-        sortDirectionIcon.setIconLiteral("fas-arrow-up");
+        // Limpiar filtros antes de mostrar la barra
+        resetAllFilters();
         taskFiltersBar.setVisible(true);
         taskFiltersBar.setManaged(true);
         showSearch();
-        createButton.setText(LanguageManager.getInstance().get("topbar.create.task"));
+
+        // En esta vista siempre se crea una tarea, no un proyecto
+        createButton.setText(lm.get("topbar.create.task"));
         Node chevron = createButton.lookup(".btn-create-chevron");
-        if (chevron != null) {
-            chevron.setVisible(false);
-            chevron.setManaged(false);
-        }
+        if (chevron != null) { chevron.setVisible(false); chevron.setManaged(false); }
+
         Label createLabel = (Label) createButton.lookup(".btn-create-label");
-        if (createLabel != null) {
-            createLabel.setText(LanguageManager.getInstance().get("topbar.create.task"));
-        }
+        if (createLabel != null) createLabel.setText(lm.get("topbar.create.task"));
+    }
+
+    /**
+     * Oculta la barra de filtros y el campo de búsqueda, y restablece el texto del botón de creación al modo home.
+     */
+    private void hideFilters() {
+        taskFiltersBar.setVisible(false);
+        taskFiltersBar.setManaged(false);
+        hideSearch();
+
+        createButton.setText(lm.get("topbar.create"));
+        Node chevron = createButton.lookup(".btn-create-chevron");
+        if (chevron != null) { chevron.setVisible(true); chevron.setManaged(true); }
+
+        Label createLabel = (Label) createButton.lookup(".btn-create-label");
+        if (createLabel != null) createLabel.setText(lm.get("topbar.create"));
+    }
+
+    /**
+     * Restablece los tres combos de filtro a su estado sin selección y la dirección de orden a ascendente.
+     * Centraliza la lógica duplicada entre {@link #showFilters()} y {@link #handleClearFilters()}.
+     */
+    private void resetAllFilters() {
+        resetComboBox(statusFilter, lm.get("common.status"));
+        resetComboBox(priorityFilter, lm.get("common.priority"));
+        resetComboBox(sortFilter, lm.get("sort.criteria"));
+        sortAscending = true;
+        sortDirectionIcon.setIconLiteral("fas-arrow-up");
     }
 
     /**
@@ -1830,7 +1923,6 @@ public class MainController {
      * @param promptText Texto de placeholder a mostrar.
      */
     private void resetComboBox(ComboBox<String> combo, String promptText) {
-        String currentValue = combo.getValue();
         combo.setValue(null);
         combo.setButtonCell(new ListCell<>() {
             @Override
@@ -1845,26 +1937,6 @@ public class MainController {
                 }
             }
         });
-    }
-
-    /**
-     * Oculta la barra de filtros y el campo de búsqueda,
-     * y restablece el texto del botón de creación.
-     */
-    private void hideFilters() {
-        taskFiltersBar.setVisible(false);
-        taskFiltersBar.setManaged(false);
-        hideSearch();
-        createButton.setText(lm.get("topbar.create"));
-        Node chevron = createButton.lookup(".btn-create-chevron");
-        if (chevron != null) {
-            chevron.setVisible(true);
-            chevron.setManaged(true);
-        }
-        Label createLabel = (Label) createButton.lookup(".btn-create-label");
-        if (createLabel != null) {
-            createLabel.setText(lm.get("topbar.create"));
-        }
     }
 
     /**
@@ -1887,42 +1959,43 @@ public class MainController {
 
     /**
      * Filtra las tarjetas visibles del contenedor de tareas en tiempo real
-     * según el texto introducido en el campo de búsqueda, buscando por
-     * título y por identificador numérico de la tarea.
+     * según el texto introducido en el campo de búsqueda.
+     * Busca coincidencia tanto en el título como en el identificador numérico.
      */
     @FXML
     private void handleSearch() {
         String query = searchField.getText().trim().toLowerCase();
+
         taskContainer.getChildren().forEach(node -> {
-            if (node instanceof VBox wrapper && !wrapper.getChildren().isEmpty()
-            && wrapper.getChildren().get(0) instanceof HBox card) {
-                boolean match = true;
+            if (!(node instanceof VBox wrapper) || wrapper.getChildren().isEmpty()) return;
+            if (!(wrapper.getChildren().getFirst() instanceof HBox card)) return;
 
-                if (!query.isEmpty()) {
+            boolean match = true;
+            if (!query.isEmpty()) {
+                // Comparar con el ID numérico de la tarea
+                Object idProp = card.getProperties().get("taskId");
+                boolean matchesId = idProp instanceof Long l && String.valueOf(l).contains(query);
 
-                    // Buscar por ID numérico
-                    Object idProp = card.getProperties().get("taskId");
-                    boolean matchesId = idProp instanceof Long l &&
-                            String.valueOf(l).contains(query);
+                // Comparar con el texto del título (Label con HGrow=ALWAYS)
+                boolean matchesTitle = card.getChildren().stream()
+                        .filter(n -> n instanceof Label && HBox.getHgrow(n) == Priority.ALWAYS)
+                        .map(n -> ((Label) n).getText().toLowerCase())
+                        .anyMatch(t -> t.contains(query));
 
-                    // Buscar por título
-                    boolean matchesTitle = card.getChildren().stream()
-                            .filter(n -> n instanceof Label && HBox.getHgrow(n) == Priority.ALWAYS)
-                            .map(n -> ((Label) n).getText().toLowerCase())
-                            .anyMatch(t -> t.contains(query));
-                    match = matchesId || matchesTitle;
-                }
-                wrapper.setVisible(match);
-                wrapper.setManaged(match);
+                match = matchesId || matchesTitle;
             }
+
+            wrapper.setVisible(match);
+            wrapper.setManaged(match);
         });
     }
 
-    // ── Diálogos ──────────────────────────────────────────────────────────────
+    // -------------------------------------------------------------------------
+    // Diálogos modales
+    // -------------------------------------------------------------------------
 
     /**
-     * Abre el diálogo modal de creación de nuevo proyecto y recarga
-     * el sidebar y las tareas al crearlo.
+     * Abre el diálogo modal de creación de nuevo proyecto y recarga el sidebar y las tareas al crearlo.
      */
     @FXML
     private void handleNewProject() {
@@ -1933,11 +2006,10 @@ public class MainController {
             );
             VBox root = loader.load();
             NewProjectController controller = loader.getController();
-
             controller.setOnProjectCreated(() -> { loadProjects(); reloadTasks(); });
             showAsDialog(root, lm.get("new.project.title"));
         } catch (IOException e) {
-            showAlert("error.title", "error.open.dialog");
+            showAlert("error.open.dialog");
         }
     }
 
@@ -1947,10 +2019,6 @@ public class MainController {
      */
     @FXML
     private void handleNewTask() {
-        final Long currentProjectId = selectedProjectId;
-        final String currentCategory = selectedCategory;
-        final String currentTitle = areaTitle.getText();
-
         try {
             FXMLLoader loader = new FXMLLoader(
                     getClass().getResource("/com/taskmaster/taskmasterfrontend/new-task-dialog.fxml"),
@@ -1959,15 +2027,18 @@ public class MainController {
             VBox root = loader.load();
             NewTaskController controller = loader.getController();
 
+            // Preseleccionar proyecto si hay uno activo
             controller.initData(selectedProjectId);
-            if (currentCategory != null) {
-                controller.setPreSelectedCategory(currentCategory);
+
+            // Preseleccionar categoría si se está viendo una categoría concreta
+            if (selectedCategory != null) {
+                controller.setPreSelectedCategory(selectedCategory);
             }
 
             controller.setOnTaskCreated(this::reloadTasks);
             showAsDialog(root, lm.get("new.task.title"));
         } catch (IOException e) {
-            showAlert("error.title", "error.open.dialog");
+            showAlert("error.open.dialog");
         }
     }
 
@@ -1975,7 +2046,7 @@ public class MainController {
      * Abre el diálogo modal de edición de un proyecto y, al guardarlo,
      * recarga el sidebar y actualiza la vista de detalle si está activa.
      *
-     * @param projectId   Identificador del proyecto a editar.
+     * @param projectId Identificador del proyecto a editar.
      * @param projectName Nombre actual del proyecto.
      */
     private void handleEditProject(Long projectId, String projectName) {
@@ -1989,24 +2060,27 @@ public class MainController {
             controller.initData(projectId, projectName);
             controller.setOnProjectUpdated(() -> {
                 loadProjects();
-                if (activeProjectDetailController != null) {
-                    new Thread(() -> {
-                        try {
-                            HttpResponse<String> r = AppContext.getInstance()
-                                    .getApiService().get("/api/projects/" + projectId);
-                            if (r.statusCode() == 200) {
-                                JsonNode updated = objectMapper.readTree(r.body());
-                                Platform.runLater(() -> activeProjectDetailController.initData(updated));
-                            }
-                        } catch (Exception ignored) {}
-                    }).start();
-                } else {
-                    reloadTasks();
-                }
+                Thread t = new Thread(() -> {
+                    try {
+                        HttpResponse<String> r = AppContext.getInstance()
+                                .getApiService().get("/api/projects/" + projectId);
+                        if (r.statusCode() == 200) {
+                            JsonNode updated = objectMapper.readTree(r.body());
+                            Platform.runLater(() -> {
+                                selectedProjectId = projectId;
+                                setSidebarProjectActive(projectId);
+                                openProjectDetail(updated);
+                            });
+                        }
+                    } catch (Exception ignored) {}
+                });
+                t.setName("taskmaster-refresh-edited-project");
+                t.setDaemon(true);
+                t.start();
             });
             showAsDialog(root, lm.get("edit.project.title"));
         } catch (IOException e) {
-            showAlert("error.title", "error.open.dialog");
+            showAlert("error.open.dialog");
         }
     }
 
@@ -2015,7 +2089,7 @@ public class MainController {
      * el proyecto del backend, recarga el sidebar y navega al home si
      * el proyecto eliminado era el activo.
      *
-     * @param projectId   Identificador del proyecto a eliminar.
+     * @param projectId Identificador del proyecto a eliminar.
      * @param projectName Nombre del proyecto, usado en el mensaje de confirmación.
      */
     private void handleDeleteProject(Long projectId, String projectName) {
@@ -2023,39 +2097,45 @@ public class MainController {
         confirm.setTitle(lm.get("confirm.delete.title.project"));
         confirm.setHeaderText(null);
         confirm.setContentText(
-                java.text.MessageFormat.format(lm.get("confirm.delete.project"), projectName));
+                MessageFormat.format(lm.get("confirm.delete.project"), projectName));
+
         confirm.showAndWait().ifPresent(r -> {
-            if (r == ButtonType.OK) {
-                new Thread(() -> {
-                    try {
-                        HttpResponse<String> resp = AppContext.getInstance()
-                                .getApiService().delete("/api/projects/" + projectId);
-                        Platform.runLater(() -> {
-                            if (resp.statusCode() == 200 || resp.statusCode() == 204) {
-                                if (projectId.equals(selectedProjectId) || activeProjectDetailController != null) {
-                                    activeProjectDetailController = null;
-                                    handleGoHome();
-                                }
-                                loadProjects();
-                                reloadTasks();
-                                if (trashController != null) trashController.refresh();
-                            } else showAlert("error.title", "error.delete.project");
-                        });
-                    } catch (Exception e) {
-                        Platform.runLater(() -> showAlert("error.title", "error.connection"));
-                    }
-                }).start();
-            }
+            if (r != ButtonType.OK) return;
+
+            Thread t = new Thread(() -> {
+                try {
+                    HttpResponse<String> resp = AppContext.getInstance()
+                            .getApiService().delete("/api/projects/" + projectId);
+                    Platform.runLater(() -> {
+                        if (resp.statusCode() == 200 || resp.statusCode() == 204) {
+                            // Si el proyecto eliminado era el activo, volver al home
+                            if (projectId.equals(selectedProjectId) || activeProjectDetailController != null) {
+                                activeProjectDetailController = null;
+                                handleGoHome();
+                            }
+                            loadProjects();
+                            reloadTasks();
+                            if (trashController != null) trashController.refresh();
+                        } else {
+                            showAlert("error.delete.project");
+                        }
+                    });
+                } catch (Exception e) {
+                    Platform.runLater(() -> showAlert("error.connection"));
+                }
+            });
+            t.setName("taskmaster-delete-project");
+            t.setDaemon(true);
+            t.start();
         });
     }
 
     /**
      * Abre el diálogo modal de edición de una tarea y recarga la lista al guardar.
      *
-     * @param taskId Identificador de la tarea a editar.
      * @param task   Nodo JSON con los datos actuales de la tarea.
      */
-    private void handleEditTask(Long taskId, JsonNode task) {
+    private void handleEditTask(JsonNode task) {
         try {
             FXMLLoader loader = new FXMLLoader(
                     getClass().getResource("/com/taskmaster/taskmasterfrontend/edit-task-dialog.fxml"),
@@ -2065,6 +2145,7 @@ public class MainController {
             EditTaskController controller = loader.getController();
             controller.initData(task);
             controller.setOnTaskUpdated(this::reloadTasks);
+
             Stage dialog = new Stage();
             dialog.setTitle(lm.get("common.task.edit"));
             dialog.initModality(Modality.APPLICATION_MODAL);
@@ -2074,7 +2155,7 @@ public class MainController {
             dialog.setScene(scene);
             dialog.showAndWait();
         } catch (IOException e) {
-            showAlert("error.title", "error.open.dialog");
+            showAlert("error.open.dialog");
         }
     }
 
@@ -2085,52 +2166,60 @@ public class MainController {
      * @param taskId Identificador de la tarea a eliminar.
      */
     private void handleDeleteTask(Long taskId) {
+        // Capturar el estado de navegación actual para restaurar la vista correcta tras borrar
         final Long   currentProjectId = selectedProjectId;
         final String currentCategory  = selectedCategory;
         final String currentTitle     = areaTitle.getText();
+
         Alert confirm = new Alert(Alert.AlertType.CONFIRMATION);
         confirm.setTitle(lm.get("common.delete.task.title"));
         confirm.setHeaderText(null);
         confirm.setContentText(lm.get("confirm.delete.task"));
+
         confirm.showAndWait().ifPresent(r -> {
-            if (r == ButtonType.OK) {
-                new Thread(() -> {
-                    try {
-                        HttpResponse<String> resp = AppContext.getInstance()
-                                .getApiService().delete("/api/tasks/" + taskId);
-                        Platform.runLater(() -> {
-                            if (resp.statusCode() == 200 || resp.statusCode() == 204) {
-                                if (currentProjectId != null) {
-                                    loadTasksForProject(currentProjectId);
-                                }
-                                else if (currentCategory != null) {
-                                    loadTasksByCategory(currentCategory, currentTitle);
-                                } else {
+            if (r != ButtonType.OK) return;
+
+            Thread t = new Thread(() -> {
+                try {
+                    HttpResponse<String> resp = AppContext.getInstance()
+                            .getApiService().delete("/api/tasks/" + taskId);
+                    Platform.runLater(() -> {
+                        if (resp.statusCode() == 200 || resp.statusCode() == 204) {
+                            // Recargar la vista que estaba activa antes de eliminar
+                            if (currentProjectId != null) {
+                                loadTasksForProject(currentProjectId);
+                            } else if (currentCategory != null) {
+                                loadTasksByCategory(currentCategory, currentTitle);
+                            } else {
                                 reloadTasks();
-                                }
-                                if (trashController != null) trashController.refresh();
-                            } else showAlert("error.title", "error.delete.task");
-                        });
-                    } catch (Exception e) {
-                        Platform.runLater(() -> showAlert("error.title", "error.connection"));
-                    }
-                }).start();
-            }
+                            }
+                            if (trashController != null) trashController.refresh();
+                        } else {
+                            showAlert("error.delete.task");
+                        }
+                    });
+                } catch (Exception e) {
+                    Platform.runLater(() -> showAlert("error.connection"));
+                }
+            });
+            t.setName("taskmaster-delete-task");
+            t.setDaemon(true);
+            t.start();
         });
     }
 
     /**
-     * Registra el logout en el backend, limpia la sesión en {@link AppContext}
-     * y navega a la pantalla de login.
+     * Registra el logout en el backend, limpia la sesión en {@link AppContext} y navega a la pantalla de login.
      */
     @FXML
     private void handleLogout() {
+        // Llamada síncrona para garantizar que el log se registra antes de limpiar credenciales
         try {
-            // Llamada síncrona para asegurar que el log se registra antes de limpiar credenciales
             AppContext.getInstance().getApiService().postWithAuth("/api/auth/logout", "");
         } catch (Exception ignored) {}
 
         AppContext.getInstance().logout();
+
         try {
             FXMLLoader loader = new FXMLLoader(
                     getClass().getResource("/com/taskmaster/taskmasterfrontend/login-view.fxml"),
@@ -2138,28 +2227,29 @@ public class MainController {
             );
             Stage stage = (Stage) mainArea.getScene().getWindow();
             Scene scene = new Scene(loader.load(), 400, 520);
-            scene.getStylesheets().add(getClass().getResource(
-                            "/com/taskmaster/taskmasterfrontend/themes/theme-amatista.css")
-                    .toExternalForm());
+            URL loginCss = getClass().getResource(
+                    "/com/taskmaster/taskmasterfrontend/themes/theme-amatista.css");
+            if (loginCss != null) scene.getStylesheets().add(loginCss.toExternalForm());
+
             stage.setScene(scene);
             stage.setMinWidth(400);
             stage.setMinHeight(520);
             stage.setMaximized(false);
             stage.setWidth(400);
             stage.setHeight(520);
-            stage.setScene(scene);
             stage.centerOnScreen();
             stage.setTitle("TaskMaster");
         } catch (IOException e) {
-            showAlert("error.title", "error.logout");
+            showAlert("error.logout");
         }
     }
 
-    // ── Helpers ───────────────────────────────────────────────────────────────
+    // -------------------------------------------------------------------------
+    // Helpers de navegación
+    // -------------------------------------------------------------------------
 
     /**
-     * Recarga la vista activa (proyecto, categoría, todas las tareas o home)
-     * según el estado de navegación actual.
+     * Recarga la vista activa (proyecto, categoría, todas las tareas o home) según el estado de navegación actual.
      */
     private void reloadTasks() {
         if (selectedProjectId != null) loadTasksForProject(selectedProjectId);
@@ -2169,14 +2259,28 @@ public class MainController {
     }
 
     /**
-     * Calcula las estadísticas globales de tareas del usuario a partir
-     * de los datos de la vista home.
+     * Navega hacia atrás en la pila de navegación.
+     * Si hay una vista anterior registrada la restaura; si no, elimina los overlays y muestra el área principal.
+     */
+    private void navigateBack() {
+        if (!navigationStack.isEmpty()) navigationStack.pop().run();
+        else removeOverlayPanels();
+    }
+
+    // -------------------------------------------------------------------------
+    // Helpers de estadísticas
+    // -------------------------------------------------------------------------
+
+    /**
+     * Calcula las estadísticas globales de tareas del usuario a partir de los datos de la vista home.
      *
      * @param home Nodo JSON con todos los datos de la vista home.
-     * @return Array de enteros con {@code [pendientes, en progreso, completadas, proyectos activos]}.
+     * @return Array {@code [pendientes, en progreso, completadas, proyectos activos]}.
      */
     private int[] computeStats(JsonNode home) {
         int pending = 0, inProgress = 0, done = 0, activeProjects = 0;
+
+        // Estadísticas de proyectos activos y sus tareas
         JsonNode projects = home.get("projects");
         if (projects != null && projects.isArray()) {
             activeProjects = projects.size();
@@ -2191,6 +2295,8 @@ public class MainController {
                     }
             }
         }
+
+        // Estadísticas de tareas de categorías sueltas
         for (String cat : new String[]{"personalTasks", "estudiosTasks", "trabajoTasks"}) {
             JsonNode ct = home.get(cat);
             if (ct != null && ct.isArray())
@@ -2201,17 +2307,51 @@ public class MainController {
                     else if ("DONE".equals(s)) done++;
                 }
         }
+
         return new int[]{pending, inProgress, done, activeProjects};
     }
 
     /**
-     * Calcula el número total de tareas pendientes (en estado TODO o IN_PROGRESS).
+     * Calcula el número total de tareas pendientes (estado TODO o IN_PROGRESS).
      *
      * @param home Nodo JSON con los datos de la vista home.
      * @return Número de tareas pendientes.
      */
     private int countPendingTasks(JsonNode home) {
-        int[] s = computeStats(home); return s[0] + s[1];
+        int[] s = computeStats(home);
+        return s[0] + s[1];
+    }
+
+    // -------------------------------------------------------------------------
+    // Helpers de UI
+    // -------------------------------------------------------------------------
+
+    /**
+     * Crea el checkbox circular de completar tarea para la columna de tareas próximas.
+     *
+     * @param taskId ID de la tarea a marcar como completada.
+     * @return Label configurado como botón circular.
+     */
+    private Label createUpcomingTaskCheck(Long taskId) {
+        Label check = new Label();
+        check.setMinSize(16, 16); check.setMaxSize(16, 16);
+        check.setStyle("-fx-border-color: #cccccc; -fx-border-radius: 8px; "
+                + "-fx-background-radius: 8px; -fx-cursor: hand;");
+        check.setOnMouseClicked(e -> {
+            Thread th = new Thread(() -> {
+                try {
+                    AppContext.getInstance().getApiService()
+                            .patch("/api/tasks/" + taskId + "/status?status=DONE", null);
+                    Platform.runLater(this::loadHome);
+                } catch (Exception ex) {
+                    Platform.runLater(() -> showAlert("error.update.task"));
+                }
+            });
+            th.setName("taskmaster-complete-task");
+            th.setDaemon(true);
+            th.start();
+        });
+        return check;
     }
 
     /**
@@ -2249,53 +2389,28 @@ public class MainController {
     }
 
     /**
-     * Elimina la selección activa de todos los botones del sidebar
-     * y de todas las filas de proyectos.
-     */
-    private void clearSidebarSelection() {
-        for (Button btn : new Button[]{btnHome, btnAllTasks, btnPersonal,
-                btnEstudios, btnTrabajo, btnCalendar, btnSettings, btnSecurity, btnTrash, btnHelp}) {
-            btn.getStyleClass().removeAll("sidebar-btn-active");
-            if (!btn.getStyleClass().contains("sidebar-btn"))
-                btn.getStyleClass().add("sidebar-btn");
-        }
-        for (Node node : projectListContainer.getChildren()) {
-            if (node instanceof HBox row) {
-                if (row.getChildren().size() >= 2 && row.getChildren().get(1) instanceof Button b) {
-                    b.getStyleClass().removeAll("sidebar-project-btn-active");
-                    if (!b.getStyleClass().contains("sidebar-project-btn"))
-                        b.getStyleClass().add("sidebar-project-btn");
-                }
-                if (row.getChildren().size() >= 3 && row.getChildren().get(2) instanceof Button dots) {
-                    dots.setStyle("-fx-background-color: transparent; -fx-text-fill: transparent; " +
-                            "-fx-font-size: 10px; -fx-font-weight: bold; -fx-cursor: hand; " +
-                            "-fx-padding: 2 6 2 6; -fx-background-radius: 6px;");
-                }
-            }
-        }
-    }
-
-    /**
-     * Navega hacia atrás en la pila de navegación. Si hay una vista anterior
-     * registrada la restaura; si no, elimina los overlays y muestra el área principal.
-     */
-    private void navigateBack() {
-        if (!navigationStack.isEmpty()) {
-            navigationStack.pop().run();
-        } else {
-            removeOverlayPanels();
-        }
-    }
-
-    /**
      * Crea un {@link Label} con el texto y el estilo CSS inline indicados.
      *
-     * @param text  Texto del badge.
+     * @param text Texto del badge.
      * @param style Estilo CSS inline a aplicar.
      * @return {@link Label} configurado como badge.
      */
     private Label createBadge(String text, String style) {
-        Label badge = new Label(text); badge.setStyle(style); return badge;
+        Label badge = new Label(text);
+        badge.setStyle(style);
+        return badge;
+    }
+
+    /**
+     * Genera el estilo CSS inline estándar para un badge de estado o prioridad con el color de fondo indicado.
+     *
+     * @param bgColor Color de fondo en formato hex.
+     * @return Cadena de estilo CSS inline.
+     */
+    private String badgeStyle(String bgColor) {
+        return "-fx-font-size: 10px; -fx-padding: 2 7 2 7; "
+                + "-fx-background-radius: 10px; -fx-text-fill: white; "
+                + "-fx-background-color: " + bgColor + ";";
     }
 
     /**
@@ -2313,19 +2428,19 @@ public class MainController {
     /**
      * Devuelve el estilo CSS inline del badge de categoría.
      *
-     * @param c Código de categoría.
+     * @param c Código de categoría ({@code "PERSONAL"}, {@code "ESTUDIOS"} o {@code "TRABAJO"}).
      * @return Cadena de estilo CSS con color de fondo y de texto.
      */
     private String getCategoryBadgeStyle(String c) {
         return switch (c) {
-            case "PERSONAL" -> "-fx-background-color: #f3e8ff; -fx-text-fill: #6b21a8; " +
-                    "-fx-background-radius: 10px; -fx-font-size: 10px; -fx-padding: 2 7 2 7;";
-            case "ESTUDIOS" -> "-fx-background-color: #fef3c7; -fx-text-fill: #92400e; " +
-                    "-fx-background-radius: 10px; -fx-font-size: 10px; -fx-padding: 2 7 2 7;";
-            case "TRABAJO"  -> "-fx-background-color: #dbeafe; -fx-text-fill: #1e40af; " +
-                    "-fx-background-radius: 10px; -fx-font-size: 10px; -fx-padding: 2 7 2 7;";
-            default -> "-fx-background-color: #f0f0f5; -fx-text-fill: #666666; " +
-                    "-fx-background-radius: 10px; -fx-font-size: 10px; -fx-padding: 2 7 2 7;";
+            case "PERSONAL" -> "-fx-background-color: #f3e8ff; -fx-text-fill: #6b21a8; "
+                    + "-fx-background-radius: 10px; -fx-font-size: 10px; -fx-padding: 2 7 2 7;";
+            case "ESTUDIOS" -> "-fx-background-color: #fef3c7; -fx-text-fill: #92400e; "
+                    + "-fx-background-radius: 10px; -fx-font-size: 10px; -fx-padding: 2 7 2 7;";
+            case "TRABAJO"  -> "-fx-background-color: #dbeafe; -fx-text-fill: #1e40af; "
+                    + "-fx-background-radius: 10px; -fx-font-size: 10px; -fx-padding: 2 7 2 7;";
+            default         -> "-fx-background-color: #f0f0f5; -fx-text-fill: #666666; "
+                    + "-fx-background-radius: 10px; -fx-font-size: 10px; -fx-padding: 2 7 2 7;";
         };
     }
 
@@ -2337,12 +2452,11 @@ public class MainController {
      */
     private String getStatusColor(String s) {
         return switch (s) {
-            case "TODO" -> "#95a5a6";
             case "IN_PROGRESS" -> "#3498db";
-            case "DONE" -> "#2ecc71";
-            case "SUBMITTED" -> "#8e44ad";
+            case "DONE"        -> "#2ecc71";
+            case "SUBMITTED"   -> "#8e44ad";
             case "CANCELLED"   -> "#e74c3c";
-            default -> "#95a5a6";
+            default            -> "#95a5a6"; // TODO y cualquier desconocido
         };
     }
 
@@ -2357,8 +2471,7 @@ public class MainController {
             case "URGENT" -> "#e74c3c";
             case "HIGH"   -> "#e67e22";
             case "MEDIUM" -> "#3498db";
-            case "LOW"    -> "#95a5a6";
-            default -> "#95a5a6";
+            default       -> "#95a5a6"; // LOW y cualquier desconocido
         };
     }
 
@@ -2396,15 +2509,13 @@ public class MainController {
     }
 
     /**
-     * Muestra un diálogo de información con el título y mensaje obtenidos
-     * de las claves de localización indicadas.
+     * Muestra un diálogo de información con el título y mensaje obtenidos de las claves de localización indicadas.
      *
-     * @param titleKey   Clave de localización del título.
      * @param messageKey Clave de localización del mensaje.
      */
-    private void showAlert(String titleKey, String messageKey) {
+    private void showAlert(String messageKey) {
         Alert alert = new Alert(Alert.AlertType.INFORMATION);
-        alert.setTitle(lm.get(titleKey));
+        alert.setTitle(lm.get("error.title"));
         alert.setHeaderText(null);
         alert.setContentText(lm.get(messageKey));
         alert.showAndWait();
@@ -2414,7 +2525,7 @@ public class MainController {
      * Crea un diálogo modal con el contenido indicado, aplica el tema activo
      * y lo muestra de forma bloqueante.
      *
-     * @param root  Contenido raíz a mostrar en el diálogo.
+     * @param root Contenido raíz a mostrar en el diálogo.
      * @param title Título de la ventana del diálogo.
      */
     private void showAsDialog(VBox root, String title) {
@@ -2426,43 +2537,41 @@ public class MainController {
         applyThemeToScene(scene);
         dialog.setScene(scene);
         dialog.centerOnScreen();
-        System.out.println("centrado");
         dialog.showAndWait();
     }
 
     /**
      * Aplica el tema activo del {@link ThemeManager} a la escena indicada,
-     * cargando primero el CSS base y luego el tema seleccionado.
+     * cargando primero el CSS base y luego el tema seleccionado por el usuario.
      *
      * @param scene Escena a la que aplicar el tema.
      */
     private void applyThemeToScene(Scene scene) {
-        com.taskmaster.taskmasterfrontend.util.ThemeManager tm =
-                com.taskmaster.taskmasterfrontend.util.ThemeManager.getInstance();
-        // Cargar siempre el CSS base primero
-        String baseUrl = getClass().getResource(
-                "/com/taskmaster/taskmasterfrontend/themes/theme-amatista.css") != null
-                ? getClass().getResource(
-                "/com/taskmaster/taskmasterfrontend/themes/theme-amatista.css").toExternalForm()
-                : null;
+        ThemeManager tm = ThemeManager.getInstance();
+
+        // Cargar siempre el CSS base (Amatista) como capa inferior
+        URL baseResource = getClass().getResource(
+                "/com/taskmaster/taskmasterfrontend/themes/theme-amatista.css");
+        String baseUrl = baseResource != null ? baseResource.toExternalForm() : null;
         if (baseUrl != null) scene.getStylesheets().add(baseUrl);
-        // Luego el tema activo si no es Amatista
-        String cssFile = "/com/taskmaster/taskmasterfrontend/themes/"
-                + tm.getCssFileNamePublic();
-        String themeUrl = getClass().getResource(cssFile) != null
-                ? getClass().getResource(cssFile).toExternalForm()
-                : null;
-        if (themeUrl != null && !themeUrl.equals(baseUrl))
-            scene.getStylesheets().add(themeUrl);
-        // Fondo del Scene
-        scene.setFill(javafx.scene.paint.Color.web(tm.getBgApp()));
+
+        // Añadir el tema activo encima si es diferente al base
+        String cssFile = "/com/taskmaster/taskmasterfrontend/themes/" + tm.getCssFileNamePublic();
+        URL themeRes = getClass().getResource(cssFile);
+        String themeUrl = themeRes != null ? themeRes.toExternalForm() : null;
+        if (themeUrl != null && !themeUrl.equals(baseUrl)) scene.getStylesheets().add(themeUrl);
+
+        // Establecer el color de fondo de la Scene según el tema
+        scene.setFill(Color.web(tm.getBgApp()));
     }
 
     /**
      * Actualiza los textos de todos los elementos del sidebar y de la barra
      * de filtros con las cadenas del idioma actualmente seleccionado.
+     * Se invoca automáticamente cuando cambia el bundle de idioma.
      */
     private void refreshSidebar() {
+        // Botones fijos del sidebar
         btnHome.setText(lm.get("sidebar.home"));
         btnAllTasks.setText(lm.get("sidebar.all.tasks"));
         btnPersonal.setText(lm.get("sidebar.personal"));
@@ -2472,30 +2581,40 @@ public class MainController {
         btnSecurity.setText(lm.get("sidebar.security"));
         btnTrash.setText(lm.get("sidebar.trash"));
         btnHelp.setText(lm.get("sidebar.help"));
+        btnCalendar.setText(lm.get("sidebar.calendar"));
+
+        // Barra superior
         createButton.setText(lm.get("topbar.create"));
         searchField.setPromptText(lm.get("topbar.search.prompt"));
+
+        // Etiquetas y botones de la barra de filtros
         statusFilter.setPromptText(lm.get("common.status"));
         priorityFilter.setPromptText(lm.get("common.priority"));
         sortFilter.setPromptText(lm.get("sort.criteria"));
         filterLabel.setText(lm.get("filter.label"));
         sortLabel.setText(lm.get("sort.label"));
         clearFiltersBtn.setText(lm.get("filter.clear"));
-        btnCalendar.setText(lm.get("sidebar.calendar"));
 
-        String currentStatus   = statusFilter.getValue();
-        String currentPriority = priorityFilter.getValue();
-        String currentSort     = sortFilter.getValue();
-
+        // Reemplazar los ítems de los combos con las traducciones nuevas
         statusFilter.setItems(FXCollections.observableArrayList(
-                lm.get("common.all"), lm.get("status.todo"), lm.get("status.inprogress"),
-                lm.get("status.done"), lm.get("status.cancelled")));
+                lm.get("common.all"),
+                lm.get("status.todo"),
+                lm.get("status.inprogress"),
+                lm.get("status.done"),
+                lm.get("status.cancelled")));
         priorityFilter.setItems(FXCollections.observableArrayList(
-                lm.get("common.all"), lm.get("priority.low"), lm.get("priority.medium"),
-                lm.get("priority.high"), lm.get("priority.urgent")));
+                lm.get("common.all"),
+                lm.get("priority.low"),
+                lm.get("priority.medium"),
+                lm.get("priority.high"),
+                lm.get("priority.urgent")));
         sortFilter.setItems(FXCollections.observableArrayList(
-                lm.get("sort.title"), lm.get("id"),
-                lm.get("common.duedate"), lm.get("common.priority")));
+                lm.get("sort.title"),
+                lm.get("id"),
+                lm.get("common.duedate"),
+                lm.get("common.priority")));
 
+        // Ajustar texto del botón de crear según la vista activa
         Label createLabel = (Label) createButton.lookup(".btn-create-label");
         if (createLabel != null) {
             boolean isHome = selectedProjectId == null && selectedCategory == null && !viewingAllTasks;

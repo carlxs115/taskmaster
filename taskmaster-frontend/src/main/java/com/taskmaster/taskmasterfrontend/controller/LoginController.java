@@ -79,7 +79,7 @@ public class LoginController {
         loginButton.setDisable(true);
         errorLabel.setVisible(false);
 
-        Thread thread = new Thread(() -> {
+        Thread t = new Thread(() -> {
             try {
                 // Spring Security espera el campo "username" aunque sea un email
                 var credentials = new HashMap<String, String>();
@@ -132,8 +132,8 @@ public class LoginController {
                 });
             }
         }, "login-request");
-        thread.setDaemon(true);
-        thread.start();
+        t.setDaemon(true);
+        t.start();
     }
 
     /**
@@ -201,6 +201,7 @@ public class LoginController {
 
             Stage stage = (Stage) usernameField.getScene().getWindow();
             stage.setScene(scene);
+            stage.setResizable(true);
             stage.setMaximized(true);
             stage.setMinWidth(900);
             stage.setMinHeight(600);

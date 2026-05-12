@@ -220,7 +220,7 @@ public class ProfileController {
      * @param pngBytes bytes de la imagen recortada en formato PNG
      */
     private void uploadAvatar(byte[] pngBytes) {
-        Thread thread = new Thread(() -> {
+        Thread t = new Thread(() -> {
             try {
                 HttpResponse<String> response = AppContext.getInstance().getApiService()
                         .postMultipart("/api/users/me/avatar", "file",
@@ -242,8 +242,8 @@ public class ProfileController {
                         MessageFormat.format(lm.get("profile.avatar.error.connection"), e.getMessage())));
             }
         }, "profile-upload-avatar");
-        thread.setDaemon(true);
-        thread.start();
+        t.setDaemon(true);
+        t.start();
     }
 
     /**
@@ -256,7 +256,7 @@ public class ProfileController {
         confirm.setContentText(lm.get("profile.avatar.delete.content"));
         confirm.showAndWait().ifPresent(r -> {
             if (r == ButtonType.OK) {
-                Thread thread = new Thread(() -> {
+                Thread t = new Thread(() -> {
                     try {
                         HttpResponse<String> response = AppContext.getInstance().getApiService()
                                 .delete("/api/users/me/avatar");
@@ -274,8 +274,8 @@ public class ProfileController {
                         Platform.runLater(() -> showAlert(lm.get("error.title"), lm.get("error.connection")));
                     }
                 }, "profile-remove-avatar");
-                thread.setDaemon(true);
-                thread.start();
+                t.setDaemon(true);
+                t.start();
             }
         });
     }

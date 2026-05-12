@@ -149,7 +149,7 @@ public class NewTaskController {
      * La primera opción siempre es "Sin proyecto (tarea personal)".
      */
     private void loadProjects() {
-        Thread thread = new Thread(() -> {
+        Thread t = new Thread(() -> {
             try {
                 HttpResponse<String> response = AppContext.getInstance()
                         .getApiService().get("/api/projects");
@@ -179,8 +179,8 @@ public class NewTaskController {
                 Platform.runLater(() -> showError(lm.get("new.task.error.load.projects")));
             }
         }, "new-task-load-projects");
-        thread.setDaemon(true);
-        thread.start();
+        t.setDaemon(true);
+        t.start();
     }
 
     // -------------------------------------------------------------------------
@@ -215,7 +215,7 @@ public class NewTaskController {
         String priorityEnum = priorityToEnum(priorityCombo.getValue());
         final Long finalProjectId = projectId;
 
-        Thread thread = new Thread(() -> {
+        Thread t = new Thread(() -> {
             try {
                 Map<String, Object> body = new HashMap<>();
                 body.put("title",       title);
@@ -245,8 +245,8 @@ public class NewTaskController {
                 Platform.runLater(() -> showError(lm.get("error.connection")));
             }
         }, "new-task-create");
-        thread.setDaemon(true);
-        thread.start();
+        t.setDaemon(true);
+        t.start();
     }
 
     /**

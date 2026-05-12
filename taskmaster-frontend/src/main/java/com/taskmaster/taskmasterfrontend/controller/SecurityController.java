@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.taskmaster.taskmasterfrontend.util.AppContext;
+import com.taskmaster.taskmasterfrontend.util.IconCatalog;
 import com.taskmaster.taskmasterfrontend.util.LanguageManager;
 import javafx.application.Platform;
 import javafx.fxml.FXML;
@@ -73,7 +74,7 @@ public class SecurityController {
      * Obtiene el historial de accesos del backend y lo renderiza en la vista.
      */
     private void loadAccessLog() {
-        Thread thread = new Thread(() -> {
+        Thread t = new Thread(() -> {
             try {
                 HttpResponse<String> response = AppContext.getInstance()
                         .getApiService().get("/api/access-log");
@@ -85,8 +86,8 @@ public class SecurityController {
                 log.error("Error al cargar el historial de accesos: {}", e.getMessage());
             }
         }, "security-load-access-log");
-        thread.setDaemon(true);
-        thread.start();
+        t.setDaemon(true);
+        t.start();
     }
 
     /**
@@ -175,7 +176,7 @@ public class SecurityController {
             return;
         }
 
-        Thread thread = new Thread(() -> {
+        Thread t = new Thread(() -> {
             try {
                 String body = objectMapper.writeValueAsString(
                         Map.of("currentPassword", current, "newPassword", newPass));
@@ -206,8 +207,8 @@ public class SecurityController {
                 Platform.runLater(() -> showError(lm.get("security.password.error.generic")));
             }
         }, "security-change-password");
-        thread.setDaemon(true);
-        thread.start();
+        t.setDaemon(true);
+        t.start();
     }
 
     // -------------------------------------------------------------------------
@@ -224,7 +225,27 @@ public class SecurityController {
         PasswordField pf = new PasswordField();
         pf.setPromptText(lm.get("common.password"));
 
-        VBox content = new VBox(8, new Label(lm.get("security.delete.header")), pf);
+        FontIcon warningIcon = new FontIcon(IconCatalog.UI_OVERDUE);
+        warningIcon.setIconSize(13);
+        warningIcon.setIconColor(javafx.scene.paint.Color.web("#e74c3c"));
+
+        Label warningLabel = new Label(lm.get("delete.account.warning"));
+        warningLabel.setStyle("-fx-font-weight: bold; -fx-text-fill: #e74c3c;");
+
+        HBox warningBox = new HBox(6, warningIcon, warningLabel);
+        warningBox.setAlignment(javafx.geometry.Pos.CENTER_LEFT);
+
+        Label detailLabel = new Label(lm.get("delete.account.warning.detail"));
+        detailLabel.setWrapText(true);
+        detailLabel.setStyle("-fx-text-fill: #aaaaaa; -fx-font-size: 11px;");
+
+        pf.setPromptText(lm.get("delete.account.password.prompt"));
+
+        VBox content = new VBox(8,
+                new Label(lm.get("security.delete.header")),
+                warningBox,
+                detailLabel,
+                pf);
 
         Alert dialog = new Alert(Alert.AlertType.CONFIRMATION);
         dialog.setTitle(lm.get("common.delete.account"));
@@ -318,7 +339,6 @@ public class SecurityController {
             stage.setHeight(520);
             stage.setMinWidth(400);
             stage.setMinHeight(520);
-            stage.setResizable(false);
             stage.centerOnScreen();
             stage.setTitle("TaskMaster");
         } catch (Exception e) {

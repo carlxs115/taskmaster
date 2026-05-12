@@ -99,7 +99,7 @@ public class NewProjectController {
             return;
         }
 
-        Thread thread = new Thread(() -> {
+        Thread t = new Thread(() -> {
             try {
                 String url = "/api/projects"
                         + "?name="        + URLEncoder.encode(name, StandardCharsets.UTF_8)
@@ -123,8 +123,8 @@ public class NewProjectController {
                 Platform.runLater(() -> showError(lm.get("error.connection")));
             }
         }, "new-project-create");
-        thread.setDaemon(true);
-        thread.start();
+        t.setDaemon(true);
+        t.start();
     }
 
     /**

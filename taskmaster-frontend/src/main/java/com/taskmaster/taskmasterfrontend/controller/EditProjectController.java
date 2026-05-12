@@ -99,7 +99,7 @@ public class EditProjectController {
         nameField.setText(projectName);
 
         // Cargamos los datos completos del proyecto desde el backend
-        Thread thread = new Thread(() -> {
+        Thread t = new Thread(() -> {
             try {
                 HttpResponse<String> response = AppContext.getInstance()
                         .getApiService().get("/api/projects/" + projectId);
@@ -111,8 +111,8 @@ public class EditProjectController {
                 Platform.runLater(() -> showError(lm.get("edit.project.error.load")));
             }
         }, "edit-project-load");
-        thread.setDaemon(true);
-        thread.start();
+        t.setDaemon(true);
+        t.start();
     }
 
     // -------------------------------------------------------------------------
@@ -136,7 +136,7 @@ public class EditProjectController {
             return;
         }
 
-        Thread thread = new Thread(() -> {
+        Thread t = new Thread(() -> {
             try {
                 String url = "/api/projects/" + projectId
                         + "?name="        + URLEncoder.encode(name, StandardCharsets.UTF_8)
@@ -163,8 +163,8 @@ public class EditProjectController {
                 Platform.runLater(() -> showError(lm.get("error.connection")));
             }
         }, "edit-project-save");
-        thread.setDaemon(true);
-        thread.start();
+        t.setDaemon(true);
+        t.start();
     }
 
     /**

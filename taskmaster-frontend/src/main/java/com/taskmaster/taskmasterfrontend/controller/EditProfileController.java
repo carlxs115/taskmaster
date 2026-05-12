@@ -74,7 +74,7 @@ public class EditProfileController {
      * los campos del formulario con los datos recibidos.
      */
     private void loadProfile() {
-        Thread thread = new Thread(() -> {
+        Thread t = new Thread(() -> {
             try {
                 HttpResponse<String> response = AppContext.getInstance()
                         .getApiService().get("/api/auth/profile");
@@ -96,8 +96,8 @@ public class EditProfileController {
                 Platform.runLater(() -> showError(lm.get("edit.profile.error.load")));
             }
         }, "edit-profile-load");
-        thread.setDaemon(true);
-        thread.start();
+        t.setDaemon(true);
+        t.start();
     }
 
     /**
@@ -130,7 +130,7 @@ public class EditProfileController {
                 "birthDate", birthDate.format(DateTimeFormatter.ISO_LOCAL_DATE)
         );
 
-        Thread thread = new Thread(() -> {
+        Thread t = new Thread(() -> {
             try {
                 HttpResponse<String> response = AppContext.getInstance()
                         .getApiService().put("/api/auth/profile", body);
@@ -163,8 +163,8 @@ public class EditProfileController {
                 Platform.runLater(() -> showError(lm.get("error.connection")));
             }
         }, "edit-profile-save");
-        thread.setDaemon(true);
-        thread.start();
+        t.setDaemon(true);
+        t.start();
     }
 
     /**

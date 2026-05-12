@@ -205,7 +205,7 @@ public class TaskDetailController {
      * @param taskId identificador de la tarea padre
      */
     private void loadSubtasks(Long taskId) {
-        Thread thread = new Thread(() -> {
+        Thread t = new Thread(() -> {
             try {
                 HttpResponse<String> response = AppContext.getInstance()
                         .getApiService().get("/api/tasks/" + taskId + "/subtasks");
@@ -217,8 +217,8 @@ public class TaskDetailController {
                 Platform.runLater(() -> showAlert(lm.get("error.title"), lm.get("task.detail.subtask.error.load")));
             }
         }, "task-detail-load-subtasks");
-        thread.setDaemon(true);
-        thread.start();
+        t.setDaemon(true);
+        t.start();
     }
 
     /**
@@ -433,11 +433,10 @@ public class TaskDetailController {
         confirm.setHeaderText(null);
         confirm.setContentText(lm.get("task.detail.subtask.delete.content"));
         confirm.showAndWait().ifPresent(r -> {
-            if (r == ButtonType.OK) return;
-            Thread thread = new Thread(() -> {
+            if (r != ButtonType.OK) return;
+            Thread t = new Thread(() -> {
                 try {
-                    AppContext.getInstance().getApiService()
-                            .delete("/api/tasks/" + subtaskId);
+                    AppContext.getInstance().getApiService().delete("/api/tasks/" + subtaskId);
                     Platform.runLater(() -> {
                         loadSubtasks(parentTaskId);
                         activityLogSectionController.loadForEntity(
@@ -449,8 +448,8 @@ public class TaskDetailController {
                             lm.get("task.detail.subtask.error.delete")));
                 }
             }, "task-detail-delete-subtask");
-            thread.setDaemon(true);
-            thread.start();
+            t.setDaemon(true);
+            t.start();
         });
     }
 

@@ -7,6 +7,8 @@ import javafx.fxml.FXMLLoader;
 import javafx.scene.Scene;
 import javafx.scene.image.Image;
 import javafx.stage.Stage;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -21,6 +23,8 @@ import java.io.InputStream;
  * @author Carlos
  */
 public class MainApp extends Application {
+
+    private static final Logger log = LoggerFactory.getLogger(MainApp.class);
 
     /** Tamaños de icono disponibles para la ventana de la aplicación. */
     private static final int[] APP_ICON_SIZES = {16, 24, 32, 48, 64, 128, 256, 512};
@@ -47,10 +51,9 @@ public class MainApp extends Application {
         Scene scene = new Scene(fxmlLoader.load(), 400, 520);
 
         // Tema Amatista fijo para login
-        String css = MainApp.class.getResource(
-                "/com/taskmaster/taskmasterfrontend/themes/theme-amatista.css"
-        ).toExternalForm();
-        scene.getStylesheets().add(css);
+        var cssResource = MainApp.class.getResource(
+                "/com/taskmaster/taskmasterfrontend/themes/theme-amatista.css");
+        if (cssResource != null) scene.getStylesheets().add(cssResource.toExternalForm());
 
         // Registrar scene en ThemeManager (se sobreescribirá al navegar al main)
         ThemeManager.getInstance().setMainScene(scene);
@@ -84,10 +87,10 @@ public class MainApp extends Application {
                 if (stream != null) {
                     stage.getIcons().add(new Image(stream));
                 } else {
-                    System.err.println("No se encontró el icono: " + resourcePath);
+                    log.warn("No se encontró el icono: {}", resourcePath);
                 }
             } catch (IOException e) {
-                System.err.println("Error al cargar el icono " + resourcePath + ": " + e.getMessage());
+                log.error("Error al cargar el icono {}: {}", resourcePath, e.getMessage());
             }
         }
     }

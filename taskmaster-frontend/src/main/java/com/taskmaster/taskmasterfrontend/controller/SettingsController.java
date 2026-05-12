@@ -264,7 +264,7 @@ public class SettingsController {
      * los días de retención y el tema guardado.
      */
     private void loadSettings() {
-        Thread thread = new Thread(() -> {
+        Thread t = new Thread(() -> {
             try {
                 HttpResponse<String> response = AppContext.getInstance()
                         .getApiService().get("/api/settings");
@@ -283,8 +283,8 @@ public class SettingsController {
                 log.error("Error al cargar los ajustes: {}", e.getMessage());
             }
         }, "settings-load");
-        thread.setDaemon(true);
-        thread.start();
+        t.setDaemon(true);
+        t.start();
     }
 
     // -------------------------------------------------------------------------

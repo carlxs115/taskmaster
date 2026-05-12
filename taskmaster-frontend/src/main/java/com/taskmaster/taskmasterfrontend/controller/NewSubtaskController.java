@@ -135,7 +135,7 @@ public class NewSubtaskController {
      * @param body cuerpo de la petición con los datos de la subtarea
      */
     private void createSubtaskAsync(Map<String, Object> body) {
-        Thread thread = new Thread(() -> {
+        Thread t = new Thread(() -> {
             try {
                 HttpResponse<String> response = AppContext.getInstance()
                         .getApiService().postWithAuth("/api/tasks", body);
@@ -151,8 +151,8 @@ public class NewSubtaskController {
                 Platform.runLater(() -> showError(lm.get("error.connection")));
             }
         }, "new-subtask-create");
-        thread.setDaemon(true);
-        thread.start();
+        t.setDaemon(true);
+        t.start();
     }
 
     /**

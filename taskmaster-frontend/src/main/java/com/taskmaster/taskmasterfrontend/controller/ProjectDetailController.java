@@ -158,7 +158,7 @@ public class ProjectDetailController {
      * @param projectId identificador del proyecto
      */
     private void loadTasks(Long projectId) {
-        Thread thread = new Thread(() -> {
+        Thread t = new Thread(() -> {
             try {
                 HttpResponse<String> response = AppContext.getInstance().getApiService()
                         .get("/api/tasks?projectId=" + projectId);
@@ -170,8 +170,8 @@ public class ProjectDetailController {
                 Platform.runLater(() -> showAlert(lm.get("error.title"), lm.get("error.load.tasks")));
             }
         }, "project-detail-load-tasks");
-        thread.setDaemon(true);
-        thread.start();
+        t.setDaemon(true);
+        t.start();
     }
 
     /**
@@ -260,7 +260,7 @@ public class ProjectDetailController {
         check.selectedProperty().addListener((obs, was, is) -> {
             if (updating[0]) return;
             String newStatus = is ? "DONE" : "TODO";
-            Thread thread = new Thread(() -> {
+            Thread t = new Thread(() -> {
                 try {
                     HttpResponse<String> resp = AppContext.getInstance().getApiService()
                             .patch("/api/tasks/" + taskId + "/status?status=" + newStatus, null);
@@ -284,8 +284,8 @@ public class ProjectDetailController {
                     });
                 }
             }, "project-task-status-change");
-            thread.setDaemon(true);
-            thread.start();
+            t.setDaemon(true);
+            t.start();
         });
 
         Label titleLabel = new Label(title);
