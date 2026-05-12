@@ -3,6 +3,7 @@ package com.taskmaster.taskmasterfrontend.controller;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.taskmaster.taskmasterfrontend.util.AppContext;
+import com.taskmaster.taskmasterfrontend.util.IconCatalog;
 import com.taskmaster.taskmasterfrontend.util.LanguageManager;
 import com.taskmaster.taskmasterfrontend.util.ThemeManager;
 import javafx.application.Platform;
@@ -11,8 +12,10 @@ import javafx.fxml.FXMLLoader;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.input.KeyCode;
+import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
 import javafx.stage.Stage;
+import org.kordamp.ikonli.javafx.FontIcon;
 
 import java.io.IOException;
 import java.net.http.HttpResponse;
@@ -222,20 +225,55 @@ public class LoginController {
     private void checkBirthday() {
         LocalDate birthDate = AppContext.getInstance().getCurrentBirthDate();
         if (birthDate == null) return;
-
         LocalDate today = LocalDate.now();
-        if (birthDate.getMonthValue() == today.getMonthValue()
-                && birthDate.getDayOfMonth() == today.getDayOfMonth()) {
-            Alert alert = new Alert(Alert.AlertType.INFORMATION);
-            alert.setTitle(lm.get("birthday.title"));
-            alert.setHeaderText(MessageFormat.format(
-                    lm.get("birthday.header"),
-                    AppContext.getInstance().getCurrentUsername()));
-            alert.setContentText(lm.get("birthday.message"));
-            ButtonType btn = new ButtonType(lm.get("birthday.button"));
-            alert.getButtonTypes().setAll(btn);
-            alert.showAndWait();
+        if (birthDate.getMonthValue() != today.getMonthValue()
+                || birthDate.getDayOfMonth() != today.getDayOfMonth()) return;
+
+        // Icono de tarta
+        FontIcon cakeIcon = new FontIcon(IconCatalog.UI_BIRTHDAY);
+        cakeIcon.getStyleClass().add("birthday-dialog-icon");
+
+        // Título y cuerpo
+        Label headerLabel = new Label(MessageFormat.format(
+                lm.get("birthday.header"),
+                AppContext.getInstance().getCurrentUsername()));
+        headerLabel.getStyleClass().add("birthday-dialog-header");
+        headerLabel.setWrapText(true);
+
+        Label messageLabel = new Label(lm.get("birthday.message"));
+        messageLabel.getStyleClass().add("birthday-dialog-message");
+        messageLabel.setWrapText(true);
+
+        // Botón de cierre con icono
+        FontIcon btnIcon = new FontIcon(IconCatalog.ACTION_SAVE);
+        Button closeButton = new Button(lm.get("birthday.button"), btnIcon);
+        closeButton.getStyleClass().add("primary-button");
+
+        // Layout
+        VBox content = new VBox(12, cakeIcon, headerLabel, messageLabel, closeButton);
+        content.setAlignment(javafx.geometry.Pos.CENTER);
+        content.setPadding(new javafx.geometry.Insets(24));
+        content.getStyleClass().add("birthday-dialog-content");
+
+        // Diálogo
+        Dialog<Void> dialog = new Dialog<>();
+        dialog.setTitle(lm.get("birthday.title"));
+        dialog.getDialogPane().setContent(content);
+        dialog.getDialogPane().getButtonTypes().add(ButtonType.CLOSE);
+        // Ocultamos el botón nativo de CLOSE para usar el nuestro
+        dialog.getDialogPane().lookupButton(ButtonType.CLOSE).setVisible(false);
+        dialog.getDialogPane().lookupButton(ButtonType.CLOSE).setManaged(false);
+
+        closeButton.setOnAction(e -> dialog.setResult(null));
+        closeButton.setOnAction(e -> { dialog.setResult(null); dialog.close(); });
+
+        // Aplicar el tema activo al DialogPane
+        Scene mainScene = ThemeManager.getInstance().getMainScene();
+        if (mainScene != null) {
+            dialog.getDialogPane().getStylesheets().addAll(mainScene.getStylesheets());
         }
+
+        dialog.showAndWait();
     }
 
     /**

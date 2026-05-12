@@ -219,6 +219,15 @@ public class ThemeManager {
     }
 
     /**
+     * Devuelve el Scene principal registrado en el ThemeManager.
+     *
+     * @return el Scene principal, o {@code null} si aún no se ha registrado
+     */
+    public Scene getMainScene() {
+        return mainScene;
+    }
+
+    /**
      * Convierte un {@code String} recibido del backend al enum {@link Theme} correspondiente.
      * Si el valor no coincide con ningún tema conocido, devuelve {@link Theme#AMATISTA}.
      *
