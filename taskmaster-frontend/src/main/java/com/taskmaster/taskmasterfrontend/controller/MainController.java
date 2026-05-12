@@ -1650,59 +1650,72 @@ public class MainController {
      */
     @FXML
     private void handleOpenManual() {
-        try {
-            URL resource = getClass().getResource("/com/taskmaster/taskmasterfrontend/help/manual_usuario.html");
-            if (resource == null) {
-                throw new IllegalStateException("Manual de usuario no encontrado en el classpath");
-            }
-
-            // Crear directorio temporal para el manual
-            Path tempDir = Files.createTempDirectory("taskmaster_manual_");
-            tempDir.toFile().deleteOnExit();
-
-            // Copiar el HTML principal
-            Path tempHtml = tempDir.resolve("manual_usuario.html");
-            try (InputStream is = resource.openStream()) {
-                Files.copy(is, tempHtml, StandardCopyOption.REPLACE_EXISTING);
-            }
-            tempHtml.toFile().deleteOnExit();
-
-            // Copiar las imágenes al subdirectorio img/
-            String[] imagenes = {
-                    "icon_128.png", "img-about.png", "img-all-tasks.png", "img-calendar.png",
-                    "img-help.png", "img-home.png", "img-login.png", "img-main.png",
-                    "img-new-project.png", "img-new-task.png", "img-new-worklog.png",
-                    "img-profile.png", "img-project-detail.png", "img-register.png",
-                    "img-security.png", "img-settings-1.png", "img-settings-2.png",
-                    "img-task-detail.png", "img-topbar.png", "img-trash.png"
-            };
-
-            Path imgDir = tempDir.resolve("img");
-            Files.createDirectories(imgDir);
-            imgDir.toFile().deleteOnExit();
-
-            for (String img : imagenes) {
-                // SEGURIDAD: validar que el nombre no contiene separadores de ruta
-                if (img.contains("/") || img.contains("\\") || img.contains("..")) {
-                    continue;
+        Thread thread = new Thread(() -> {
+            try {
+                URL resource = getClass().getResource("/com/taskmaster/taskmasterfrontend/help/manual_usuario.html");
+                if (resource == null) {
+                    throw new IllegalStateException("Manual de usuario no encontrado en el classpath");
                 }
-                URL imgResource = getClass().getResource(
-                        "/com/taskmaster/taskmasterfrontend/help/img/" + img);
-                if (imgResource != null) {
-                    Path dest = imgDir.resolve(img);
-                    try (InputStream is = imgResource.openStream()) {
-                        Files.copy(is, dest, StandardCopyOption.REPLACE_EXISTING);
+                Path tempDir = Files.createTempDirectory("taskmaster_manual_");
+                tempDir.toFile().deleteOnExit();
+
+                Path tempHtml = tempDir.resolve("manual_usuario.html");
+                try (InputStream is = resource.openStream()) {
+                    Files.copy(is, tempHtml, StandardCopyOption.REPLACE_EXISTING);
+                }
+                tempHtml.toFile().deleteOnExit();
+
+                String[] imagenes = {
+                        "icon_128.png", "img-about.png", "img-all-tasks.png", "img-calendar.png",
+                        "img-help.png", "img-home.png", "img-login.png", "img-main.png",
+                        "img-new-project.png", "img-new-task.png", "img-new-worklog.png",
+                        "img-profile.png", "img-project-detail.png", "img-register.png",
+                        "img-security.png", "img-settings-1.png", "img-settings-2.png",
+                        "img-task-detail.png", "img-topbar.png", "img-trash.png"
+                };
+                Path imgDir = tempDir.resolve("img");
+                Files.createDirectories(imgDir);
+                imgDir.toFile().deleteOnExit();
+
+                for (String img : imagenes) {
+                    if (img.contains("/") || img.contains("\\") || img.contains("..")) continue;
+                    URL imgResource = getClass().getResource(
+                            "/com/taskmaster/taskmasterfrontend/help/img/" + img);
+                    if (imgResource != null) {
+                        Path dest = imgDir.resolve(img);
+                        try (InputStream is = imgResource.openStream()) {
+                            Files.copy(is, dest, StandardCopyOption.REPLACE_EXISTING);
+                        }
+                        dest.toFile().deleteOnExit();
                     }
-                    dest.toFile().deleteOnExit();
                 }
+
+                String os = System.getProperty("os.name").toLowerCase();
+                if (os.contains("linux")) {
+                    // En Linux, forzar xdg-open o navegadores conocidos
+                    String uri = tempHtml.toFile().toURI().toString();
+                    String[] browsers = {"brave", "brave-browser", "firefox", "chromium", "chromium-browser", "google-chrome"};
+                    boolean opened = false;
+                    for (String browser : browsers) {
+                        try {
+                            new ProcessBuilder(browser, uri).start();
+                            opened = true;
+                            break;
+                        } catch (IOException ignored) {}
+                    }
+                    if (!opened) {
+                        Platform.runLater(() -> showAlert("error.open.manual"));
+                    }
+                } else {
+                    Desktop.getDesktop().browse(tempHtml.toFile().toURI());
+                }
+
+            } catch (IllegalStateException | IOException e) {
+                Platform.runLater(() -> showAlert("error.open.manual"));
             }
-
-            Desktop.getDesktop().browse(tempHtml.toFile().toURI());
-
-        } catch (IllegalStateException | IOException e) {
-            // Informar al usuario sin exponer el stack trace en consola
-            showAlert("error.open.manual");
-        }
+        }, "manual-open");
+        thread.setDaemon(true);
+        thread.start();
     }
 
     /**
