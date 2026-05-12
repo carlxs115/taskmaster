@@ -1,18 +1,14 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<?import javafx.geometry.Insets?>
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
-<?import javafx.scene.text.*?>
 
 <VBox xmlns:fx="http://javafx.com/fxml"
-      fx:controller="com.taskmaster.taskmasterfrontend.controller.LoginController"
-      spacing="0"
-      styleClass="auth-root">
+      fx:controller="com.taskmaster.taskmasterfrontend.controller.LoginController" styleClass="auth-root">
 
     <!-- ENCABEZADO OSCURO -->
     <VBox styleClass="auth-header" alignment="CENTER" spacing="8">
-        <HBox alignment="CENTER" spacing="0">
+        <HBox alignment="CENTER">
             <Label text="Task"   styleClass="auth-title-task"/>
             <Label text="Master" styleClass="auth-title-master"/>
         </HBox>

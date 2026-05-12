@@ -7,7 +7,7 @@
 <VBox fx:id="root"
       xmlns:fx="http://javafx.com/fxml"
       fx:controller="com.taskmaster.taskmasterfrontend.controller.CalendarController"
-      styleClass="main-area" spacing="0">
+      styleClass="main-area">
 
     <!-- TOPBAR -->
     <HBox styleClass="area-topbar" alignment="CENTER_LEFT" spacing="12">

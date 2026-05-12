@@ -8,14 +8,14 @@
             style="-fx-background-color: transparent; -fx-border-color: transparent;">
     <VBox spacing="16" styleClass="security-root">
         <!-- Registros de seguridad -->
-        <VBox spacing="0" styleClass="security-card" style="-fx-padding: 0;">
+        <VBox styleClass="security-card" style="-fx-padding: 0;">
             <HBox styleClass="security-access-row" alignment="CENTER_LEFT" spacing="8">
                 <FontIcon iconLiteral="fas-history" styleClass="security-section-icon"/>
                 <Label text="%security.access.log" styleClass="security-section-title"/>
             </HBox>
             <ScrollPane fitToWidth="true" maxHeight="220"
                         style="-fx-background-color: transparent; -fx-border-color: transparent;">
-                <VBox fx:id="accessLogContainer" spacing="0">
+                <VBox fx:id="accessLogContainer">
                     <Label fx:id="accessLogEmpty" text="%security.access.empty"
                            styleClass="security-access-empty"/>
                 </VBox>
@@ -48,8 +48,7 @@
             <Label text="%security.danger.description"
                    styleClass="security-danger-desc" wrapText="true"/>
             <Button text="%common.delete.account" onAction="#handleDeleteAccount"
-                    styleClass="btn-danger"
-                    contentDisplay="LEFT" graphicTextGap="8">
+                    styleClass="btn-danger" graphicTextGap="8">
                 <graphic>
                     <FontIcon iconLiteral="fas-user-times" styleClass="btn-danger-icon"/>
                 </graphic>

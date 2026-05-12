@@ -1122,7 +1122,7 @@
 .dialog-root .btn-confirm-accent,
 .dialog-body .btn-confirm-accent {
     -fx-background-color: -tm-btn-primary;
-    -fx-text-fill: white;
+    -fx-text-fill: -tm-text-on-accent;
 }
 .dialog-root .btn-cancel-soft,
 .dialog-body .btn-cancel-soft {
@@ -1144,7 +1144,7 @@
 
 .btn-confirm-accent-icon {
     -fx-icon-size: 11;
-    -fx-icon-color: white;
+    -fx-icon-color: -tm-text-on-accent;
 }
 
 .btn-cancel-soft-icon {

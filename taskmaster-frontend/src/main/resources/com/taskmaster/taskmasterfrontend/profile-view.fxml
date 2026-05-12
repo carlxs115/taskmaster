@@ -1,11 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<?import javafx.geometry.Insets?>
+
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
 <?import org.kordamp.ikonli.javafx.FontIcon?>
 <VBox xmlns:fx="http://javafx.com/fxml"
-      fx:controller="com.taskmaster.taskmasterfrontend.controller.ProfileController"
-      spacing="0" styleClass="profile-root">
+      fx:controller="com.taskmaster.taskmasterfrontend.controller.ProfileController" styleClass="profile-root">
 
     <!-- Cabecera -->
     <HBox styleClass="profile-header" alignment="CENTER_LEFT" spacing="10">
@@ -15,7 +14,7 @@
                 onAction="#handleEditProfile"
                 styleClass="btn-primary"
                 style="-fx-padding: 6 14 6 14; -fx-font-size: 12px;"
-                contentDisplay="LEFT" graphicTextGap="6">
+                graphicTextGap="6">
             <graphic>
                 <FontIcon iconLiteral="fas-pen" styleClass="btn-primary-icon"/>
             </graphic>
@@ -52,7 +51,7 @@
                     </VBox>
                 </VBox>
                 <!-- Datos del perfil -->
-                <VBox spacing="0" styleClass="profile-card" style="-fx-padding: 0;">
+                <VBox styleClass="profile-card" style="-fx-padding: 0;">
                     <HBox styleClass="profile-field-row" alignment="CENTER_LEFT" spacing="16">
                         <Label text="%common.username" styleClass="profile-field-label"/>
                         <Label fx:id="usernameValueLabel" styleClass="profile-field-value"/>
@@ -71,13 +70,13 @@
                     </HBox>
                 </VBox>
                 <!-- Historial de actividad -->
-                <VBox spacing="0" styleClass="profile-card" style="-fx-padding: 0;">
+                <VBox styleClass="profile-card" style="-fx-padding: 0;">
                     <HBox styleClass="profile-field-row" alignment="CENTER_LEFT">
                         <Label text="%profile.activity.title" styleClass="profile-section-title"/>
                     </HBox>
                     <ScrollPane fitToWidth="true" maxHeight="180"
                                 style="-fx-background-color: transparent; -fx-border-color: transparent;">
-                        <VBox fx:id="activityLogContainer" spacing="0">
+                        <VBox fx:id="activityLogContainer">
                             <Label fx:id="activityLogEmpty" text="%profile.activity.empty"
                                    styleClass="profile-activity-empty"/>
                         </VBox>

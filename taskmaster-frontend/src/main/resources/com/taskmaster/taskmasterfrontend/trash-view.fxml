@@ -16,7 +16,7 @@
         <Button text="%trash.empty.all"
                 onAction="#handleEmptyTrash"
                 styleClass="btn-danger"
-                contentDisplay="LEFT" graphicTextGap="6">
+                graphicTextGap="6">
             <graphic>
                 <FontIcon iconLiteral="fas-trash-alt" styleClass="btn-danger-icon"/>
             </graphic>

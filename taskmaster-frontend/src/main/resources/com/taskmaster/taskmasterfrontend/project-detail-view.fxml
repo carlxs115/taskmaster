@@ -1,25 +1,22 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<?import javafx.geometry.Insets?>
+
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
 <?import org.kordamp.ikonli.javafx.FontIcon?>
 <VBox xmlns:fx="http://javafx.com/fxml"
-      fx:controller="com.taskmaster.taskmasterfrontend.controller.ProjectDetailController"
-      spacing="0" styleClass="detail-root">
+      fx:controller="com.taskmaster.taskmasterfrontend.controller.ProjectDetailController" styleClass="detail-root">
 
     <HBox styleClass="detail-header" alignment="CENTER_LEFT" spacing="10">
         <FontIcon iconLiteral="fas-folder-open" styleClass="detail-header-icon"/>
         <Label fx:id="projectIdLabel" styleClass="detail-id-badge"/>
         <Label fx:id="projectNameLabel" styleClass="detail-title"/>
         <Region HBox.hgrow="ALWAYS"/>
-        <Button text="%common.menu.edit" onAction="#handleEdit" styleClass="detail-btn-edit"
-                contentDisplay="LEFT" graphicTextGap="6">
+        <Button text="%common.menu.edit" onAction="#handleEdit" styleClass="detail-btn-edit" graphicTextGap="6">
             <graphic>
                 <FontIcon iconLiteral="fas-pen" styleClass="detail-btn-edit-icon"/>
             </graphic>
         </Button>
-        <Button text="%common.close" onAction="#handleClose" styleClass="detail-btn-close"
-                contentDisplay="LEFT" graphicTextGap="6">
+        <Button text="%common.close" onAction="#handleClose" styleClass="detail-btn-close" graphicTextGap="6">
             <graphic>
                 <FontIcon iconLiteral="fas-times" styleClass="detail-btn-close-icon"/>
             </graphic>
@@ -96,20 +93,20 @@
             </VBox>
 
             <!-- Lista de tareas -->
-            <VBox spacing="0" styleClass="detail-section">
+            <VBox styleClass="detail-section">
                 <HBox alignment="CENTER_LEFT" spacing="10" style="-fx-padding: 0 0 10 0;">
                     <FontIcon iconLiteral="fas-list-ul" styleClass="detail-section-icon"/>
                     <Label text="%common.tasks" styleClass="detail-section-title"/>
                     <Region HBox.hgrow="ALWAYS"/>
                     <Button text="%project.detail.tasks.new"
                             onAction="#handleNewTask" styleClass="btn-small-primary"
-                            contentDisplay="LEFT" graphicTextGap="6">
+                            graphicTextGap="6">
                         <graphic>
                             <FontIcon iconLiteral="fas-plus" styleClass="btn-small-primary-icon"/>
                         </graphic>
                     </Button>
                 </HBox>
-                <VBox fx:id="taskListContainer" spacing="0"/>
+                <VBox fx:id="taskListContainer"/>
                 <Label fx:id="emptyTasksLabel"
                        text="%project.detail.tasks.empty" styleClass="detail-empty-label"/>
             </VBox>

@@ -46,14 +46,12 @@
     <Label fx:id="errorLabel" styleClass="dialog-error" visible="false"/>
 
     <HBox spacing="10" alignment="CENTER_RIGHT">
-        <Button text="%common.cancel" onAction="#handleCancel" styleClass="btn-cancel-soft"
-                contentDisplay="LEFT" graphicTextGap="6">
+        <Button text="%common.cancel" onAction="#handleCancel" styleClass="btn-cancel-soft" graphicTextGap="6">
             <graphic>
                 <FontIcon iconLiteral="fas-times" styleClass="btn-cancel-soft-icon"/>
             </graphic>
         </Button>
-        <Button text="%new.task.button" onAction="#handleCreate" styleClass="btn-confirm-accent"
-                contentDisplay="LEFT" graphicTextGap="6">
+        <Button text="%new.task.button" onAction="#handleCreate" styleClass="btn-confirm-accent" graphicTextGap="6">
             <graphic>
                 <FontIcon iconLiteral="fas-check" styleClass="btn-confirm-accent-icon"/>
             </graphic>

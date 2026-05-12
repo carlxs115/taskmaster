@@ -155,7 +155,7 @@ public class SettingsController {
 
             VBox card = new VBox(6);
             card.setAlignment(Pos.CENTER);
-            card.setPrefWidth(90);
+            card.setPrefWidth(100);
             card.setPadding(new Insets(10, 8, 10, 8));
             card.setStyle(buildCardStyle(bg, accent, isSelected));
             card.setUserData(theme);

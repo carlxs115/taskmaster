@@ -10,7 +10,7 @@
     <!-- ===== TOPBAR APP ===== -->
     <top>
         <HBox styleClass="app-topbar" alignment="CENTER_LEFT" spacing="12">
-            <HBox spacing="0" onMouseClicked="#handleGoHome" style="-fx-cursor: hand;">
+            <HBox onMouseClicked="#handleGoHome" style="-fx-cursor: hand;">
                 <Label text="Task"   styleClass="app-topbar-logo-task"/>
                 <Label text="Master" styleClass="app-topbar-logo-master"/>
             </HBox>
@@ -28,14 +28,14 @@
     <center>
         <HBox>
             <!-- ===== SIDEBAR ===== -->
-            <VBox styleClass="sidebar" spacing="0">
+            <VBox styleClass="sidebar">
                 <padding><Insets top="16" bottom="16"/></padding>
 
                 <Button fx:id="btnHome" text="%sidebar.home"
                         onAction="#handleGoHome"
                         maxWidth="Infinity"
                         styleClass="sidebar-btn-active"
-                        contentDisplay="LEFT" graphicTextGap="10">
+                        graphicTextGap="10">
                     <graphic><FontIcon iconLiteral="fas-home" styleClass="sidebar-icon"/></graphic>
                 </Button>
                 <Separator styleClass="sidebar-separator"/>
@@ -44,25 +44,25 @@
                 <Button fx:id="btnAllTasks" text="%sidebar.all.tasks"
                         onAction="#handleAllTasks"
                         maxWidth="Infinity" styleClass="sidebar-btn"
-                        contentDisplay="LEFT" graphicTextGap="10">
+                        graphicTextGap="10">
                     <graphic><FontIcon iconLiteral="fas-list-ul" styleClass="sidebar-icon"/></graphic>
                 </Button>
                 <Button fx:id="btnPersonal" text="%sidebar.personal"
                         onAction="#handleCategoryPersonal"
                         maxWidth="Infinity" styleClass="sidebar-btn"
-                        contentDisplay="LEFT" graphicTextGap="10">
+                        graphicTextGap="10">
                     <graphic><FontIcon iconLiteral="fas-user" styleClass="sidebar-icon"/></graphic>
                 </Button>
                 <Button fx:id="btnEstudios" text="%sidebar.estudios"
                         onAction="#handleCategoryEstudios"
                         maxWidth="Infinity" styleClass="sidebar-btn"
-                        contentDisplay="LEFT" graphicTextGap="10">
+                        graphicTextGap="10">
                     <graphic><FontIcon iconLiteral="fas-graduation-cap" styleClass="sidebar-icon"/></graphic>
                 </Button>
                 <Button fx:id="btnTrabajo" text="%sidebar.trabajo"
                         onAction="#handleCategoryTrabajo"
                         maxWidth="Infinity" styleClass="sidebar-btn"
-                        contentDisplay="LEFT" graphicTextGap="10">
+                        graphicTextGap="10">
                     <graphic><FontIcon iconLiteral="fas-briefcase" styleClass="sidebar-icon"/></graphic>
                 </Button>
 
@@ -70,14 +70,14 @@
                 <Label text="%sidebar.section.projects" styleClass="sidebar-section-label"/>
 
                 <ScrollPane VBox.vgrow="ALWAYS" fitToWidth="true" styleClass="sidebar-scroll">
-                    <VBox fx:id="projectListContainer" styleClass="sidebar-project-list" spacing="0"/>
+                    <VBox fx:id="projectListContainer" styleClass="sidebar-project-list"/>
                 </ScrollPane>
 
                 <Separator styleClass="sidebar-separator"/>
                 <Button fx:id="btnCalendar" text="%sidebar.calendar"
                         onAction="#handleCalendar"
                         maxWidth="Infinity" styleClass="sidebar-btn"
-                        contentDisplay="LEFT" graphicTextGap="10">
+                        graphicTextGap="10">
                     <graphic><FontIcon iconLiteral="fas-calendar-alt" styleClass="sidebar-icon"/></graphic>
                 </Button>
 
@@ -85,32 +85,32 @@
                 <Button fx:id="btnHelp" text="%sidebar.help"
                         onAction="#handleHelp"
                         maxWidth="Infinity" styleClass="sidebar-btn"
-                        contentDisplay="LEFT" graphicTextGap="10">
+                        graphicTextGap="10">
                     <graphic><FontIcon iconLiteral="fas-question-circle" styleClass="sidebar-icon"/></graphic>
                 </Button>
                 <Separator styleClass="sidebar-separator"/>
                 <Button fx:id="btnSettings" text="%sidebar.settings"
                         onAction="#handleSettings"
                         maxWidth="Infinity" styleClass="sidebar-btn"
-                        contentDisplay="LEFT" graphicTextGap="10">
+                        graphicTextGap="10">
                     <graphic><FontIcon iconLiteral="fas-cog" styleClass="sidebar-icon"/></graphic>
                 </Button>
                 <Button fx:id="btnSecurity" text="%sidebar.security"
                         onAction="#handleSecurity"
                         maxWidth="Infinity" styleClass="sidebar-btn"
-                        contentDisplay="LEFT" graphicTextGap="10">
+                        graphicTextGap="10">
                     <graphic><FontIcon iconLiteral="fas-shield-alt" styleClass="sidebar-icon"/></graphic>
                 </Button>
                 <Button fx:id="btnTrash" text="%sidebar.trash"
                         onAction="#handleTrash"
                         maxWidth="Infinity" styleClass="sidebar-btn"
-                        contentDisplay="LEFT" graphicTextGap="10">
+                        graphicTextGap="10">
                     <graphic><FontIcon iconLiteral="fas-trash" styleClass="sidebar-icon"/></graphic>
                 </Button>
             </VBox>
 
             <!-- ===== ÁREA PRINCIPAL ===== -->
-            <VBox fx:id="mainArea" HBox.hgrow="ALWAYS" spacing="0" styleClass="main-area">
+            <VBox fx:id="mainArea" HBox.hgrow="ALWAYS" styleClass="main-area">
 
                 <!-- TOPBAR DEL ÁREA -->
                 <HBox fx:id="areaTopBar" styleClass="area-topbar"
@@ -163,7 +163,7 @@
                     <Button fx:id="clearFiltersBtn" text="%filter.clear"
                             onAction="#handleClearFilters"
                             styleClass="btn-clear-filters"
-                            contentDisplay="LEFT" graphicTextGap="6">
+                            graphicTextGap="6">
                         <graphic>
                             <FontIcon iconLiteral="fas-times" styleClass="btn-clear-filters-icon"/>
                         </graphic>
@@ -173,8 +173,8 @@
                 <!-- CONTENIDO -->
                 <ScrollPane VBox.vgrow="ALWAYS" fitToWidth="true"
                             style="-fx-background-color: transparent; -fx-border-color: transparent;">
-                    <VBox fx:id="taskContainer" spacing="0">
-                        <padding><Insets top="0" right="0" bottom="16" left="0"/></padding>
+                    <VBox fx:id="taskContainer">
+                        <padding><Insets bottom="16"/></padding>
                         <Label fx:id="emptyLabel"
                                text="%tasks.empty.default"
                                styleClass="empty-label"/>

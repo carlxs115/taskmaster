@@ -209,6 +209,8 @@ public class LoginController {
             stage.setMinWidth(900);
             stage.setMinHeight(600);
             stage.setTitle("TaskMaster");
+            // Diferir el maximizado para que funcione en Linux
+            Platform.runLater(() -> stage.setMaximized(true));
 
         } catch (Exception e) {
             Platform.runLater(() -> {

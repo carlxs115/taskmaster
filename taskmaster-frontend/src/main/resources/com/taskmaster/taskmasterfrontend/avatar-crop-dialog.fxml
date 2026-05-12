@@ -37,15 +37,13 @@
     <!-- Botones -->
     <HBox spacing="10" alignment="CENTER_RIGHT">
         <Button fx:id="cancelButton" text="%common.cancel"
-                onAction="#handleCancel" styleClass="button, btn-cancel-soft"
-                contentDisplay="LEFT" graphicTextGap="6">
+                onAction="#handleCancel" styleClass="button, btn-cancel-soft" graphicTextGap="6">
             <graphic>
                 <FontIcon iconLiteral="fas-times" styleClass="btn-cancel-soft-icon"/>
             </graphic>
         </Button>
         <Button fx:id="saveButton" text="%avatar.crop.save"
-                onAction="#handleSave" styleClass="btn-confirm-accent"
-                contentDisplay="LEFT" graphicTextGap="6">
+                onAction="#handleSave" styleClass="btn-confirm-accent" graphicTextGap="6">
             <graphic>
                 <FontIcon iconLiteral="fas-check" styleClass="btn-confirm-accent-icon"/>
             </graphic>
