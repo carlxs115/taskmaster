@@ -10,15 +10,22 @@ import javafx.stage.Stage;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.file.Path;
 
 /**
  * Clase principal de la aplicación TaskMaster.
  *
- * <p>Punto de entrada de la aplicación JavaFX. Se encarga de inicializar
- * la ventana principal ({@link Stage}), cargar la vista de login y aplicar
- * el tema y el idioma iniciales.</p>
+ * <p>Punto de entrada de la aplicación JavaFX. Se encarga de:</p>
+ * <ul>
+ *   <li>Arrancar el proceso del backend Spring Boot antes de mostrar la UI</li>
+ *   <li>Esperar a que el backend esté listo para aceptar peticiones</li>
+ *   <li>Inicializar la ventana principal ({@link Stage})</li>
+ *   <li>Cargar la vista de login y aplicar el tema y el idioma iniciales</li>
+ *   <li>Detener el proceso del backend al cerrar la aplicación</li>
+ * </ul>
  *
  * @author Carlos
  */
@@ -31,6 +38,36 @@ public class MainApp extends Application {
 
     /** Ruta base donde se encuentran los iconos de la aplicación. */
     private static final String APP_ICON_PATH = "/com/taskmaster/taskmasterfrontend/images/app-icon/";
+
+    /** Nombre del JAR del backend, debe coincidir con el empaquetado por Maven. */
+    private static final String BACKEND_JAR = "taskmaster-0.0.1-SNAPSHOT.jar";
+
+    /** URL del endpoint que usamos para comprobar que el backend está listo. */
+    private static final String BACKEND_HEALTH_URL = "http://localhost:8080/api/auth/login";
+
+    /** Segundos máximos que esperamos a que el backend arranque. */
+    private static final int BACKEND_TIMEOUT_SECONDS = 30;
+
+    /** Proceso del backend lanzado al iniciar la app. */
+    private Process backendProcess;
+
+    // -------------------------------------------------------------------------
+    // Ciclo de vida de JavaFX
+    // -------------------------------------------------------------------------
+
+    /**
+     * Se ejecuta antes de {@link #start(Stage)}, en el hilo de inicialización de JavaFX.
+     *
+     * <p>Arranca el proceso del backend y espera a que esté listo antes de
+     * mostrar la interfaz de usuario.</p>
+     *
+     * @throws Exception si el backend no puede iniciarse o no responde a tiempo
+     */
+    @Override
+    public void init() throws Exception {
+        startBackend();
+        waitForBackend(BACKEND_HEALTH_URL, BACKEND_TIMEOUT_SECONDS);
+    }
 
     /**
      * Inicializa y muestra la ventana principal de la aplicación.
@@ -72,6 +109,110 @@ public class MainApp extends Application {
     }
 
     /**
+     * Se ejecuta al cerrar la aplicación.
+     *
+     * <p>Detiene el proceso del backend si sigue en ejecución, liberando
+     * el puerto 8080 y los recursos asociados.</p>
+     *
+     * @throws Exception si ocurre algún error al destruir el proceso
+     */
+    @Override
+    public void stop() throws Exception {
+        if (backendProcess != null && backendProcess.isAlive()) {
+            backendProcess.destroy();
+            log.info("Backend detenido");
+        }
+    }
+
+    // -------------------------------------------------------------------------
+    // Gestión del backend
+    // -------------------------------------------------------------------------
+
+    /**
+     * Lanza el JAR del backend como proceso hijo.
+     *
+     * <p>Resuelve la ruta del JAR del backend buscando en el mismo directorio
+     * que contiene el JAR del frontend. Esto funciona tanto en desarrollo
+     * (carpeta {@code packaging/input}) como en producción (directorio de instalación).</p>
+     *
+     * @throws Exception si no se puede construir o lanzar el proceso
+     */
+    private void startBackend() throws Exception {
+        // Usamos el java.exe del JRE que viene empaquetado con la app
+        String javaExe = System.getProperty("java.home") + File.separator + "bin" + File.separator + "java";
+
+        // En producción (jpackage) ambos JARs están en el mismo directorio que el ejecutable.
+        // Resolvemos desde la ubicación del frontend JAR subiendo hasta encontrar el backend.
+        Path frontendJar = Path.of(
+                MainApp.class.getProtectionDomain().getCodeSource().getLocation().toURI()
+        );
+
+        // Primero buscamos en el mismo directorio (producción)
+        Path backendJar = frontendJar.getParent().resolve(BACKEND_JAR);
+
+        // Si no existe, buscamos en el directorio hermano (desarrollo en IntelliJ)
+        if (!backendJar.toFile().exists()) {
+            backendJar = frontendJar.getParent()  // target
+                    .getParent()                   // taskmaster-frontend
+                    .getParent()                   // taskmaster (raíz)
+                    .resolve("taskmaster-backend")
+                    .resolve("target")
+                    .resolve(BACKEND_JAR);
+        }
+
+        log.info("Arrancando backend desde: {}", backendJar);
+
+        if (!backendJar.toFile().exists()) {
+            throw new RuntimeException("No se encontró el JAR del backend en: " + backendJar);
+        }
+
+        ProcessBuilder pb = new ProcessBuilder(javaExe, "-jar", backendJar.toString());
+        pb.redirectErrorStream(true);
+        // Descartamos la salida del backend para no mezclarla con la del frontend
+        pb.redirectOutput(ProcessBuilder.Redirect.DISCARD);
+        backendProcess = pb.start();
+
+        log.info("Proceso backend iniciado (PID {})", backendProcess.pid());
+    }
+
+    /**
+     * Espera a que el backend esté listo para aceptar peticiones HTTP.
+     *
+     * <p>Realiza peticiones cada 500 ms al endpoint indicado hasta que responde
+     * (con cualquier código HTTP) o se agota el tiempo de espera.</p>
+     *
+     * @param healthUrl      URL del endpoint a sondear
+     * @param timeoutSeconds segundos máximos de espera
+     * @throws Exception si el backend no responde antes de agotar el tiempo
+     */
+    private void waitForBackend(String healthUrl, int timeoutSeconds) throws Exception {
+        long deadline = System.currentTimeMillis() + timeoutSeconds * 1000L;
+
+        log.info("Esperando a que el backend esté listo...");
+
+        while (System.currentTimeMillis() < deadline) {
+            try {
+                java.net.HttpURLConnection conn = (java.net.HttpURLConnection)
+                        new java.net.URI(healthUrl).toURL().openConnection();
+                conn.setConnectTimeout(1000);
+                conn.setReadTimeout(1000);
+                conn.setRequestMethod("GET");
+                int code = conn.getResponseCode();
+                log.info("Backend listo (HTTP {})", code);
+                return;
+            } catch (Exception ignored) {
+                Thread.sleep(500);
+            }
+        }
+
+        throw new RuntimeException("El backend no respondió en " + timeoutSeconds + " segundos");
+    }
+
+    // -------------------------------------------------------------------------
+    // Iconos de la aplicación
+    // -------------------------------------------------------------------------
+
+    /**
      * Carga los iconos de la aplicación en todos los tamaños disponibles.
      *
      * <p>Añade los iconos al {@link Stage} en varios tamaños para que el sistema
@@ -94,6 +235,10 @@ public class MainApp extends Application {
             }
         }
     }
+
+    // -------------------------------------------------------------------------
+    // Punto de entrada
+    // -------------------------------------------------------------------------
 
     /**
      * Método principal. Lanza la aplicación JavaFX.
