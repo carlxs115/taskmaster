@@ -13,6 +13,8 @@ import org.slf4j.LoggerFactory;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.HttpURLConnection;
+import java.net.URI;
 import java.nio.file.Path;
 
 /**
@@ -42,7 +44,7 @@ public class MainApp extends Application {
     /** Nombre del JAR del backend, debe coincidir con el empaquetado por Maven. */
     private static final String BACKEND_JAR = "taskmaster-0.0.1-SNAPSHOT.jar";
 
-    /** URL del endpoint que usamos para comprobar que el backend está listo. */
+    /** URL del endpoint que usamos para comprobar que el backend está listo, HTTP es suficiente para localhost. */
     private static final String BACKEND_HEALTH_URL = "http://localhost:8080/api/auth/login";
 
     /** Segundos máximos que esperamos a que el backend arranque. */
@@ -66,7 +68,7 @@ public class MainApp extends Application {
     @Override
     public void init() throws Exception {
         startBackend();
-        waitForBackend(BACKEND_HEALTH_URL, BACKEND_TIMEOUT_SECONDS);
+        waitForBackend();
     }
 
     /**
@@ -114,10 +116,9 @@ public class MainApp extends Application {
      * <p>Detiene el proceso del backend si sigue en ejecución, liberando
      * el puerto 8080 y los recursos asociados.</p>
      *
-     * @throws Exception si ocurre algún error al destruir el proceso
      */
     @Override
-    public void stop() throws Exception {
+    public void stop() {
         if (backendProcess != null && backendProcess.isAlive()) {
             backendProcess.destroy();
             log.info("Backend detenido");
@@ -181,19 +182,17 @@ public class MainApp extends Application {
      * <p>Realiza peticiones cada 500 ms al endpoint indicado hasta que responde
      * (con cualquier código HTTP) o se agota el tiempo de espera.</p>
      *
-     * @param healthUrl      URL del endpoint a sondear
-     * @param timeoutSeconds segundos máximos de espera
      * @throws Exception si el backend no responde antes de agotar el tiempo
      */
-    private void waitForBackend(String healthUrl, int timeoutSeconds) throws Exception {
-        long deadline = System.currentTimeMillis() + timeoutSeconds * 1000L;
+    private void waitForBackend() throws Exception {
+        long deadline = System.currentTimeMillis() + BACKEND_TIMEOUT_SECONDS * 1000L;
 
         log.info("Esperando a que el backend esté listo...");
 
         while (System.currentTimeMillis() < deadline) {
             try {
-                java.net.HttpURLConnection conn = (java.net.HttpURLConnection)
-                        new java.net.URI(healthUrl).toURL().openConnection();
+                HttpURLConnection conn = (HttpURLConnection)
+                        new URI(BACKEND_HEALTH_URL).toURL().openConnection();
                 conn.setConnectTimeout(1000);
                 conn.setReadTimeout(1000);
                 conn.setRequestMethod("GET");
@@ -201,11 +200,12 @@ public class MainApp extends Application {
                 log.info("Backend listo (HTTP {})", code);
                 return;
             } catch (Exception ignored) {
+                //noinspection BusyWait
                 Thread.sleep(500);
             }
         }
 
-        throw new RuntimeException("El backend no respondió en " + timeoutSeconds + " segundos");
+        throw new RuntimeException("El backend no respondió en " + BACKEND_TIMEOUT_SECONDS + " segundos");
     }
 
     // -------------------------------------------------------------------------
