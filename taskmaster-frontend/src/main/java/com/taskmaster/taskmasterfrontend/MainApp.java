@@ -16,6 +16,7 @@ import java.io.InputStream;
 import java.net.HttpURLConnection;
 import java.net.URI;
 import java.nio.file.Path;
+import java.util.Locale;
 
 /**
  * Clase principal de la aplicación TaskMaster.
@@ -67,8 +68,49 @@ public class MainApp extends Application {
      */
     @Override
     public void init() throws Exception {
-        startBackend();
-        waitForBackend();
+        File logFile = new File(System.getProperty("user.home") + "/.taskmaster/startup.log");
+        if (!logFile.getParentFile().mkdirs() && !logFile.getParentFile().exists()) {
+            throw new RuntimeException("No se pudo crear el directorio de logs");
+        }
+        try (var pw = new java.io.PrintWriter(new java.io.FileWriter(logFile, true))) {
+            pw.println("=== Iniciando TaskMaster ===");
+            pw.println("java.home: " + System.getProperty("java.home"));
+            pw.println("JAVA_HOME env: " + System.getenv("JAVA_HOME"));
+            try {
+                String javaExe = findJavaExecutable();
+                pw.println("java.exe encontrado: " + javaExe);
+                pw.println("appdir property: " + System.getProperty("appdir"));
+                pw.flush();
+            } catch (Exception e) {
+                pw.println("ERROR findJavaExecutable: " + e.getMessage());
+            }
+            pw.flush();
+
+            try {
+                pw.println("Llamando a startBackend()...");
+                pw.flush();
+                startBackend();
+                pw.println("Backend iniciado OK, PID: " + backendProcess.pid());
+                pw.flush();
+            } catch (Exception e) {
+                pw.println("ERROR startBackend: " + e.getClass().getName() + ": " + e.getMessage());
+                e.printStackTrace(pw);
+                pw.flush();
+                throw e;
+            }
+
+            try {
+                pw.println("Esperando al backend...");
+                pw.flush();
+                waitForBackend();
+                pw.println("Backend listo");
+                pw.flush();
+            } catch (Exception e) {
+                pw.println("ERROR waitForBackend: " + e.getMessage());
+                pw.flush();
+                throw e;
+            }
+        }
     }
 
     /**
@@ -129,6 +171,28 @@ public class MainApp extends Application {
     // Gestión del backend
     // -------------------------------------------------------------------------
 
+    private String findJavaExecutable() {
+        // 1. Intentamos el java.home del proceso actual (puede ser el JRE recortado sin java.exe)
+        String javaHome = System.getProperty("java.home");
+        File javaExe = new File(javaHome + File.separator + "bin" + File.separator + "java.exe");
+        if (javaExe.exists()) return javaExe.getAbsolutePath();
+
+        // 2. Buscamos JAVA_HOME del sistema
+        String envJavaHome = System.getenv("JAVA_HOME");
+        if (envJavaHome != null) {
+            javaExe = new File(envJavaHome + File.separator + "bin" + File.separator + "java.exe");
+            if (javaExe.exists()) return javaExe.getAbsolutePath();
+        }
+
+        // 3. Buscamos java.exe en el PATH del sistema
+        for (String path : System.getenv("PATH").split(File.pathSeparator)) {
+            javaExe = new File(path + File.separator + "java.exe");
+            if (javaExe.exists()) return javaExe.getAbsolutePath();
+        }
+
+        throw new RuntimeException("No se encontró java.exe. Instala Java 21 o superior.");
+    }
+
     /**
      * Lanza el JAR del backend como proceso hijo.
      *
@@ -140,22 +204,23 @@ public class MainApp extends Application {
      */
     private void startBackend() throws Exception {
         // Usamos el java.exe del JRE que viene empaquetado con la app
-        String javaExe = System.getProperty("java.home") + File.separator + "bin" + File.separator + "java";
+        String javaExe = findJavaExecutable();
 
-        // En producción (jpackage) ambos JARs están en el mismo directorio que el ejecutable.
-        // Resolvemos desde la ubicación del frontend JAR subiendo hasta encontrar el backend.
-        Path frontendJar = Path.of(
-                MainApp.class.getProtectionDomain().getCodeSource().getLocation().toURI()
-        );
-
-        // Primero buscamos en el mismo directorio (producción)
-        Path backendJar = frontendJar.getParent().resolve(BACKEND_JAR);
-
-        // Si no existe, buscamos en el directorio hermano (desarrollo en IntelliJ)
-        if (!backendJar.toFile().exists()) {
-            backendJar = frontendJar.getParent()  // target
-                    .getParent()                   // taskmaster-frontend
-                    .getParent()                   // taskmaster (raíz)
+        // En producción con jpackage, el app dir se pasa como propiedad del sistema
+        Path backendJar;
+        String appDir = System.getProperty("appdir");
+        if (appDir != null) {
+            // Producción: jpackage define 'appdir' con la carpeta de los JARs
+            backendJar = Path.of(appDir).resolve(BACKEND_JAR);
+        } else {
+            // Desarrollo: buscamos relativo al JAR del frontend
+            Path frontendJar = Path.of(
+                    MainApp.class.getProtectionDomain().getCodeSource().getLocation().toURI()
+            );
+            backendJar = frontendJar
+                    .getParent()
+                    .getParent()
+                    .getParent()
                     .resolve("taskmaster-backend")
                     .resolve("target")
                     .resolve(BACKEND_JAR);
@@ -246,6 +311,7 @@ public class MainApp extends Application {
      * @param args Argumentos de línea de comandos (no utilizados).
      */
     public static void main(String[] args) {
+        Locale.setDefault(Locale.forLanguageTag("es-ES"));
         launch();
     }
 }

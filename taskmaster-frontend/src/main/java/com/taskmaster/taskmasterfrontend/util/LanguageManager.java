@@ -184,11 +184,11 @@ public class LanguageManager {
             }
 
             String lang = props.getProperty("language", "es");
-            return Locale.of(lang);
+            return Locale.of(lang, lang.equals("es") ? "ES" : "US");
         } catch (Exception e) {
             // Si falla la lectura usamos español como fallback seguro
             log.warn("No se pudo cargar la preferencia de idioma, usando español por defecto");
-            return Locale.of("es");
+            return Locale.of("es", "ES");
         }
     }
 }
