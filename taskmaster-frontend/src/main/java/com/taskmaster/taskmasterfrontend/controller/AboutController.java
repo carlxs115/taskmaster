@@ -2,7 +2,6 @@ package com.taskmaster.taskmasterfrontend.controller;
 
 import com.taskmaster.taskmasterfrontend.util.LanguageManager;
 import com.taskmaster.taskmasterfrontend.util.ThemeManager;
-import javafx.beans.property.SimpleStringProperty;
 import javafx.fxml.FXML;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
@@ -15,7 +14,6 @@ import javafx.stage.Modality;
 import javafx.stage.Stage;
 
 import java.time.Year;
-import java.util.List;
 
 /**
  * Controlador de la pantalla "Acerca de TaskMaster".
@@ -69,22 +67,6 @@ public class AboutController {
         showInfoDialog(lm.get("about.btn.privacy"), lm.get("about.privacy.content"));
     }
 
-    /**
-     * Abre el diálogo modal con las licencias de las bibliotecas de terceros.
-     */
-    @FXML
-    private void handleLicenses() {
-        showLicensesDialog();
-    }
-
-    /**
-     * Abre el diálogo modal con los reconocimientos y créditos.
-     */
-    @FXML
-    private void handleAcknowledgements() {
-        showInfoDialog(lm.get("about.btn.acknowledgements"), lm.get("about.acknowledgements.content"));
-    }
-
     // -------------------------------------------------------------------------
     // Diálogos modales
     // -------------------------------------------------------------------------
@@ -115,66 +97,6 @@ public class AboutController {
         root.setPrefHeight(440);
 
         showDialog(dialog, root, 520, 440);
-    }
-
-    /**
-     * Muestra un diálogo modal con una tabla de licencias de las
-     * bibliotecas utilizadas en el proyecto.
-     */
-    private void showLicensesDialog() {
-        Stage dialog = buildDialogStage(lm.get("about.btn.licenses"), 600, 460);
-
-        HBox header = buildDialogHeader(lm.get("about.btn.licenses"));
-
-        // Tabla de licencias con tres columnas
-        TableView<String[]> table = new TableView<>();
-        table.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY_FLEX_LAST_COLUMN);
-        table.getStyleClass().add("activity-table");
-        VBox.setVgrow(table, Priority.ALWAYS);
-
-        TableColumn<String[], String> colLib = new TableColumn<>(lm.get("about.licenses.col.library"));
-        colLib.setCellValueFactory(c -> new SimpleStringProperty(c.getValue()[0]));
-        colLib.setPrefWidth(200);
-
-        TableColumn<String[], String> colLic = new TableColumn<>(lm.get("about.licenses.col.license"));
-        colLic.setCellValueFactory(c -> new SimpleStringProperty(c.getValue()[1]));
-        colLic.setPrefWidth(120);
-
-        TableColumn<String[], String> colNote = new TableColumn<>(lm.get("about.licenses.col.note"));
-        colNote.setCellValueFactory(c -> new SimpleStringProperty(c.getValue()[2]));
-
-        table.getColumns().addAll(List.of(colLib, colLic, colNote));
-
-        // Datos de licencias
-        String[][] licenseData = {
-                { "JavaFX 21.0.6",         "GPL v2 + Classpath",  "OpenJFX — openjfx.io" },
-                { "Spring Boot 3.5.0",     "Apache 2.0",          "spring.io/projects/spring-boot" },
-                { "Spring Security",       "Apache 2.0",          "spring.io/projects/spring-security" },
-                { "Spring Data JPA",       "Apache 2.0",          "spring.io/projects/spring-data-jpa" },
-                { "Hibernate ORM",         "LGPL 2.1",            "hibernate.org" },
-                { "H2 Database",           "MPL 2.0 / EPL 1.0",   "h2database.com" },
-                { "PostgreSQL JDBC",       "BSD 2-Clause",        "jdbc.postgresql.org" },
-                { "Jackson Databind",      "Apache 2.0",          "github.com/FasterXML/jackson" },
-                { "Maven",                 "Apache 2.0",          "maven.apache.org" },
-                { "Lombok",                "MIT",                  "projectlombok.org" },
-        };
-
-        for (String[] row : licenseData) {
-            table.getItems().add(row);
-        }
-
-        HBox footer = buildDialogFooter(dialog);
-
-        VBox tableWrapper = new VBox(table);
-        tableWrapper.setPadding(new Insets(12, 20, 0, 20));
-        VBox.setVgrow(table, Priority.ALWAYS);
-        VBox.setVgrow(tableWrapper, Priority.ALWAYS);
-
-        VBox root = new VBox(header, tableWrapper, footer);
-        VBox.setVgrow(tableWrapper, Priority.ALWAYS);
-        root.getStyleClass().add("dialog-body");
-
-        showDialog(dialog, root, 600, 460);
     }
 
     /**
