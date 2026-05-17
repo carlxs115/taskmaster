@@ -172,25 +172,29 @@ public class MainApp extends Application {
     // -------------------------------------------------------------------------
 
     private String findJavaExecutable() {
-        // 1. Intentamos el java.home del proceso actual (puede ser el JRE recortado sin java.exe)
+        // En Windows el ejecutable es java.exe, en Linux/Mac es java
+        String javaExeName = System.getProperty("os.name").toLowerCase().contains("win")
+                ? "java.exe" : "java";
+
+        // 1. java.home del proceso actual
         String javaHome = System.getProperty("java.home");
-        File javaExe = new File(javaHome + File.separator + "bin" + File.separator + "java.exe");
+        File javaExe = new File(javaHome + File.separator + "bin" + File.separator + javaExeName);
         if (javaExe.exists()) return javaExe.getAbsolutePath();
 
-        // 2. Buscamos JAVA_HOME del sistema
+        // 2. JAVA_HOME del sistema
         String envJavaHome = System.getenv("JAVA_HOME");
         if (envJavaHome != null) {
-            javaExe = new File(envJavaHome + File.separator + "bin" + File.separator + "java.exe");
+            javaExe = new File(envJavaHome + File.separator + "bin" + File.separator + javaExeName);
             if (javaExe.exists()) return javaExe.getAbsolutePath();
         }
 
-        // 3. Buscamos java.exe en el PATH del sistema
+        // 3. PATH del sistema
         for (String path : System.getenv("PATH").split(File.pathSeparator)) {
-            javaExe = new File(path + File.separator + "java.exe");
+            javaExe = new File(path + File.separator + javaExeName);
             if (javaExe.exists()) return javaExe.getAbsolutePath();
         }
 
-        throw new RuntimeException("No se encontró java.exe. Instala Java 21 o superior.");
+        throw new RuntimeException("No se encontró java. Instala Java 21 o superior.");
     }
 
     /**
