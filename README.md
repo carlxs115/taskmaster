@@ -5,7 +5,7 @@
 </p>
 
 <p align="center">
-  Gestor de proyectos y tareas de escritorio — <strong>completamente offline, sin cuentas, sin la nube</strong>.
+  Gestor de proyectos y tareas de escritorio — <strong>completamente offline</strong>.
 </p>
 
 <p align="center">
