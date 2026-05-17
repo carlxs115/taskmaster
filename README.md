@@ -36,13 +36,13 @@ para planes de pago. TaskMaster parte de un planteamiento diferente.
 | WorkLog — registro de tiempo por tarea | ✅ | Planes de pago |
 | Estadísticas de productividad | ✅ | Planes de pago |
 | Sin límite de proyectos ni tareas | ✅ | Freemium |
-| Temas visuales personalizables | ✅ | ❌ |
+| Temas visuales personalizados | ✅ | ❌ |
 | Código abierto y gratuito para siempre | ✅ | ❌ |
 
 ## Características
 
 - **Proyectos y tareas jerarquizadas** — Crea proyectos con tareas y subtareas, categorías, prioridades (`Baja`, `Media`, `Alta`, `Urgente`), fechas límite y estados (`Nuevo`, `En curso`, `Completado`, `Entregado`, `Cancelado`).
-- **Registro de tiempo (WorkLog)** — Registra horas dedicadas por tarea al estilo Redmine, con historial de entradas y totales acumulados.
+- **Registro de tiempo (WorkLog)** — Registra horas dedicadas por tarea, con historial de entradas y totales acumulados.
 - **Panel de estadísticas** — Análisis de productividad accesible desde la pantalla principal.
 - **Vista de calendario** — Visualiza las fechas límite de tus tareas en su día correspondiente.
 - **Búsqueda y filtros en tiempo real** — Filtra por estado, prioridad, categoría y fecha; ordena y agrupa por proyectos.
@@ -72,6 +72,7 @@ TaskMaster aplica el patrón **MVC** con separación estricta entre módulos:
 ```
 taskmaster/
 ├── taskmaster-backend/          # API REST — Spring Boot
+│   ├── pom.xml
 │   └── src/main/java/
 │       ├── config/              # Configuración (almacenamiento de avatares)
 │       ├── controller/          # Endpoints REST
@@ -87,19 +88,21 @@ taskmaster/
 │       └── TrashScheduler.java  # Tarea programada de purga automática
 │
 ├── taskmaster-frontend/         # Interfaz de escritorio — JavaFX
+│   ├── pom.xml
 │   └── src/main/
 │       ├── java/
-│       │   ├── controller/      # Controladores de pantalla
+│       │   ├── controller/      # Controladores de pantalla (20 vistas)
 │       │   ├── service/         # ApiService — comunicación con el backend
 │       │   └── util/            # ThemeManager, LanguageManager, IconCatalog…
 │       └── resources/
-│           ├── *.fxml           # Definición de vistas
+│           ├── *.fxml           # Definición de vistas (20 pantallas)
 │           ├── themes/          # 14 temas visuales CSS
 │           ├── i18n/            # messages_es / messages_en
 │           ├── help/            # Manual de usuario HTML autocontenido
 │           └── images/          # Iconos de la aplicación (multi-resolución)
 │
-└── pom.xml                      # POM raíz (multi-módulo)
+├── install.sh                   # Instalador Linux (detecta gestor de paquetes)
+└── start.sh                     # Script de arranque Linux
 ```
 
 La comunicación entre frontend y backend se realiza mediante API REST interna sobre localhost, lo que permite evolucionar ambas capas de forma independiente.
@@ -119,7 +122,7 @@ La comunicación entre frontend y backend se realiza mediante API REST interna s
 
 ### Windows — Instalador
 
-Descarga `TaskMaster-1.0.0.exe` desde [GitHub Releases](https://github.com/carlxs115/taskmaster/releases) e instálalo normalmente. El instalador incluye un JRE personalizado (jlink + jpackage + WiX), no requiere tener Java instalado en el sistema.
+Descarga `TaskMaster-1.0.0.exe` desde [GitHub Releases](https://github.com/carlxs115/taskmaster/releases/tag/v1.0.0) e instálalo normalmente. El instalador incluye un JRE personalizado (jlink + jpackage + WiX), no requiere tener Java instalado en el sistema.
 
 Al arrancar la aplicación, el backend se lanza automáticamente como proceso hijo y se cierra al salir.
 
