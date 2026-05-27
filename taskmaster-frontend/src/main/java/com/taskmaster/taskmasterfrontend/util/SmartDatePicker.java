@@ -7,7 +7,6 @@ import javafx.scene.control.*;
 import javafx.scene.layout.*;
 import javafx.stage.Popup;
 
-import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.Month;
 import java.time.YearMonth;
@@ -186,6 +185,7 @@ public class SmartDatePicker extends HBox {
         popup.setConsumeAutoHidingEvents(false);
 
         popupRoot = new VBox(0);
+        popupRoot.getStyleClass().add("root");
         popupRoot.getStyleClass().add("smart-date-popup");
         popupRoot.setStyle(
             "-fx-border-color: -tm-border;" +
@@ -213,7 +213,7 @@ public class SmartDatePicker extends HBox {
 
         monthCombo = new ComboBox<>();
         styleHeaderCombo(monthCombo);
-        Locale spanishLocale = new Locale("es", "ES");
+        Locale spanishLocale = Locale.of("es", "ES");
         for (int m = 1; m <= 12; m++) {
             String name = Month.of(m).getDisplayName(TextStyle.FULL, spanishLocale);
             monthCombo.getItems().add(capitalize(name));
@@ -398,32 +398,12 @@ public class SmartDatePicker extends HBox {
 
     private Button navButton(String text) {
         Button btn = new Button(text);
-        btn.setStyle(
-            "-fx-background-color: rgba(255,255,255,0.2);" +
-            "-fx-text-fill: white;" +
-            "-fx-font-size: 16px;" +
-            "-fx-background-radius: 6;" +
-            "-fx-cursor: hand;" +
-            "-fx-padding: 2 8;"
-        );
-        btn.setOnMouseEntered(e -> btn.setStyle(btn.getStyle()
-            .replace("rgba(255,255,255,0.2)", "rgba(255,255,255,0.35)")));
-        btn.setOnMouseExited(e -> btn.setStyle(btn.getStyle()
-            .replace("rgba(255,255,255,0.35)", "rgba(255,255,255,0.2)")));
+        btn.getStyleClass().add("smart-date-nav-btn");
         return btn;
     }
 
     private void styleHeaderCombo(ComboBox<?> combo) {
-        combo.setStyle(
-            "-fx-background-color: rgba(255,255,255,0.15);" +
-            "-fx-text-fill: white;" +
-            "-fx-font-weight: bold;" +
-            "-fx-font-size: 12px;" +
-            "-fx-background-radius: 6;" +
-            "-fx-border-color: rgba(255,255,255,0.3);" +
-            "-fx-border-radius: 6;" +
-            "-fx-padding: 3 6;"
-        );
+        combo.getStyleClass().add("smart-date-header-combo");
     }
 
     private String capitalize(String s) {

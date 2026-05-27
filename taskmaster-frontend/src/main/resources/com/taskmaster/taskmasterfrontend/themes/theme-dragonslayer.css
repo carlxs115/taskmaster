@@ -97,3 +97,7 @@
     -fx-background-color: -tm-bg-active;
     -fx-text-fill: -tm-accent-light;
 }
+
+/* SmartDatePicker — cabecera con acento claro */
+.smart-date-nav-btn      { -fx-text-fill: -tm-text-on-accent; }
+.smart-date-header-combo { -fx-text-fill: -tm-text-on-accent; }
