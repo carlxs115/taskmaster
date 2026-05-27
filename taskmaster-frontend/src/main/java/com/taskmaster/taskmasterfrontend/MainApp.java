@@ -13,8 +13,7 @@ import org.slf4j.LoggerFactory;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
-import java.net.HttpURLConnection;
-import java.net.URI;
+import java.net.Socket;
 import java.nio.file.Path;
 import java.util.Locale;
 
@@ -45,8 +44,8 @@ public class MainApp extends Application {
     /** Nombre del JAR del backend, debe coincidir con el empaquetado por Maven. */
     private static final String BACKEND_JAR = "taskmaster-0.0.1-SNAPSHOT.jar";
 
-    /** URL del endpoint que usamos para comprobar que el backend está listo, HTTP es suficiente para localhost. */
-    private static final String BACKEND_HEALTH_URL = "http://localhost:8080/api/auth/login";
+    /** Puerto del backend, usado para comprobar que está listo aceptando conexiones TCP. */
+    private static final int BACKEND_PORT = 8080;
 
     /** Segundos máximos que esperamos a que el backend arranque. */
     private static final int BACKEND_TIMEOUT_SECONDS = 30;
@@ -259,14 +258,9 @@ public class MainApp extends Application {
         log.info("Esperando a que el backend esté listo...");
 
         while (System.currentTimeMillis() < deadline) {
-            try {
-                HttpURLConnection conn = (HttpURLConnection)
-                        new URI(BACKEND_HEALTH_URL).toURL().openConnection();
-                conn.setConnectTimeout(1000);
-                conn.setReadTimeout(1000);
-                conn.setRequestMethod("GET");
-                int code = conn.getResponseCode();
-                log.info("Backend listo (HTTP {})", code);
+            try (Socket socket = new Socket()) {
+                socket.connect(new java.net.InetSocketAddress("localhost", BACKEND_PORT), 1000);
+                log.info("Backend listo (puerto {} accesible)", BACKEND_PORT);
                 return;
             } catch (Exception ignored) {
                 //noinspection BusyWait

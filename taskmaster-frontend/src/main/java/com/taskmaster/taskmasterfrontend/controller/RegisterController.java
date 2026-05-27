@@ -8,7 +8,7 @@ import javafx.application.Platform;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Scene;
-import javafx.scene.control.DatePicker;
+import com.taskmaster.taskmasterfrontend.util.SmartDatePicker;
 import javafx.scene.control.Label;
 import javafx.scene.control.PasswordField;
 import javafx.scene.control.TextField;
@@ -33,7 +33,7 @@ public class RegisterController {
     @FXML private TextField usernameField;
     @FXML private TextField emailField;
     @FXML private PasswordField passwordField;
-    @FXML private DatePicker birthDatePicker;
+    @FXML private SmartDatePicker birthDatePicker;
     @FXML private Label errorLabel;
 
     private final LanguageManager lm = LanguageManager.getInstance();

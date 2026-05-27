@@ -3,6 +3,7 @@ package com.taskmaster.taskmasterfrontend.controller;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.taskmaster.taskmasterfrontend.util.AppContext;
 import com.taskmaster.taskmasterfrontend.util.LanguageManager;
+import com.taskmaster.taskmasterfrontend.util.SmartDatePicker;
 import javafx.application.Platform;
 import javafx.collections.FXCollections;
 import javafx.fxml.FXML;
@@ -30,7 +31,7 @@ public class EditTaskController {
     @FXML private TextArea descriptionField;
     @FXML private ComboBox<String> statusCombo;
     @FXML private ComboBox<String> priorityCombo;
-    @FXML private DatePicker dueDatePicker;
+    @FXML private SmartDatePicker dueDatePicker;
     @FXML private Label errorLabel;
     @FXML private Label dialogTitleLabel;
 

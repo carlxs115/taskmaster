@@ -297,6 +297,32 @@
     -fx-border-color: -tm-accent;
     -fx-border-width: 2px;
 }
+/* ── SmartDatePicker ── */
+.smart-date-field {
+    -fx-pref-height: 38px;
+    -fx-font-size: 13px;
+    -fx-background-color: -tm-bg-input;
+    -fx-border-color: -tm-border;
+    -fx-border-radius: 6 0 0 6;
+    -fx-background-radius: 6 0 0 6;
+    -fx-border-width: 1.5 0 1.5 1.5;
+    -fx-padding: 0 12 0 12;
+    -fx-text-fill: -tm-text-primary;
+    -fx-prompt-text-fill: -tm-text-muted;
+}
+.smart-date-field:focused {
+    -fx-border-color: -tm-accent;
+    -fx-border-width: 2 0 2 2;
+}
+.smart-date-field.smart-date-error {
+    -fx-border-color: #e74c3c;
+    -fx-border-width: 1.5 0 1.5 1.5;
+}
+.smart-date-field.smart-date-valid {
+    -fx-border-color: #2ecc71;
+    -fx-border-width: 1.5 0 1.5 1.5;
+}
+
 .auth-btn {
     -fx-background-color: -tm-accent;
     -fx-text-fill: -tm-text-on-accent;
@@ -320,6 +346,29 @@
 .auth-error {
     -fx-text-fill: -tm-status-urgent;
     -fx-font-size: 12px;
+}
+.smart-date-nav-btn {
+    -fx-background-color: ladder(-tm-accent, rgba(255,255,255,0.25) 49%, rgba(0,0,0,0.15) 50%);
+    -fx-text-fill: ladder(-tm-accent, white 49%, black 50%);
+    -fx-font-size: 16px;
+    -fx-background-radius: 6;
+    -fx-background-insets: 0;
+    -fx-border-width: 0;
+    -fx-cursor: hand;
+    -fx-padding: 2 8;
+}
+.smart-date-nav-btn:hover {
+    -fx-background-color: ladder(-tm-accent, rgba(255,255,255,0.4) 49%, rgba(0,0,0,0.25) 50%);
+    -fx-background-insets: 0;
+}
+.smart-date-header-combo {
+    -fx-text-fill: ladder(-tm-accent, white 49%, black 50%);
+    -fx-font-weight: bold;
+    -fx-font-size: 12px;
+    -fx-background-radius: 6;
+    -fx-border-color: rgba(255,255,255,0.3);
+    -fx-border-radius: 6;
+    -fx-padding: 3 6;
 }
 
 /* =====================================================
