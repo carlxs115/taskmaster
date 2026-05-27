@@ -21,3 +21,6 @@ packaging/
 
 # Javadoc generado
 docs/
+
+# Claude
+.claude/
