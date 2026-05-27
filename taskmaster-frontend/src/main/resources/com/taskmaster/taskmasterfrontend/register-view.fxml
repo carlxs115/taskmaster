@@ -36,11 +36,13 @@
             <PasswordField fx:id="passwordField"
                            promptText="%common.password.prompt"
                            styleClass="auth-field"/>
+            <Label text="%register.hint.password" styleClass="auth-field-hint"/>
         </VBox>
         <VBox spacing="8">
             <Label text="%common.birthdate" styleClass="auth-field-label"/>
             <SmartDatePicker fx:id="birthDatePicker"
                             style="-fx-pref-width: 300px;"/>
+            <Label text="%register.hint.age" styleClass="auth-field-hint"/>
         </VBox>
 
         <!-- ERROR -->

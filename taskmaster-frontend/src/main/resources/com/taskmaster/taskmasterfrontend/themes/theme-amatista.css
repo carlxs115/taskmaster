@@ -1671,3 +1671,8 @@
 .cal-month-btn-selected:hover {
     -fx-background-color: -tm-accent;
 }
+
+.auth-field-hint {
+    -fx-font-size: 10px;
+    -fx-text-fill: #9ca3af;
+}

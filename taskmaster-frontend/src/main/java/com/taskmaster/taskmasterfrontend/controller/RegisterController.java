@@ -22,7 +22,7 @@ import java.util.HashMap;
 /**
  * Controlador de la pantalla de registro de nuevos usuarios.
  *
- * <p>Valida los datos introducidos (campos obligatorios, edad mínima de 12 años)
+ * <p>Valida los datos introducidos (campos obligatorios, edad mínima de 14 años)
  * y envía la solicitud de registro al backend. Si el registro es exitoso,
  * redirige automáticamente a la pantalla de login.</p>
  *
@@ -63,7 +63,7 @@ public class RegisterController {
      *
      * <p>Comprueba que todos los campos estén rellenos, que se haya
      * seleccionado una fecha de nacimiento y que el usuario tenga al menos
-     * 12 años. Si el registro es exitoso, navega a la pantalla de login.</p>
+     * 14 años. Si el registro es exitoso, navega a la pantalla de login.</p>
      */
     @FXML
     private void handleRegister() {
@@ -77,13 +77,18 @@ public class RegisterController {
             return;
         }
 
+        if (password.length() < 6) {
+            showError(lm.get("common.error.password.length"));
+            return;
+        }
+
         if (birthDate == null) {
             showError(lm.get("common.birthdate.prompt"));
             return;
         }
 
-        // Validamos edad mínima de 12 años
-        if (birthDate.isAfter(LocalDate.now().minusYears(12))) {
+        // Validamos edad mínima de 14 años
+        if (birthDate.isAfter(LocalDate.now().minusYears(14))) {
             showError(lm.get("register.error.age"));
             return;
         }

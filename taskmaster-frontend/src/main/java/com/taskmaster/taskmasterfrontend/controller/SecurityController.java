@@ -172,7 +172,7 @@ public class SecurityController {
             return;
         }
         if (newPass.length() < 6) {
-            showError(lm.get("security.password.error.length"));
+            showError(lm.get("common.error.password.length"));
             return;
         }
 

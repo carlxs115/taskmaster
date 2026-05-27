@@ -116,8 +116,8 @@ public class EditProfileController {
             return;
         }
 
-        // Validación edad mínima 12 años
-        if (birthDate.isAfter(LocalDate.now().minusYears(12))) {
+        // Validación edad mínima 14 años
+        if (birthDate.isAfter(LocalDate.now().minusYears(14))) {
             showError(lm.get("edit.profile.error.age"));
             return;
         }
