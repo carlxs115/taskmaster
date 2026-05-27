@@ -1549,3 +1549,76 @@
 .cal-chip-submitted {
     -fx-border-color: #8e44ad;
 }
+
+/* Botón clicable mes/año en la cabecera */
+.cal-month-year-btn {
+    -fx-cursor: hand;
+    -fx-padding: 4 8 4 8;
+    -fx-background-radius: 6px;
+}
+.cal-month-year-btn:hover {
+    -fx-background-color: -tm-bg-hover;
+}
+.cal-month-label-chevron {
+    -fx-icon-size: 10px;
+    -fx-icon-color: -tm-text-secondary;
+}
+
+/* Popup selector de mes/año */
+.cal-month-picker-popup {
+    -fx-background-color: -tm-bg-surface;
+    -fx-border-color: -tm-border;
+    -fx-border-radius: 10px;
+    -fx-background-radius: 10px;
+    -fx-border-width: 1.5px;
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.18), 12, 0, 0, 4);
+}
+.cal-month-picker-year-label {
+    -fx-font-size: 14px;
+    -fx-font-weight: bold;
+    -fx-text-fill: -tm-text-primary;
+    -fx-alignment: center;
+    -fx-cursor: hand;
+    -fx-background-color: transparent;
+    -fx-background-radius: 6px;
+    -fx-padding: 4 10 4 10;
+}
+.cal-month-picker-year-label:hover {
+    -fx-text-fill: -tm-accent;
+    -fx-background-color: -tm-bg-hover;
+}
+.cal-month-picker-range-label {
+    -fx-font-size: 13px;
+    -fx-font-weight: bold;
+    -fx-text-fill: -tm-text-primary;
+    -fx-alignment: center;
+}
+.cal-month-picker-year-btn {
+    -fx-background-color: transparent;
+    -fx-cursor: hand;
+    -fx-padding: 4 10 4 10;
+    -fx-background-radius: 6px;
+}
+.cal-month-picker-year-btn:hover {
+    -fx-background-color: -tm-bg-hover;
+}
+.cal-month-btn {
+    -fx-background-color: transparent;
+    -fx-cursor: hand;
+    -fx-padding: 7 6 7 6;
+    -fx-background-radius: 8px;
+    -fx-font-size: 12px;
+    -fx-text-fill: -tm-text-primary;
+    -fx-max-width: Infinity;
+}
+.cal-month-btn:hover {
+    -fx-background-color: -tm-bg-hover;
+}
+.cal-month-btn-selected {
+    -fx-background-color: -tm-accent;
+    -fx-text-fill: white;
+    -fx-font-weight: bold;
+}
+.cal-month-btn-selected:hover {
+    -fx-background-color: -tm-accent;
+}
