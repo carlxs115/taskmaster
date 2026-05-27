@@ -2,6 +2,7 @@
 
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
+<?import com.taskmaster.taskmasterfrontend.util.SmartDatePicker?>
 
 <VBox xmlns:fx="http://javafx.com/fxml"
       fx:controller="com.taskmaster.taskmasterfrontend.controller.RegisterController" styleClass="auth-root">
@@ -38,10 +39,8 @@
         </VBox>
         <VBox spacing="8">
             <Label text="%common.birthdate" styleClass="auth-field-label"/>
-            <DatePicker fx:id="birthDatePicker"
-                        promptText="%common.birthdate.prompt"
-                        styleClass="auth-field"
-                        style="-fx-pref-width: 300px;"/>
+            <SmartDatePicker fx:id="birthDatePicker"
+                            style="-fx-pref-width: 300px;"/>
         </VBox>
 
         <!-- ERROR -->

@@ -7,7 +7,7 @@ import com.taskmaster.taskmasterfrontend.util.AppContext;
 import com.taskmaster.taskmasterfrontend.util.LanguageManager;
 import javafx.application.Platform;
 import javafx.fxml.FXML;
-import javafx.scene.control.DatePicker;
+import com.taskmaster.taskmasterfrontend.util.SmartDatePicker;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextField;
 import javafx.scene.input.KeyCode;
@@ -32,7 +32,7 @@ public class EditProfileController {
 
     @FXML private TextField usernameField;
     @FXML private TextField emailField;
-    @FXML private DatePicker birthDatePicker;
+    @FXML private SmartDatePicker birthDatePicker;
     @FXML private Label errorLabel;
 
     private Runnable onProfileUpdated;

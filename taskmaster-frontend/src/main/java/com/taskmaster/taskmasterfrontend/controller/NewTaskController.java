@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.taskmaster.taskmasterfrontend.util.AppContext;
 import com.taskmaster.taskmasterfrontend.util.LanguageManager;
+import com.taskmaster.taskmasterfrontend.util.SmartDatePicker;
 import javafx.application.Platform;
 import javafx.collections.FXCollections;
 import javafx.fxml.FXML;
@@ -36,7 +37,7 @@ public class NewTaskController {
     @FXML private ComboBox<String> priorityCombo;
     @FXML private ComboBox<String> categoryCombo;
     @FXML private VBox categoryBox;
-    @FXML private DatePicker dueDatePicker;
+    @FXML private SmartDatePicker dueDatePicker;
     @FXML private Label errorLabel;
 
     private Long         preSelectedProjectId;

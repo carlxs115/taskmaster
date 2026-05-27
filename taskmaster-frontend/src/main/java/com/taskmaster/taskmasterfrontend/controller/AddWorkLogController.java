@@ -3,6 +3,7 @@ package com.taskmaster.taskmasterfrontend.controller;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.taskmaster.taskmasterfrontend.util.AppContext;
 import com.taskmaster.taskmasterfrontend.util.LanguageManager;
+import com.taskmaster.taskmasterfrontend.util.SmartDatePicker;
 import javafx.application.Platform;
 import javafx.collections.FXCollections;
 import javafx.fxml.FXML;
@@ -26,7 +27,7 @@ import java.util.Map;
  */
 public class AddWorkLogController {
 
-    @FXML private DatePicker datePicker;
+    @FXML private SmartDatePicker datePicker;
     @FXML private TextField hoursField;
     @FXML private ComboBox<String> activityTypeCombo;
     @FXML private TextArea noteField;

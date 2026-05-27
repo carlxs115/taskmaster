@@ -16,7 +16,7 @@ module com.taskmaster.taskmasterfrontend {
     requires ch.qos.logback.classic;
     opens com.taskmaster.taskmasterfrontend to javafx.fxml;
     opens com.taskmaster.taskmasterfrontend.controller to javafx.fxml;
-    opens com.taskmaster.taskmasterfrontend.util to com.fasterxml.jackson.databind;
+    opens com.taskmaster.taskmasterfrontend.util to com.fasterxml.jackson.databind, javafx.fxml;
     exports com.taskmaster.taskmasterfrontend;
     exports com.taskmaster.taskmasterfrontend.controller;
 }
