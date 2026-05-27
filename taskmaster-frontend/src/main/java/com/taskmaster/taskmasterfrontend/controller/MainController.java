@@ -1212,7 +1212,7 @@ public class MainController {
                     getClass().getResource("/com/taskmaster/taskmasterfrontend/project-detail-view.fxml"),
                     LanguageManager.getInstance().getBundle()
             );
-            VBox root = loader.load();
+            Region root = loader.load();
             root.setUserData("detail");
             HBox.setHgrow(root, Priority.ALWAYS);
             root.setMaxWidth(Double.MAX_VALUE);
@@ -1276,7 +1276,7 @@ public class MainController {
                             "/com/taskmaster/taskmasterfrontend/task-detail-view.fxml"),
                     LanguageManager.getInstance().getBundle()
             );
-            VBox root = loader.load();
+            Region root = loader.load();
             root.setUserData("detail");
             HBox.setHgrow(root, Priority.ALWAYS);
             root.setMaxWidth(Double.MAX_VALUE);

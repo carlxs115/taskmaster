@@ -317,6 +317,25 @@ public class TaskController {
         return ResponseEntity.ok(toResponseList(taskService.getAllTasksByProject(id)));
     }
 
+    /**
+     * GET /api/tasks/project/{id}/subtask-ids
+     * Devuelve los IDs de todas las subtareas de las tareas de un proyecto en una sola consulta.
+     * Diseñado para ser llamado junto con {@code /api/activity-log/entities} y así evitar
+     * el problema N+1 al cargar el historial de actividad de un proyecto.
+     *
+     * @param id          identificador del proyecto
+     * @param userDetails usuario autenticado inyectado por Spring Security
+     * @return 200 OK con la lista de IDs de subtareas
+     */
+    @GetMapping("/project/{id}/subtask-ids")
+    public ResponseEntity<List<Long>> getSubtaskIdsByProject(
+            @PathVariable Long id,
+            @AuthenticationPrincipal UserDetails userDetails) {
+        Long userId = securityUtils.getUserId(userDetails);
+        projectService.getProjectByIdAndUser(id, userId);
+        return ResponseEntity.ok(taskService.getSubtaskIdsByProject(id));
+    }
+
     // -------------------------------------------------------------------------
     // Escritura
     // -------------------------------------------------------------------------

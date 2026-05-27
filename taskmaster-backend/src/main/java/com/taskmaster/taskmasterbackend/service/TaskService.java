@@ -515,6 +515,17 @@ public class TaskService {
         return taskRepository.findByProjectIdAndParentTaskIsNull(projectId);
     }
 
+    /**
+     * Devuelve los identificadores de todas las subtareas de las tareas de un proyecto.
+     * Delega en una sola query JPQL para evitar el problema N+1.
+     *
+     * @param projectId identificador del proyecto
+     * @return lista de IDs de subtareas del proyecto
+     */
+    public List<Long> getSubtaskIdsByProject(Long projectId) {
+        return taskRepository.findSubtaskIdsByProjectId(projectId);
+    }
+
     // -------------------------------------------------------------------------
     // Métodos privados
     // -------------------------------------------------------------------------

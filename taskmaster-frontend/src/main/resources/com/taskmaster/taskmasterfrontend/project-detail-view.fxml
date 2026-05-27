@@ -3,116 +3,126 @@
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
 <?import org.kordamp.ikonli.javafx.FontIcon?>
-<VBox xmlns:fx="http://javafx.com/fxml"
-      fx:controller="com.taskmaster.taskmasterfrontend.controller.ProjectDetailController" styleClass="detail-root">
+<BorderPane xmlns:fx="http://javafx.com/fxml"
+            fx:controller="com.taskmaster.taskmasterfrontend.controller.ProjectDetailController" styleClass="detail-root">
 
-    <HBox styleClass="detail-header" alignment="CENTER_LEFT" spacing="10">
-        <FontIcon iconLiteral="fas-folder-open" styleClass="detail-header-icon"/>
-        <Label fx:id="projectIdLabel" styleClass="detail-id-badge"/>
-        <Label fx:id="projectNameLabel" styleClass="detail-title"/>
-        <Region HBox.hgrow="ALWAYS"/>
-        <Button text="%common.menu.edit" onAction="#handleEdit" styleClass="detail-btn-edit" graphicTextGap="6">
-            <graphic>
-                <FontIcon iconLiteral="fas-pen" styleClass="detail-btn-edit-icon"/>
-            </graphic>
-        </Button>
-        <Button text="%common.close" onAction="#handleClose" styleClass="detail-btn-close" graphicTextGap="6">
-            <graphic>
-                <FontIcon iconLiteral="fas-times" styleClass="detail-btn-close-icon"/>
-            </graphic>
-        </Button>
-    </HBox>
+    <top>
+        <HBox styleClass="detail-header" alignment="CENTER_LEFT" spacing="10">
+            <FontIcon iconLiteral="fas-folder-open" styleClass="detail-header-icon"/>
+            <Label fx:id="projectIdLabel" styleClass="detail-id-badge"/>
+            <Label fx:id="projectNameLabel" styleClass="detail-title"/>
+            <Region HBox.hgrow="ALWAYS"/>
+            <Button text="%common.menu.edit" onAction="#handleEdit" styleClass="detail-btn-edit" graphicTextGap="6">
+                <graphic>
+                    <FontIcon iconLiteral="fas-pen" styleClass="detail-btn-edit-icon"/>
+                </graphic>
+            </Button>
+            <Button text="%common.close" onAction="#handleClose" styleClass="detail-btn-close" graphicTextGap="6">
+                <graphic>
+                    <FontIcon iconLiteral="fas-times" styleClass="detail-btn-close-icon"/>
+                </graphic>
+            </Button>
+        </HBox>
+    </top>
 
-    <ScrollPane VBox.vgrow="ALWAYS" fitToWidth="true"
-                style="-fx-background-color: transparent; -fx-border-color: transparent;">
-        <VBox spacing="16" style="-fx-padding: 20;">
+    <center>
+        <ScrollPane fitToWidth="true"
+                    style="-fx-background-color: transparent; -fx-border-color: transparent;">
+            <VBox spacing="16" style="-fx-padding: 20;">
 
-            <!-- Badges -->
-            <HBox spacing="8" alignment="CENTER_LEFT">
-                <Label fx:id="statusBadge"
-                       style="-fx-font-size: 11px; -fx-padding: 3 10 3 10;
-                              -fx-background-radius: 10px; -fx-text-fill: white;"/>
-                <Label fx:id="priorityBadge"
-                       style="-fx-font-size: 11px; -fx-padding: 3 10 3 10;
-                              -fx-background-radius: 10px; -fx-text-fill: white;"/>
-                <Label fx:id="categoryBadge"
-                       style="-fx-font-size: 11px; -fx-padding: 3 10 3 10;
-                              -fx-background-radius: 10px;"/>
-            </HBox>
-
-            <!-- Descripción -->
-            <VBox spacing="6" styleClass="detail-section">
-                <HBox alignment="CENTER_LEFT" spacing="6">
-                    <FontIcon iconLiteral="fas-align-left" styleClass="detail-section-icon"/>
-                    <Label text="%common.description" styleClass="detail-section-label"/>
+                <!-- Badges -->
+                <HBox spacing="8" alignment="CENTER_LEFT">
+                    <Label fx:id="statusBadge"
+                           style="-fx-font-size: 11px; -fx-padding: 3 10 3 10;
+                                  -fx-background-radius: 10px; -fx-text-fill: white;"/>
+                    <Label fx:id="priorityBadge"
+                           style="-fx-font-size: 11px; -fx-padding: 3 10 3 10;
+                                  -fx-background-radius: 10px; -fx-text-fill: white;"/>
+                    <Label fx:id="categoryBadge"
+                           style="-fx-font-size: 11px; -fx-padding: 3 10 3 10;
+                                  -fx-background-radius: 10px;"/>
                 </HBox>
-                <Label fx:id="descriptionLabel" styleClass="detail-description" wrapText="true"/>
-            </VBox>
 
-            <!-- Estadísticas -->
-            <HBox spacing="10">
-                <VBox fx:id="statTotal" alignment="CENTER" spacing="4"
-                      HBox.hgrow="ALWAYS" styleClass="project-stat-card">
-                    <Label fx:id="statTotalNum" styleClass="project-stat-number"/>
-                    <Label text="%project.detail.stat.total" styleClass="project-stat-label"/>
+                <!-- Descripción -->
+                <VBox spacing="6" styleClass="detail-section">
+                    <HBox alignment="CENTER_LEFT" spacing="6">
+                        <FontIcon iconLiteral="fas-align-left" styleClass="detail-section-icon"/>
+                        <Label text="%common.description" styleClass="detail-section-label"/>
+                    </HBox>
+                    <Label fx:id="descriptionLabel" styleClass="detail-description" wrapText="true"/>
                 </VBox>
-                <VBox alignment="CENTER" spacing="4"
-                      HBox.hgrow="ALWAYS" styleClass="project-stat-card">
-                    <Label fx:id="statPendingNum"
-                           style="-fx-font-size: 22px; -fx-font-weight: bold; -fx-text-fill: #3b82f6;"/>
-                    <Label text="%profile.stats.pending" styleClass="project-stat-label"/>
-                </VBox>
-                <VBox alignment="CENTER" spacing="4"
-                      HBox.hgrow="ALWAYS" styleClass="project-stat-card">
-                    <Label fx:id="statDoneNum"
-                           style="-fx-font-size: 22px; -fx-font-weight: bold; -fx-text-fill: #22c55e;"/>
-                    <Label text="%common.done" styleClass="project-stat-label"/>
-                </VBox>
-                <VBox alignment="CENTER" spacing="4"
-                      HBox.hgrow="ALWAYS" styleClass="project-stat-card">
-                    <Label fx:id="statOverdueNum"
-                           style="-fx-font-size: 22px; -fx-font-weight: bold; -fx-text-fill: #e74c3c;"/>
-                    <Label text="%project.detail.stat.overdue" styleClass="project-stat-label"/>
-                </VBox>
-            </HBox>
 
-            <!-- Barra de progreso -->
-            <VBox spacing="6" styleClass="detail-section">
-                <HBox alignment="CENTER_LEFT" spacing="6">
-                    <FontIcon iconLiteral="fas-chart-line" styleClass="detail-section-icon"/>
-                    <Label text="%project.detail.progress" styleClass="detail-section-label"/>
-                    <Region HBox.hgrow="ALWAYS"/>
-                    <Label fx:id="progressLabel" styleClass="project-stat-label"/>
+                <!-- Estadísticas -->
+                <HBox spacing="10">
+                    <VBox fx:id="statTotal" alignment="CENTER" spacing="4"
+                          HBox.hgrow="ALWAYS" styleClass="project-stat-card">
+                        <Label fx:id="statTotalNum" styleClass="project-stat-number"/>
+                        <Label text="%project.detail.stat.total" styleClass="project-stat-label"/>
+                    </VBox>
+                    <VBox alignment="CENTER" spacing="4"
+                          HBox.hgrow="ALWAYS" styleClass="project-stat-card">
+                        <Label fx:id="statPendingNum"
+                               style="-fx-font-size: 22px; -fx-font-weight: bold; -fx-text-fill: #3b82f6;"/>
+                        <Label text="%profile.stats.pending" styleClass="project-stat-label"/>
+                    </VBox>
+                    <VBox alignment="CENTER" spacing="4"
+                          HBox.hgrow="ALWAYS" styleClass="project-stat-card">
+                        <Label fx:id="statDoneNum"
+                               style="-fx-font-size: 22px; -fx-font-weight: bold; -fx-text-fill: #22c55e;"/>
+                        <Label text="%common.done" styleClass="project-stat-label"/>
+                    </VBox>
+                    <VBox alignment="CENTER" spacing="4"
+                          HBox.hgrow="ALWAYS" styleClass="project-stat-card">
+                        <Label fx:id="statOverdueNum"
+                               style="-fx-font-size: 22px; -fx-font-weight: bold; -fx-text-fill: #e74c3c;"/>
+                        <Label text="%project.detail.stat.overdue" styleClass="project-stat-label"/>
+                    </VBox>
                 </HBox>
-                <StackPane fx:id="progressBarBg" styleClass="detail-progress-bg"
-                           minHeight="8" maxHeight="8">
-                    <StackPane fx:id="progressBarFill"
-                               style="-fx-background-color: -tm-accent; -fx-background-radius: 4px;"
-                               StackPane.alignment="CENTER_LEFT"/>
-                </StackPane>
-            </VBox>
 
-            <!-- Lista de tareas -->
-            <VBox styleClass="detail-section">
-                <HBox alignment="CENTER_LEFT" spacing="10" style="-fx-padding: 0 0 10 0;">
-                    <FontIcon iconLiteral="fas-list-ul" styleClass="detail-section-icon"/>
-                    <Label text="%common.tasks" styleClass="detail-section-title"/>
-                    <Region HBox.hgrow="ALWAYS"/>
-                    <Button text="%project.detail.tasks.new"
-                            onAction="#handleNewTask" styleClass="btn-small-primary"
-                            graphicTextGap="6">
-                        <graphic>
-                            <FontIcon iconLiteral="fas-plus" styleClass="btn-small-primary-icon"/>
-                        </graphic>
-                    </Button>
-                </HBox>
-                <VBox fx:id="taskListContainer"/>
-                <Label fx:id="emptyTasksLabel"
-                       text="%project.detail.tasks.empty" styleClass="detail-empty-label"/>
-            </VBox>
+                <!-- Barra de progreso -->
+                <VBox spacing="6" styleClass="detail-section">
+                    <HBox alignment="CENTER_LEFT" spacing="6">
+                        <FontIcon iconLiteral="fas-chart-line" styleClass="detail-section-icon"/>
+                        <Label text="%project.detail.progress" styleClass="detail-section-label"/>
+                        <Region HBox.hgrow="ALWAYS"/>
+                        <Label fx:id="progressLabel" styleClass="project-stat-label"/>
+                    </HBox>
+                    <StackPane fx:id="progressBarBg" styleClass="detail-progress-bg"
+                               minHeight="8" maxHeight="8">
+                        <StackPane fx:id="progressBarFill"
+                                   style="-fx-background-color: -tm-accent; -fx-background-radius: 4px;"
+                                   StackPane.alignment="CENTER_LEFT"/>
+                    </StackPane>
+                </VBox>
 
+                <!-- Lista de tareas -->
+                <VBox styleClass="detail-section">
+                    <HBox alignment="CENTER_LEFT" spacing="10" style="-fx-padding: 0 0 10 0;">
+                        <FontIcon iconLiteral="fas-list-ul" styleClass="detail-section-icon"/>
+                        <Label text="%common.tasks" styleClass="detail-section-title"/>
+                        <Region HBox.hgrow="ALWAYS"/>
+                        <Button text="%project.detail.tasks.new"
+                                onAction="#handleNewTask" styleClass="btn-small-primary"
+                                graphicTextGap="6">
+                            <graphic>
+                                <FontIcon iconLiteral="fas-plus" styleClass="btn-small-primary-icon"/>
+                            </graphic>
+                        </Button>
+                    </HBox>
+                    <VBox fx:id="taskListContainer"/>
+                    <Label fx:id="emptyTasksLabel"
+                           text="%project.detail.tasks.empty" styleClass="detail-empty-label"/>
+                </VBox>
+
+            </VBox>
+        </ScrollPane>
+    </center>
+
+    <bottom>
+        <VBox>
+            <Separator/>
+            <fx:include fx:id="activityLogSection" source="activity-log-section.fxml"/>
         </VBox>
-    </ScrollPane>
-    <Separator/>
-    <fx:include fx:id="activityLogSection" source="activity-log-section.fxml"/>
-</VBox>
+    </bottom>
+
+</BorderPane>
