@@ -6,6 +6,7 @@ import com.taskmaster.taskmasterbackend.model.enums.TaskStatus;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
 import lombok.*;
+import java.math.BigDecimal;
 import java.util.List;
 
 import java.time.LocalDate;
@@ -94,6 +95,13 @@ public class Task {
      * Es opcional: puede ser {@code null} si la tarea no tiene fecha límite.
      */
     private LocalDate dueDate;
+
+    /**
+     * Duración estimada de la tarea en horas. Es opcional.
+     * Permite comparar la planificación frente al tiempo real registrado en {@link WorkLog}.
+     */
+    @Column(precision = 6, scale = 2)
+    private BigDecimal estimatedDuration;
 
     /**
      * Fecha y hora de creación de la tarea.

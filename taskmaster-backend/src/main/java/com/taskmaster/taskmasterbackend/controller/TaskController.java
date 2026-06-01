@@ -357,7 +357,8 @@ public class TaskController {
         Long userId = securityUtils.getUserId(userDetails);
         Task task = taskService.createTask(
                 request.getTitle(), request.getDescription(), request.getPriority(),
-                request.getDueDate(), request.getProjectId(), request.getParentTaskId(),
+                request.getDueDate(), request.getEstimatedDuration(),
+                request.getProjectId(), request.getParentTaskId(),
                 request.getCategory(), userId);
         return ResponseEntity.status(HttpStatus.CREATED).body(toResponse(task));
     }
@@ -380,7 +381,8 @@ public class TaskController {
 
         Long userId = securityUtils.getUserId(userDetails);
         Task task = taskService.updateTask(id, request.getTitle(), request.getDescription(),
-                request.getStatus(), request.getPriority(), request.getDueDate(), userId);
+                request.getStatus(), request.getPriority(), request.getDueDate(),
+                request.getEstimatedDuration(), userId);
         return ResponseEntity.ok(toResponse(task));
     }
 
@@ -495,6 +497,7 @@ public class TaskController {
                 .status(task.getStatus())
                 .priority(task.getPriority())
                 .dueDate(task.getDueDate())
+                .estimatedDuration(task.getEstimatedDuration())
                 .createdAt(task.getCreatedAt())
                 // Resolvemos las FK a IDs para no serializar los objetos completos
                 .projectId(task.getProject() != null ? task.getProject().getId() : null)

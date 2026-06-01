@@ -4,6 +4,7 @@ import com.taskmaster.taskmasterbackend.model.enums.TaskCategory;
 import com.taskmaster.taskmasterbackend.model.enums.TaskPriority;
 import com.taskmaster.taskmasterbackend.model.enums.TaskStatus;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 /**
@@ -19,6 +20,7 @@ import java.time.LocalDateTime;
  * @param status      estado actual del proyecto
  * @param priority    prioridad del proyecto
  * @param category    categoría del proyecto
+ * @param estimatedDuration duración estimada del proyecto en horas, o {@code null} si no se especificó
  * @param createdAt   fecha y hora de creación
  * @param deleted     indica si el proyecto está en la papelera
  * @param deletedAt   fecha y hora en que fue enviado a la papelera, o {@code null} si no lo está
@@ -32,6 +34,7 @@ public record ProjectResponse(
         TaskStatus status,
         TaskPriority priority,
         TaskCategory category,
+        BigDecimal estimatedDuration,
         LocalDateTime createdAt,
         boolean deleted,
         LocalDateTime deletedAt

@@ -15,6 +15,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -90,12 +91,14 @@ public class ProjectService {
      * @param category    categoría del proyecto
      * @param status      estado inicial; si es {@code null} se usa {@code TODO}
      * @param priority    prioridad inicial; si es {@code null} se usa {@code MEDIUM}
+     * @param estimatedDuration duración estimada en horas; opcional
      * @param userId      identificador del usuario propietario
      * @return proyecto creado y persistido
      */
     @Transactional
     public Project createProject(String name, String description, TaskCategory category,
-                                 TaskStatus status, TaskPriority priority, Long userId) {
+                                 TaskStatus status, TaskPriority priority,
+                                 BigDecimal estimatedDuration, Long userId) {
 
         User user = userService.findById(userId);
 
@@ -106,13 +109,16 @@ public class ProjectService {
                 // Valores por defecto si no se especifican
                 .status(status != null ? status : TaskStatus.TODO)
                 .priority(priority != null ? priority : TaskPriority.MEDIUM)
+                .estimatedDuration(estimatedDuration)
                 .user(user)
                 .deleted(false)
                 .build();
 
         Project saved = projectRepository.save(project);
 
-        activityLogService.log(userId, ActionType.PROJECT_CREATED, "PROJECT", saved.getId(), saved.getName());
+        activityLogService.log(
+                userId, ActionType.PROJECT_CREATED, "PROJECT", saved.getId(), saved.getName()
+        );
 
         return saved;
     }
@@ -131,13 +137,15 @@ public class ProjectService {
      * @param category    nueva categoría
      * @param status      nuevo estado
      * @param priority    nueva prioridad
+     * @param estimatedDuration nueva duración estimada en horas; {@code null} para eliminarla
      * @param userId      identificador del usuario propietario
      * @return proyecto actualizado
      * @throws BusinessException si se intenta completar un proyecto con tareas pendientes
      */
     @Transactional
     public Project updateProject(Long projectId, String name, String description, TaskCategory category,
-                                 TaskStatus status, TaskPriority priority, Long userId) {
+                                 TaskStatus status, TaskPriority priority,
+                                 BigDecimal estimatedDuration, Long userId) {
 
         Project project = getProjectByIdAndUser(projectId, userId);
         TaskStatus oldStatus = project.getStatus();
@@ -157,6 +165,7 @@ public class ProjectService {
         project.setCategory(category);
         project.setStatus(status);
         project.setPriority(priority);
+        project.setEstimatedDuration(estimatedDuration);
 
         Project saved = projectRepository.save(project);
 

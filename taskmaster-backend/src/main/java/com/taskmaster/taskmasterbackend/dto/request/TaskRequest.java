@@ -3,9 +3,11 @@ package com.taskmaster.taskmasterbackend.dto.request;
 import com.taskmaster.taskmasterbackend.model.enums.TaskCategory;
 import com.taskmaster.taskmasterbackend.model.enums.TaskPriority;
 import com.taskmaster.taskmasterbackend.model.enums.TaskStatus;
+import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.NotBlank;
 import lombok.Data;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 
 /**
@@ -42,6 +44,13 @@ public class TaskRequest {
 
     /** Fecha límite opcional de la tarea. */
     private LocalDate dueDate;
+
+    /**
+     * Duración estimada de la tarea en horas. Es opcional.
+     * Si se especifica, debe ser mayor o igual a 0.1 horas.
+     */
+    @DecimalMin(value = "0.1", message = "La duración estimada debe ser al menos 0.1 horas")
+    private BigDecimal estimatedDuration;
 
     /**
      * Identificador del proyecto al que pertenece la tarea.

@@ -8,6 +8,7 @@ import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
 import lombok.*;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -89,6 +90,13 @@ public class Project {
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private TaskCategory category;
+
+    /**
+     * Duración estimada del proyecto en horas. Es opcional.
+     * Permite comparar la planificación frente al tiempo real registrado en los WorkLogs de sus tareas.
+     */
+    @Column(precision = 6, scale = 2)
+    private BigDecimal estimatedDuration;
 
     /**
      * Usuario propietario del proyecto.

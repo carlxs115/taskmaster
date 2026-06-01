@@ -6,6 +6,7 @@ import com.taskmaster.taskmasterbackend.model.enums.TaskStatus;
 import lombok.Builder;
 import lombok.Data;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 
@@ -46,6 +47,12 @@ public class TaskResponse {
      * {@code null} si la tarea no tiene fecha límite asignada.
      */
     private LocalDate dueDate;
+
+    /**
+     * Duración estimada de la tarea en horas.
+     * {@code null} si no se ha especificado estimación.
+     */
+    private BigDecimal estimatedDuration;
 
     /** Fecha y hora de creación de la tarea. */
     private LocalDateTime createdAt;

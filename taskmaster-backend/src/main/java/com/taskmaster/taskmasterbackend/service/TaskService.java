@@ -17,11 +17,13 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 /**
  * Servicio que gestiona la lógica de negocio de las tareas.
@@ -188,6 +190,7 @@ public class TaskService {
      * @param description  descripción opcional
      * @param priority     prioridad; si es {@code null} se usa {@code MEDIUM}
      * @param dueDate      fecha límite opcional
+     * @param estimatedDuration duración estimada en horas; opcional
      * @param projectId    proyecto al que pertenece; {@code null} si es tarea personal
      * @param parentTaskId tarea padre; {@code null} si es tarea raíz
      * @param category     categoría; ignorada si la tarea pertenece a un proyecto
@@ -196,7 +199,8 @@ public class TaskService {
      */
     @Transactional
     public Task createTask(String title, String description, TaskPriority priority,
-                           LocalDate dueDate, Long projectId, Long parentTaskId,
+                           LocalDate dueDate, BigDecimal estimatedDuration,
+                           Long projectId, Long parentTaskId,
                            TaskCategory category, Long userId) {
 
         User user = userRepository.findById(userId)
@@ -209,6 +213,7 @@ public class TaskService {
                 .priority(priority != null ? priority : TaskPriority.MEDIUM)
                 .status(TaskStatus.TODO)
                 .dueDate(dueDate)
+                .estimatedDuration(estimatedDuration)
                 .deleted(false)
                 .user(user);
 
@@ -254,13 +259,15 @@ public class TaskService {
      * @param status      nuevo estado
      * @param priority    nueva prioridad
      * @param dueDate     nueva fecha límite
+     * @param estimatedDuration nueva duración estimada en horas; {@code null} para eliminarla
      * @param userId      identificador del usuario
      * @return tarea actualizada
      * @throws BusinessException si se intenta completar una tarea con subtareas pendientes
      */
     @Transactional
     public Task updateTask(Long taskId, String title, String description, TaskStatus status,
-                           TaskPriority priority, LocalDate dueDate, Long userId) {
+                           TaskPriority priority, LocalDate dueDate,
+                           BigDecimal estimatedDuration, Long userId) {
 
         Task task = findById(taskId);
 
@@ -290,6 +297,7 @@ public class TaskService {
         task.setStatus(status);
         task.setPriority(priority);
         task.setDueDate(dueDate);
+        task.setEstimatedDuration(estimatedDuration);
 
         Task saved = taskRepository.save(task);
 
@@ -299,12 +307,18 @@ public class TaskService {
 
         // Registramos solo el primer cambio relevante detectado en orden de prioridad
         if (!oldTitle.equals(title)) {
-            activityLogService.log(userId, actionType, entityType, saved.getId(), saved.getTitle(), oldTitle, title);
+            activityLogService.log(
+                    userId, actionType, entityType, saved.getId(), saved.getTitle(), oldTitle, title
+            );
         } else if (oldStatus != status) {
-            activityLogService.log(userId, actionType, entityType, saved.getId(), saved.getTitle(), oldStatus.name(), status.name());
+            activityLogService.log(
+                    userId, actionType, entityType, saved.getId(), saved.getTitle(), oldStatus.name(), status.name()
+            );
         } else if (oldPriority != priority) {
-            activityLogService.log(userId, actionType, entityType, saved.getId(), saved.getTitle(), oldPriority.name(), priority.name());
-        } else if (!java.util.Objects.equals(oldDueDate, dueDate)) {
+            activityLogService.log(
+                    userId, actionType, entityType, saved.getId(), saved.getTitle(), oldPriority.name(), priority.name()
+            );
+        } else if (!Objects.equals(oldDueDate, dueDate)) {
             // Formateamos las fechas para que sean legibles en el historial
             String oldStr = oldDueDate != null ? oldDueDate.format(DATE_FORMATTER) : "Sin fecha";
             String newStr = dueDate    != null ? dueDate.format(DATE_FORMATTER)    : "Sin fecha";
