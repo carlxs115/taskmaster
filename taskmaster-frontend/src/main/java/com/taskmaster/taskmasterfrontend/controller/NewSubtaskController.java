@@ -11,6 +11,7 @@ import javafx.scene.control.TextArea;
 import javafx.scene.control.TextField;
 import javafx.scene.input.KeyCode;
 
+import java.math.BigDecimal;
 import java.net.http.HttpResponse;
 import java.util.HashMap;
 import java.util.Map;
@@ -29,6 +30,7 @@ public class NewSubtaskController {
     @FXML private TextField titleField;
     @FXML private TextArea descriptionField;
     @FXML private ComboBox<String> priorityCombo;
+    @FXML private TextField estimatedDurationField;
     @FXML private Label errorLabel;
 
     private Long parentTaskId;
@@ -96,6 +98,9 @@ public class NewSubtaskController {
         }
         hideError();
 
+        BigDecimal estimatedDuration = parseEstimatedDuration();
+        if (estimatedDuration == null && !estimatedDurationField.getText().trim().isEmpty()) return;
+
         // Convertimos la prioridad localizada a su código de backend
         String p = priorityCombo.getValue();
         String priorityEnum;
@@ -113,6 +118,7 @@ public class NewSubtaskController {
 
         if (projectId != null) body.put("projectId", projectId);
         else if (category != null) body.put("category", category);
+        if (estimatedDuration != null) body.put("estimatedDuration", estimatedDuration);
 
         createSubtaskAsync(body);
     }
@@ -128,6 +134,31 @@ public class NewSubtaskController {
     // -------------------------------------------------------------------------
     // Métodos privados
     // -------------------------------------------------------------------------
+
+    /**
+     * Parsea y valida el campo de duración estimada.
+     *
+     * <p>Devuelve {@code null} si el campo está vacío (el campo es opcional).
+     * Muestra un error y devuelve {@code null} si el valor no es numérico
+     * o es inferior al mínimo permitido (0.1 horas).</p>
+     *
+     * @return duración estimada como {@link BigDecimal}, o {@code null} si el campo está vacío
+     */
+    private BigDecimal parseEstimatedDuration() {
+        String text = estimatedDurationField.getText().trim();
+        if (text.isEmpty()) return null;
+        try {
+            BigDecimal value = new BigDecimal(text.replace(",", "."));
+            if (value.compareTo(new BigDecimal("0.1")) < 0) {
+                showError(lm.get("estimated.duration.error.invalid"));
+                return null;
+            }
+            return value;
+        } catch (NumberFormatException e) {
+            showError(lm.get("estimated.duration.error.invalid"));
+            return null;
+        }
+    }
 
     /**
      * Envía la solicitud de creación de la subtarea al backend en un hilo secundario.

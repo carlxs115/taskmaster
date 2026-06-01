@@ -13,6 +13,7 @@ import javafx.scene.control.TextArea;
 import javafx.scene.control.TextField;
 import javafx.scene.input.KeyCode;
 
+import java.math.BigDecimal;
 import java.net.URLEncoder;
 import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
@@ -31,6 +32,7 @@ public class EditProjectController {
 
     @FXML private TextField nameField;
     @FXML private TextArea descriptionField;
+    @FXML private TextField estimatedDurationField;
     @FXML private ComboBox<String> categoryCombo;
     @FXML private ComboBox<String> statusCombo;
     @FXML private ComboBox<String> priorityCombo;
@@ -136,6 +138,9 @@ public class EditProjectController {
             return;
         }
 
+        BigDecimal estimatedDuration = parseEstimatedDuration();
+        if (estimatedDuration == null && !estimatedDurationField.getText().trim().isEmpty()) return;
+
         Thread t = new Thread(() -> {
             try {
                 String url = "/api/projects/" + projectId
@@ -145,6 +150,10 @@ public class EditProjectController {
                         + "&category="    + mapCategory(categoryCombo.getValue())
                         + "&status="      + mapStatus(statusCombo.getValue())
                         + "&priority="    + mapPriority(priorityCombo.getValue());
+
+                if (estimatedDuration != null) {
+                    url += "&estimatedDuration=" + estimatedDuration.toPlainString();
+                }
 
                 HttpResponse<String> response = AppContext.getInstance()
                         .getApiService().putNoBody(url);
@@ -188,6 +197,11 @@ public class EditProjectController {
         if (project.has("description") && !project.get("description").isNull()) {
             descriptionField.setText(project.get("description").asText());
         }
+        if (project.has("estimatedDuration") && !project.get("estimatedDuration").isNull()) {
+            estimatedDurationField.setText(
+                    new BigDecimal(project.get("estimatedDuration").asText())
+                            .stripTrailingZeros().toPlainString());
+        }
         if (project.has("category") && !project.get("category").isNull()) {
             categoryCombo.setValue(switch (project.get("category").asText()) {
                 case "ESTUDIOS" -> lm.get("category.ESTUDIOS");
@@ -213,6 +227,31 @@ public class EditProjectController {
         }
         nameField.deselect();
         nameField.getParent().requestFocus();
+    }
+
+    /**
+     * Parsea y valida el campo de duración estimada.
+     *
+     * <p>Devuelve {@code null} si el campo está vacío (el campo es opcional).
+     * Muestra un error y devuelve {@code null} si el valor no es numérico
+     * o es inferior al mínimo permitido (0.1 horas).</p>
+     *
+     * @return duración estimada como {@link BigDecimal}, o {@code null} si el campo está vacío
+     */
+    private BigDecimal parseEstimatedDuration() {
+        String text = estimatedDurationField.getText().trim();
+        if (text.isEmpty()) return null;
+        try {
+            BigDecimal value = new BigDecimal(text.replace(",", "."));
+            if (value.compareTo(new BigDecimal("0.1")) < 0) {
+                showError(lm.get("estimated.duration.error.invalid"));
+                return null;
+            }
+            return value;
+        } catch (NumberFormatException e) {
+            showError(lm.get("estimated.duration.error.invalid"));
+            return null;
+        }
     }
 
     /**

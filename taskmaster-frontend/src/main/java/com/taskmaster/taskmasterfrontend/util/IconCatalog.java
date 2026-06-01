@@ -97,4 +97,5 @@ public class IconCatalog {
     public static final String UI_BACK             = "fas-arrow-left";
     public static final String UI_MORE             = "fas-ellipsis-v";
     public static final String UI_INFO             = "fas-info-circle";
+    public static final String UI_ESTIMATED_DURATION = "fas-hourglass-half";
 }

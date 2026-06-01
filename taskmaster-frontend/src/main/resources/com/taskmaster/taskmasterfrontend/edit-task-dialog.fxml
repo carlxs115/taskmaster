@@ -21,6 +21,12 @@
         <TextArea fx:id="descriptionField"
                   styleClass="dialog-textarea" wrapText="true"/>
     </VBox>
+    <VBox spacing="6">
+        <Label text="%common.estimated.duration" styleClass="dialog-field-label"/>
+        <TextField fx:id="estimatedDurationField"
+                   promptText="%common.estimated.duration.prompt"
+                   styleClass="dialog-field"/>
+    </VBox>
     <HBox spacing="16">
         <VBox spacing="6" HBox.hgrow="ALWAYS">
             <Label text="%common.status" styleClass="dialog-field-label"/>

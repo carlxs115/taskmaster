@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.taskmaster.taskmasterfrontend.util.*;
 import javafx.application.Platform;
+import org.kordamp.ikonli.javafx.FontIcon;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.geometry.Pos;
@@ -17,6 +18,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.math.BigDecimal;
 import java.net.http.HttpResponse;
 import java.text.MessageFormat;
 import java.time.LocalDate;
@@ -43,6 +45,7 @@ public class TaskDetailController {
     @FXML private Label priorityBadge;
     @FXML private Label categoryBadge;
     @FXML private Label dueDateLabel;
+    @FXML private Label estimatedDurationLabel;
     @FXML private Label descriptionLabel;
     @FXML private Label subtaskProgressLabel;
     @FXML private Label emptySubtasksLabel;
@@ -104,6 +107,10 @@ public class TaskDetailController {
      * Carga los datos de una tarea en la vista e inicializa el historial
      * de actividad de la tarea y sus subtareas.
      *
+     * <p>Realiza un render inicial con los datos en memoria y, a continuación,
+     * hace una llamada fresca a la API para garantizar que campos opcionales
+     * como {@code estimatedDuration} están actualizados.</p>
+     *
      * @param task nodo JSON con los datos de la tarea a mostrar
      */
     public void initData(JsonNode task) {
@@ -111,12 +118,16 @@ public class TaskDetailController {
         loadTaskDetail();
         Long taskId = task.path("id").asLong();
         activityLogSectionController.loadForEntity("TASK", taskId, "SUBTASK");
+        refreshTaskDataFromApi(taskId, false);
     }
 
     /**
      * Carga los datos de una subtarea en la vista, inicializa su historial
      * de actividad y oculta la sección de subtareas, ya que las subtareas
      * no pueden tener subtareas propias.
+     *
+     * <p>Realiza un render inicial con los datos en memoria y después una
+     * recarga fresca desde la API.</p>
      *
      * @param subtask nodo JSON con los datos de la subtarea a mostrar
      */
@@ -128,6 +139,39 @@ public class TaskDetailController {
         activityLogSectionController.loadForEntity("SUBTASK", subtaskId);
         subtasksSection.setVisible(false);
         subtasksSection.setManaged(false);
+        refreshTaskDataFromApi(subtaskId, true);
+    }
+
+    /**
+     * Recarga los datos de la tarea desde la API en segundo plano y actualiza
+     * la vista. Garantiza que campos como {@code estimatedDuration} se muestran
+     * aunque el JSON en memoria viniera de una versión cacheada del listado.
+     *
+     * @param taskId    identificador de la tarea o subtarea
+     * @param isSubtask {@code true} si es una subtarea (oculta la sección de subtareas)
+     */
+    private void refreshTaskDataFromApi(Long taskId, boolean isSubtask) {
+        Thread t = new Thread(() -> {
+            try {
+                HttpResponse<String> r = AppContext.getInstance()
+                        .getApiService().get("/api/tasks/" + taskId);
+                if (r.statusCode() == 200) {
+                    JsonNode fresh = objectMapper.readTree(r.body());
+                    Platform.runLater(() -> {
+                        this.taskData = fresh;
+                        loadTaskDetail();
+                        if (isSubtask) {
+                            subtasksSection.setVisible(false);
+                            subtasksSection.setManaged(false);
+                        }
+                    });
+                }
+            } catch (Exception ignored) {
+                // Si la API no responde usamos los datos en memoria ya renderizados
+            }
+        }, "task-detail-refresh");
+        t.setDaemon(true);
+        t.start();
     }
 
     // -------------------------------------------------------------------------
@@ -189,6 +233,29 @@ public class TaskDetailController {
         } else {
             dueDateLabel.setVisible(false);
             dueDateLabel.setManaged(false);
+        }
+
+        // Duración estimada — badge junto a estado/prioridad/fecha límite
+        if (taskData.has("estimatedDuration") && !taskData.get("estimatedDuration").isNull()) {
+            String est = new BigDecimal(taskData.get("estimatedDuration").asText())
+                    .stripTrailingZeros().toPlainString();
+            FontIcon estIcon = new FontIcon(IconCatalog.UI_ESTIMATED_DURATION);
+            estIcon.setIconSize(11);
+            estimatedDurationLabel.setGraphic(estIcon);
+            estimatedDurationLabel.setGraphicTextGap(5);
+            estimatedDurationLabel.setText(
+                    MessageFormat.format(lm.get("task.detail.estimated.duration"), est));
+            estimatedDurationLabel.setStyle(
+                    "-fx-font-size: 11px; -fx-padding: 3 10 3 10; "
+                    + "-fx-background-radius: 10px; "
+                    + "-fx-text-fill: -tm-text-secondary; "
+                    + "-fx-background-color: -tm-bg-app;");
+            estimatedDurationLabel.setVisible(true);
+            estimatedDurationLabel.setManaged(true);
+        } else {
+            estimatedDurationLabel.setGraphic(null);
+            estimatedDurationLabel.setVisible(false);
+            estimatedDurationLabel.setManaged(false);
         }
         loadSubtasks(taskId);
         loadTotalHours(taskId);
@@ -550,8 +617,17 @@ public class TaskDetailController {
                         .get("/api/worklogs/task/" + taskId + "/total");
                 if (response.statusCode() == 200) {
                     String total = response.body();
-                    Platform.runLater(() -> totalHoursLabel.setText(
-                            MessageFormat.format(lm.get("task.detail.worklog.total"), total)));
+                    Platform.runLater(() -> {
+                        if (taskData.has("estimatedDuration") && !taskData.get("estimatedDuration").isNull()) {
+                            String est = new BigDecimal(taskData.get("estimatedDuration").asText())
+                                    .stripTrailingZeros().toPlainString();
+                            totalHoursLabel.setText(MessageFormat.format(
+                                    lm.get("task.detail.worklog.total.with.estimate"), total, est));
+                        } else {
+                            totalHoursLabel.setText(MessageFormat.format(
+                                    lm.get("task.detail.worklog.total"), total));
+                        }
+                    });
                 }
             } catch (Exception e) {
                 // No es crítico si falla el total de horas

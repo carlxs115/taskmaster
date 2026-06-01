@@ -1,6 +1,7 @@
 package com.taskmaster.taskmasterfrontend.controller;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.taskmaster.taskmasterfrontend.util.AppContext;
 import com.taskmaster.taskmasterfrontend.util.LanguageManager;
 import com.taskmaster.taskmasterfrontend.util.SmartDatePicker;
@@ -10,6 +11,7 @@ import javafx.fxml.FXML;
 import javafx.scene.control.*;
 import javafx.scene.input.KeyCode;
 
+import java.math.BigDecimal;
 import java.net.http.HttpResponse;
 import java.time.LocalDate;
 import java.util.HashMap;
@@ -29,6 +31,7 @@ public class EditTaskController {
 
     @FXML private TextField titleField;
     @FXML private TextArea descriptionField;
+    @FXML private TextField estimatedDurationField;
     @FXML private ComboBox<String> statusCombo;
     @FXML private ComboBox<String> priorityCombo;
     @FXML private SmartDatePicker dueDatePicker;
@@ -39,7 +42,8 @@ public class EditTaskController {
     private Long taskId;
     private Runnable onTaskUpdated;
 
-    private final LanguageManager lm = LanguageManager.getInstance();
+    private final LanguageManager lm           = LanguageManager.getInstance();
+    private final ObjectMapper    objectMapper  = new ObjectMapper();
 
     // -------------------------------------------------------------------------
     // Inicialización
@@ -91,12 +95,46 @@ public class EditTaskController {
     // -------------------------------------------------------------------------
 
     /**
-     * Rellena el formulario con los datos actuales de la tarea recibida.
+     * Inicializa el diálogo con el ID de la tarea y lanza una carga fresca desde
+     * la API para garantizar que todos los campos (incluida la duración estimada)
+     * reflejan el estado actual en base de datos.
      *
-     * @param task Nodo JSON con los datos de la tarea a editar.
+     * <p>Se pre-rellena el título desde los datos en memoria para que el formulario
+     * no aparezca en blanco mientras llega la respuesta del backend.</p>
+     *
+     * @param task Nodo JSON con los datos de la tarea (puede ser caché de lista).
      */
     public void initData(JsonNode task) {
         this.taskId = task.get("id").asLong();
+
+        // Pre-rellenamos el título inmediatamente para evitar pantalla en blanco
+        titleField.setText(task.get("title").asText());
+
+        // Carga fresca desde la API — garantiza que estimatedDuration y demás campos
+        // están actualizados aunque el JSON en memoria venga de una versión cacheada
+        Thread t = new Thread(() -> {
+            try {
+                HttpResponse<String> response = AppContext.getInstance()
+                        .getApiService().get("/api/tasks/" + this.taskId);
+                if (response.statusCode() == 200) {
+                    JsonNode fresh = objectMapper.readTree(response.body());
+                    Platform.runLater(() -> populateForm(fresh));
+                }
+            } catch (Exception e) {
+                // Si la API falla, rellenamos con los datos en memoria como fallback
+                Platform.runLater(() -> populateForm(task));
+            }
+        }, "edit-task-load");
+        t.setDaemon(true);
+        t.start();
+    }
+
+    /**
+     * Rellena todos los campos del formulario con los datos del nodo JSON recibido.
+     *
+     * @param task Nodo JSON con los datos actualizados de la tarea.
+     */
+    private void populateForm(JsonNode task) {
         titleField.setText(task.get("title").asText());
 
         if (task.has("description") && !task.get("description").isNull()) {
@@ -108,6 +146,12 @@ public class EditTaskController {
 
         if (task.has("dueDate") && !task.get("dueDate").isNull()) {
             dueDatePicker.setValue(LocalDate.parse(task.get("dueDate").asText()));
+        }
+
+        if (task.has("estimatedDuration") && !task.get("estimatedDuration").isNull()) {
+            estimatedDurationField.setText(
+                    new BigDecimal(task.get("estimatedDuration").asText())
+                            .stripTrailingZeros().toPlainString());
         }
 
         Platform.runLater(() -> {
@@ -142,6 +186,11 @@ public class EditTaskController {
             return;
         }
 
+        BigDecimal estimatedDuration = parseEstimatedDuration();
+        if (estimatedDuration == null && !estimatedDurationField.getText().trim().isEmpty()) return;
+
+        final BigDecimal finalEstimated = estimatedDuration;
+
         Thread t = new Thread(() -> {
             try {
                 Map<String, Object> body = new HashMap<>();
@@ -151,6 +200,9 @@ public class EditTaskController {
                 body.put("priority",    reversePriority(priorityCombo.getValue()));
                 if (dueDatePicker.getValue() != null) {
                     body.put("dueDate", dueDatePicker.getValue().toString());
+                }
+                if (finalEstimated != null) {
+                    body.put("estimatedDuration", finalEstimated);
                 }
 
                 HttpResponse<String> response = AppContext.getInstance()
@@ -187,6 +239,31 @@ public class EditTaskController {
     // -------------------------------------------------------------------------
     // Métodos privados
     // -------------------------------------------------------------------------
+
+    /**
+     * Parsea y valida el campo de duración estimada.
+     *
+     * <p>Devuelve {@code null} si el campo está vacío (el campo es opcional).
+     * Muestra un error y devuelve {@code null} si el valor no es numérico
+     * o es inferior al mínimo permitido (0.1 horas).</p>
+     *
+     * @return duración estimada como {@link BigDecimal}, o {@code null} si el campo está vacío
+     */
+    private BigDecimal parseEstimatedDuration() {
+        String text = estimatedDurationField.getText().trim();
+        if (text.isEmpty()) return null;
+        try {
+            BigDecimal value = new BigDecimal(text.replace(",", "."));
+            if (value.compareTo(new BigDecimal("0.1")) < 0) {
+                showError(lm.get("estimated.duration.error.invalid"));
+                return null;
+            }
+            return value;
+        } catch (NumberFormatException e) {
+            showError(lm.get("estimated.duration.error.invalid"));
+            return null;
+        }
+    }
 
     /**
      * Cierra el diálogo actual.

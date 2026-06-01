@@ -12,6 +12,7 @@ import javafx.scene.control.*;
 import javafx.scene.input.KeyCode;
 import javafx.scene.layout.VBox;
 
+import java.math.BigDecimal;
 import java.net.http.HttpResponse;
 import java.time.LocalDate;
 import java.util.ArrayList;
@@ -32,6 +33,7 @@ public class NewTaskController {
 
     @FXML private TextField titleField;
     @FXML private TextArea descriptionField;
+    @FXML private TextField estimatedDurationField;
     @FXML private ComboBox<String> projectCombo;
     @FXML private VBox projectBox;
     @FXML private ComboBox<String> priorityCombo;
@@ -203,6 +205,9 @@ public class NewTaskController {
             return;
         }
 
+        BigDecimal estimatedDuration = parseEstimatedDuration();
+        if (estimatedDuration == null && !estimatedDurationField.getText().trim().isEmpty()) return;
+
         // Resolvemos el proyecto: preseleccionado o elegido en el combo
         Long projectId;
         if (preSelectedProjectId != null) {
@@ -215,6 +220,7 @@ public class NewTaskController {
         // Convertimos la prioridad localizada a su código de backend
         String priorityEnum = priorityToEnum(priorityCombo.getValue());
         final Long finalProjectId = projectId;
+        final BigDecimal finalEstimated = estimatedDuration;
 
         Thread t = new Thread(() -> {
             try {
@@ -230,6 +236,7 @@ public class NewTaskController {
                 }
                 if (dueDate != null) body.put("dueDate", dueDate.toString());
                 if (parentTaskId != null) body.put("parentTaskId", parentTaskId);
+                if (finalEstimated != null) body.put("estimatedDuration", finalEstimated);
 
                 HttpResponse<String> response = AppContext.getInstance()
                         .getApiService().postWithAuth("/api/tasks", body);
@@ -263,6 +270,31 @@ public class NewTaskController {
     // -------------------------------------------------------------------------
 
     /**
+     * Parsea y valida el campo de duración estimada.
+     *
+     * <p>Devuelve {@code null} si el campo está vacío (el campo es opcional).
+     * Muestra un error y devuelve {@code null} si el valor no es numérico
+     * o es inferior al mínimo permitido (0.1 horas).</p>
+     *
+     * @return duración estimada como {@link BigDecimal}, o {@code null} si el campo está vacío
+     */
+    private BigDecimal parseEstimatedDuration() {
+        String text = estimatedDurationField.getText().trim();
+        if (text.isEmpty()) return null;
+        try {
+            BigDecimal value = new BigDecimal(text.replace(",", "."));
+            if (value.compareTo(new BigDecimal("0.1")) < 0) {
+                showError(lm.get("estimated.duration.error.invalid"));
+                return null;
+            }
+            return value;
+        } catch (NumberFormatException e) {
+            showError(lm.get("estimated.duration.error.invalid"));
+            return null;
+        }
+    }
+
+    /**
      * Cierra el diálogo actual.
      */
     private void closeDialog() {
@@ -279,6 +311,12 @@ public class NewTaskController {
         errorLabel.setVisible(true);
     }
 
+    /**
+     * Traduce la etiqueta localizada de prioridad al código del backend.
+     *
+     * @param label Etiqueta localizada seleccionada en el combo.
+     * @return Código de prioridad ({@code "LOW"}, {@code "MEDIUM"}, {@code "HIGH"} o {@code "URGENT"}).
+     */
     private String priorityToEnum(String label) {
         if (label.equals(lm.get("priority.low"))) return "LOW";
         if (label.equals(lm.get("priority.medium"))) return "MEDIUM";
@@ -287,6 +325,12 @@ public class NewTaskController {
         return "MEDIUM";
     }
 
+    /**
+     * Traduce la etiqueta localizada de categoría al código del backend.
+     *
+     * @param label Etiqueta localizada seleccionada en el combo.
+     * @return Código de categoría ({@code "PERSONAL"}, {@code "ESTUDIOS"} o {@code "TRABAJO"}).
+     */
     private String categoryToEnum(String label) {
         if (label.equals(lm.get("category.ESTUDIOS"))) return "ESTUDIOS";
         if (label.equals(lm.get("category.TRABAJO"))) return "TRABAJO";

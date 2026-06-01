@@ -4,9 +4,11 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.taskmaster.taskmasterfrontend.util.AppContext;
+import com.taskmaster.taskmasterfrontend.util.IconCatalog;
 import com.taskmaster.taskmasterfrontend.util.LanguageManager;
 import com.taskmaster.taskmasterfrontend.util.MenuButtonFactory;
 import com.taskmaster.taskmasterfrontend.util.TaskStyleHelper;
+import org.kordamp.ikonli.javafx.FontIcon;
 import javafx.animation.PauseTransition;
 import javafx.application.Platform;
 import javafx.fxml.FXML;
@@ -46,6 +48,7 @@ public class ProjectDetailController {
     @FXML private Label statusBadge;
     @FXML private Label priorityBadge;
     @FXML private Label categoryBadge;
+    @FXML private Label estimatedDurationLabel;
     @FXML private Label descriptionLabel;
     @FXML private Label statTotalNum;
     @FXML private Label statPendingNum;
@@ -81,6 +84,23 @@ public class ProjectDetailController {
         loadProjectDetail();
         Long projectId = project.path("id").asLong();
         activityLogSectionController.loadForEntity("PROJECT", projectId, "TASK");
+        // Recarga fresca para garantizar que estimatedDuration y demás campos
+        // opcionales están actualizados aunque el JSON venga de caché de lista
+        Thread t = new Thread(() -> {
+            try {
+                HttpResponse<String> r = AppContext.getInstance()
+                        .getApiService().get("/api/projects/" + projectId);
+                if (r.statusCode() == 200) {
+                    JsonNode fresh = objectMapper.readTree(r.body());
+                    Platform.runLater(() -> {
+                        this.projectData = fresh;
+                        loadProjectDetail();
+                    });
+                }
+            } catch (Exception ignored) {}
+        }, "project-detail-refresh");
+        t.setDaemon(true);
+        t.start();
     }
 
     /**
@@ -148,6 +168,29 @@ public class ProjectDetailController {
         categoryBadge.setStyle("-fx-font-size: 11px; -fx-padding: 3 10 3 10; "
                 + "-fx-background-radius: 10px; "
                 + TaskStyleHelper.getCategoryBadgeStyle(category));
+
+        // Duración estimada — badge junto a estado/prioridad/categoría
+        if (projectData.has("estimatedDuration") && !projectData.get("estimatedDuration").isNull()) {
+            String est = new java.math.BigDecimal(projectData.get("estimatedDuration").asText())
+                    .stripTrailingZeros().toPlainString();
+            FontIcon estIcon = new FontIcon(IconCatalog.UI_ESTIMATED_DURATION);
+            estIcon.setIconSize(11);
+            estimatedDurationLabel.setGraphic(estIcon);
+            estimatedDurationLabel.setGraphicTextGap(5);
+            estimatedDurationLabel.setText(
+                    java.text.MessageFormat.format(lm.get("task.detail.estimated.duration"), est));
+            estimatedDurationLabel.setStyle(
+                    "-fx-font-size: 11px; -fx-padding: 3 10 3 10; "
+                    + "-fx-background-radius: 10px; "
+                    + "-fx-text-fill: -tm-text-secondary; "
+                    + "-fx-background-color: -tm-bg-app;");
+            estimatedDurationLabel.setVisible(true);
+            estimatedDurationLabel.setManaged(true);
+        } else {
+            estimatedDurationLabel.setGraphic(null);
+            estimatedDurationLabel.setVisible(false);
+            estimatedDurationLabel.setManaged(false);
+        }
 
         loadTasks(id);
     }

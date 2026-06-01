@@ -24,6 +24,12 @@
                   styleClass="dialog-textarea" wrapText="true"/>
     </VBox>
     <VBox spacing="6">
+        <Label text="%common.estimated.duration" styleClass="dialog-field-label"/>
+        <TextField fx:id="estimatedDurationField"
+                   promptText="%common.estimated.duration.prompt"
+                   styleClass="dialog-field"/>
+    </VBox>
+    <VBox spacing="6">
         <Label text="%common.new.category" styleClass="dialog-field-label"/>
         <ComboBox fx:id="categoryCombo" maxWidth="Infinity" styleClass="dialog-combo"/>
     </VBox>

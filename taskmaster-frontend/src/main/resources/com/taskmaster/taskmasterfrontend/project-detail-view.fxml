@@ -41,6 +41,7 @@
                     <Label fx:id="categoryBadge"
                            style="-fx-font-size: 11px; -fx-padding: 3 10 3 10;
                                   -fx-background-radius: 10px;"/>
+                    <Label fx:id="estimatedDurationLabel" styleClass="detail-due-badge"/>
                 </HBox>
 
                 <!-- Descripción -->
