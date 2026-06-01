@@ -1226,7 +1226,6 @@ public class MainController {
             // Al actualizar el proyecto, refrescar sidebar y volver a cargar el detalle
             controller.setOnProjectUpdated(() -> {
                 loadProjects();
-                reloadTasks();
                 Thread th = new Thread(() -> {
                     try {
                         HttpResponse<String> r = AppContext.getInstance()
