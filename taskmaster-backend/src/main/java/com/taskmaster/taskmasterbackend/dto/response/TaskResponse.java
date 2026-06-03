@@ -9,6 +9,7 @@ import lombok.Data;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.List;
 
 /**
  * DTO de respuesta que representa una tarea.
@@ -80,4 +81,10 @@ public class TaskResponse {
      * {@code null} si la tarea no está eliminada.
      */
     private LocalDateTime deletedAt;
+
+    /**
+     * IDs de las tareas predecesoras de las que esta tarea depende.
+     * Esta tarea no puede iniciarse hasta que todas ellas estén completadas o canceladas.
+     */
+    private List<Long> dependencyIds;
 }

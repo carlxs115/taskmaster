@@ -210,6 +210,20 @@ public class AuthController {
         return ResponseEntity.noContent().build();
     }
 
+    /**
+     * GET /api/auth/ping
+     * Endpoint público de comprobación de disponibilidad del backend.
+     * No requiere autenticación. Usado por el frontend para esperar a que
+     * el servidor esté completamente operativo antes de mostrar la pantalla
+     * de login.
+     *
+     * @return 200 OK
+     */
+    @GetMapping("/ping")
+    public ResponseEntity<Void> ping() {
+        return ResponseEntity.ok().build();
+    }
+
     // -------------------------------------------------------------------------
     // Métodos privados
     // -------------------------------------------------------------------------

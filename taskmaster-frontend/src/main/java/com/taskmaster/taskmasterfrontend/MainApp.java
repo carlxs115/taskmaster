@@ -269,7 +269,7 @@ public class MainApp extends Application {
      */
     private void waitForBackend() throws Exception {
         long deadline = System.currentTimeMillis() + BACKEND_TIMEOUT_SECONDS * 1000L;
-        String probeUrl = "http://localhost:" + BACKEND_PORT + "/api/auth/me";
+        String probeUrl = "http://localhost:" + BACKEND_PORT + "/api/auth/ping";
 
         log.info("Esperando a que el backend esté listo...");
 

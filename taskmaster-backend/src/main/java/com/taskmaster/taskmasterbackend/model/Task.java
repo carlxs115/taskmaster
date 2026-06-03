@@ -7,10 +7,12 @@ import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
 import lombok.*;
 import java.math.BigDecimal;
+import java.util.HashSet;
 import java.util.List;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.Set;
 
 /**
  * Entidad central de TaskMaster que representa una tarea.
@@ -19,6 +21,10 @@ import java.time.LocalDateTime;
  * También puede actuar como tarea padre conteniendo subtareas, que son a su vez
  * instancias de {@code Task} enlazadas mediante una relación recursiva
  * ({@code parentTask} / {@code subTasks}).</p>
+ *
+ * <p>Soporta relaciones de dependencia entre tareas ({@code dependencies} /
+ * {@code dependents}): una tarea no puede iniciarse hasta que todas sus
+ * dependencias estén completadas o canceladas.</p>
  *
  * <p>Soporta borrado lógico (soft delete) mediante el campo {@code deleted},
  * lo que permite enviar tareas a la papelera antes de eliminarlas definitivamente.</p>
@@ -150,6 +156,35 @@ public class Task {
     @ToString.Exclude
     @EqualsAndHashCode.Exclude
     private List<Task> subTasks;
+
+    /**
+     * Tareas predecesoras de las que esta tarea depende.
+     * Esta tarea no puede iniciarse hasta que todas sus dependencias estén
+     * en estado {@code DONE} o {@code CANCELLED}.
+     *
+     * <p>Es el lado propietario de la relación: gestiona la tabla
+     * {@code task_dependencies} creada automáticamente por Hibernate.</p>
+     */
+    @ManyToMany
+    @JoinTable(
+            name = "task_dependencies",
+            joinColumns        = @JoinColumn(name = "task_id"),
+            inverseJoinColumns = @JoinColumn(name = "depends_on_task_id")
+    )
+    @ToString.Exclude
+    @EqualsAndHashCode.Exclude
+    @Builder.Default
+    private Set<Task> dependencies = new HashSet<>();
+
+    /**
+     * Tareas sucesoras que dependen de esta tarea.
+     * Lado inverso de la relación, gestionado por {@code dependencies}.
+     */
+    @ManyToMany(mappedBy = "dependencies")
+    @ToString.Exclude
+    @EqualsAndHashCode.Exclude
+    @Builder.Default
+    private Set<Task> dependents = new HashSet<>();
 
     /**
      * Indica si la tarea ha sido enviada a la papelera (soft delete).

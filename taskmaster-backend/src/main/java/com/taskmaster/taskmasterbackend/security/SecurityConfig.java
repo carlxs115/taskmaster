@@ -60,7 +60,7 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         // Solo registro y login son accesibles sin autenticación.
                         // Cualquier otro endpoint requiere credenciales válidas.
-                        .requestMatchers("/api/auth/**").permitAll()
+                        .requestMatchers("/api/auth/register", "/api/auth/login", "/api/auth/ping").permitAll()
                         .anyRequest().authenticated()
                 )
 

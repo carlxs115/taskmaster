@@ -395,6 +395,8 @@ public class ActivityLogSectionController {
             case "PROJECT_RESTORED"         -> lm.get("common.project.restored");
             case "PROFILE_UPDATED"          -> lm.get("common.profile.updated");
             case "PASSWORD_CHANGED"         -> lm.get("common.password.changed");
+            case "DEPENDENCY_ADDED"         -> lm.get("common.dependency.added");
+            case "DEPENDENCY_REMOVED"       -> lm.get("common.dependency.removed");
             default                         -> actionType;
         };
     }
@@ -451,22 +453,24 @@ public class ActivityLogSectionController {
                  "PROJECT_DELETED"                                      -> "fas-trash";
             case "TASK_PERMANENTLY_DELETED",
                  "PROJECT_PERMANENTLY_DELETED"                          -> "fas-times-circle";
-            case "TASK_RESTORED", "PROJECT_RESTORED"                   -> "fas-undo";
-            case "TASK_STATUS_CHANGED", "PROJECT_STATUS_CHANGED"       -> "fas-sync-alt";
+            case "TASK_RESTORED", "PROJECT_RESTORED"                    -> "fas-undo";
+            case "TASK_STATUS_CHANGED", "PROJECT_STATUS_CHANGED"        -> "fas-sync-alt";
             case "PROJECT_CREATED"                                      -> "fas-folder-plus";
             case "PROFILE_UPDATED"                                      -> "fas-user-edit";
             case "PASSWORD_CHANGED"                                     -> "fas-key";
-            default                                     -> "fas-circle";
+            case "DEPENDENCY_ADDED", "DEPENDENCY_REMOVED"               -> "fas-link";
+            default                                                     -> "fas-circle";
         };
     }
 
     private String getActionColor(String actionType) {
         return switch (actionType) {
-            case "TASK_CREATED", "SUBTASK_CREATED", "PROJECT_CREATED"     -> "#22c55e";
-            case "TASK_DELETED", "SUBTASK_DELETED", "PROJECT_DELETED"     -> "#f59e0b";
-            case "TASK_PERMANENTLY_DELETED", "PROJECT_PERMANENTLY_DELETED" -> "#e74c3c";
-            case "TASK_RESTORED", "PROJECT_RESTORED"                       -> "#3b82f6";
-            case "TASK_STATUS_CHANGED", "PROJECT_STATUS_CHANGED"           -> "#7c3aed";
+            case "TASK_CREATED", "SUBTASK_CREATED", "PROJECT_CREATED"       -> "#22c55e";
+            case "TASK_DELETED", "SUBTASK_DELETED", "PROJECT_DELETED"       -> "#f59e0b";
+            case "TASK_PERMANENTLY_DELETED", "PROJECT_PERMANENTLY_DELETED"  -> "#e74c3c";
+            case "TASK_RESTORED", "PROJECT_RESTORED"                        -> "#3b82f6";
+            case "TASK_STATUS_CHANGED", "PROJECT_STATUS_CHANGED"            -> "#7c3aed";
+            case "DEPENDENCY_ADDED", "DEPENDENCY_REMOVED"                   -> "#0ea5e9";
             default                                                         -> "#888888";
         };
     }

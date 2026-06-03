@@ -56,6 +56,25 @@
                     <Label fx:id="descriptionLabel" styleClass="detail-description" wrapText="true"/>
                 </VBox>
 
+                <!-- Dependencias -->
+                <VBox fx:id="dependenciesSection" styleClass="detail-section">
+                    <HBox alignment="CENTER_LEFT" spacing="10" style="-fx-padding: 0 0 10 0;">
+                        <FontIcon iconLiteral="fas-link" styleClass="detail-section-icon"/>
+                        <Label text="%task.detail.dependencies" styleClass="detail-section-title"/>
+                        <Label fx:id="dependenciesCountLabel" styleClass="detail-section-count"/>
+                        <Region HBox.hgrow="ALWAYS"/>
+                        <Button text="%task.detail.dependencies.add"
+                                onAction="#handleAddDependency" styleClass="btn-small-primary" graphicTextGap="6">
+                            <graphic>
+                                <FontIcon iconLiteral="fas-plus" styleClass="btn-small-primary-icon"/>
+                            </graphic>
+                        </Button>
+                    </HBox>
+                    <VBox fx:id="dependenciesContainer"/>
+                    <Label fx:id="emptyDependenciesLabel"
+                           text="%task.detail.dependencies.empty" styleClass="detail-empty-label"/>
+                </VBox>
+
                 <!-- Subtareas -->
                 <VBox fx:id="subtasksSection" styleClass="detail-section">
                     <HBox alignment="CENTER_LEFT" spacing="10" style="-fx-padding: 0 0 10 0;">

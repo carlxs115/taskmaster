@@ -98,4 +98,12 @@ public class IconCatalog {
     public static final String UI_MORE             = "fas-ellipsis-v";
     public static final String UI_INFO             = "fas-info-circle";
     public static final String UI_ESTIMATED_DURATION = "fas-hourglass-half";
+
+    // -------------------------------------------------------------------------
+    // Dependencias
+    // -------------------------------------------------------------------------
+
+    public static final String DEP_BLOCKED           = "fas-lock";
+    public static final String DEP_UNBLOCKED         = "fas-check-circle";
+    public static final String DEP_SECTION           = "fas-link";
 }

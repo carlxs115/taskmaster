@@ -21,19 +21,23 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 
 /**
  * Servicio que gestiona la lógica de negocio de las tareas.
  *
  * <p>Implementa el ciclo de vida completo de una tarea: creación, edición,
  * cambio de estado, borrado lógico (soft delete), restauración y eliminación
- * definitiva. Gestiona también las subtareas de forma recursiva.</p>
+ * definitiva. Gestiona también las subtareas de forma recursiva y las relaciones
+ * de dependencia entre tareas.</p>
  *
- * <p><b>Regla de negocio principal:</b> no se puede marcar una tarea como
- * completada ({@code DONE}) si tiene subtareas pendientes.</p>
+ * <p><b>Reglas de negocio principales:</b></p>
+ * <ul>
+ *   <li>No se puede marcar una tarea como {@code DONE} si tiene subtareas pendientes.</li>
+ *   <li>No se puede iniciar ({@code IN_PROGRESS}) una tarea si tiene dependencias
+ *       sin completar.</li>
+ *   <li>Las dependencias no pueden formar ciclos.</li>
+ * </ul>
  *
  * @author Carlos
  */
@@ -292,6 +296,16 @@ public class TaskService {
             }
         }
 
+        // Regla de negocio: una tarea no puede iniciarse si tiene dependencias sin completar
+        if (status == TaskStatus.IN_PROGRESS && oldStatus != TaskStatus.IN_PROGRESS) {
+            boolean hasUnfinishedDeps = task.getDependencies().stream()
+                    .anyMatch(dep -> dep.getStatus() != TaskStatus.DONE
+                            && dep.getStatus() != TaskStatus.CANCELLED);
+            if (hasUnfinishedDeps) {
+                throw new BusinessException("No puedes iniciar esta tarea porque tiene dependencias sin completar");
+            }
+        }
+
         task.setTitle(title);
         task.setDescription(description);
         task.setStatus(status);
@@ -358,6 +372,16 @@ public class TaskService {
                     .existsByParentTaskIdAndStatusNotAndDeletedFalse(taskId, TaskStatus.DONE);
             if (hasPending) {
                 throw new BusinessException("No puedes completar esta tarea porque tiene subtareas pendientes");
+            }
+        }
+
+        // Regla: una tarea no puede iniciarse si tiene dependencias sin completar
+        if (newStatus == TaskStatus.IN_PROGRESS) {
+            boolean hasUnfinishedDeps = task.getDependencies().stream()
+                    .anyMatch(dep -> dep.getStatus() != TaskStatus.DONE
+                            && dep.getStatus() != TaskStatus.CANCELLED);
+            if (hasUnfinishedDeps) {
+                throw new BusinessException("No puedes iniciar esta tarea porque tiene dependencias sin completar");
             }
         }
 
@@ -492,6 +516,89 @@ public class TaskService {
     }
 
     // -------------------------------------------------------------------------
+    // Dependencias
+    // -------------------------------------------------------------------------
+
+    /**
+     * Devuelve las tareas predecesoras de las que depende la tarea indicada.
+     *
+     * @param taskId identificador de la tarea
+     * @param userId identificador del usuario
+     * @return lista de tareas predecesoras
+     */
+    @Transactional(readOnly = true)
+    public List<Task> getDependencies(Long taskId, Long userId) {
+        Task task = findById(taskId);
+        if (!task.getUser().getId().equals(userId)) {
+            throw new BusinessException("No tienes permisos para ver las dependencias de esta tarea");
+        }
+        return new ArrayList<>(task.getDependencies());
+    }
+
+    /**
+     * Añade una relación de dependencia: la tarea {@code taskId} no podrá iniciarse
+     * hasta que la tarea {@code dependsOnId} esté completada o cancelada.
+     *
+     * @param taskId      identificador de la tarea dependiente (la que se bloquea)
+     * @param dependsOnId identificador de la tarea predecesora (la que debe completarse)
+     * @param userId      identificador del usuario
+     * @return tarea actualizada
+     * @throws BusinessException si se crearía un ciclo o la tarea ya depende de sí misma
+     */
+    @Transactional
+    public Task addDependency(Long taskId, Long dependsOnId, Long userId) {
+        if (taskId.equals(dependsOnId)) {
+            throw new BusinessException("Una tarea no puede depender de sí misma");
+        }
+
+        Task task      = findById(taskId);
+        Task dependsOn = findById(dependsOnId);
+
+        if (!task.getUser().getId().equals(userId) || !dependsOn.getUser().getId().equals(userId)) {
+            throw new BusinessException("No tienes permisos para gestionar estas tareas");
+        }
+
+        // Verificamos que no se crea un ciclo antes de añadir la dependencia
+        if (wouldCreateCycle(taskId, dependsOn)) {
+            throw new BusinessException("No se puede añadir esta dependencia porque crearía un ciclo");
+        }
+
+        task.getDependencies().add(dependsOn);
+        Task saved = taskRepository.save(task);
+
+        activityLogService.log(userId, ActionType.DEPENDENCY_ADDED, "TASK",
+                taskId, task.getTitle(), dependsOn.getTitle(), "");
+
+        return saved;
+    }
+
+    /**
+     * Elimina una relación de dependencia entre dos tareas.
+     *
+     * @param taskId      identificador de la tarea dependiente
+     * @param dependsOnId identificador de la tarea predecesora
+     * @param userId      identificador del usuario
+     * @return tarea actualizada
+     */
+    @Transactional
+    public Task removeDependency(Long taskId, Long dependsOnId, Long userId) {
+        Task task      = findById(taskId);
+        Task dependsOn = findById(dependsOnId);
+
+        if (!task.getUser().getId().equals(userId)) {
+            throw new BusinessException("No tienes permisos para gestionar esta tarea");
+        }
+
+        task.getDependencies().remove(dependsOn);
+        Task saved = taskRepository.save(task);
+
+        activityLogService.log(userId, ActionType.DEPENDENCY_REMOVED, "TASK",
+                taskId, task.getTitle(), dependsOn.getTitle(), "");
+
+        return saved;
+    }
+
+    // -------------------------------------------------------------------------
     // Métodos de soporte
     // -------------------------------------------------------------------------
 
@@ -561,5 +668,32 @@ public class TaskService {
         for (Task sub : subTasks) {
             softDeleteRecursive(sub);
         }
+    }
+
+    /**
+     * Comprueba mediante BFS si añadir la dependencia {@code dependsOn} a la tarea
+     * {@code taskId} crearía un ciclo en el grafo de dependencias.
+     *
+     * <p>Recorre en anchura todas las dependencias transitivas de {@code dependsOn}.
+     * Si durante el recorrido se encuentra {@code taskId}, significa que
+     * {@code dependsOn} ya depende de esa tarea y añadir la relación inversa
+     * formaría un ciclo.</p>
+     *
+     * @param taskId    identificador de la tarea a la que se quiere añadir la dependencia
+     * @param dependsOn tarea predecesora candidata cuyas dependencias se recorren
+     * @return {@code true} si la relación crearía un ciclo; {@code false} en caso contrario
+     */
+    private boolean wouldCreateCycle(Long taskId, Task dependsOn) {
+        Set<Long> visited = new HashSet<>();
+        Queue<Task> queue = new LinkedList<>(dependsOn.getDependencies());
+
+        while (!queue.isEmpty()) {
+            Task current = queue.poll();
+            if (current.getId().equals(taskId)) return true;
+            if (visited.add(current.getId())) {
+                queue.addAll(current.getDependencies());
+            }
+        }
+        return false;
     }
 }

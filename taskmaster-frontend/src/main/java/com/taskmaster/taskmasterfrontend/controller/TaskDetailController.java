@@ -28,10 +28,10 @@ import java.util.function.Consumer;
  * Controlador de la vista de detalle de tarea.
  *
  * <p>Muestra la información completa de una tarea o subtarea: título, estado,
- * prioridad, categoría, fecha límite, descripción, subtareas con barra de
- * progreso, registros de trabajo (worklogs) y el historial de actividad.
- * Permite editar la tarea, crear subtareas, gestionar worklogs y abrir el
- * detalle de una subtarea concreta.</p>
+ * prioridad, categoría, fecha límite, descripción, dependencias (tareas predecesoras),
+ * subtareas con barra de progreso, registros de trabajo (worklogs) y el historial
+ * de actividad. Permite editar la tarea, gestionar dependencias, crear subtareas,
+ * gestionar worklogs y abrir el detalle de una subtarea concreta.</p>
  *
  * @author Carlos
  */
@@ -57,6 +57,12 @@ public class TaskDetailController {
     @FXML private VBox workLogContainer;
     @FXML private Label emptyWorkLogLabel;
     @FXML private VBox subtasksSection;
+
+    // -- Dependencias --
+    @FXML private VBox dependenciesSection;
+    @FXML private VBox dependenciesContainer;
+    @FXML private Label emptyDependenciesLabel;
+    @FXML private Label dependenciesCountLabel;
 
     private boolean isSubtask = false;
     private Runnable onClose;
@@ -139,6 +145,11 @@ public class TaskDetailController {
         activityLogSectionController.loadForEntity("SUBTASK", subtaskId);
         subtasksSection.setVisible(false);
         subtasksSection.setManaged(false);
+
+        // Las subtareas no tienen sección de dependencias
+        dependenciesSection.setVisible(false);
+        dependenciesSection.setManaged(false);
+
         refreshTaskDataFromApi(subtaskId, true);
     }
 
@@ -163,6 +174,8 @@ public class TaskDetailController {
                         if (isSubtask) {
                             subtasksSection.setVisible(false);
                             subtasksSection.setManaged(false);
+                            dependenciesSection.setVisible(false);
+                            dependenciesSection.setManaged(false);
                         }
                     });
                 }
@@ -214,9 +227,8 @@ public class TaskDetailController {
         // Fecha límite - marcamos en rojo si está vencida
         if (taskData.has("dueDate") && !taskData.get("dueDate").isNull()) {
             try {
-                LocalDate due     = LocalDate.parse(
-                        taskData.get("dueDate").asText().substring(0, 10));
-                boolean   overdue = due.isBefore(LocalDate.now())
+                LocalDate due = LocalDate.parse(taskData.get("dueDate").asText().substring(0, 10));
+                boolean overdue = due.isBefore(LocalDate.now())
                         && !"DONE".equals(status) && !"CANCELLED".equals(status);
                 dueDateLabel.setText("📅 " + DateFormatManager.getInstance().format(due));
                 if (overdue) {
@@ -257,9 +269,250 @@ public class TaskDetailController {
             estimatedDurationLabel.setVisible(false);
             estimatedDurationLabel.setManaged(false);
         }
+
+        loadDependencies(taskId);
         loadSubtasks(taskId);
         loadTotalHours(taskId);
         loadWorkLogs(taskId);
+    }
+
+    // -------------------------------------------------------------------------
+    // Dependencias
+    // -------------------------------------------------------------------------
+
+    /**
+     * Obtiene en segundo plano las tareas predecesoras de la tarea indicada
+     * y las renderiza en la sección de dependencias.
+     *
+     * @param taskId identificador de la tarea cuyas dependencias se cargan
+     */
+    private void loadDependencies(long taskId) {
+        Thread t = new Thread(() -> {
+            try {
+                HttpResponse<String> response = AppContext.getInstance()
+                        .getApiService().get("/api/tasks/" + taskId + "/dependencies");
+                if (response.statusCode() == 200) {
+                    JsonNode deps = objectMapper.readTree(response.body());
+                    Platform.runLater(() -> renderDependencies(deps, taskId));
+                }
+            } catch (Exception e) {
+                Platform.runLater(() -> showAlert(lm.get("error.title"),
+                        lm.get("task.detail.dependencies.error.load")));
+            }
+        }, "task-detail-load-deps");
+        t.setDaemon(true);
+        t.start();
+    }
+
+    /**
+     * Renderiza la lista de tareas predecesoras en el contenedor de dependencias.
+     * Muestra el contador, el icono de bloqueo/completado y el botón de eliminar
+     * para cada dependencia. Si la lista está vacía muestra la etiqueta vacía.
+     *
+     * @param deps   array JSON con las tareas predecesoras
+     * @param taskId identificador de la tarea dependiente (necesario para las acciones de cada fila)
+     */
+    private void renderDependencies(JsonNode deps, long taskId) {
+        dependenciesContainer.getChildren().clear();
+
+        if (!deps.isArray() || deps.isEmpty()) {
+            emptyDependenciesLabel.setVisible(true);
+            emptyDependenciesLabel.setManaged(true);
+            dependenciesCountLabel.setText("");
+            return;
+        }
+
+        emptyDependenciesLabel.setVisible(false);
+        emptyDependenciesLabel.setManaged(false);
+        dependenciesCountLabel.setText("(" + deps.size() + ")");
+
+        for (JsonNode dep : deps) {
+            dependenciesContainer.getChildren().add(createDependencyRow(dep, taskId));
+        }
+    }
+
+    /**
+     * Construye la fila visual de una tarea predecesora con icono de estado de bloqueo,
+     * ID, título, badge de estado y botón para eliminar la dependencia.
+     *
+     * <p>El icono es un candado naranja si la predecesora no está completada
+     * (la tarea actual está bloqueada) o un check verde si ya está completada.</p>
+     *
+     * @param dep    nodo JSON con los datos de la tarea predecesora
+     * @param taskId identificador de la tarea dependiente, usado en la acción de eliminar
+     * @return {@link HBox} con el contenido visual de la fila
+     */
+    private HBox createDependencyRow(JsonNode dep, long taskId) {
+        long depId = dep.get("id").asLong();
+        String status = dep.get("status").asText();
+        String title = dep.get("title").asText();
+        boolean blocked = !"DONE".equals(status) && !"CANCELLED".equals(status);
+
+        FontIcon lockIcon = new FontIcon(blocked ? IconCatalog.DEP_BLOCKED : IconCatalog.DEP_UNBLOCKED);
+        lockIcon.setIconSize(13);
+        lockIcon.setIconColor(javafx.scene.paint.Color.web(blocked ? "#f59e0b" : "#22c55e"));
+
+        Label idLabel = new Label("#" + depId);
+        idLabel.setStyle("-fx-font-size: 11px; -fx-text-fill: -tm-text-secondary; -fx-min-width: 35px;");
+
+        Label titleLabel = new Label(title);
+        titleLabel.getStyleClass().add("task-title");
+        titleLabel.setCursor(javafx.scene.Cursor.HAND);
+        titleLabel.setOnMouseClicked(e -> openDependencyTaskDetail(depId, taskId));
+        HBox.setHgrow(titleLabel, Priority.ALWAYS);
+
+        Label statusLbl = new Label(TaskStyleHelper.translateStatus(status, lm));
+        statusLbl.setStyle("-fx-font-size: 10px; -fx-padding: 2 7 2 7; "
+                + "-fx-background-radius: 10px; -fx-text-fill: white; "
+                + "-fx-background-color: " + TaskStyleHelper.getStatusColor(status) + ";");
+
+        Button removeBtn = new Button();
+        FontIcon removeIcon = new FontIcon(IconCatalog.ACTION_CANCEL);
+        removeIcon.setIconSize(10);
+        removeBtn.setGraphic(removeIcon);
+        removeBtn.setStyle("-fx-background-color: transparent; -fx-padding: 4; -fx-cursor: hand;");
+        removeBtn.setOnAction(e -> removeDependency(depId, taskId));
+
+        HBox row = new HBox(8, lockIcon, idLabel, titleLabel, statusLbl, removeBtn);
+        row.setAlignment(Pos.CENTER_LEFT);
+        row.getStyleClass().add("profile-field-row");
+        return row;
+    }
+
+    /**
+     * Abre en un diálogo modal el detalle de la tarea predecesora indicada.
+     *
+     * <p>Carga los datos de la tarea desde la API en segundo plano y abre la vista
+     * de detalle completa. Al cerrar el diálogo recarga la lista de dependencias de
+     * la tarea actual para reflejar posibles cambios de estado.</p>
+     *
+     * @param depTaskId     identificador de la tarea predecesora a abrir
+     * @param currentTaskId identificador de la tarea actual (para refrescar sus dependencias al volver)
+     */
+    private void openDependencyTaskDetail(long depTaskId, long currentTaskId) {
+        Thread t = new Thread(() -> {
+            try {
+                HttpResponse<String> resp = AppContext.getInstance().getApiService()
+                        .get("/api/tasks/" + depTaskId);
+                if (resp.statusCode() != 200) return;
+                JsonNode depTask = objectMapper.readTree(resp.body());
+                Platform.runLater(() -> {
+                    try {
+                        FXMLLoader loader = new FXMLLoader(
+                                getClass().getResource("/com/taskmaster/taskmasterfrontend/task-detail-view.fxml"),
+                                LanguageManager.getInstance().getBundle());
+                        javafx.scene.Parent root = loader.load();
+                        TaskDetailController ctrl = loader.getController();
+
+                        Stage dialog = new Stage();
+                        ctrl.initData(depTask);
+                        ctrl.setOnClose(() -> {
+                            dialog.close();
+                            loadDependencies(currentTaskId);
+                        });
+                        ctrl.setOnTaskChanged(() -> loadDependencies(currentTaskId));
+
+                        dialog.setTitle(depTask.path("title").asText());
+                        dialog.initModality(Modality.APPLICATION_MODAL);
+                        dialog.initOwner(taskTitleLabel.getScene().getWindow());
+                        Scene scene = new Scene(root);
+                        TaskStyleHelper.applyThemeToScene(scene, this);
+                        dialog.setScene(scene);
+                        dialog.setMinWidth(720);
+                        dialog.setMinHeight(520);
+                        dialog.show();
+                    } catch (IOException e) {
+                        showAlert(lm.get("error.title"), lm.get("error.open.dialog"));
+                    }
+                });
+            } catch (Exception e) {
+                Platform.runLater(() -> showAlert(lm.get("error.title"), lm.get("error.open.dialog")));
+            }
+        }, "task-dep-open-detail");
+        t.setDaemon(true);
+        t.start();
+    }
+
+    /**
+     * Muestra un diálogo de entrada de texto para que el usuario introduzca el ID
+     * de la tarea predecesora que desea añadir como dependencia.
+     *
+     * <p>Valida que el valor introducido sea numérico y envía la petición al backend.
+     * Si el backend rechaza la operación (ciclo, tarea no encontrada, sin permisos),
+     * muestra un mensaje de error.</p>
+     */
+    @FXML
+    private void handleAddDependency() {
+        TextInputDialog dialog = new TextInputDialog();
+        dialog.setTitle(lm.get("task.detail.dependencies.add.title"));
+        dialog.setHeaderText(null);
+        dialog.setContentText(lm.get("task.detail.dependencies.add.prompt"));
+
+        dialog.showAndWait().ifPresent(input -> {
+            String trimmed = input.trim();
+            if (trimmed.isEmpty()) return;
+            try {
+                long dependsOnId = Long.parseLong(trimmed);
+                long taskId = taskData.get("id").asLong();
+
+                Thread t = new Thread(() -> {
+                    try {
+                        HttpResponse<String> resp = AppContext.getInstance().getApiService()
+                                .postWithAuthNoBody("/api/tasks/" + taskId + "/dependencies/" + dependsOnId);
+                        Platform.runLater(() -> {
+                            if (resp.statusCode() == 200) {
+                                loadDependencies(taskId);
+                                activityLogSectionController.loadForEntity("TASK", taskId, "SUBTASK");
+                            } else {
+                                showAlert(lm.get("error.title"), lm.get("task.detail.dependencies.error.add"));
+                            }
+                        });
+                    } catch (Exception ex) {
+                        Platform.runLater(() -> showAlert(lm.get("error.title"),
+                                lm.get("task.detail.dependencies.error.add")));
+                    }
+                }, "task-detail-add-dep");
+                t.setDaemon(true);
+                t.start();
+
+            } catch (NumberFormatException e) {
+                showAlert(lm.get("error.title"), lm.get("task.detail.dependencies.error.invalid.id"));
+            }
+        });
+    }
+
+    /**
+     * Solicita confirmación y elimina la relación de dependencia entre la tarea actual
+     * y la tarea predecesora indicada.
+     *
+     * @param depId  identificador de la tarea predecesora a desvincular
+     * @param taskId identificador de la tarea dependiente (la tarea actual)
+     */
+    private void removeDependency(long depId, long taskId) {
+        Alert confirm = new Alert(Alert.AlertType.CONFIRMATION);
+        confirm.setTitle(lm.get("task.detail.dependencies.remove.title"));
+        confirm.setHeaderText(null);
+        confirm.setContentText(lm.get("task.detail.dependencies.remove.content"));
+        confirm.showAndWait().ifPresent(r -> {
+
+            if (r != ButtonType.OK) return;
+
+            Thread t = new Thread(() -> {
+                try {
+                    AppContext.getInstance().getApiService()
+                            .delete("/api/tasks/" + taskId + "/dependencies/" + depId);
+                    Platform.runLater(() -> {
+                        loadDependencies(taskId);
+                        activityLogSectionController.loadForEntity("TASK", taskId, "SUBTASK");
+                    });
+                } catch (Exception e) {
+                    Platform.runLater(() -> showAlert(lm.get("error.title"),
+                            lm.get("task.detail.dependencies.error.remove")));
+                }
+            }, "task-detail-remove-dep");
+            t.setDaemon(true);
+            t.start();
+        });
     }
 
     // -------------------------------------------------------------------------
@@ -431,8 +684,7 @@ public class TaskDetailController {
             // Fallback: diálogo modal si no hay callback registrado
             FXMLLoader loader = new FXMLLoader(
                     getClass().getResource("/com/taskmaster/taskmasterfrontend/task-detail-view.fxml"),
-                    LanguageManager.getInstance().getBundle()
-            );
+                    LanguageManager.getInstance().getBundle());
             VBox root = loader.load();
             TaskDetailController controller = loader.getController();
             controller.initDataAsSubtask(subtask);
@@ -464,14 +716,11 @@ public class TaskDetailController {
         try {
             HttpResponse<String> resp = AppContext.getInstance().getApiService().get("/api/tasks/" + subtaskId);
             if (resp.statusCode() != 200) return;
-            JsonNode subtask = new ObjectMapper()
-                    .registerModule(new JavaTimeModule())
-                    .readTree(resp.body());
+            JsonNode subtask = new ObjectMapper().registerModule(new JavaTimeModule()).readTree(resp.body());
 
             FXMLLoader loader = new FXMLLoader(getClass().getResource(
                     "/com/taskmaster/taskmasterfrontend/edit-task-dialog.fxml"),
-                    LanguageManager.getInstance().getBundle()
-            );
+                    LanguageManager.getInstance().getBundle());
             VBox root = loader.load();
             EditTaskController controller = loader.getController();
             controller.initData(subtask);
@@ -500,7 +749,9 @@ public class TaskDetailController {
         confirm.setHeaderText(null);
         confirm.setContentText(lm.get("task.detail.subtask.delete.content"));
         confirm.showAndWait().ifPresent(r -> {
+
             if (r != ButtonType.OK) return;
+
             Thread t = new Thread(() -> {
                 try {
                     AppContext.getInstance().getApiService().delete("/api/tasks/" + subtaskId);
@@ -791,9 +1042,7 @@ public class TaskDetailController {
                 thread.setDaemon(true);
                 thread.start();
             });
-            showAsDialog(root, isSubtask
-                    ? lm.get("task.detail.subtask.edit")
-                    : lm.get("common.menu.edit"));
+            showAsDialog(root, isSubtask ? lm.get("task.detail.subtask.edit") : lm.get("common.menu.edit"));
         } catch (IOException e) {
             showAlert(lm.get("error.title"), lm.get("error.open.dialog"));
         }
@@ -823,7 +1072,7 @@ public class TaskDetailController {
      * Crea un diálogo modal con el contenido indicado, aplica el tema activo
      * y lo muestra de forma bloqueante.
      *
-     * @param root  contenido raíz del diálogo
+     * @param root contenido raíz del diálogo
      * @param title título de la ventana
      */
     private void showAsDialog(VBox root, String title) {

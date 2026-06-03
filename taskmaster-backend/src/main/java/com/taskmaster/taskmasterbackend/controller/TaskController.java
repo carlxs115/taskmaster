@@ -24,7 +24,8 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 /**
- * Controlador REST que gestiona el CRUD de tareas, subtareas y la pantalla de inicio.
+ * Controlador REST que gestiona el CRUD de tareas, subtareas, dependencias
+ * y la pantalla de inicio.
  *
  * <p>Todos los endpoints requieren autenticación. El usuario autenticado
  * solo puede acceder y modificar sus propias tareas, ya que el {@code userId}
@@ -266,6 +267,7 @@ public class TaskController {
     public ResponseEntity<List<TaskResponse>> getTasksByCategory(
             @PathVariable TaskCategory category,
             @AuthenticationPrincipal UserDetails userDetails) {
+
         Long userId = securityUtils.getUserId(userDetails);
         return ResponseEntity.ok(toResponseList(taskService.getTasksByCategory(category, userId)));
     }
@@ -283,6 +285,7 @@ public class TaskController {
     public ResponseEntity<List<TaskResponse>> getAllSubTasks(
             @PathVariable Long id,
             @AuthenticationPrincipal UserDetails userDetails) {
+
         Long userId = securityUtils.getUserId(userDetails);
         Task parentTask = taskService.findById(id);
 
@@ -308,6 +311,7 @@ public class TaskController {
     public ResponseEntity<List<TaskResponse>> getAllTasksByProject(
             @PathVariable Long id,
             @AuthenticationPrincipal UserDetails userDetails) {
+
         Long userId = securityUtils.getUserId(userDetails);
 
         // SEGURIDAD: validamos que el proyecto pertenece al usuario autenticado
@@ -331,6 +335,7 @@ public class TaskController {
     public ResponseEntity<List<Long>> getSubtaskIdsByProject(
             @PathVariable Long id,
             @AuthenticationPrincipal UserDetails userDetails) {
+
         Long userId = securityUtils.getUserId(userDetails);
         projectService.getProjectByIdAndUser(id, userId);
         return ResponseEntity.ok(taskService.getSubtaskIdsByProject(id));
@@ -477,6 +482,71 @@ public class TaskController {
         return ResponseEntity.ok(toResponse(taskService.restoreTask(id, userId)));
     }
 
+
+    // -------------------------------------------------------------------------
+    // Dependencias
+    // -------------------------------------------------------------------------
+
+    /**
+     * GET /api/tasks/{id}/dependencies
+     * Devuelve las tareas predecesoras de las que depende la tarea indicada.
+     * La tarea no puede iniciarse hasta que todas ellas estén completadas o canceladas.
+     *
+     * @param id identificador de la tarea
+     * @param userDetails usuario autenticado inyectado por Spring Security
+     * @return 200 OK con la lista de tareas predecesoras
+     */
+    @GetMapping("/{id}/dependencies")
+    public ResponseEntity<List<TaskResponse>> getDependencies(
+            @PathVariable Long id,
+            @AuthenticationPrincipal UserDetails userDetails) {
+
+        Long userId = securityUtils.getUserId(userDetails);
+        return ResponseEntity.ok(toResponseList(taskService.getDependencies(id, userId)));
+    }
+
+    /**
+     * POST /api/tasks/{id}/dependencies/{dependsOnId}
+     * Añade la tarea {@code dependsOnId} como predecesora de la tarea {@code id}.
+     * La tarea {@code id} no podrá iniciarse hasta que {@code dependsOnId} esté
+     * completada o cancelada.
+     *
+     * @param id identificador de la tarea dependiente (la que se bloquea)
+     * @param dependsOnId identificador de la tarea predecesora (la que debe completarse antes)
+     * @param userDetails usuario autenticado inyectado por Spring Security
+     * @return 200 OK con la tarea actualizada
+     */
+    @PostMapping("/{id}/dependencies/{dependsOnId}")
+    public ResponseEntity<TaskResponse> addDependency(
+            @PathVariable Long id,
+            @PathVariable Long dependsOnId,
+            @AuthenticationPrincipal UserDetails userDetails) {
+
+        Long userId = securityUtils.getUserId(userDetails);
+        return ResponseEntity.ok(toResponse(taskService.addDependency(id, dependsOnId, userId)));
+    }
+
+    /**
+     * DELETE /api/tasks/{id}/dependencies/{dependsOnId}
+     * Elimina la relación de dependencia entre las dos tareas indicadas.
+     * Tras esta operación la tarea {@code id} podrá iniciarse sin esperar a {@code dependsOnId}.
+     *
+     * @param id identificador de la tarea dependiente
+     * @param dependsOnId identificador de la tarea predecesora a desvincular
+     * @param userDetails usuario autenticado inyectado por Spring Security
+     * @return 204 No Content
+     */
+    @DeleteMapping("/{id}/dependencies/{dependsOnId}")
+    public ResponseEntity<Void> removeDependency(
+            @PathVariable Long id,
+            @PathVariable Long dependsOnId,
+            @AuthenticationPrincipal UserDetails userDetails) {
+
+        Long userId = securityUtils.getUserId(userDetails);
+        taskService.removeDependency(id, dependsOnId, userId);
+        return ResponseEntity.noContent().build();
+    }
+
     // -------------------------------------------------------------------------
     // Métodos privados
     // -------------------------------------------------------------------------
@@ -505,6 +575,7 @@ public class TaskController {
                 .deleted(task.isDeleted())
                 .deletedAt(task.getDeletedAt())
                 .category(task.getCategory())
+                .dependencyIds(List.of())
                 .build();
     }
 
