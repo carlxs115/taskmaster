@@ -46,7 +46,7 @@ public class MainApp extends Application {
     private static final String BACKEND_JAR = "taskmaster-0.0.1-SNAPSHOT.jar";
 
     /** URL del endpoint que usamos para comprobar que el backend está listo, HTTP es suficiente para localhost. */
-    private static final String BACKEND_HEALTH_URL = "http://localhost:8080/api/auth/login";
+    private static final String BACKEND_HEALTH_URL = "http://127.0.0.1:8080/api/auth/login";
 
     /** Segundos máximos que esperamos a que el backend arranque. */
     private static final int BACKEND_TIMEOUT_SECONDS = 30;

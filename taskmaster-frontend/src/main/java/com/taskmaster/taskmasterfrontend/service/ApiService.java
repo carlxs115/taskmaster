@@ -25,7 +25,7 @@ import java.util.Base64;
  * Ver {@code AppContext} para más detalles.</p>
  *
  * <p><b>Configuración:</b> la URL base del backend está fijada a
- * {@code http://localhost:8080}, adecuada para uso en escritorio local.
+ * {@code http://127.0.0.1:8080}, adecuada para uso en escritorio local.
  * Para entornos remotos habría que externalizarla a un fichero de configuración.</p>
  *
  * @author Carlos
@@ -34,8 +34,8 @@ public class ApiService {
 
     private static final Logger log = LoggerFactory.getLogger(ApiService.class);
 
-    /** URL base del backend. Fija para uso en escritorio local (localhost). */
-    private static final String BASE_URL = "http://localhost:8080";
+    /** URL base del backend. Fija a loopback IPv4, donde escucha el backend ({@code server.address}). */
+    private static final String BASE_URL = "http://127.0.0.1:8080";
 
     private final HttpClient httpClient;
     private final ObjectMapper objectMapper;
