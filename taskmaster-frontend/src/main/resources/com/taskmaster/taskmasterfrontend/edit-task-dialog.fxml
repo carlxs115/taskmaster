@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
+<?import com.taskmaster.taskmasterfrontend.util.SmartDatePicker?>
 <?import org.kordamp.ikonli.javafx.FontIcon?>
 <VBox xmlns:fx="http://javafx.com/fxml"
       fx:controller="com.taskmaster.taskmasterfrontend.controller.EditTaskController"
@@ -20,6 +21,12 @@
         <TextArea fx:id="descriptionField"
                   styleClass="dialog-textarea" wrapText="true"/>
     </VBox>
+    <VBox spacing="6">
+        <Label text="%common.estimated.duration" styleClass="dialog-field-label"/>
+        <TextField fx:id="estimatedDurationField"
+                   promptText="%common.estimated.duration.prompt"
+                   styleClass="dialog-field"/>
+    </VBox>
     <HBox spacing="16">
         <VBox spacing="6" HBox.hgrow="ALWAYS">
             <Label text="%common.status" styleClass="dialog-field-label"/>
@@ -32,7 +39,7 @@
     </HBox>
     <VBox spacing="6">
         <Label text="%common.duedate" styleClass="dialog-field-label"/>
-        <DatePicker fx:id="dueDatePicker" maxWidth="Infinity" styleClass="dialog-combo"/>
+        <SmartDatePicker fx:id="dueDatePicker" maxWidth="Infinity"/>
     </VBox>
 
     <Label fx:id="errorLabel" styleClass="dialog-error" visible="false"/>

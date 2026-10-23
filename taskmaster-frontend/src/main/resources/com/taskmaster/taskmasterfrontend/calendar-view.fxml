@@ -19,7 +19,11 @@
                     styleClass="cal-nav-btn" contentDisplay="GRAPHIC_ONLY">
                 <graphic><FontIcon iconLiteral="fas-chevron-left" styleClass="sidebar-icon"/></graphic>
             </Button>
-            <Label fx:id="monthYearLabel" styleClass="cal-month-label" minWidth="160" alignment="CENTER"/>
+            <HBox spacing="4" alignment="CENTER" onMouseClicked="#handleMonthYearClick"
+                  styleClass="cal-month-year-btn">
+                <Label fx:id="monthYearLabel" styleClass="cal-month-label" minWidth="160" alignment="CENTER"/>
+                <FontIcon iconLiteral="fas-chevron-down" styleClass="cal-month-label-chevron"/>
+            </HBox>
             <Button fx:id="btnNext" onAction="#handleNext"
                     styleClass="cal-nav-btn" contentDisplay="GRAPHIC_ONLY">
                 <graphic><FontIcon iconLiteral="fas-chevron-right" styleClass="sidebar-icon"/></graphic>

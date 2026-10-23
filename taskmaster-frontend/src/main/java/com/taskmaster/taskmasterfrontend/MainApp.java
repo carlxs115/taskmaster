@@ -13,9 +13,12 @@ import org.slf4j.LoggerFactory;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
-import java.net.HttpURLConnection;
 import java.net.URI;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
 import java.nio.file.Path;
+import java.time.Duration;
 import java.util.Locale;
 
 /**
@@ -45,8 +48,8 @@ public class MainApp extends Application {
     /** Nombre del JAR del backend, debe coincidir con el empaquetado por Maven. */
     private static final String BACKEND_JAR = "taskmaster-0.0.1-SNAPSHOT.jar";
 
-    /** URL del endpoint que usamos para comprobar que el backend está listo, HTTP es suficiente para localhost. */
-    private static final String BACKEND_HEALTH_URL = "http://127.0.0.1:8080/api/auth/login";
+    /** Puerto del backend, usado para comprobar que está listo aceptando conexiones TCP. */
+    private static final int BACKEND_PORT = 8080;
 
     /** Segundos máximos que esperamos a que el backend arranque. */
     private static final int BACKEND_TIMEOUT_SECONDS = 30;
@@ -253,20 +256,36 @@ public class MainApp extends Application {
      *
      * @throws Exception si el backend no responde antes de agotar el tiempo
      */
+    /**
+     * Espera a que el backend esté completamente listo para aceptar peticiones HTTP.
+     *
+     * <p>En lugar de comprobar solo la conexión TCP (que se abre antes de que
+     * Hibernate termine de inicializar el esquema), realiza peticiones HTTP reales
+     * al endpoint de autenticación hasta obtener cualquier respuesta HTTP válida.
+     * Esto garantiza que Spring Boot y JPA están completamente operativos antes
+     * de que el frontend empiece a hacer llamadas a la API.</p>
+     *
+     * @throws Exception si el backend no responde en {@link #BACKEND_TIMEOUT_SECONDS} segundos
+     */
     private void waitForBackend() throws Exception {
         long deadline = System.currentTimeMillis() + BACKEND_TIMEOUT_SECONDS * 1000L;
+        String probeUrl = "http://127.0.0.1:" + BACKEND_PORT + "/api/auth/ping";
 
         log.info("Esperando a que el backend esté listo...");
 
+        HttpClient client = HttpClient.newBuilder()
+                .connectTimeout(Duration.ofMillis(1000))
+                .build();
+        HttpRequest request = HttpRequest.newBuilder()
+                .uri(URI.create(probeUrl))
+                .timeout(Duration.ofMillis(1000))
+                .GET()
+                .build();
+
         while (System.currentTimeMillis() < deadline) {
             try {
-                HttpURLConnection conn = (HttpURLConnection)
-                        new URI(BACKEND_HEALTH_URL).toURL().openConnection();
-                conn.setConnectTimeout(1000);
-                conn.setReadTimeout(1000);
-                conn.setRequestMethod("GET");
-                int code = conn.getResponseCode();
-                log.info("Backend listo (HTTP {})", code);
+                client.send(request, HttpResponse.BodyHandlers.discarding());
+                log.info("Backend listo (HTTP respondiendo en puerto {})", BACKEND_PORT);
                 return;
             } catch (Exception ignored) {
                 //noinspection BusyWait
