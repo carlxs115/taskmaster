@@ -11,6 +11,7 @@ import javafx.scene.control.TextArea;
 import javafx.scene.control.TextField;
 import javafx.scene.input.KeyCode;
 
+import java.math.BigDecimal;
 import java.net.URLEncoder;
 import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
@@ -29,6 +30,7 @@ public class NewProjectController {
 
     @FXML private TextField nameField;
     @FXML private TextArea descriptionField;
+    @FXML private TextField estimatedDurationField;
     @FXML private Label errorLabel;
     @FXML private ComboBox<String> categoryCombo;
     @FXML private ComboBox<String> statusCombo;
@@ -99,6 +101,9 @@ public class NewProjectController {
             return;
         }
 
+        BigDecimal estimatedDuration = parseEstimatedDuration();
+        if (estimatedDuration == null && !estimatedDurationField.getText().trim().isEmpty()) return;
+
         Thread t = new Thread(() -> {
             try {
                 String url = "/api/projects"
@@ -107,6 +112,10 @@ public class NewProjectController {
                         + "&category="    + categoryToEnum(categoryCombo.getValue())
                         + "&status="      + statusToEnum(statusCombo.getValue())
                         + "&priority="    + priorityToEnum(priorityCombo.getValue());
+
+                if (estimatedDuration != null) {
+                    url += "&estimatedDuration=" + estimatedDuration.toPlainString();
+                }
 
                 HttpResponse<String> response = AppContext.getInstance()
                         .getApiService().postWithAuthNoBody(url);
@@ -138,6 +147,31 @@ public class NewProjectController {
     // -------------------------------------------------------------------------
     // Métodos privados
     // -------------------------------------------------------------------------
+
+    /**
+     * Parsea y valida el campo de duración estimada.
+     *
+     * <p>Devuelve {@code null} si el campo está vacío (el campo es opcional).
+     * Muestra un error y devuelve {@code null} si el valor no es numérico
+     * o es inferior al mínimo permitido (0.1 horas).</p>
+     *
+     * @return duración estimada como {@link BigDecimal}, o {@code null} si el campo está vacío
+     */
+    private BigDecimal parseEstimatedDuration() {
+        String text = estimatedDurationField.getText().trim();
+        if (text.isEmpty()) return null;
+        try {
+            BigDecimal value = new BigDecimal(text.replace(",", "."));
+            if (value.compareTo(new BigDecimal("0.1")) < 0) {
+                showError(lm.get("estimated.duration.error.invalid"));
+                return null;
+            }
+            return value;
+        } catch (NumberFormatException e) {
+            showError(lm.get("estimated.duration.error.invalid"));
+            return null;
+        }
+    }
 
     /**
      * Cierra el diálogo actual.

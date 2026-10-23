@@ -151,14 +151,14 @@ public class LoginController {
                     getClass().getResource("/com/taskmaster/taskmasterfrontend/register-view.fxml"),
                     LanguageManager.getInstance().getBundle()
             );
-            Scene scene = new Scene(loader.load(), 400, 660);
+            Scene scene = new Scene(loader.load(), 400, 720);
 
             String cssUrl = getAmatistaThemeUrl();
             if (cssUrl != null) scene.getStylesheets().add(cssUrl);
 
             Stage stage = (Stage) usernameField.getScene().getWindow();
             stage.setWidth(400);
-            stage.setHeight(660);
+            stage.setHeight(720);
             stage.setScene(scene);
             stage.centerOnScreen();
         } catch (IOException e) {

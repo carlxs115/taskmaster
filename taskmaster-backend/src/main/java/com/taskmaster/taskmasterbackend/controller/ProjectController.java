@@ -14,6 +14,7 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
+import java.math.BigDecimal;
 import java.util.List;
 
 /**
@@ -122,11 +123,12 @@ public class ProjectController {
             @RequestParam TaskCategory category,
             @RequestParam(required = false) TaskStatus status,
             @RequestParam(required = false) TaskPriority priority,
+            @RequestParam(required = false) BigDecimal estimatedDuration,
             @AuthenticationPrincipal UserDetails userDetails) {
 
         Long userId = securityUtils.getUserId(userDetails);
         Project project = projectService.createProject(
-                name, description, category, status, priority, userId);
+                name, description, category, status, priority, estimatedDuration, userId);
         return ResponseEntity.status(HttpStatus.CREATED).body(toResponse(project));
     }
 
@@ -152,11 +154,12 @@ public class ProjectController {
             @RequestParam TaskCategory category,
             @RequestParam(required = false) TaskStatus status,
             @RequestParam(required = false) TaskPriority priority,
+            @RequestParam(required = false) BigDecimal estimatedDuration,
             @AuthenticationPrincipal UserDetails userDetails) {
 
         Long userId = securityUtils.getUserId(userDetails);
         Project project = projectService.updateProject(
-                id, name, description, category, status, priority, userId);
+                id, name, description, category, status, priority, estimatedDuration, userId);
         return ResponseEntity.ok(toResponse(project));
     }
 
@@ -257,6 +260,7 @@ public class ProjectController {
                 project.getStatus(),
                 project.getPriority(),
                 project.getCategory(),
+                project.getEstimatedDuration(),
                 project.getCreatedAt(),
                 project.isDeleted(),
                 project.getDeletedAt()

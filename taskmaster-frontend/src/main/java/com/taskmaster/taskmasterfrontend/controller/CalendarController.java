@@ -15,11 +15,9 @@ import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.Separator;
-import javafx.scene.layout.GridPane;
-import javafx.scene.layout.Priority;
-import javafx.scene.layout.RowConstraints;
-import javafx.scene.layout.VBox;
+import javafx.scene.layout.*;
 import javafx.stage.Popup;
+import org.kordamp.ikonli.javafx.FontIcon;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -51,6 +49,8 @@ public class CalendarController {
     @FXML private VBox root;
 
     private YearMonth currentMonth;
+    private int pickerYear;
+    private int yearRangeStart;
     private Runnable onClose;
     private Consumer<JsonNode> onOpenTask;
 
@@ -114,6 +114,198 @@ public class CalendarController {
     private void handleNext() {
         currentMonth = currentMonth.plusMonths(1);
         loadMonth();
+    }
+
+    // -------------------------------------------------------------------------
+    // Selector rápido de mes/año
+    // -------------------------------------------------------------------------
+
+    @FXML
+    private void handleMonthYearClick() {
+        showMonthYearPicker(monthYearLabel);
+    }
+
+    private void showMonthYearPicker(Node anchor) {
+        pickerYear = currentMonth.getYear();
+        yearRangeStart = (pickerYear / 12) * 12;
+
+        Popup popup = new Popup();
+        popup.setAutoHide(true);
+        popup.setAutoFix(true);
+
+        VBox content = new VBox(8);
+        content.getStyleClass().add("cal-month-picker-popup");
+        content.setPadding(new Insets(12));
+        content.setPrefWidth(230);
+
+        HBox headerRow = new HBox(8);
+        headerRow.setAlignment(Pos.CENTER);
+
+        GridPane grid = new GridPane();
+        grid.setHgap(6);
+        grid.setVgap(6);
+
+        content.getChildren().addAll(headerRow, new Separator(), grid);
+        popup.getContent().add(content);
+        switchToMonthView(headerRow, grid, popup);
+
+        Scene anchorScene = anchor.getScene();
+        if (anchorScene != null) {
+            content.getStylesheets().addAll(anchorScene.getStylesheets());
+        }
+
+        Bounds bounds = anchor.localToScreen(anchor.getBoundsInLocal());
+        if (bounds != null) {
+            double popupX = bounds.getMinX() + bounds.getWidth() / 2.0 - 115;
+            popup.show(anchor.getScene().getWindow(), popupX, bounds.getMaxY() + 6);
+        }
+    }
+
+    private void switchToMonthView(HBox headerRow, GridPane grid, Popup popup) {
+        headerRow.getChildren().clear();
+
+        Button prevBtn = new Button();
+        FontIcon prevIcon = new FontIcon("fas-chevron-left");
+        prevIcon.setIconSize(11);
+        prevBtn.setGraphic(prevIcon);
+        prevBtn.getStyleClass().add("cal-month-picker-year-btn");
+
+        Button yearBtn = new Button(String.valueOf(pickerYear));
+        yearBtn.getStyleClass().add("cal-month-picker-year-label");
+        yearBtn.setMaxWidth(Double.MAX_VALUE);
+        HBox.setHgrow(yearBtn, Priority.ALWAYS);
+
+        Button nextBtn = new Button();
+        FontIcon nextIcon = new FontIcon("fas-chevron-right");
+        nextIcon.setIconSize(11);
+        nextBtn.setGraphic(nextIcon);
+        nextBtn.getStyleClass().add("cal-month-picker-year-btn");
+
+        prevBtn.setOnAction(e -> {
+            pickerYear--;
+            yearBtn.setText(String.valueOf(pickerYear));
+            grid.getChildren().clear();
+            buildMonthGrid(grid, popup);
+        });
+
+        nextBtn.setOnAction(e -> {
+            pickerYear++;
+            yearBtn.setText(String.valueOf(pickerYear));
+            grid.getChildren().clear();
+            buildMonthGrid(grid, popup);
+        });
+
+        yearBtn.setOnAction(e -> {
+            yearRangeStart = (pickerYear / 12) * 12;
+            grid.getChildren().clear();
+            grid.getColumnConstraints().clear();
+            switchToYearView(headerRow, grid, popup);
+        });
+
+        headerRow.getChildren().addAll(prevBtn, yearBtn, nextBtn);
+
+        grid.getChildren().clear();
+        if (grid.getColumnConstraints().isEmpty()) {
+            for (int i = 0; i < 3; i++) {
+                ColumnConstraints cc = new ColumnConstraints();
+                cc.setHgrow(Priority.ALWAYS);
+                cc.setPercentWidth(33.3);
+                grid.getColumnConstraints().add(cc);
+            }
+        }
+        buildMonthGrid(grid, popup);
+    }
+
+    private void switchToYearView(HBox headerRow, GridPane grid, Popup popup) {
+        headerRow.getChildren().clear();
+
+        Button prevBtn = new Button();
+        FontIcon prevIcon = new FontIcon("fas-chevron-left");
+        prevIcon.setIconSize(11);
+        prevBtn.setGraphic(prevIcon);
+        prevBtn.getStyleClass().add("cal-month-picker-year-btn");
+
+        Label rangeLabel = new Label(yearRangeStart + " – " + (yearRangeStart + 11));
+        rangeLabel.getStyleClass().add("cal-month-picker-range-label");
+        rangeLabel.setMaxWidth(Double.MAX_VALUE);
+        rangeLabel.setAlignment(Pos.CENTER);
+        HBox.setHgrow(rangeLabel, Priority.ALWAYS);
+
+        Button nextBtn = new Button();
+        FontIcon nextIcon = new FontIcon("fas-chevron-right");
+        nextIcon.setIconSize(11);
+        nextBtn.setGraphic(nextIcon);
+        nextBtn.getStyleClass().add("cal-month-picker-year-btn");
+
+        prevBtn.setOnAction(e -> {
+            yearRangeStart -= 12;
+            rangeLabel.setText(yearRangeStart + " – " + (yearRangeStart + 11));
+            grid.getChildren().clear();
+            buildYearGrid(grid, popup, headerRow);
+        });
+
+        nextBtn.setOnAction(e -> {
+            yearRangeStart += 12;
+            rangeLabel.setText(yearRangeStart + " – " + (yearRangeStart + 11));
+            grid.getChildren().clear();
+            buildYearGrid(grid, popup, headerRow);
+        });
+
+        headerRow.getChildren().addAll(prevBtn, rangeLabel, nextBtn);
+
+        if (grid.getColumnConstraints().isEmpty()) {
+            for (int i = 0; i < 3; i++) {
+                ColumnConstraints cc = new ColumnConstraints();
+                cc.setHgrow(Priority.ALWAYS);
+                cc.setPercentWidth(33.3);
+                grid.getColumnConstraints().add(cc);
+            }
+        }
+        buildYearGrid(grid, popup, headerRow);
+    }
+
+    private void buildMonthGrid(GridPane grid, Popup popup) {
+        Locale locale = lm.getBundle().getLocale();
+        for (int m = 1; m <= 12; m++) {
+            String name = YearMonth.of(pickerYear, m).getMonth()
+                    .getDisplayName(TextStyle.SHORT, locale);
+            name = name.substring(0, 1).toUpperCase() + name.substring(1).toLowerCase();
+            if (name.endsWith(".")) name = name.substring(0, name.length() - 1);
+
+            Button btn = new Button(name);
+            boolean selected = pickerYear == currentMonth.getYear()
+                    && m == currentMonth.getMonthValue();
+            btn.getStyleClass().add(selected ? "cal-month-btn-selected" : "cal-month-btn");
+            btn.setMaxWidth(Double.MAX_VALUE);
+
+            final int month = m;
+            btn.setOnAction(e -> {
+                currentMonth = YearMonth.of(pickerYear, month);
+                popup.hide();
+                loadMonth();
+            });
+
+            grid.add(btn, (m - 1) % 3, (m - 1) / 3);
+        }
+    }
+
+    private void buildYearGrid(GridPane grid, Popup popup, HBox headerRow) {
+        for (int i = 0; i < 12; i++) {
+            int year = yearRangeStart + i;
+            Button btn = new Button(String.valueOf(year));
+            boolean selected = year == currentMonth.getYear();
+            btn.getStyleClass().add(selected ? "cal-month-btn-selected" : "cal-month-btn");
+            btn.setMaxWidth(Double.MAX_VALUE);
+
+            btn.setOnAction(e -> {
+                pickerYear = year;
+                grid.getChildren().clear();
+                grid.getColumnConstraints().clear();
+                switchToMonthView(headerRow, grid, popup);
+            });
+
+            grid.add(btn, i % 3, i / 3);
+        }
     }
 
     // -------------------------------------------------------------------------

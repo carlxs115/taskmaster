@@ -7,7 +7,7 @@ import com.taskmaster.taskmasterfrontend.util.AppContext;
 import com.taskmaster.taskmasterfrontend.util.LanguageManager;
 import javafx.application.Platform;
 import javafx.fxml.FXML;
-import javafx.scene.control.DatePicker;
+import com.taskmaster.taskmasterfrontend.util.SmartDatePicker;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextField;
 import javafx.scene.input.KeyCode;
@@ -32,7 +32,7 @@ public class EditProfileController {
 
     @FXML private TextField usernameField;
     @FXML private TextField emailField;
-    @FXML private DatePicker birthDatePicker;
+    @FXML private SmartDatePicker birthDatePicker;
     @FXML private Label errorLabel;
 
     private Runnable onProfileUpdated;
@@ -116,8 +116,8 @@ public class EditProfileController {
             return;
         }
 
-        // Validación edad mínima 12 años
-        if (birthDate.isAfter(LocalDate.now().minusYears(12))) {
+        // Validación edad mínima 14 años
+        if (birthDate.isAfter(LocalDate.now().minusYears(14))) {
             showError(lm.get("edit.profile.error.age"));
             return;
         }

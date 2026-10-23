@@ -23,6 +23,12 @@ public enum ActionType {
     /** Estado de una tarea modificado. */
     TASK_STATUS_CHANGED,
 
+    // ── Dependencias ──────────────────────────────────────────────────────────
+    /** Dependencia añadida entre tareas. */
+    DEPENDENCY_ADDED,
+    /** Dependencia eliminada entre tareas. */
+    DEPENDENCY_REMOVED,
+
     // ── Subtareas ─────────────────────────────────────────────────────────────
     /** Subtarea creada. */
     SUBTASK_CREATED,

@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
+<?import com.taskmaster.taskmasterfrontend.util.SmartDatePicker?>
 <VBox xmlns:fx="http://javafx.com/fxml"
       fx:controller="com.taskmaster.taskmasterfrontend.controller.AddWorkLogController"
       spacing="16" styleClass="dialog-root">
@@ -10,7 +11,7 @@
     <HBox spacing="12">
         <VBox spacing="6" HBox.hgrow="ALWAYS">
             <Label text="%worklog.date" styleClass="dialog-field-label"/>
-            <DatePicker fx:id="datePicker" maxWidth="Infinity" styleClass="dialog-combo"/>
+            <SmartDatePicker fx:id="datePicker" maxWidth="Infinity"/>
         </VBox>
         <VBox spacing="6" HBox.hgrow="ALWAYS">
             <Label text="%worklog.hours" styleClass="dialog-field-label"/>

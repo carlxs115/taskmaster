@@ -121,6 +121,18 @@ public interface TaskRepository extends JpaRepository<Task, Long> {
     // -------------------------------------------------------------------------
 
     /**
+     * Devuelve los identificadores de todas las subtareas de las tareas raíz de un proyecto.
+     * Recorre la relación parentTask → project en una sola consulta JPQL para evitar N+1.
+     * Se usa para cargar el historial de actividad de subtareas de un proyecto de forma eficiente.
+     *
+     * @param projectId identificador del proyecto
+     * @return lista de IDs de subtareas pertenecientes al proyecto
+     */
+    @Query("SELECT t.id FROM Task t WHERE t.parentTask.id IN " +
+            "(SELECT pt.id FROM Task pt WHERE pt.project.id = :projectId)")
+    List<Long> findSubtaskIdsByProjectId(@Param("projectId") Long projectId);
+
+    /**
      * Devuelve las subtareas activas de una tarea padre.
      *
      * @param parentTaskId identificador de la tarea padre

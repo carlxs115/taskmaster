@@ -6,6 +6,7 @@ import com.taskmaster.taskmasterbackend.model.enums.TaskStatus;
 import lombok.Builder;
 import lombok.Data;
 
+import java.math.BigDecimal;
 import java.util.List;
 
 /**
@@ -42,6 +43,12 @@ public class ProjectWithTasksResponse {
 
     /** Categoría del proyecto. */
     private TaskCategory category;
+
+    /**
+     * Duración estimada del proyecto en horas.
+     * {@code null} si no se ha especificado estimación.
+     */
+    private BigDecimal estimatedDuration;
 
     /**
      * Lista de tareas raíz activas asociadas al proyecto.

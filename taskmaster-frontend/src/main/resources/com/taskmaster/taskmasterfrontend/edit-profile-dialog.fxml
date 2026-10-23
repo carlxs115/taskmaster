@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
+<?import com.taskmaster.taskmasterfrontend.util.SmartDatePicker?>
 <?import org.kordamp.ikonli.javafx.FontIcon?>
 <VBox xmlns:fx="http://javafx.com/fxml"
       fx:controller="com.taskmaster.taskmasterfrontend.controller.EditProfileController" styleClass="dialog-body">
@@ -21,8 +22,7 @@
         </VBox>
         <VBox spacing="6">
             <Label text="%common.birthdate" styleClass="dialog-field-label-bold"/>
-            <DatePicker fx:id="birthDatePicker" styleClass="dialog-combo"
-                        maxWidth="Infinity"/>
+            <SmartDatePicker fx:id="birthDatePicker" maxWidth="Infinity"/>
         </VBox>
 
         <Label fx:id="errorLabel" styleClass="dialog-error" visible="false" managed="false"/>

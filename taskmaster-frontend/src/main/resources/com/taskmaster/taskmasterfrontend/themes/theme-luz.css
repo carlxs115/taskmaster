@@ -89,3 +89,7 @@
 .btn-create-icon {
     -fx-icon-color: #ffffff;
 }
+
+/* SmartDatePicker — cabecera con acento claro */
+.smart-date-nav-btn      { -fx-text-fill: -tm-text-on-accent; }
+.smart-date-header-combo { -fx-text-fill: -tm-text-on-accent; }
