@@ -2,9 +2,13 @@
 
 # =============================================================================
 # TaskMaster — Script de arranque
-# Inicia el backend Spring Boot y el frontend JavaFX.
-# Al cerrar el frontend, detiene el backend automáticamente.
+# Compila el JAR del backend si no existe y arranca el frontend JavaFX.
+# El frontend se encarga de lanzar el backend y de detenerlo al cerrarse.
 # =============================================================================
+
+cd "$(dirname "$0")" || exit 1
+
+BACKEND_JAR="taskmaster-backend/target/taskmaster-0.0.1-SNAPSHOT.jar"
 
 echo ""
 echo "╔══════════════════════════════════╗"
@@ -12,29 +16,21 @@ echo "║   TaskMaster — Iniciando         ║"
 echo "╚══════════════════════════════════╝"
 echo ""
 
-# Arranca el backend en segundo plano
-echo "Arrancando backend..."
-cd taskmaster-backend
-./mvnw spring-boot:run &
-BACKEND_PID=$!
-cd ..
-
-# Espera a que el backend esté listo
-echo "Esperando al backend..."
-until curl -s -o /dev/null -w "%{http_code}" http://localhost:8080/api/auth/login | grep -qE "^[0-9]+$"; do
-    sleep 1
-done
-echo "✓ Backend listo"
+# Compila el backend la primera vez (o si se ha borrado target/)
+if [ ! -f "$BACKEND_JAR" ]; then
+    echo "Compilando backend (solo la primera vez)..."
+    (cd taskmaster-backend && ./mvnw -q -B package -DskipTests) || {
+        echo "✗ No se pudo compilar el backend."
+        exit 1
+    }
+    echo "✓ Backend compilado"
+fi
 
 # Arranca el frontend (bloquea hasta que el usuario cierra la app)
-echo "Arrancando frontend..."
+echo "Arrancando TaskMaster..."
 cd taskmaster-frontend
-./mvnw javafx:run
+./mvnw -q -B javafx:run
 
-# Al cerrar el frontend, detiene el backend
 echo ""
-echo "Cerrando TaskMaster..."
-kill $BACKEND_PID 2>/dev/null
-wait $BACKEND_PID 2>/dev/null
 echo "✓ TaskMaster cerrado."
 echo ""
