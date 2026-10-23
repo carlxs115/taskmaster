@@ -62,7 +62,7 @@ para planes de pago. TaskMaster parte de un planteamiento diferente.
 | Base de datos | SQLite embebida (sin servidor externo) |
 | Iconografía | Ikonli 12.3 + FontAwesome 5 |
 | Autenticación | HTTP Basic + BCrypt |
-| Build | Maven (multi-módulo) |
+| Build | Maven (dos módulos independientes, con Maven Wrapper) |
 | JDK | Java 21 (LTS) |
 
 ## Arquitectura
@@ -101,8 +101,8 @@ taskmaster/
 │           ├── help/            # Manual de usuario HTML autocontenido
 │           └── images/          # Iconos de la aplicación (multi-resolución)
 │
-├── install.sh                   # Instalador Linux (detecta gestor de paquetes)
-└── start.sh                     # Script de arranque Linux
+├── install.sh                   # Instalador de Java 21 para Linux (detecta gestor de paquetes)
+└── start.sh                     # Script de arranque Linux (compila el backend y abre la app)
 ```
 
 La comunicación entre frontend y backend se realiza mediante API REST interna sobre localhost, lo que permite evolucionar ambas capas de forma independiente.
@@ -113,7 +113,7 @@ La comunicación entre frontend y backend se realiza mediante API REST interna s
 |---|---|
 | Windows (instalador) | Windows 10 o superior — sin requisitos adicionales |
 | Linux (scripts) | Java 21 se instala automáticamente con `install.sh` |
-| Desde el código fuente | JDK 21+, Maven 3.8+ |
+| Desde el código fuente | JDK 21+ (Maven se incluye mediante `mvnw`) |
 
 > [!NOTE]
 > La base de datos SQLite se crea automáticamente en el primer arranque. No se requiere instalar ni configurar ningún motor de base de datos.
@@ -134,28 +134,37 @@ git clone https://github.com/carlxs115/taskmaster.git
 cd taskmaster
 
 # 2. Instala Java 21 automáticamente (detecta apt, dnf, pacman, zypper o sdkman)
-chmod +x install.sh && ./install.sh
+./install.sh
 
 # 3. Arranca la aplicación
-chmod +x start.sh && ./start.sh
+./start.sh
 ```
 
-`start.sh` arranca backend y frontend secuencialmente y cierra el backend al salir del frontend.
+No hace falta `sudo` ni tener Maven instalado: los scripts usan el Maven Wrapper (`mvnw`) incluido en cada módulo.
+
+`start.sh` hace lo siguiente:
+
+1. La primera vez, compila el JAR del backend (`taskmaster-backend/target/taskmaster-0.0.1-SNAPSHOT.jar`). Puede tardar unos minutos mientras Maven descarga las dependencias.
+2. Arranca el frontend, que lanza el backend como proceso hijo y lo detiene al cerrar la ventana.
+
+> [!IMPORTANT]
+> El JAR del backend solo se compila si no existe. Si actualizas el repositorio (`git pull`) o modificas el backend, borra `taskmaster-backend/target` antes de volver a ejecutar `./start.sh` para que se recompile.
 
 ### Ejecución desde el código fuente (desarrollo)
 
+El frontend siempre arranca el backend desde su JAR, así que hay que empaquetarlo antes de lanzar la interfaz:
+
 ```bash
-# Compila ambos módulos
-mvn clean install
-
-# Terminal 1 — backend
+# 1. Empaqueta el backend (repetir tras cada cambio en el backend)
 cd taskmaster-backend
-mvn spring-boot:run
+./mvnw package -DskipTests
 
-# Terminal 2 — frontend
-cd taskmaster-frontend
-mvn javafx:run
+# 2. Arranca el frontend (lanza y detiene el backend automáticamente)
+cd ../taskmaster-frontend
+./mvnw javafx:run
 ```
+
+En Windows, usa `mvnw.cmd` en lugar de `./mvnw`.
 
 > [!TIP]
 > Si tu `JAVA_HOME` apunta a un JDK anterior (por ejemplo, JDK 8 en entornos corporativos), sobreescríbelo para la sesión actual:
@@ -172,7 +181,8 @@ mvn javafx:run
 ## Generar Javadoc
 
 ```bash
-mvn javadoc:javadoc
+# Dentro de taskmaster-backend o taskmaster-frontend
+./mvnw javadoc:javadoc
 ```
 
 La documentación se genera en `target/site/apidocs/` dentro de cada módulo.
