@@ -164,17 +164,20 @@ public class UserService {
      * Calcula y devuelve las estadísticas de actividad del usuario en tiempo real,
      * consultando directamente los contadores en base de datos para mayor eficiencia.
      *
+     * <p>Las tareas de proyectos en la papelera no cuentan, igual que el proyecto
+     * no cuenta en {@code totalProjects}.</p>
+     *
      * @param userId identificador del usuario
      * @return objeto con totales de tareas por estado y tasa de completado
      */
     public UserStatsResponse getStats(Long userId) {
 
-        // Contamos cada estado con queries individuales optimizadas (usan índice user_id)
-        long total      = taskRepository.countByUserIdAndDeletedFalse(userId);
-        long completed  = taskRepository.countByUserIdAndStatusAndDeletedFalse(userId, TaskStatus.DONE);
-        long pending    = taskRepository.countByUserIdAndStatusAndDeletedFalse(userId, TaskStatus.TODO);
-        long inProgress = taskRepository.countByUserIdAndStatusAndDeletedFalse(userId, TaskStatus.IN_PROGRESS);
-        long cancelled  = taskRepository.countByUserIdAndStatusAndDeletedFalse(userId, TaskStatus.CANCELLED);
+        // Contamos cada estado con queries individuales (filtran por usuario y proyecto activo)
+        long total      = taskRepository.countActiveTasks(userId);
+        long completed  = taskRepository.countActiveTasksByStatus(userId, TaskStatus.DONE);
+        long pending    = taskRepository.countActiveTasksByStatus(userId, TaskStatus.TODO);
+        long inProgress = taskRepository.countActiveTasksByStatus(userId, TaskStatus.IN_PROGRESS);
+        long cancelled  = taskRepository.countActiveTasksByStatus(userId, TaskStatus.CANCELLED);
         long projects   = projectRepository.countByUserIdAndDeletedFalse(userId);
 
         // Tasa de completado: porcentaje de tareas completadas sobre el total.
