@@ -16,7 +16,7 @@ import lombok.Data;
 @Builder
 public class UserStatsResponse {
 
-    /** Número total de tareas activas del usuario: no eliminadas y sin proyecto en la papelera. */
+    /** Número total de tareas activas del usuario (no eliminadas). */
     private long totalTasks;
 
     /** Número de tareas en estado {@code DONE}. */

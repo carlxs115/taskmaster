@@ -217,34 +217,22 @@ public interface TaskRepository extends JpaRepository<Task, Long> {
     // -------------------------------------------------------------------------
 
     /**
-     * Cuenta las tareas activas de un usuario: no eliminadas y que no pertenezcan
-     * a un proyecto en la papelera.
-     *
-     * <p>El {@code LEFT JOIN} conserva las tareas personales, que no tienen proyecto.</p>
+     * Cuenta las tareas activas de un usuario.
+     * Usa el índice {@code idx_tasks_user_id} para mayor eficiencia.
      *
      * @param userId identificador del usuario
      * @return número de tareas activas
      */
-    @Query("SELECT COUNT(t) FROM Task t LEFT JOIN t.project p " +
-            "WHERE t.user.id = :userId AND t.deleted = false " +
-            "AND (p IS NULL OR p.deleted = false)")
-    long countActiveTasks(@Param("userId") Long userId);
+    long countByUserIdAndDeletedFalse(Long userId);
 
     /**
-     * Cuenta las tareas activas de un usuario con un estado concreto, excluyendo
-     * las de proyectos en la papelera.
+     * Cuenta las tareas activas de un usuario con un estado concreto.
      * Llamado múltiples veces desde {@code UserService.getStats}
      * para cada estado (TODO, IN_PROGRESS, DONE, CANCELLED).
-     *
-     * <p>El {@code LEFT JOIN} conserva las tareas personales, que no tienen proyecto.</p>
      *
      * @param userId identificador del usuario
      * @param status estado por el que filtrar
      * @return número de tareas activas con ese estado
      */
-    @Query("SELECT COUNT(t) FROM Task t LEFT JOIN t.project p " +
-            "WHERE t.user.id = :userId AND t.status = :status AND t.deleted = false " +
-            "AND (p IS NULL OR p.deleted = false)")
-    long countActiveTasksByStatus(@Param("userId") Long userId,
-                                  @Param("status") TaskStatus status);
+    long countByUserIdAndStatusAndDeletedFalse(Long userId, TaskStatus status);
 }
