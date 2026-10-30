@@ -288,10 +288,7 @@ public class TaskService {
 
         // Regla de negocio: no se puede completar una tarea con subtareas pendientes
         if (status == TaskStatus.DONE && oldStatus != TaskStatus.DONE) {
-            boolean hasPending = taskRepository
-                    .existsByParentTaskIdAndStatusNotInAndDeletedFalse(
-                            taskId, List.of(TaskStatus.DONE, TaskStatus.CANCELLED));
-            if (hasPending) {
+            if (hasPendingSubtasks(taskId)) {
                 throw new BusinessException("No puedes completar esta tarea porque tiene subtareas pendientes");
             }
         }
@@ -349,7 +346,7 @@ public class TaskService {
      * Cambia el estado de una tarea y registra el evento en el historial.
      *
      * <p><b>Regla de negocio:</b> no se puede marcar como {@code DONE}
-     * si tiene subtareas pendientes.</p>
+     * si tiene subtareas pendientes (ni {@code DONE} ni {@code CANCELLED}).</p>
      *
      * @param taskId    identificador de la tarea
      * @param newStatus nuevo estado a aplicar
@@ -368,9 +365,7 @@ public class TaskService {
 
         // Regla de negocio: una tarea no puede completarse si tiene subtareas pendientes
         if (newStatus == TaskStatus.DONE) {
-            boolean hasPending = taskRepository
-                    .existsByParentTaskIdAndStatusNotAndDeletedFalse(taskId, TaskStatus.DONE);
-            if (hasPending) {
+            if (hasPendingSubtasks(taskId)) {
                 throw new BusinessException("No puedes completar esta tarea porque tiene subtareas pendientes");
             }
         }
@@ -612,6 +607,18 @@ public class TaskService {
     public Task findById(Long taskId) {
         return taskRepository.findById(taskId)
                 .orElseThrow(() -> new ResourceNotFoundException("Tarea no encontrada con id: " + taskId));
+    }
+
+    /**
+     * Indica si la tarea tiene subtareas activas sin terminar.
+     * Las subtareas {@code DONE} o {@code CANCELLED} no cuentan como pendientes.
+     *
+     * @param taskId identificador de la tarea padre
+     * @return {@code true} si alguna subtarea activa sigue pendiente
+     */
+    private boolean hasPendingSubtasks(Long taskId) {
+        return taskRepository.existsByParentTaskIdAndStatusNotInAndDeletedFalse(
+                taskId, List.of(TaskStatus.DONE, TaskStatus.CANCELLED));
     }
 
     /**
