@@ -106,15 +106,23 @@ public interface TaskRepository extends JpaRepository<Task, Long> {
 
     /**
      * Devuelve las tareas activas de un usuario con {@code dueDate} en un rango de fechas.
-     * Excluye subtareas y tareas eliminadas. Se usa para poblar la vista de calendario.
+     * Excluye subtareas, tareas eliminadas y tareas de proyectos en la papelera.
+     * Se usa para poblar la vista de calendario.
+     *
+     * <p>El {@code LEFT JOIN} conserva las tareas personales, que no tienen proyecto.</p>
      *
      * @param userId    identificador del usuario
      * @param startDate inicio del rango (inclusive), primer día del mes
      * @param endDate   fin del rango (inclusive), último día del mes
      * @return lista de tareas con fecha límite en ese rango
      */
-    List<Task> findByUserIdAndDueDateBetweenAndParentTaskIsNullAndDeletedFalse(
-            Long userId, LocalDate startDate, LocalDate endDate);
+    @Query("SELECT t FROM Task t LEFT JOIN t.project p " +
+            "WHERE t.user.id = :userId AND t.dueDate BETWEEN :startDate AND :endDate " +
+            "AND t.parentTask IS NULL AND t.deleted = false " +
+            "AND (p IS NULL OR p.deleted = false)")
+    List<Task> findActiveRootTasksForCalendar(@Param("userId") Long userId,
+                                              @Param("startDate") LocalDate startDate,
+                                              @Param("endDate") LocalDate endDate);
 
     // -------------------------------------------------------------------------
     // Subtareas
@@ -209,22 +217,34 @@ public interface TaskRepository extends JpaRepository<Task, Long> {
     // -------------------------------------------------------------------------
 
     /**
-     * Cuenta las tareas activas de un usuario.
-     * Usa el índice {@code idx_tasks_user_id} para mayor eficiencia.
+     * Cuenta las tareas activas de un usuario: no eliminadas y que no pertenezcan
+     * a un proyecto en la papelera.
+     *
+     * <p>El {@code LEFT JOIN} conserva las tareas personales, que no tienen proyecto.</p>
      *
      * @param userId identificador del usuario
      * @return número de tareas activas
      */
-    long countByUserIdAndDeletedFalse(Long userId);
+    @Query("SELECT COUNT(t) FROM Task t LEFT JOIN t.project p " +
+            "WHERE t.user.id = :userId AND t.deleted = false " +
+            "AND (p IS NULL OR p.deleted = false)")
+    long countActiveTasks(@Param("userId") Long userId);
 
     /**
-     * Cuenta las tareas activas de un usuario con un estado concreto.
+     * Cuenta las tareas activas de un usuario con un estado concreto, excluyendo
+     * las de proyectos en la papelera.
      * Llamado múltiples veces desde {@code UserService.getStats}
      * para cada estado (TODO, IN_PROGRESS, DONE, CANCELLED).
+     *
+     * <p>El {@code LEFT JOIN} conserva las tareas personales, que no tienen proyecto.</p>
      *
      * @param userId identificador del usuario
      * @param status estado por el que filtrar
      * @return número de tareas activas con ese estado
      */
-    long countByUserIdAndStatusAndDeletedFalse(Long userId, TaskStatus status);
+    @Query("SELECT COUNT(t) FROM Task t LEFT JOIN t.project p " +
+            "WHERE t.user.id = :userId AND t.status = :status AND t.deleted = false " +
+            "AND (p IS NULL OR p.deleted = false)")
+    long countActiveTasksByStatus(@Param("userId") Long userId,
+                                  @Param("status") TaskStatus status);
 }
