@@ -106,23 +106,15 @@ public interface TaskRepository extends JpaRepository<Task, Long> {
 
     /**
      * Devuelve las tareas activas de un usuario con {@code dueDate} en un rango de fechas.
-     * Excluye subtareas, tareas eliminadas y tareas de proyectos en la papelera.
-     * Se usa para poblar la vista de calendario.
-     *
-     * <p>El {@code LEFT JOIN} conserva las tareas personales, que no tienen proyecto.</p>
+     * Excluye subtareas y tareas eliminadas. Se usa para poblar la vista de calendario.
      *
      * @param userId    identificador del usuario
      * @param startDate inicio del rango (inclusive), primer día del mes
      * @param endDate   fin del rango (inclusive), último día del mes
      * @return lista de tareas con fecha límite en ese rango
      */
-    @Query("SELECT t FROM Task t LEFT JOIN t.project p " +
-            "WHERE t.user.id = :userId AND t.dueDate BETWEEN :startDate AND :endDate " +
-            "AND t.parentTask IS NULL AND t.deleted = false " +
-            "AND (p IS NULL OR p.deleted = false)")
-    List<Task> findActiveRootTasksForCalendar(@Param("userId") Long userId,
-                                              @Param("startDate") LocalDate startDate,
-                                              @Param("endDate") LocalDate endDate);
+    List<Task> findByUserIdAndDueDateBetweenAndParentTaskIsNullAndDeletedFalse(
+            Long userId, LocalDate startDate, LocalDate endDate);
 
     // -------------------------------------------------------------------------
     // Subtareas
