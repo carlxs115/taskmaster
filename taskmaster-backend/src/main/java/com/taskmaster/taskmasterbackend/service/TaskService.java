@@ -153,7 +153,7 @@ public class TaskService {
 
     /**
      * Devuelve las tareas activas del usuario con {@code dueDate} en el mes indicado.
-     * Solo incluye tareas raíz: excluye subtareas, tareas borradas y tareas de proyectos en la papelera.
+     * Solo incluye tareas raíz (excluye subtareas) y tareas no eliminadas.
      *
      * @param userId identificador del usuario
      * @param year   año del mes a consultar
@@ -167,7 +167,7 @@ public class TaskService {
         LocalDate endDate   = startDate.withDayOfMonth(startDate.lengthOfMonth());
 
         return taskRepository
-                .findActiveRootTasksForCalendar(userId, startDate, endDate)
+                .findByUserIdAndDueDateBetweenAndParentTaskIsNullAndDeletedFalse(userId, startDate, endDate)
                 .stream()
                 // Convertimos cada Task a un DTO ligero con solo los campos del calendario
                 .map(t -> new CalendarTaskDTO(
