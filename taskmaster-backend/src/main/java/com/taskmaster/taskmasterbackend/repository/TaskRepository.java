@@ -158,19 +158,9 @@ public interface TaskRepository extends JpaRepository<Task, Long> {
     List<Task> findByParentTaskId(Long parentTaskId);
 
     /**
-     * Comprueba si una tarea padre tiene subtareas activas con un estado distinto al indicado.
-     * Se usa en {@code TaskService.changeStatus} para validar que todas las subtareas
-     * estén completadas antes de marcar la tarea padre como {@code DONE}.
-     *
-     * @param parentTaskId identificador de la tarea padre
-     * @param status       estado a excluir de la comprobación (normalmente {@code DONE})
-     * @return {@code true} si existe alguna subtarea activa con estado distinto
-     */
-    boolean existsByParentTaskIdAndStatusNotAndDeletedFalse(Long parentTaskId, TaskStatus status);
-
-    /**
      * Comprueba si una tarea padre tiene subtareas activas con un estado distinto a los indicados.
-     * Se usa en {@code TaskService.updateTask} para validar que todas las subtareas
+     * Se usa en {@code TaskService.updateTask} y {@code TaskService.changeStatus}
+     * (vía {@code hasPendingSubtasks}) para validar que todas las subtareas
      * estén completadas o canceladas antes de marcar la tarea padre como {@code DONE}.
      *
      * @param parentTaskId identificador de la tarea padre
