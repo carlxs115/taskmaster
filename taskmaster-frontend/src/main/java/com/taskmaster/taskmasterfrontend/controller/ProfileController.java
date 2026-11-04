@@ -413,16 +413,11 @@ public class ProfileController {
 
         // Barra de progreso
         completionRateLabel.setText(rate + "% " + lm.get("profile.stats.rate").toLowerCase());
-        completionBarFill.prefWidthProperty().bind(
-                completionBarFill.getParent() instanceof Region parent
-                        ? parent.widthProperty().multiply(rate / 100.0)
-                        : null
-        );
-
-        // Ancho de la barra via estilo
-        completionBarFill.setStyle(
-                "-fx-background-color: #22c55e; -fx-background-radius: 4px; " +
-                        "-fx-pref-width: " + rate + "%;");
+        double fraction = Math.max(0, Math.min(rate, 100)) / 100.0;
+        Region track = (Region) completionBarFill.getParent();
+        // Sin limitar maxWidth, el StackPane del fondo estira el relleno a todo el ancho
+        completionBarFill.setMaxWidth(Region.USE_PREF_SIZE);
+        completionBarFill.prefWidthProperty().bind(track.widthProperty().multiply(fraction));
     }
 
     /**
