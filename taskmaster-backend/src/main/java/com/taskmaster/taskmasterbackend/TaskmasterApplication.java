@@ -16,7 +16,7 @@ import java.nio.file.Paths;
  *
  * <p>Punto de entrada de Spring Boot. La anotación {@code @EnableScheduling}
  * activa las tareas programadas como el vaciado automático de la papelera
- * definido en {@link TrashScheduler}.</p>
+ * definido en {@link TrashScheduler}, que también se ejecuta al arrancar.</p>
  *
  * @author Carlos
  */
