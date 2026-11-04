@@ -233,7 +233,7 @@ public class TaskService {
 
         if (parentTaskId != null) {
             // Subtarea: enlazamos con la tarea padre
-            Task parentTask = findById(parentTaskId);
+            Task parentTask = findOwnedTask(parentTaskId, userId);
             builder.parentTask(parentTask);
         }
 
@@ -273,7 +273,7 @@ public class TaskService {
                            TaskPriority priority, LocalDate dueDate,
                            BigDecimal estimatedDuration, Long userId) {
 
-        Task task = findById(taskId);
+        Task task = findOwnedTask(taskId, userId);
 
         // Si la tarea pertenece a un proyecto, validamos que el proyecto es del usuario
         if (task.getProject() != null) {
@@ -356,7 +356,7 @@ public class TaskService {
      */
     @Transactional
     public Task changeStatus(Long taskId, TaskStatus newStatus, Long userId) {
-        Task task = findById(taskId);
+        Task task = findOwnedTask(taskId, userId);
 
         // Solo validamos pertenencia al proyecto para tareas raíz (no subtareas)
         if (task.getProject() != null && task.getParentTask() == null) {
@@ -406,7 +406,7 @@ public class TaskService {
      */
     @Transactional
     public void deleteTask(Long taskId, Long userId) {
-        Task task = findById(taskId);
+        Task task = findOwnedTask(taskId, userId);
 
         // Si la tarea pertenece a un proyecto, validamos que es del usuario
         if (task.getProject() != null) {
@@ -479,7 +479,7 @@ public class TaskService {
      */
     @Transactional
     public void deletePermanently(Long taskId, Long userId) {
-        Task task = findById(taskId);
+        Task task = findOwnedTask(taskId, userId);
 
         if (task.getProject() != null) {
             projectService.getProjectByIdAndUser(task.getProject().getId(), userId);
@@ -607,6 +607,25 @@ public class TaskService {
     public Task findById(Long taskId) {
         return taskRepository.findById(taskId)
                 .orElseThrow(() -> new ResourceNotFoundException("Tarea no encontrada con id: " + taskId));
+    }
+
+    /**
+     * Busca una tarea del usuario indicado.
+     *
+     * <p>Si la tarea existe pero pertenece a otro usuario, responde igual que si
+     * no existiera, para no revelar qué identificadores están en uso.</p>
+     *
+     * @param taskId identificador de la tarea
+     * @param userId identificador del usuario que debe ser su propietario
+     * @return tarea encontrada
+     * @throws ResourceNotFoundException si la tarea no existe o no pertenece al usuario
+     */
+    private Task findOwnedTask(Long taskId, Long userId) {
+        Task task = findById(taskId);
+        if (!task.getUser().getId().equals(userId)) {
+            throw new ResourceNotFoundException("Tarea no encontrada con id: " + taskId);
+        }
+        return task;
     }
 
     /**
