@@ -153,7 +153,7 @@ public class TaskService {
 
     /**
      * Devuelve las tareas activas del usuario con {@code dueDate} en el mes indicado.
-     * Solo incluye tareas raíz (excluye subtareas) y tareas no eliminadas.
+     * Solo incluye tareas raíz: excluye subtareas, tareas borradas y tareas de proyectos en la papelera.
      *
      * @param userId identificador del usuario
      * @param year   año del mes a consultar
@@ -167,7 +167,7 @@ public class TaskService {
         LocalDate endDate   = startDate.withDayOfMonth(startDate.lengthOfMonth());
 
         return taskRepository
-                .findByUserIdAndDueDateBetweenAndParentTaskIsNullAndDeletedFalse(userId, startDate, endDate)
+                .findActiveRootTasksForCalendar(userId, startDate, endDate)
                 .stream()
                 // Convertimos cada Task a un DTO ligero con solo los campos del calendario
                 .map(t -> new CalendarTaskDTO(
@@ -233,7 +233,7 @@ public class TaskService {
 
         if (parentTaskId != null) {
             // Subtarea: enlazamos con la tarea padre
-            Task parentTask = findById(parentTaskId);
+            Task parentTask = findOwnedTask(parentTaskId, userId);
             builder.parentTask(parentTask);
         }
 
@@ -273,7 +273,7 @@ public class TaskService {
                            TaskPriority priority, LocalDate dueDate,
                            BigDecimal estimatedDuration, Long userId) {
 
-        Task task = findById(taskId);
+        Task task = findOwnedTask(taskId, userId);
 
         // Si la tarea pertenece a un proyecto, validamos que el proyecto es del usuario
         if (task.getProject() != null) {
@@ -288,10 +288,7 @@ public class TaskService {
 
         // Regla de negocio: no se puede completar una tarea con subtareas pendientes
         if (status == TaskStatus.DONE && oldStatus != TaskStatus.DONE) {
-            boolean hasPending = taskRepository
-                    .existsByParentTaskIdAndStatusNotInAndDeletedFalse(
-                            taskId, List.of(TaskStatus.DONE, TaskStatus.CANCELLED));
-            if (hasPending) {
+            if (hasPendingSubtasks(taskId)) {
                 throw new BusinessException("No puedes completar esta tarea porque tiene subtareas pendientes");
             }
         }
@@ -349,7 +346,7 @@ public class TaskService {
      * Cambia el estado de una tarea y registra el evento en el historial.
      *
      * <p><b>Regla de negocio:</b> no se puede marcar como {@code DONE}
-     * si tiene subtareas pendientes.</p>
+     * si tiene subtareas pendientes (ni {@code DONE} ni {@code CANCELLED}).</p>
      *
      * @param taskId    identificador de la tarea
      * @param newStatus nuevo estado a aplicar
@@ -359,7 +356,7 @@ public class TaskService {
      */
     @Transactional
     public Task changeStatus(Long taskId, TaskStatus newStatus, Long userId) {
-        Task task = findById(taskId);
+        Task task = findOwnedTask(taskId, userId);
 
         // Solo validamos pertenencia al proyecto para tareas raíz (no subtareas)
         if (task.getProject() != null && task.getParentTask() == null) {
@@ -368,9 +365,7 @@ public class TaskService {
 
         // Regla de negocio: una tarea no puede completarse si tiene subtareas pendientes
         if (newStatus == TaskStatus.DONE) {
-            boolean hasPending = taskRepository
-                    .existsByParentTaskIdAndStatusNotAndDeletedFalse(taskId, TaskStatus.DONE);
-            if (hasPending) {
+            if (hasPendingSubtasks(taskId)) {
                 throw new BusinessException("No puedes completar esta tarea porque tiene subtareas pendientes");
             }
         }
@@ -411,7 +406,7 @@ public class TaskService {
      */
     @Transactional
     public void deleteTask(Long taskId, Long userId) {
-        Task task = findById(taskId);
+        Task task = findOwnedTask(taskId, userId);
 
         // Si la tarea pertenece a un proyecto, validamos que es del usuario
         if (task.getProject() != null) {
@@ -484,7 +479,7 @@ public class TaskService {
      */
     @Transactional
     public void deletePermanently(Long taskId, Long userId) {
-        Task task = findById(taskId);
+        Task task = findOwnedTask(taskId, userId);
 
         if (task.getProject() != null) {
             projectService.getProjectByIdAndUser(task.getProject().getId(), userId);
@@ -612,6 +607,37 @@ public class TaskService {
     public Task findById(Long taskId) {
         return taskRepository.findById(taskId)
                 .orElseThrow(() -> new ResourceNotFoundException("Tarea no encontrada con id: " + taskId));
+    }
+
+    /**
+     * Busca una tarea del usuario indicado.
+     *
+     * <p>Si la tarea existe pero pertenece a otro usuario, responde igual que si
+     * no existiera, para no revelar qué identificadores están en uso.</p>
+     *
+     * @param taskId identificador de la tarea
+     * @param userId identificador del usuario que debe ser su propietario
+     * @return tarea encontrada
+     * @throws ResourceNotFoundException si la tarea no existe o no pertenece al usuario
+     */
+    private Task findOwnedTask(Long taskId, Long userId) {
+        Task task = findById(taskId);
+        if (!task.getUser().getId().equals(userId)) {
+            throw new ResourceNotFoundException("Tarea no encontrada con id: " + taskId);
+        }
+        return task;
+    }
+
+    /**
+     * Indica si la tarea tiene subtareas activas sin terminar.
+     * Las subtareas {@code DONE} o {@code CANCELLED} no cuentan como pendientes.
+     *
+     * @param taskId identificador de la tarea padre
+     * @return {@code true} si alguna subtarea activa sigue pendiente
+     */
+    private boolean hasPendingSubtasks(Long taskId) {
+        return taskRepository.existsByParentTaskIdAndStatusNotInAndDeletedFalse(
+                taskId, List.of(TaskStatus.DONE, TaskStatus.CANCELLED));
     }
 
     /**
