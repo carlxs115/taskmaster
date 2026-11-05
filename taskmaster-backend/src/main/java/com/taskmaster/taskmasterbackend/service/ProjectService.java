@@ -79,6 +79,22 @@ public class ProjectService {
                 .orElseThrow(() -> new ResourceNotFoundException("Proyecto no encontrado"));
     }
 
+    /**
+     * Busca un proyecto de la papelera del usuario. Si no existe, es de otro usuario
+     * o está activo, responde igual, para no revelar qué identificadores existen.
+     *
+     * @param projectId identificador del proyecto
+     * @param userId    identificador del usuario
+     * @return proyecto encontrado en la papelera del usuario
+     * @throws ResourceNotFoundException si no existe, no pertenece al usuario o no está en la papelera
+     */
+    private Project getTrashedProjectByIdAndUser(Long projectId, Long userId) {
+        return projectRepository.findById(projectId)
+                // Verificamos que pertenece al usuario y está en la papelera
+                .filter(p -> p.getUser().getId().equals(userId) && p.isDeleted())
+                .orElseThrow(() -> new ResourceNotFoundException("Proyecto no encontrado en la papelera"));
+    }
+
     // -------------------------------------------------------------------------
     // Escritura
     // -------------------------------------------------------------------------
@@ -209,10 +225,7 @@ public class ProjectService {
      */
     @Transactional
     public Project restoreProject(Long projectId, Long userId) {
-        Project project = projectRepository.findById(projectId)
-                // Verificamos que pertenece al usuario y está en la papelera
-                .filter(p -> p.getUser().getId().equals(userId) && p.isDeleted())
-                .orElseThrow(() -> new ResourceNotFoundException("Proyecto no encontrado en la papelera"));
+        Project project = getTrashedProjectByIdAndUser(projectId, userId);
 
         project.setDeleted(false);
         project.setDeletedAt(null); // limpiamos la fecha de eliminación
@@ -225,20 +238,19 @@ public class ProjectService {
     }
 
     /**
-     * Elimina definitivamente un proyecto de la base de datos.
-     * Usado desde el vaciado manual o automático de la papelera.
+     * Elimina definitivamente un proyecto de la papelera del usuario, con sus tareas.
+     * Usado desde {@code DELETE /api/projects/{id}/permanent}.
      *
      * @param projectId identificador del proyecto
-     * @param userId    identificador del usuario (para registrar el evento)
-     * @throws ResourceNotFoundException si el proyecto no existe
+     * @param userId    identificador del usuario propietario (también para registrar el evento)
+     * @throws ResourceNotFoundException si el proyecto no existe, no es del usuario o no está en la papelera
      */
     @Transactional
     public void deletePermanently(Long projectId, Long userId) {
-        Project project = projectRepository.findById(projectId)
-                .orElseThrow(() -> new RuntimeException("Proyecto no encontrado"));
+        Project project = getTrashedProjectByIdAndUser(projectId, userId);
 
         String name = project.getName(); // capturamos el nombre antes de borrar
-        projectRepository.deleteById(projectId);
+        projectRepository.delete(project);
 
         activityLogService.log(userId, ActionType.PROJECT_PERMANENTLY_DELETED, "PROJECT", projectId, name);
     }
