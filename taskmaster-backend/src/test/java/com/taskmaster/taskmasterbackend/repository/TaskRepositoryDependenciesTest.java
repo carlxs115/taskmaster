@@ -43,8 +43,13 @@ class TaskRepositoryDependenciesTest {
         Task a = em.persist(task("A", uno));
         Task b = em.persist(task("B", uno));
         Task deDos = em.persist(task("De dos", dos));
+        Task enPapelera = task("En papelera", uno);
+        enPapelera.setDeleted(true);
+        em.persist(enPapelera);
         a.getDependencies().add(b); // válida: A → B, mismo usuario
         em.flush();
+        // Válida aunque la predecesora esté en la papelera: hace falta para restaurarla
+        insertarDependencia(a.getId(), enPapelera.getId());
 
         long inexistente = maxTaskId() + 1000;
         insertarDependencia(a.getId(), inexistente);      // huérfana por predecesora
@@ -52,14 +57,15 @@ class TaskRepositoryDependenciesTest {
         insertarDependencia(a.getId(), deDos.getId());    // cruzada entre usuarios
         em.clear();
 
-        assertThat(filas()).hasSize(4);
+        assertThat(filas()).hasSize(5);
 
+        String[] validas = {a.getId() + "->" + b.getId(), a.getId() + "->" + enPapelera.getId()};
         assertThat(taskRepository.deleteInvalidDependencies()).isEqualTo(3);
-        assertThat(filas()).containsExactly(a.getId() + "->" + b.getId());
+        assertThat(filas()).containsExactlyInAnyOrder(validas);
 
         // Idempotente: una segunda llamada no encuentra nada que borrar
         assertThat(taskRepository.deleteInvalidDependencies()).isZero();
-        assertThat(filas()).containsExactly(a.getId() + "->" + b.getId());
+        assertThat(filas()).containsExactlyInAnyOrder(validas);
     }
 
     // -------------------------------------------------------------------------

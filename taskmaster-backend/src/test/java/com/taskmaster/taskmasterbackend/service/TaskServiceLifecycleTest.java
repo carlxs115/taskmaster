@@ -206,8 +206,8 @@ class TaskServiceLifecycleTest {
         assertThat(filasComoPredecesora(y.getId())).isZero();
         assertThat(filasComoPredecesora(z.getId())).isEqualTo(1);
 
-        // La siguiente tarea, de otro usuario, recibe el id de Y si se reutiliza
-        em.persist(Task.builder()
+        // La siguiente tarea, de otro usuario, recibe el id de Y (SQLite reutiliza el id máximo)
+        Task deAjeno = em.persist(Task.builder()
                 .title("De ajeno")
                 .category(TaskCategory.PERSONAL)
                 .priority(TaskPriority.MEDIUM)
@@ -216,6 +216,7 @@ class TaskServiceLifecycleTest {
                 .build());
         em.flush();
         em.clear();
+        assertThat(deAjeno.getId()).isEqualTo(y.getId()); // sin reuso, el test no probaría la fuga
 
         assertThat(taskService.getDependencies(x.getId(), propietario.getId()))
                 .extracting(Task::getId)
