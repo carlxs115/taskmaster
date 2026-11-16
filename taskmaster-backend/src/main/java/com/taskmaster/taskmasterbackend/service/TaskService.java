@@ -468,6 +468,10 @@ public class TaskService {
             log.info("Purgando {} tareas expiradas del usuario {} (retención: {} días)",
                     expired.size(), userId, retentionDays);
             taskRepository.deleteAll(expired);
+
+            // Quitamos las filas en las que las tareas borradas eran predecesoras
+            // antes de que su id se reutilice (SEG-8)
+            taskRepository.deleteInvalidDependencies();
         }
     }
 
@@ -488,6 +492,10 @@ public class TaskService {
         String title = task.getTitle(); // capturamos el título antes de borrar la entidad
         taskRepository.delete(task);
 
+        // Quitamos las filas en las que las tareas borradas eran predecesoras
+        // antes de que su id se reutilice (SEG-8)
+        taskRepository.deleteInvalidDependencies();
+
         activityLogService.log(userId, ActionType.TASK_PERMANENTLY_DELETED, "TASK", taskId, title);
     }
 
@@ -502,6 +510,10 @@ public class TaskService {
 
         // Eliminamos todas de golpe con deleteAll en lugar de una por una
         taskRepository.deleteAll(deleted);
+
+        // Quitamos las filas en las que las tareas borradas eran predecesoras
+        // antes de que su id se reutilice (SEG-8)
+        taskRepository.deleteInvalidDependencies();
 
         // Registramos cada eliminación en el historial de actividad
         for (Task task : deleted) {

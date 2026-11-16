@@ -186,8 +186,106 @@ class TaskServiceLifecycleTest {
     }
 
     // -------------------------------------------------------------------------
+    // Dependencias de las tareas borradas (SEG-8)
+    // -------------------------------------------------------------------------
+
+    @Test
+    void deletePermanentlyQuitaLasDependenciasDeLaTareaBorradaYNoFiltraLaSiguiente() {
+        Task x = em.persist(task("X", null, false));
+        Task z = em.persist(task("Z", null, false));
+        Task y = em.persist(task("Y", null, true)); // la última: tiene el id máximo
+        x.getDependencies().add(y);
+        x.getDependencies().add(z);
+        em.flush();
+        em.clear();
+
+        taskService.deletePermanently(y.getId(), propietario.getId());
+        em.flush();
+        em.clear();
+
+        assertThat(filasComoPredecesora(y.getId())).isZero();
+        assertThat(filasComoPredecesora(z.getId())).isEqualTo(1);
+
+        // La siguiente tarea, de otro usuario, recibe el id de Y si se reutiliza
+        em.persist(Task.builder()
+                .title("De ajeno")
+                .category(TaskCategory.PERSONAL)
+                .priority(TaskPriority.MEDIUM)
+                .status(TaskStatus.TODO)
+                .user(ajeno)
+                .build());
+        em.flush();
+        em.clear();
+
+        assertThat(taskService.getDependencies(x.getId(), propietario.getId()))
+                .extracting(Task::getId)
+                .containsExactly(z.getId());
+    }
+
+    @Test
+    void deletePermanentlyQuitaLasDependenciasDeSusSubtareas() {
+        Task padre = em.persist(task("Padre", null, true));
+        Task subtarea = em.persist(task("Subtarea", padre, true));
+        Task x = em.persist(task("X", null, false));
+        x.getDependencies().add(subtarea);
+        em.flush();
+        em.clear();
+
+        taskService.deletePermanently(padre.getId(), propietario.getId());
+        em.flush();
+        em.clear();
+
+        assertThat(taskRepository.findById(subtarea.getId())).isEmpty();
+        assertThat(filasComoPredecesora(subtarea.getId())).isZero();
+        assertThat(taskRepository.findById(x.getId())).isPresent();
+    }
+
+    @Test
+    void purgeExpiredTasksQuitaLasDependenciasDeLasTareasPurgadas() {
+        Task x = em.persist(task("X", null, false));
+        Task reciente = em.persist(borrada("Reciente", propietario, 5));
+        Task caducada = em.persist(borrada("Caducada", propietario, 31));
+        x.getDependencies().add(reciente);
+        x.getDependencies().add(caducada);
+        em.flush();
+        em.clear();
+
+        taskService.purgeExpiredTasks(propietario.getId(), 30);
+        em.flush();
+        em.clear();
+
+        assertThat(filasComoPredecesora(caducada.getId())).isZero();
+        assertThat(filasComoPredecesora(reciente.getId())).isEqualTo(1);
+    }
+
+    @Test
+    void emptyTrashQuitaLasDependenciasDeLasTareasBorradas() {
+        Task x = em.persist(task("X", null, false));
+        Task enPapelera = em.persist(task("En papelera", null, true));
+        x.getDependencies().add(enPapelera);
+        em.flush();
+        em.clear();
+
+        taskService.emptyTrash(propietario.getId());
+        em.flush();
+        em.clear();
+
+        assertThat(taskRepository.findById(enPapelera.getId())).isEmpty();
+        assertThat(filasComoPredecesora(enPapelera.getId())).isZero();
+        assertThat(taskRepository.findById(x.getId())).isPresent();
+    }
+
+    // -------------------------------------------------------------------------
     // Auxiliares
     // -------------------------------------------------------------------------
+
+    private long filasComoPredecesora(Long taskId) {
+        Object total = em.getEntityManager()
+                .createNativeQuery("SELECT COUNT(*) FROM task_dependencies WHERE depends_on_task_id = ?1")
+                .setParameter(1, taskId)
+                .getSingleResult();
+        return ((Number) total).longValue();
+    }
 
     private Task recargar(Task task) {
         em.flush();
