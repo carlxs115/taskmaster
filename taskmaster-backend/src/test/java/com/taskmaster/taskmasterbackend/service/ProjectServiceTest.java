@@ -281,8 +281,82 @@ class ProjectServiceTest {
     }
 
     // -------------------------------------------------------------------------
+    // Dependencias de las tareas borradas (SEG-8)
+    // -------------------------------------------------------------------------
+
+    @Test
+    void deletePermanentlyQuitaLasDependenciasDeLasTareasDelProyecto() {
+        Project proyecto = em.persist(project("En papelera", propietario, true, LocalDateTime.now()));
+        Task t = em.persist(task("T", proyecto, TaskStatus.TODO, false));
+        Task x = personalQueDependeDe(t);
+
+        projectService.deletePermanently(proyecto.getId(), propietario.getId());
+        em.flush();
+        em.clear();
+
+        assertThat(taskRepository.findById(t.getId())).isEmpty();
+        assertThat(filasComoPredecesora(t.getId())).isZero();
+        assertThat(taskRepository.findById(x.getId())).isPresent();
+    }
+
+    @Test
+    void emptyTrashQuitaLasDependenciasDeLasTareasDelProyecto() {
+        Project proyecto = em.persist(project("En papelera", propietario, true, LocalDateTime.now()));
+        Task t = em.persist(task("T", proyecto, TaskStatus.TODO, false));
+        Task x = personalQueDependeDe(t);
+
+        projectService.emptyTrash(propietario.getId());
+        em.flush();
+        em.clear();
+
+        assertThat(taskRepository.findById(t.getId())).isEmpty();
+        assertThat(filasComoPredecesora(t.getId())).isZero();
+        assertThat(taskRepository.findById(x.getId())).isPresent();
+    }
+
+    @Test
+    void purgeExpiredProjectsQuitaLasDependenciasDeLasTareasDelProyecto() {
+        Project proyecto = em.persist(project("Caducado", propietario, true, LocalDateTime.now().minusDays(31)));
+        Task t = em.persist(task("T", proyecto, TaskStatus.TODO, false));
+        Task x = personalQueDependeDe(t);
+
+        projectService.purgeExpiredProjects(propietario.getId(), 30);
+        em.flush();
+        em.clear();
+
+        assertThat(taskRepository.findById(t.getId())).isEmpty();
+        assertThat(filasComoPredecesora(t.getId())).isZero();
+        assertThat(taskRepository.findById(x.getId())).isPresent();
+    }
+
+    // -------------------------------------------------------------------------
     // Auxiliares
     // -------------------------------------------------------------------------
+
+    /** Crea una tarea personal activa del propietario que depende de {@code predecesora}. */
+    private Task personalQueDependeDe(Task predecesora) {
+        Task personal = em.persist(Task.builder()
+                .title("Personal")
+                .category(TaskCategory.PERSONAL)
+                .priority(TaskPriority.MEDIUM)
+                .status(TaskStatus.TODO)
+                .user(propietario)
+                .deleted(false)
+                .build());
+        personal.getDependencies().add(predecesora);
+        em.flush();
+        em.clear();
+        assertThat(filasComoPredecesora(predecesora.getId())).isEqualTo(1);
+        return personal;
+    }
+
+    private long filasComoPredecesora(Long taskId) {
+        Object total = em.getEntityManager()
+                .createNativeQuery("SELECT COUNT(*) FROM task_dependencies WHERE depends_on_task_id = ?1")
+                .setParameter(1, taskId)
+                .getSingleResult();
+        return ((Number) total).longValue();
+    }
 
     private void completar(Project proyecto) {
         projectService.updateProject(proyecto.getId(), proyecto.getName(), null, proyecto.getCategory(),
