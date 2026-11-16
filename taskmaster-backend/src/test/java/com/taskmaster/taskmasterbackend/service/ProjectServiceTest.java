@@ -23,21 +23,20 @@ import java.time.LocalDateTime;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 /**
  * Tests de las reglas de negocio de {@link ProjectService} (CAL-1): creación,
- * edición, regla de completar, papelera, restauración y purga.
+ * edición, regla de completar, papelera, restauración, borrado definitivo y purga.
  *
  * <p>Usa los repositorios reales contra la SQLite temporal que inyecta
  * {@code validar.sh}; {@link UserService} y {@link ActivityLogService} son mocks.</p>
- *
- * <p>{@code deletePermanently} no se prueba aquí: no comprueba el propietario
- * (pendiente SEG-7) y su test llegará con el arreglo.</p>
  *
  * @author Carlos
  */
@@ -191,6 +190,60 @@ class ProjectServiceTest {
         Project enBd = recargar(enPapelera);
         assertThat(enBd.isDeleted()).isFalse();
         assertThat(enBd.getDeletedAt()).isNull();
+    }
+
+    @Test
+    void deletePermanentlyDeOtroUsuarioNoBorraNada() {
+        Project proyecto = em.persist(project("En papelera", propietario, true, LocalDateTime.now()));
+        Task tarea = em.persist(task("Tarea", proyecto, TaskStatus.TODO, false));
+        em.flush();
+        em.clear();
+
+        assertThatThrownBy(() -> projectService.deletePermanently(proyecto.getId(), ajeno.getId()))
+                .isInstanceOf(ResourceNotFoundException.class)
+                .hasMessage("Proyecto no encontrado en la papelera");
+        em.flush();
+        em.clear();
+
+        assertThat(projectRepository.findById(proyecto.getId())).isPresent();
+        assertThat(taskRepository.findById(tarea.getId())).isPresent();
+        verify(activityLogService, never()).log(anyLong(), eq(ActionType.PROJECT_PERMANENTLY_DELETED),
+                anyString(), anyLong(), anyString());
+    }
+
+    @Test
+    void deletePermanentlyNoBorraUnProyectoActivo() {
+        Project activo = em.persist(project("Activo", propietario, false, null));
+        em.flush();
+        em.clear();
+
+        assertThatThrownBy(() -> projectService.deletePermanently(activo.getId(), propietario.getId()))
+                .isInstanceOf(ResourceNotFoundException.class);
+
+        assertThat(recargar(activo).isDeleted()).isFalse();
+    }
+
+    @Test
+    void deletePermanentlyDeIdInexistenteDa404() {
+        assertThatThrownBy(() -> projectService.deletePermanently(Long.MAX_VALUE, propietario.getId()))
+                .isInstanceOf(ResourceNotFoundException.class);
+    }
+
+    @Test
+    void deletePermanentlyBorraElProyectoDeLaPapeleraConSusTareas() {
+        Project proyecto = em.persist(project("Para siempre", propietario, true, LocalDateTime.now()));
+        Task tarea = em.persist(task("Tarea", proyecto, TaskStatus.TODO, false));
+        em.flush();
+        em.clear();
+
+        projectService.deletePermanently(proyecto.getId(), propietario.getId());
+        em.flush();
+        em.clear();
+
+        assertThat(projectRepository.findById(proyecto.getId())).isEmpty();
+        assertThat(taskRepository.findById(tarea.getId())).isEmpty();
+        verify(activityLogService).log(propietario.getId(), ActionType.PROJECT_PERMANENTLY_DELETED, "PROJECT",
+                proyecto.getId(), "Para siempre");
     }
 
     @Test
