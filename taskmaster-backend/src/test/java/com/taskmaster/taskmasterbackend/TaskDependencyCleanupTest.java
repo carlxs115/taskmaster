@@ -66,6 +66,15 @@ class TaskDependencyCleanupTest {
     }
 
     @Test
+    void cleanOnStartupNoImpideElArranqueSiFallaLaLimpiezaDeRegistros() {
+        when(taskRepository.deleteOrphanWorkLogs()).thenThrow(new RuntimeException("BD no disponible"));
+
+        assertThatCode(() -> taskDependencyCleanup.cleanOnStartup()).doesNotThrowAnyException();
+
+        verify(taskRepository).deleteInvalidDependencies();
+    }
+
+    @Test
     void cleanOnStartupSeEjecutaAlArrancar() throws NoSuchMethodException {
         EventListener listener = TaskDependencyCleanup.class.getMethod("cleanOnStartup")
                 .getAnnotation(EventListener.class);

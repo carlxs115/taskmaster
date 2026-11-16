@@ -279,7 +279,8 @@ public interface TaskRepository extends JpaRepository<Task, Long> {
      * limpieza, la siguiente tarea creada por cualquier usuario heredaría los registros (SEG-9).</p>
      *
      * <p>Es SQL nativo por coherencia con {@link #deleteInvalidDependencies()} y para no depender
-     * del modelo; {@code flushAutomatically} por el mismo motivo. Es idempotente. No detecta los
+     * del modelo; {@code flushAutomatically} para que la consulta vea los {@code DELETE} de tareas
+     * pendientes, como en {@link #deleteInvalidDependencies()}. Es idempotente. No detecta los
      * registros ya reasignados a una tarea viva, porque no hay forma fiable de distinguirlos.</p>
      *
      * @return número de filas borradas
