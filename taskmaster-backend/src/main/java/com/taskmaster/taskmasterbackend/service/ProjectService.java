@@ -252,9 +252,9 @@ public class ProjectService {
         String name = project.getName(); // capturamos el nombre antes de borrar
         projectRepository.delete(project);
 
-        // Quitamos las filas en las que las tareas borradas eran predecesoras
-        // antes de que su id se reutilice (SEG-8)
-        taskRepository.deleteInvalidDependencies();
+        // Quitamos las dependencias (SEG-8) y los registros de trabajo (SEG-9) de las
+        // tareas borradas antes de que su id se reutilice
+        taskRepository.deleteOrphanTaskReferences();
 
         activityLogService.log(userId, ActionType.PROJECT_PERMANENTLY_DELETED, "PROJECT", projectId, name);
     }
@@ -277,9 +277,9 @@ public class ProjectService {
                     expired.size(), userId, retentionDays);
             projectRepository.deleteAll(expired);
 
-            // Quitamos las filas en las que las tareas borradas eran predecesoras
-            // antes de que su id se reutilice (SEG-8)
-            taskRepository.deleteInvalidDependencies();
+            // Quitamos las dependencias (SEG-8) y los registros de trabajo (SEG-9) de las
+            // tareas borradas antes de que su id se reutilice
+            taskRepository.deleteOrphanTaskReferences();
         }
     }
 
@@ -295,9 +295,9 @@ public class ProjectService {
         // Eliminamos todos de golpe y registramos cada uno en el historial
         projectRepository.deleteAll(deleted);
 
-        // Quitamos las filas en las que las tareas borradas eran predecesoras
-        // antes de que su id se reutilice (SEG-8)
-        taskRepository.deleteInvalidDependencies();
+        // Quitamos las dependencias (SEG-8) y los registros de trabajo (SEG-9) de las
+        // tareas borradas antes de que su id se reutilice
+        taskRepository.deleteOrphanTaskReferences();
 
         for (Project project : deleted) {
             activityLogService.log(userId, ActionType.PROJECT_PERMANENTLY_DELETED,

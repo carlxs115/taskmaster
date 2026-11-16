@@ -23,7 +23,7 @@ import java.util.List;
  *
  * <p>La mayoría de las queries se derivan automáticamente por Spring Data JPA a
  * partir del nombre del método; las que no se pueden expresar así usan
- * {@code @Query} (JPQL o, para la tabla {@code task_dependencies}, SQL nativo).</p>
+ * {@code @Query} (JPQL o, para las tablas {@code task_dependencies} y {@code work_logs}, SQL nativo).</p>
  *
  * @author Carlos
  */
@@ -242,7 +242,7 @@ public interface TaskRepository extends JpaRepository<Task, Long> {
                                   @Param("status") TaskStatus status);
 
     // -------------------------------------------------------------------------
-    // Dependencias
+    // Limpieza tras el borrado físico de tareas
     // -------------------------------------------------------------------------
 
     /**
@@ -270,4 +270,38 @@ public interface TaskRepository extends JpaRepository<Task, Long> {
             "OR EXISTS (SELECT 1 FROM tasks t JOIN tasks p ON p.id = task_dependencies.depends_on_task_id " +
             "WHERE t.id = task_dependencies.task_id AND t.user_id <> p.user_id)")
     int deleteInvalidDependencies();
+
+    /**
+     * Borra los registros de trabajo cuya tarea ya no existe.
+     *
+     * <p>{@code Task} no tiene colección de registros (no hay cascada), el esquema SQLite
+     * no tiene claves foráneas (ROB-3) y los ids de {@code tasks} se reutilizan: sin esta
+     * limpieza, la siguiente tarea creada por cualquier usuario heredaría los registros (SEG-9).</p>
+     *
+     * <p>Es SQL nativo por coherencia con {@link #deleteInvalidDependencies()} y para no depender
+     * del modelo; {@code flushAutomatically} por el mismo motivo. Es idempotente. No detecta los
+     * registros ya reasignados a una tarea viva, porque no hay forma fiable de distinguirlos.</p>
+     *
+     * @return número de filas borradas
+     */
+    @Modifying(flushAutomatically = true)
+    @Transactional
+    @Query(nativeQuery = true, value =
+            "DELETE FROM work_logs WHERE task_id NOT IN (SELECT id FROM tasks)")
+    int deleteOrphanWorkLogs();
+
+    /**
+     * Único punto común que hay que llamar, en la misma transacción y justo después de cada
+     * borrado físico de tareas o proyectos: ejecuta {@link #deleteInvalidDependencies()}
+     * (SEG-8) y {@link #deleteOrphanWorkLogs()} (SEG-9).
+     *
+     * <p>{@code @Transactional} explícito para que, fuera de un servicio, no herede el
+     * {@code readOnly} de {@code SimpleJpaRepository}; dentro de un servicio se une a su
+     * transacción.</p>
+     */
+    @Transactional
+    default void deleteOrphanTaskReferences() {
+        deleteInvalidDependencies();
+        deleteOrphanWorkLogs();
+    }
 }

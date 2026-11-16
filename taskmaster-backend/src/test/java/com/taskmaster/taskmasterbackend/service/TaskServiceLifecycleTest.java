@@ -4,12 +4,15 @@ import com.taskmaster.taskmasterbackend.exception.ResourceNotFoundException;
 import com.taskmaster.taskmasterbackend.model.Project;
 import com.taskmaster.taskmasterbackend.model.Task;
 import com.taskmaster.taskmasterbackend.model.User;
+import com.taskmaster.taskmasterbackend.model.WorkLog;
+import com.taskmaster.taskmasterbackend.model.enums.ActivityType;
 import com.taskmaster.taskmasterbackend.model.enums.ActionType;
 import com.taskmaster.taskmasterbackend.model.enums.TaskCategory;
 import com.taskmaster.taskmasterbackend.model.enums.TaskPriority;
 import com.taskmaster.taskmasterbackend.model.enums.TaskStatus;
 import com.taskmaster.taskmasterbackend.repository.TaskRepository;
 import com.taskmaster.taskmasterbackend.repository.UserRepository;
+import com.taskmaster.taskmasterbackend.repository.WorkLogRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -17,6 +20,7 @@ import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabas
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.boot.test.autoconfigure.orm.jpa.TestEntityManager;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.Optional;
@@ -49,6 +53,9 @@ class TaskServiceLifecycleTest {
 
     @Autowired
     private TaskRepository taskRepository;
+
+    @Autowired
+    private WorkLogRepository workLogRepository;
 
     private TaskService taskService;
     private ProjectService projectService;
@@ -277,8 +284,114 @@ class TaskServiceLifecycleTest {
     }
 
     // -------------------------------------------------------------------------
+    // Registros de trabajo de las tareas borradas (SEG-9)
+    // -------------------------------------------------------------------------
+
+    @Test
+    void deletePermanentlyBorraLosRegistrosYNoLosHeredaLaSiguienteTarea() {
+        Task x = em.persist(task("X", null, false));
+        Task y = em.persist(task("Y", null, true)); // la última: tiene el id máximo
+        registro(x);
+        registro(y);
+        em.flush();
+        em.clear();
+
+        taskService.deletePermanently(y.getId(), propietario.getId());
+        em.flush();
+        em.clear();
+
+        assertThat(registrosDe(y.getId())).isZero();
+        assertThat(registrosDe(x.getId())).isEqualTo(1);
+
+        // La siguiente tarea, de otro usuario, recibe el id de Y (SQLite reutiliza el id máximo)
+        Task deAjeno = em.persist(Task.builder()
+                .title("De ajeno")
+                .category(TaskCategory.PERSONAL)
+                .priority(TaskPriority.MEDIUM)
+                .status(TaskStatus.TODO)
+                .user(ajeno)
+                .build());
+        em.flush();
+        em.clear();
+        assertThat(deAjeno.getId()).isEqualTo(y.getId()); // sin reuso, el test no probaría la fuga
+
+        WorkLogService workLogService = new WorkLogService(workLogRepository, taskRepository);
+        assertThat(workLogService.getByTask(deAjeno.getId(), ajeno.getId())).isEmpty();
+        assertThat(workLogService.getTotalHours(deAjeno.getId(), ajeno.getId()))
+                .isEqualByComparingTo(BigDecimal.ZERO);
+    }
+
+    @Test
+    void deletePermanentlyBorraLosRegistrosDeSusSubtareas() {
+        Task padre = em.persist(task("Padre", null, true));
+        Task subtarea = em.persist(task("Subtarea", padre, true));
+        registro(subtarea);
+        em.flush();
+        em.clear();
+
+        taskService.deletePermanently(padre.getId(), propietario.getId());
+        em.flush();
+        em.clear();
+
+        assertThat(taskRepository.findById(subtarea.getId())).isEmpty();
+        assertThat(registrosDe(subtarea.getId())).isZero();
+    }
+
+    @Test
+    void purgeExpiredTasksBorraLosRegistrosDeLasTareasPurgadas() {
+        Task caducada = em.persist(borrada("Caducada", propietario, 31));
+        Task reciente = em.persist(borrada("Reciente", propietario, 5));
+        registro(caducada);
+        registro(reciente);
+        em.flush();
+        em.clear();
+
+        taskService.purgeExpiredTasks(propietario.getId(), 30);
+        em.flush();
+        em.clear();
+
+        assertThat(registrosDe(caducada.getId())).isZero();
+        assertThat(registrosDe(reciente.getId())).isEqualTo(1);
+    }
+
+    @Test
+    void emptyTrashBorraLosRegistrosDeLasTareasBorradas() {
+        Task enPapelera = em.persist(task("En papelera", null, true));
+        Task activa = em.persist(task("Activa", null, false));
+        registro(enPapelera);
+        registro(activa);
+        em.flush();
+        em.clear();
+
+        taskService.emptyTrash(propietario.getId());
+        em.flush();
+        em.clear();
+
+        assertThat(registrosDe(enPapelera.getId())).isZero();
+        assertThat(registrosDe(activa.getId())).isEqualTo(1);
+    }
+
+    // -------------------------------------------------------------------------
     // Auxiliares
     // -------------------------------------------------------------------------
+
+    private WorkLog registro(Task task) {
+        return em.persist(WorkLog.builder()
+                .date(LocalDate.of(2026, 11, 16))
+                .activityType(ActivityType.DEVELOPMENT)
+                .hours(new BigDecimal("2.5"))
+                .note("nota privada")
+                .task(task)
+                .build());
+    }
+
+    private long registrosDe(Long taskId) {
+        Object total = em.getEntityManager()
+                .createNativeQuery("SELECT COUNT(*) FROM work_logs WHERE task_id = ?1")
+                .setParameter(1, taskId)
+                .getSingleResult();
+        return ((Number) total).longValue();
+    }
 
     private long filasComoPredecesora(Long taskId) {
         Object total = em.getEntityManager()
