@@ -11,8 +11,13 @@ import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Cursor;
 import javafx.scene.Node;
+import javafx.scene.control.Alert;
+import javafx.scene.control.Button;
+import javafx.scene.control.ButtonBar;
+import javafx.scene.control.ButtonType;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.Label;
+import javafx.scene.control.PasswordField;
 import javafx.scene.control.RadioButton;
 import javafx.scene.layout.FlowPane;
 import javafx.scene.layout.HBox;
@@ -20,11 +25,20 @@ import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Circle;
+import javafx.stage.FileChooser;
+import javafx.stage.Window;
 import javafx.util.Duration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.File;
+import java.net.URLEncoder;
 import java.net.http.HttpResponse;
+import java.nio.charset.StandardCharsets;
+import java.text.MessageFormat;
+import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Locale;
 
 /**
@@ -66,6 +80,17 @@ public class SettingsController {
     @FXML private FlowPane themesContainer;
     @FXML private Label themeStatusLabel;
 
+    // ── Copia de seguridad ──
+    @FXML private Button createBackupButton;
+    @FXML private Button restoreBackupButton;
+    @FXML private Label backupStatusLabel;
+    @FXML private Label restoreStatusLabel;
+    @FXML private Label backupUnavailableLabel;
+    @FXML private VBox restorePendingBox;
+
+    /** Tamaño máximo de una copia aceptado por el backend (256 MB). */
+    private static final long MAX_BACKUP_BYTES = 256L * 1024 * 1024;
+
     private final ObjectMapper objectMapper = new ObjectMapper();
     private final LanguageManager lm = LanguageManager.getInstance();
 
@@ -102,6 +127,7 @@ public class SettingsController {
     @FXML
     public void initialize() {
         loadSettings();
+        loadBackupStatus();
 
         // Preseleccionamos el idioma activo
         if (lm.isSpanish()) langEs.setSelected(true);
@@ -119,6 +145,8 @@ public class SettingsController {
             languageStatusLabel.setVisible(false);
             retentionStatusLabel.setVisible(false);
             timeFormatStatusLabel.setVisible(false);
+            backupStatusLabel.setVisible(false);
+            restoreStatusLabel.setVisible(false);
         });
 
         // Combo de formato de fecha
@@ -385,6 +413,261 @@ public class SettingsController {
                 });
             }
         }, "settings-save-retention");
+        thread.setDaemon(true);
+        thread.start();
+    }
+
+    // -------------------------------------------------------------------------
+    // Copia de seguridad
+    // -------------------------------------------------------------------------
+
+    /**
+     * Consulta al backend si la copia de seguridad está disponible y si hay una
+     * restauración pendiente, y actualiza botones y avisos en consecuencia.
+     */
+    private void loadBackupStatus() {
+        Thread thread = new Thread(() -> {
+            try {
+                HttpResponse<String> response = AppContext.getInstance()
+                        .getApiService()
+                        .get("/api/backup/status");
+                if (response.statusCode() != 200) return;
+                JsonNode json = objectMapper.readTree(response.body());
+                boolean available = json.path("available").asBoolean(false);
+                boolean pending = json.path("restorePending").asBoolean(false);
+                Platform.runLater(() -> {
+                    createBackupButton.setDisable(!available);
+                    restoreBackupButton.setDisable(!available);
+                    setShown(backupUnavailableLabel, !available);
+                    setShown(restorePendingBox, pending);
+                });
+            } catch (Exception e) {
+                log.error("Error al cargar el estado de la copia de seguridad: {}", e.getMessage());
+            }
+        }, "settings-backup-status");
+        thread.setDaemon(true);
+        thread.start();
+    }
+
+    /** Muestra u oculta un nodo sin que reserve espacio cuando está oculto. */
+    private void setShown(Node node, boolean shown) {
+        node.setVisible(shown);
+        node.setManaged(shown);
+    }
+
+    /**
+     * Muestra un mensaje de estado en la etiqueta indicada.
+     *
+     * @param label   etiqueta de estado
+     * @param text    texto ya traducido
+     * @param success {@code true} para el color de éxito, {@code false} para el de error
+     */
+    private void showBackupStatus(Label label, String text, boolean success) {
+        label.setText(text);
+        label.setStyle("-fx-text-fill: " + (success ? "#2ecc71" : "#e74c3c") + ";");
+        label.setVisible(true);
+    }
+
+    /** Ventana propietaria de los diálogos de esta vista. */
+    private Window ownerWindow() {
+        return backupStatusLabel.getScene() != null ? backupStatusLabel.getScene().getWindow() : null;
+    }
+
+    /**
+     * Pide al usuario dónde guardar la copia y la descarga del backend.
+     */
+    @FXML
+    private void handleCreateBackup() {
+        FileChooser chooser = new FileChooser();
+        chooser.setTitle(lm.get("settings.backup.chooser.save"));
+        chooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("ZIP (*.zip)", "*.zip"));
+        chooser.setInitialFileName("taskmaster-copia-" + LocalDate.now() + ".zip");
+        File file = chooser.showSaveDialog(ownerWindow());
+        if (file == null) return;
+
+        createBackupButton.setDisable(true);
+        backupStatusLabel.setVisible(false);
+        Thread thread = new Thread(() -> {
+            boolean ok;
+            try {
+                AppContext.getInstance().getApiService().downloadToFile("/api/backup", file.toPath());
+                ok = true;
+            } catch (Exception e) {
+                log.error("Error al crear la copia de seguridad: {}", e.getMessage());
+                ok = false;
+            }
+            boolean success = ok;
+            Platform.runLater(() -> {
+                createBackupButton.setDisable(false);
+                showBackupStatus(backupStatusLabel,
+                        lm.get(success ? "settings.backup.create.done" : "settings.backup.create.error"),
+                        success);
+            });
+        }, "settings-create-backup");
+        thread.setDaemon(true);
+        thread.start();
+    }
+
+    /**
+     * Elige una copia, pide la contraseña y una segunda confirmación y la envía
+     * al backend, que la valida y la deja pendiente hasta el próximo arranque.
+     */
+    @FXML
+    private void handleRestoreBackup() {
+        FileChooser chooser = new FileChooser();
+        chooser.setTitle(lm.get("settings.backup.chooser.open"));
+        chooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("ZIP (*.zip)", "*.zip"));
+        File file = chooser.showOpenDialog(ownerWindow());
+        if (file == null) return;
+
+        restoreStatusLabel.setVisible(false);
+        if (file.length() > MAX_BACKUP_BYTES) {
+            showBackupStatus(restoreStatusLabel, lm.get("settings.backup.restore.error.size"), false);
+            return;
+        }
+
+        PasswordField pf = new PasswordField();
+        pf.setPromptText(lm.get("common.password.prompt"));
+
+        Label warningLabel = new Label(lm.get("settings.backup.restore.warning"));
+        warningLabel.setWrapText(true);
+        warningLabel.setStyle("-fx-font-weight: bold; -fx-text-fill: #e74c3c;");
+
+        VBox content = new VBox(8, warningLabel, pf);
+
+        Alert dialog = new Alert(Alert.AlertType.CONFIRMATION);
+        dialog.setTitle(lm.get("settings.backup.restore.title"));
+        dialog.setHeaderText(null);
+        dialog.getDialogPane().setContent(content);
+        Platform.runLater(pf::requestFocus);
+
+        ((Button) dialog.getDialogPane().lookupButton(ButtonType.OK))
+                .setText(lm.get("common.confirm"));
+        ((Button) dialog.getDialogPane().lookupButton(ButtonType.CANCEL))
+                .setText(lm.get("common.cancel"));
+
+        dialog.showAndWait().ifPresent(result -> {
+            if (result != ButtonType.OK) return;
+
+            String password = pf.getText();
+            if (password.isBlank()) {
+                showBackupStatus(restoreStatusLabel, lm.get("settings.backup.password.empty"), false);
+                return;
+            }
+
+            // Segunda confirmación antes de una operación que sustituye todos los datos
+            Alert confirm = new Alert(Alert.AlertType.CONFIRMATION);
+            confirm.setTitle(lm.get("settings.backup.restore.title"));
+            confirm.setHeaderText(lm.get("settings.backup.restore.confirm.header"));
+            confirm.setContentText(lm.get("settings.backup.restore.confirm.content"));
+
+            ((Button) confirm.getDialogPane().lookupButton(ButtonType.OK))
+                    .setText(lm.get("common.confirm"));
+            ((Button) confirm.getDialogPane().lookupButton(ButtonType.CANCEL))
+                    .setText(lm.get("common.cancel"));
+
+            confirm.showAndWait().ifPresent(r -> {
+                if (r == ButtonType.OK) restoreBackupAsync(password, file);
+            });
+        });
+    }
+
+    /**
+     * Envía la copia al backend en un hilo secundario y gestiona la respuesta.
+     *
+     * @param password contraseña confirmada por el usuario
+     * @param file     copia elegida
+     */
+    private void restoreBackupAsync(String password, File file) {
+        restoreBackupButton.setDisable(true);
+        Thread thread = new Thread(() -> {
+            try {
+                String encodedPassword = URLEncoder.encode(password, StandardCharsets.UTF_8);
+                HttpResponse<String> response = AppContext.getInstance()
+                        .getApiService()
+                        .postFile("/api/backup/restore?password=" + encodedPassword,
+                                file.toPath(), "application/zip");
+                int status = response.statusCode();
+
+                if (status == 202) {
+                    List<String> usernames = new ArrayList<>();
+                    for (JsonNode name : objectMapper.readTree(response.body()).path("usernames")) {
+                        usernames.add(name.asText());
+                    }
+                    Platform.runLater(() -> {
+                        restoreBackupButton.setDisable(false);
+                        showRestoreReadyDialog(usernames);
+                    });
+                } else {
+                    String key = status == 413
+                            ? "settings.backup.restore.error.size"
+                            : "settings.backup.restore.error";
+                    Platform.runLater(() -> {
+                        restoreBackupButton.setDisable(false);
+                        showBackupStatus(restoreStatusLabel, lm.get(key), false);
+                    });
+                }
+            } catch (Exception e) {
+                log.error("Error al preparar la restauración: {}", e.getMessage());
+                Platform.runLater(() -> {
+                    restoreBackupButton.setDisable(false);
+                    showBackupStatus(restoreStatusLabel, lm.get("settings.connection.error"), false);
+                });
+            }
+        }, "settings-restore-backup");
+        thread.setDaemon(true);
+        thread.start();
+    }
+
+    /**
+     * Informa de que la restauración queda preparada y ofrece cerrar TaskMaster
+     * para aplicarla en el siguiente arranque.
+     *
+     * @param usernames cuentas que contiene la copia
+     */
+    private void showRestoreReadyDialog(List<String> usernames) {
+        ButtonType closeButton = new ButtonType(lm.get("settings.backup.restore.close"),
+                ButtonBar.ButtonData.OK_DONE);
+        ButtonType laterButton = new ButtonType(lm.get("settings.backup.restore.later"),
+                ButtonBar.ButtonData.CANCEL_CLOSE);
+
+        Alert dialog = new Alert(Alert.AlertType.INFORMATION,
+                MessageFormat.format(lm.get("settings.backup.restore.ready.content"),
+                        String.join(", ", usernames)),
+                closeButton, laterButton);
+        dialog.setTitle(lm.get("settings.backup.restore.ready.title"));
+        dialog.setHeaderText(lm.get("settings.backup.restore.ready.title"));
+
+        boolean close = dialog.showAndWait().filter(b -> b == closeButton).isPresent();
+        if (close) {
+            // Platform.exit() acaba llamando a MainApp.stop(), que también para el backend
+            Platform.exit();
+        } else {
+            loadBackupStatus();
+        }
+    }
+
+    /**
+     * Cancela la restauración pendiente en el backend y recarga el estado.
+     */
+    @FXML
+    private void handleCancelRestore() {
+        Thread thread = new Thread(() -> {
+            try {
+                HttpResponse<String> response = AppContext.getInstance()
+                        .getApiService()
+                        .delete("/api/backup/restore");
+                if (response.statusCode() != 204 && response.statusCode() != 200) {
+                    Platform.runLater(() -> showBackupStatus(restoreStatusLabel,
+                            lm.get("settings.connection.error"), false));
+                }
+            } catch (Exception e) {
+                log.error("Error al cancelar la restauración: {}", e.getMessage());
+                Platform.runLater(() -> showBackupStatus(restoreStatusLabel,
+                        lm.get("settings.connection.error"), false));
+            }
+            Platform.runLater(this::loadBackupStatus);
+        }, "settings-cancel-restore");
         thread.setDaemon(true);
         thread.start();
     }
