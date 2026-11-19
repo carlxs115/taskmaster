@@ -5,6 +5,8 @@ import com.taskmaster.taskmasterbackend.exception.ResourceNotFoundException;
 import com.taskmaster.taskmasterbackend.model.Project;
 import com.taskmaster.taskmasterbackend.model.Task;
 import com.taskmaster.taskmasterbackend.model.User;
+import com.taskmaster.taskmasterbackend.model.WorkLog;
+import com.taskmaster.taskmasterbackend.model.enums.ActivityType;
 import com.taskmaster.taskmasterbackend.model.enums.ActionType;
 import com.taskmaster.taskmasterbackend.model.enums.TaskCategory;
 import com.taskmaster.taskmasterbackend.model.enums.TaskPriority;
@@ -18,6 +20,7 @@ import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabas
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.boot.test.autoconfigure.orm.jpa.TestEntityManager;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 
@@ -281,8 +284,170 @@ class ProjectServiceTest {
     }
 
     // -------------------------------------------------------------------------
+    // Dependencias de las tareas borradas (SEG-8)
+    // -------------------------------------------------------------------------
+
+    @Test
+    void deletePermanentlyQuitaLasDependenciasDeLasTareasDelProyecto() {
+        Project proyecto = em.persist(project("En papelera", propietario, true, LocalDateTime.now()));
+        Task t = em.persist(task("T", proyecto, TaskStatus.TODO, false));
+        Task x = personalQueDependeDe(t);
+
+        projectService.deletePermanently(proyecto.getId(), propietario.getId());
+        em.flush();
+        em.clear();
+
+        assertThat(taskRepository.findById(t.getId())).isEmpty();
+        assertThat(filasComoPredecesora(t.getId())).isZero();
+        assertThat(taskRepository.findById(x.getId())).isPresent();
+    }
+
+    @Test
+    void emptyTrashQuitaLasDependenciasDeLasTareasDelProyecto() {
+        Project proyecto = em.persist(project("En papelera", propietario, true, LocalDateTime.now()));
+        Task t = em.persist(task("T", proyecto, TaskStatus.TODO, false));
+        Task x = personalQueDependeDe(t);
+
+        projectService.emptyTrash(propietario.getId());
+        em.flush();
+        em.clear();
+
+        assertThat(taskRepository.findById(t.getId())).isEmpty();
+        assertThat(filasComoPredecesora(t.getId())).isZero();
+        assertThat(taskRepository.findById(x.getId())).isPresent();
+    }
+
+    @Test
+    void purgeExpiredProjectsQuitaLasDependenciasDeLasTareasDelProyecto() {
+        Project proyecto = em.persist(project("Caducado", propietario, true, LocalDateTime.now().minusDays(31)));
+        Task t = em.persist(task("T", proyecto, TaskStatus.TODO, false));
+        Task x = personalQueDependeDe(t);
+
+        projectService.purgeExpiredProjects(propietario.getId(), 30);
+        em.flush();
+        em.clear();
+
+        assertThat(taskRepository.findById(t.getId())).isEmpty();
+        assertThat(filasComoPredecesora(t.getId())).isZero();
+        assertThat(taskRepository.findById(x.getId())).isPresent();
+    }
+
+    // -------------------------------------------------------------------------
+    // Registros de trabajo de las tareas borradas (SEG-9)
+    // -------------------------------------------------------------------------
+
+    @Test
+    void deletePermanentlyBorraLosRegistrosDeLasTareasDelProyecto() {
+        Project proyecto = em.persist(project("En papelera", propietario, true, LocalDateTime.now()));
+        Task t = em.persist(task("T", proyecto, TaskStatus.TODO, false));
+        Task personal = personalConRegistro(t);
+
+        projectService.deletePermanently(proyecto.getId(), propietario.getId());
+        em.flush();
+        em.clear();
+
+        assertThat(taskRepository.findById(t.getId())).isEmpty();
+        assertThat(registrosDe(t.getId())).isZero();
+        assertThat(registrosDe(personal.getId())).isEqualTo(1);
+    }
+
+    @Test
+    void emptyTrashBorraLosRegistrosDeLasTareasDelProyecto() {
+        Project proyecto = em.persist(project("En papelera", propietario, true, LocalDateTime.now()));
+        Task t = em.persist(task("T", proyecto, TaskStatus.TODO, false));
+        Task personal = personalConRegistro(t);
+
+        projectService.emptyTrash(propietario.getId());
+        em.flush();
+        em.clear();
+
+        assertThat(taskRepository.findById(t.getId())).isEmpty();
+        assertThat(registrosDe(t.getId())).isZero();
+        assertThat(registrosDe(personal.getId())).isEqualTo(1);
+    }
+
+    @Test
+    void purgeExpiredProjectsBorraLosRegistrosDeLasTareasDelProyecto() {
+        Project proyecto = em.persist(project("Caducado", propietario, true, LocalDateTime.now().minusDays(31)));
+        Task t = em.persist(task("T", proyecto, TaskStatus.TODO, false));
+        Task personal = personalConRegistro(t);
+
+        projectService.purgeExpiredProjects(propietario.getId(), 30);
+        em.flush();
+        em.clear();
+
+        assertThat(taskRepository.findById(t.getId())).isEmpty();
+        assertThat(registrosDe(t.getId())).isZero();
+        assertThat(registrosDe(personal.getId())).isEqualTo(1);
+    }
+
+    // -------------------------------------------------------------------------
     // Auxiliares
     // -------------------------------------------------------------------------
+
+    /**
+     * Añade un registro de trabajo a {@code t} y crea una tarea personal activa del
+     * propietario con otro registro; devuelve la personal.
+     */
+    private Task personalConRegistro(Task t) {
+        Task personal = em.persist(Task.builder()
+                .title("Personal")
+                .category(TaskCategory.PERSONAL)
+                .priority(TaskPriority.MEDIUM)
+                .status(TaskStatus.TODO)
+                .user(propietario)
+                .deleted(false)
+                .build());
+        registro(t);
+        registro(personal);
+        em.flush();
+        em.clear();
+        assertThat(registrosDe(t.getId())).isEqualTo(1);
+        return personal;
+    }
+
+    private void registro(Task task) {
+        em.persist(WorkLog.builder()
+                .date(LocalDate.of(2026, 11, 16))
+                .activityType(ActivityType.DEVELOPMENT)
+                .hours(new BigDecimal("2.5"))
+                .note("nota privada")
+                .task(task)
+                .build());
+    }
+
+    private long registrosDe(Long taskId) {
+        Object total = em.getEntityManager()
+                .createNativeQuery("SELECT COUNT(*) FROM work_logs WHERE task_id = ?1")
+                .setParameter(1, taskId)
+                .getSingleResult();
+        return ((Number) total).longValue();
+    }
+
+    /** Crea una tarea personal activa del propietario que depende de {@code predecesora}. */
+    private Task personalQueDependeDe(Task predecesora) {
+        Task personal = em.persist(Task.builder()
+                .title("Personal")
+                .category(TaskCategory.PERSONAL)
+                .priority(TaskPriority.MEDIUM)
+                .status(TaskStatus.TODO)
+                .user(propietario)
+                .deleted(false)
+                .build());
+        personal.getDependencies().add(predecesora);
+        em.flush();
+        em.clear();
+        assertThat(filasComoPredecesora(predecesora.getId())).isEqualTo(1);
+        return personal;
+    }
+
+    private long filasComoPredecesora(Long taskId) {
+        Object total = em.getEntityManager()
+                .createNativeQuery("SELECT COUNT(*) FROM task_dependencies WHERE depends_on_task_id = ?1")
+                .setParameter(1, taskId)
+                .getSingleResult();
+        return ((Number) total).longValue();
+    }
 
     private void completar(Project proyecto) {
         projectService.updateProject(proyecto.getId(), proyecto.getName(), null, proyecto.getCategory(),

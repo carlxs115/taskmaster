@@ -125,10 +125,13 @@ public class WorkLogService {
      * Devuelve todos los registros de trabajo de una tarea como DTOs.
      *
      * @param taskId identificador de la tarea
+     * @param userId identificador del usuario autenticado
      * @return lista de registros como DTOs
+     * @throws ResourceNotFoundException si la tarea no existe o no pertenece al usuario
      */
     @Transactional(readOnly = true)
-    public List<WorkLogDTO> getByTask(Long taskId) {
+    public List<WorkLogDTO> getByTask(Long taskId, Long userId) {
+        findOwnedTask(taskId, userId);
         return workLogRepository.findByTaskId(taskId)
                 .stream()
                 .map(this::toDTO)
@@ -140,13 +143,15 @@ public class WorkLogService {
      * incluyendo todas sus subtareas de forma recursiva.
      *
      * @param taskId identificador de la tarea raíz
+     * @param userId identificador del usuario autenticado
      * @return total de horas acumuladas como {@link BigDecimal}
-     * @throws ResourceNotFoundException si no existe ninguna tarea con ese identificador
+     * @throws ResourceNotFoundException si la tarea no existe o no pertenece al usuario
      */
     @Transactional(readOnly = true)
-    public BigDecimal getTotalHours(Long taskId) {
-        Task task = taskRepository.findById(taskId)
-                .orElseThrow(() -> new ResourceNotFoundException("Tarea no encontrada con id: " + taskId));
+    public BigDecimal getTotalHours(Long taskId, Long userId) {
+        // Las subtareas siempre son del mismo usuario que su tarea padre, así que
+        // basta con comprobar el propietario de la tarea raíz
+        Task task = findOwnedTask(taskId, userId);
 
         return calculateTotalHours(task);
     }
@@ -154,6 +159,23 @@ public class WorkLogService {
     // -------------------------------------------------------------------------
     // Métodos privados
     // -------------------------------------------------------------------------
+
+    /**
+     * Busca una tarea y comprueba que pertenece al usuario.
+     *
+     * <p>Si la tarea es de otro usuario se responde igual que si no existiera, para
+     * no revelar qué identificadores están en uso (SEG-9).</p>
+     *
+     * @param taskId identificador de la tarea
+     * @param userId identificador del usuario autenticado
+     * @return la tarea, si existe y es del usuario
+     * @throws ResourceNotFoundException si la tarea no existe o no pertenece al usuario
+     */
+    private Task findOwnedTask(Long taskId, Long userId) {
+        return taskRepository.findById(taskId)
+                .filter(task -> task.getUser().getId().equals(userId))
+                .orElseThrow(() -> new ResourceNotFoundException("Tarea no encontrada con id: " + taskId));
+    }
 
     /**
      * Suma las horas registradas en una tarea y todas sus subtareas recursivamente.

@@ -179,6 +179,11 @@ public class Task {
     /**
      * Tareas sucesoras que dependen de esta tarea.
      * Lado inverso de la relación, gestionado por {@code dependencies}.
+     *
+     * <p>Al ser el lado inverso, Hibernate no borra sus filas de {@code task_dependencies}
+     * al eliminar la tarea; las limpia
+     * {@link com.taskmaster.taskmasterbackend.repository.TaskRepository#deleteOrphanTaskReferences()}
+     * tras cada borrado físico (SEG-8).</p>
      */
     @ManyToMany(mappedBy = "dependencies")
     @ToString.Exclude
