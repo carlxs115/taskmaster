@@ -17,7 +17,8 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 /**
- * Tests de {@link TaskDependencyCleanup}: limpieza de dependencias inválidas al arrancar (SEG-8).
+ * Tests de {@link TaskDependencyCleanup}: limpieza al arrancar de las dependencias inválidas (SEG-8)
+ * y de los registros de trabajo huérfanos (SEG-9).
  *
  * @author Carlos
  */
@@ -44,6 +45,33 @@ class TaskDependencyCleanupTest {
         when(taskRepository.deleteInvalidDependencies()).thenThrow(new RuntimeException("BD no disponible"));
 
         assertThatCode(() -> taskDependencyCleanup.cleanOnStartup()).doesNotThrowAnyException();
+    }
+
+    @Test
+    void cleanOnStartupLimpiaLosRegistrosHuerfanos() {
+        when(taskRepository.deleteOrphanWorkLogs()).thenReturn(3);
+
+        taskDependencyCleanup.cleanOnStartup();
+
+        verify(taskRepository).deleteOrphanWorkLogs();
+    }
+
+    @Test
+    void cleanOnStartupLimpiaLosRegistrosAunqueFallenLasDependencias() {
+        when(taskRepository.deleteInvalidDependencies()).thenThrow(new RuntimeException("BD no disponible"));
+
+        assertThatCode(() -> taskDependencyCleanup.cleanOnStartup()).doesNotThrowAnyException();
+
+        verify(taskRepository).deleteOrphanWorkLogs();
+    }
+
+    @Test
+    void cleanOnStartupNoImpideElArranqueSiFallaLaLimpiezaDeRegistros() {
+        when(taskRepository.deleteOrphanWorkLogs()).thenThrow(new RuntimeException("BD no disponible"));
+
+        assertThatCode(() -> taskDependencyCleanup.cleanOnStartup()).doesNotThrowAnyException();
+
+        verify(taskRepository).deleteInvalidDependencies();
     }
 
     @Test

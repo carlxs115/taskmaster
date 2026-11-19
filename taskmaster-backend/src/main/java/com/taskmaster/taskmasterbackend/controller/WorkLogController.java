@@ -21,8 +21,8 @@ import java.util.List;
  * así como obtener el total de horas invertidas en una tarea incluyendo
  * sus subtareas.</p>
  *
- * <p><b>Seguridad:</b> las operaciones de escritura (crear, actualizar, eliminar)
- * validan que el worklog pertenece al usuario autenticado antes de ejecutarse.</p>
+ * <p><b>Seguridad:</b> todas las operaciones, también las lecturas, validan que la
+ * tarea o el registro pertenece al usuario autenticado antes de ejecutarse.</p>
  *
  * @author Carlos
  */
@@ -94,12 +94,18 @@ public class WorkLogController {
      * GET /api/worklogs/task/{taskId}
      * Devuelve todos los registros de trabajo de una tarea.
      *
-     * @param taskId identificador de la tarea
+     * Responde 404 si la tarea no existe o no es del usuario autenticado.
+     *
+     * @param taskId      identificador de la tarea
+     * @param userDetails usuario autenticado inyectado por Spring Security
      * @return 200 OK con la lista de registros de trabajo
      */
     @GetMapping("/task/{taskId}")
-    public ResponseEntity<List<WorkLogDTO>> getByTask(@PathVariable Long taskId) {
-        return ResponseEntity.ok(workLogService.getByTask(taskId));
+    public ResponseEntity<List<WorkLogDTO>> getByTask(
+            @PathVariable Long taskId,
+            @AuthenticationPrincipal UserDetails userDetails) {
+        Long userId = securityUtils.getUserId(userDetails);
+        return ResponseEntity.ok(workLogService.getByTask(taskId, userId));
     }
 
     /**
@@ -107,11 +113,17 @@ public class WorkLogController {
      * Devuelve el total de horas registradas para una tarea,
      * incluyendo las horas de todas sus subtareas de forma recursiva.
      *
-     * @param taskId identificador de la tarea raíz
+     * Responde 404 si la tarea no existe o no es del usuario autenticado.
+     *
+     * @param taskId      identificador de la tarea raíz
+     * @param userDetails usuario autenticado inyectado por Spring Security
      * @return 200 OK con el total de horas como {@link BigDecimal}
      */
     @GetMapping("/task/{taskId}/total")
-    public ResponseEntity<BigDecimal> getTotalHours(@PathVariable Long taskId) {
-        return ResponseEntity.ok(workLogService.getTotalHours(taskId));
+    public ResponseEntity<BigDecimal> getTotalHours(
+            @PathVariable Long taskId,
+            @AuthenticationPrincipal UserDetails userDetails) {
+        Long userId = securityUtils.getUserId(userDetails);
+        return ResponseEntity.ok(workLogService.getTotalHours(taskId, userId));
     }
 }

@@ -57,9 +57,13 @@ public class WorkLog {
      * Tarea a la que pertenece este registro de trabajo.
      * Carga lazy para no traer la tarea completa al listar worklogs.
      *
-     * <p>{@code @ToString.Exclude} y {@code @EqualsAndHashCode.Exclude} evitan
-     * referencias circulares cuando Lombok genera estos métodos, ya que
-     * {@code Task} también tiene una lista de {@code WorkLog}.</p>
+     * <p>La relación es unidireccional: {@code Task} no tiene lista de {@code WorkLog}.
+     * {@code @ToString.Exclude} y {@code @EqualsAndHashCode.Exclude} evitan que Lombok
+     * cargue la tarea perezosa en {@code toString} y {@code equals}.</p>
+     *
+     * <p>Al no haber cascada, los registros de una tarea borrada físicamente los quita
+     * {@link com.taskmaster.taskmasterbackend.repository.TaskRepository#deleteOrphanTaskReferences()}
+     * (SEG-9).</p>
      */
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "task_id", nullable = false)

@@ -469,9 +469,9 @@ public class TaskService {
                     expired.size(), userId, retentionDays);
             taskRepository.deleteAll(expired);
 
-            // Quitamos las filas en las que las tareas borradas eran predecesoras
-            // antes de que su id se reutilice (SEG-8)
-            taskRepository.deleteInvalidDependencies();
+            // Quitamos las dependencias (SEG-8) y los registros de trabajo (SEG-9) de las
+            // tareas borradas antes de que su id se reutilice
+            taskRepository.deleteOrphanTaskReferences();
         }
     }
 
@@ -492,9 +492,9 @@ public class TaskService {
         String title = task.getTitle(); // capturamos el título antes de borrar la entidad
         taskRepository.delete(task);
 
-        // Quitamos las filas en las que las tareas borradas eran predecesoras
-        // antes de que su id se reutilice (SEG-8)
-        taskRepository.deleteInvalidDependencies();
+        // Quitamos las dependencias (SEG-8) y los registros de trabajo (SEG-9) de las
+        // tareas borradas antes de que su id se reutilice
+        taskRepository.deleteOrphanTaskReferences();
 
         activityLogService.log(userId, ActionType.TASK_PERMANENTLY_DELETED, "TASK", taskId, title);
     }
@@ -511,9 +511,9 @@ public class TaskService {
         // Eliminamos todas de golpe con deleteAll en lugar de una por una
         taskRepository.deleteAll(deleted);
 
-        // Quitamos las filas en las que las tareas borradas eran predecesoras
-        // antes de que su id se reutilice (SEG-8)
-        taskRepository.deleteInvalidDependencies();
+        // Quitamos las dependencias (SEG-8) y los registros de trabajo (SEG-9) de las
+        // tareas borradas antes de que su id se reutilice
+        taskRepository.deleteOrphanTaskReferences();
 
         // Registramos cada eliminación en el historial de actividad
         for (Task task : deleted) {
