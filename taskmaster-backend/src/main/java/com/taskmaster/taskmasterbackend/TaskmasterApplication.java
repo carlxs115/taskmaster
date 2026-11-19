@@ -35,6 +35,9 @@ public class TaskmasterApplication {
 	 * de datos {@code ~/.taskmaster} existe, necesario para que SQLite pueda
 	 * crear el fichero de base de datos en esa ruta.</p>
 	 *
+	 * <p>Registra {@link PendingRestoreApplier}, que aplica la restauración de una copia
+	 * de seguridad pendiente antes de que se abra la base de datos.</p>
+	 *
 	 * @param args argumentos de línea de comandos
 	 */
 	public static void main(String[] args) {
@@ -50,6 +53,10 @@ public class TaskmasterApplication {
 			log.error("No se pudo crear el directorio de datos: {}", e.getMessage());
 		}
 
-		SpringApplication.run(TaskmasterApplication.class, args);
+		// La restauración pendiente se aplica antes de crear el contexto y abrir la BD.
+		// Se registra aquí y no como bean: los @SpringBootTest no pasan por main y no la ejecutan
+		SpringApplication app = new SpringApplication(TaskmasterApplication.class);
+		app.addListeners(new PendingRestoreApplier());
+		app.run(args);
 	}
 }
