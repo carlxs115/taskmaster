@@ -32,6 +32,7 @@ import java.util.ArrayList;
 import java.util.Deque;
 import java.util.List;
 import java.util.Optional;
+import java.util.regex.Pattern;
 
 /**
  * Aplica, al arrancar el backend, la restauración de una copia de seguridad que
@@ -49,8 +50,8 @@ import java.util.Optional;
  * {@code @SpringBootTest} no lo ejecutan.</p>
  *
  * <p>Un fallo nunca impide arrancar: se deshacen los movimientos, la copia pendiente se
- * renombra a {@code restore-failed-<marca>} para no reintentarla en bucle y el backend
- * arranca con los datos anteriores.</p>
+ * renombra a {@code restore-failed-<marca>} para no reintentarla en bucle, se deja el aviso
+ * {@code restore-failed.aviso} para Ajustes y el backend arranca con los datos anteriores.</p>
  *
  * @author Carlos
  */
@@ -59,6 +60,13 @@ public class PendingRestoreApplier implements ApplicationListener<ApplicationEnv
 
     /** Número de estados anteriores que se conservan en {@code restore-previous/}. */
     static final int PREVIOUS_TO_KEEP = 3;
+
+    /** Número de restauraciones fallidas ({@code restore-failed-<marca>}) que se conservan. */
+    static final int FAILED_TO_KEEP = 3;
+
+    /** Nombre de las restauraciones fallidas: prefijo, marca y un {@code -n} opcional. */
+    private static final Pattern FAILED_NAME = Pattern.compile(
+            "^" + Pattern.quote(BackupPaths.RESTORE_FAILED_PREFIX) + "\\d{8}-\\d{6}(-\\d+)?$");
 
     /** Formato de la marca temporal de {@code restore-previous/} y {@code restore-failed-}. */
     private static final DateTimeFormatter STAMP = DateTimeFormatter.ofPattern("yyyyMMdd-HHmmss");
@@ -103,6 +111,15 @@ public class PendingRestoreApplier implements ApplicationListener<ApplicationEnv
             return;
         }
 
+        // Con los avatares fuera del directorio de datos, mover y guardar el estado anterior
+        // tocaría otra carpeta: no se aplica (BackupService tampoco ofrece la función)
+        if (!paths.avatarsInDataDir()) {
+            if (Files.exists(paths.pendingDir(), LinkOption.NOFOLLOW_LINKS)) {
+                log.warn("El directorio de avatares no está dentro del de datos; la restauración pendiente no se aplica");
+            }
+            return;
+        }
+
         // Paso 0: si el puerto está ocupado hay otro backend con la misma BD abierta
         // (segunda instancia o entorno de pruebas). No se toca nada, ni los temporales,
         // que podrían ser de ese otro backend.
@@ -133,8 +150,17 @@ public class PendingRestoreApplier implements ApplicationListener<ApplicationEnv
         String stamp = LocalDateTime.now(clock).format(STAMP);
 
         // Paso 2b: si después de preparar la restauración se registró otra cuenta, aplicar
-        // la copia borraría sus datos; se descarta
-        if (countUsers(paths.database()) > 1) {
+        // la copia borraría sus datos; se descarta. También si no se puede saber cuántas hay
+        long users;
+        try {
+            users = countUsers(paths.database());
+        } catch (SQLException e) {
+            Path failed = markFailed(paths, stamp);
+            log.warn("Restauración descartada: no se pudo leer la base de datos actual; la copia queda en {}",
+                    failed == null ? "restore-pending" : failed.getFileName(), e);
+            return;
+        }
+        if (users > 1) {
             Path failed = markFailed(paths, stamp);
             log.warn("Restauración descartada: hay varias cuentas; la copia queda en {}",
                     failed == null ? "restore-pending" : failed.getFileName());
@@ -165,7 +191,10 @@ public class PendingRestoreApplier implements ApplicationListener<ApplicationEnv
                 Files.createDirectories(paths.avatarsDir().getParent());
                 move(pendingAvatars, paths.avatarsDir(), moves);
             } else {
+                // Se apunta como paso deshacible: si algo falla después, el directorio vacío
+                // se borra antes de devolver los avatares originales a su sitio
                 Files.createDirectories(paths.avatarsDir());
+                moves.push(new Path[]{null, paths.avatarsDir()});
             }
 
             // Sin la marca la pendiente ya no se vuelve a aplicar: es el punto de no retorno
@@ -221,9 +250,8 @@ public class PendingRestoreApplier implements ApplicationListener<ApplicationEnv
         try (DirectoryStream<Path> entries = Files.newDirectoryStream(dataDir)) {
             for (Path entry : entries) {
                 String name = entry.getFileName().toString();
-                if (name.startsWith(BackupPaths.BACKUP_TMP_PREFIX)
-                        || name.startsWith(BackupPaths.RESTORE_UPLOAD_PREFIX)
-                        || name.startsWith(BackupPaths.RESTORE_STAGING_PREFIX)) {
+                // Solo los nombres exactos que generan BackupService (prefijo y UUID)
+                if (BackupPaths.TEMPORARY_NAME.matcher(name).matches()) {
                     try {
                         BackupPaths.deleteRecursively(entry);
                     } catch (IOException e) {
@@ -240,22 +268,28 @@ public class PendingRestoreApplier implements ApplicationListener<ApplicationEnv
      * Cuenta los usuarios de la base de datos actual, abierta en solo lectura.
      *
      * @param database fichero de la base de datos
-     * @return número de usuarios, o 0 si la base de datos no existe, no tiene la tabla
-     *         {@code users} o no se puede leer (en esos casos la restauración se aplica)
+     * @return número de usuarios, o 0 si la base de datos no existe o no tiene la tabla
+     *         {@code users} (en esos casos no hay cuentas que proteger y se aplica)
+     * @throws SQLException ante cualquier otro error (fichero dañado, bloqueado, que no es
+     *                      SQLite…): no se sabe cuántas cuentas hay y la restauración se descarta
      */
-    private static long countUsers(Path database) {
-        if (!Files.isRegularFile(database)) {
+    private static long countUsers(Path database) throws SQLException {
+        if (!Files.exists(database, LinkOption.NOFOLLOW_LINKS)) {
             return 0;
         }
         SQLiteConfig config = new SQLiteConfig();
         config.setReadOnly(true);
         try (Connection connection = DriverManager.getConnection("jdbc:sqlite:" + database, config.toProperties());
-             Statement statement = connection.createStatement();
-             ResultSet result = statement.executeQuery("SELECT count(*) FROM users")) {
-            return result.next() ? result.getLong(1) : 0;
-        } catch (SQLException e) {
-            // BD vacía (sin tabla users) o dañada: no hay cuentas que proteger
-            return 0;
+             Statement statement = connection.createStatement()) {
+            try (ResultSet result = statement.executeQuery(
+                    "SELECT count(*) FROM sqlite_master WHERE type = 'table' AND name = 'users'")) {
+                if (!result.next() || result.getLong(1) == 0) {
+                    return 0;
+                }
+            }
+            try (ResultSet result = statement.executeQuery("SELECT count(*) FROM users")) {
+                return result.next() ? result.getLong(1) : 0;
+            }
         }
     }
 
@@ -263,7 +297,9 @@ public class PendingRestoreApplier implements ApplicationListener<ApplicationEnv
      * Mueve un fichero o directorio y apunta el movimiento para poder deshacerlo.
      *
      * <p>Si el directorio no se puede renombrar porque el destino está en otro sistema de
-     * ficheros, se copia de forma recursiva y se borra el original.</p>
+     * ficheros, se copia de forma recursiva y se borra el original. El movimiento se apunta
+     * en cuanto la copia está completa, antes de borrar el original: si ese borrado falla a
+     * medias, {@link #undo} sigue teniendo la copia entera para completar el original.</p>
      *
      * @param source origen
      * @param target destino, que no debe existir
@@ -271,19 +307,20 @@ public class PendingRestoreApplier implements ApplicationListener<ApplicationEnv
      * @throws IOException si no se puede mover
      */
     private static void move(Path source, Path target, Deque<Path[]> moves) throws IOException {
-        moveOrCopy(source, target);
-        moves.push(new Path[]{source, target});
+        moveOrCopy(source, target, () -> moves.push(new Path[]{source, target}));
     }
 
     /**
      * Mueve un fichero o directorio; si es un directorio y el destino está en otro
      * sistema de ficheros, lo copia y borra el original.
      *
-     * @param source origen
-     * @param target destino, que no debe existir
+     * @param source   origen
+     * @param target   destino, que no debe existir
+     * @param onPlaced se ejecuta en cuanto el destino está completo (antes de borrar el
+     *                 original, si hubo que copiar)
      * @throws IOException si no se puede mover
      */
-    private static void moveOrCopy(Path source, Path target) throws IOException {
+    private static void moveOrCopy(Path source, Path target, Runnable onPlaced) throws IOException {
         try {
             Files.move(source, target);
         } catch (DirectoryNotEmptyException e) {
@@ -294,8 +331,11 @@ public class PendingRestoreApplier implements ApplicationListener<ApplicationEnv
                 BackupPaths.deleteRecursively(target);
                 throw copyError;
             }
+            onPlaced.run();
             BackupPaths.deleteRecursively(source);
+            return;
         }
+        onPlaced.run();
     }
 
     /**
@@ -325,29 +365,92 @@ public class PendingRestoreApplier implements ApplicationListener<ApplicationEnv
      * Deshace los movimientos en orden inverso. Un fallo al deshacer se registra y se
      * sigue con los demás para recuperar todo lo posible.
      *
+     * <p>Cada paso es {@code {origen, destino}}. Un origen {@code null} indica un directorio
+     * creado vacío, que se borra (solo si sigue vacío). Si el origen todavía existe, es un
+     * movimiento entre sistemas de ficheros cuyo borrado del original se quedó a medias: se
+     * le devuelve lo que le falta desde la copia completa y después se borra la copia.</p>
+     *
      * @param moves movimientos hechos, el último en la cima
      */
-    private static void undo(Deque<Path[]> moves) {
+    static void undo(Deque<Path[]> moves) {
         while (!moves.isEmpty()) {
             Path[] step = moves.pop();
             try {
-                moveOrCopy(step[1], step[0]);
+                if (step[0] == null) {
+                    Files.deleteIfExists(step[1]);
+                } else if (Files.exists(step[0], LinkOption.NOFOLLOW_LINKS)) {
+                    copyMissing(step[1], step[0]);
+                    BackupPaths.deleteRecursively(step[1]);
+                } else {
+                    moveOrCopy(step[1], step[0], () -> { });
+                }
             } catch (IOException e) {
-                log.error("No se pudo deshacer un movimiento de la restauración: {} → {}",
-                        step[1].getFileName(), step[0].getFileName(), e);
+                log.error("No se pudo deshacer un paso de la restauración: {}", step[1].getFileName(), e);
             }
         }
     }
 
     /**
+     * Copia a {@code target} lo que tiene {@code source} y a {@code target} le falta, sin
+     * sobrescribir nada ni seguir enlaces simbólicos. Completa un directorio original cuyo
+     * borrado se quedó a medias tras copiarlo entero a otro sistema de ficheros.
+     *
+     * @param source copia completa
+     * @param target directorio incompleto
+     * @throws IOException si falla la copia o {@code target} no es un directorio
+     */
+    private static void copyMissing(Path source, Path target) throws IOException {
+        if (!Files.isDirectory(source, LinkOption.NOFOLLOW_LINKS)
+                || !Files.isDirectory(target, LinkOption.NOFOLLOW_LINKS)) {
+            throw new IOException("No se puede completar " + target.getFileName() + ": ya existe y no es un directorio");
+        }
+        Files.walkFileTree(source, new SimpleFileVisitor<>() {
+            @Override
+            public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) throws IOException {
+                Path copy = target.resolve(source.relativize(dir).toString());
+                if (!Files.exists(copy, LinkOption.NOFOLLOW_LINKS)) {
+                    Files.createDirectory(copy);
+                }
+                return FileVisitResult.CONTINUE;
+            }
+
+            @Override
+            public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
+                Path copy = target.resolve(source.relativize(file).toString());
+                if (!Files.exists(copy, LinkOption.NOFOLLOW_LINKS)) {
+                    Files.copy(file, copy, LinkOption.NOFOLLOW_LINKS);
+                }
+                return FileVisitResult.CONTINUE;
+            }
+        });
+    }
+
+    /**
      * Renombra la restauración pendiente a {@code restore-failed-<marca>} para que no se
-     * vuelva a intentar en el siguiente arranque.
+     * vuelva a intentar en el siguiente arranque, deja el aviso para Ajustes y conserva solo
+     * las {@value #FAILED_TO_KEEP} restauraciones fallidas más recientes.
      *
      * @param paths rutas de trabajo
      * @param stamp marca temporal
      * @return el directorio renombrado, o {@code null} si no se pudo renombrar
      */
     private static Path markFailed(BackupPaths paths, String stamp) {
+        try {
+            Files.writeString(paths.failedNotice(), stamp);
+        } catch (IOException e) {
+            log.warn("No se pudo dejar el aviso de restauración fallida", e);
+        }
+        Path failed = moveToFailed(paths, stamp);
+        pruneOldFailed(paths.dataDir());
+        return failed;
+    }
+
+    /**
+     * Renombra {@code restore-pending/} a {@code restore-failed-<marca>}.
+     *
+     * @return el directorio renombrado, o {@code null} si no se pudo renombrar
+     */
+    private static Path moveToFailed(BackupPaths paths, String stamp) {
         try {
             Path failed = uniqueChild(paths.dataDir(), BackupPaths.RESTORE_FAILED_PREFIX + stamp);
             Files.move(paths.pendingDir(), failed);
@@ -378,12 +481,45 @@ public class PendingRestoreApplier implements ApplicationListener<ApplicationEnv
             log.warn("No se pudo revisar restore-previous", e);
             return;
         }
+        deleteAllButNewest(entries, PREVIOUS_TO_KEEP);
+    }
+
+    /**
+     * Conserva solo las {@value #FAILED_TO_KEEP} restauraciones fallidas más recientes
+     * ({@code restore-failed-<marca>}); no toca nada con otro nombre.
+     *
+     * @param dataDir directorio de datos
+     */
+    private static void pruneOldFailed(Path dataDir) {
+        List<Path> entries = new ArrayList<>();
+        try (DirectoryStream<Path> stream = Files.newDirectoryStream(dataDir)) {
+            for (Path entry : stream) {
+                if (FAILED_NAME.matcher(entry.getFileName().toString()).matches()
+                        && Files.isDirectory(entry, LinkOption.NOFOLLOW_LINKS)) {
+                    entries.add(entry);
+                }
+            }
+        } catch (IOException e) {
+            log.warn("No se pudo revisar el directorio de datos en busca de restauraciones fallidas", e);
+            return;
+        }
+        deleteAllButNewest(entries, FAILED_TO_KEEP);
+    }
+
+    /**
+     * Borra todas las entradas salvo las {@code keep} más recientes; la marca
+     * {@code AAAAMMDD-HHmmss} del nombre se ordena como texto.
+     *
+     * @param entries entradas candidatas
+     * @param keep    número de entradas que se conservan
+     */
+    private static void deleteAllButNewest(List<Path> entries, int keep) {
         entries.sort((a, b) -> b.getFileName().toString().compareTo(a.getFileName().toString()));
-        for (Path old : entries.subList(Math.min(PREVIOUS_TO_KEEP, entries.size()), entries.size())) {
+        for (Path old : entries.subList(Math.min(keep, entries.size()), entries.size())) {
             try {
                 BackupPaths.deleteRecursively(old);
             } catch (IOException e) {
-                log.warn("No se pudo borrar un estado anterior antiguo: {}", old.getFileName(), e);
+                log.warn("No se pudo borrar una copia antigua de la restauración: {}", old.getFileName(), e);
             }
         }
     }

@@ -18,6 +18,8 @@ import org.springframework.web.server.ResponseStatusException;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -29,6 +31,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Enumeration;
 import java.util.HexFormat;
 import java.util.LinkedHashMap;
@@ -147,6 +150,31 @@ class BackupServiceTest {
         assertThat(service.getStatus().isAvailable()).isFalse();
     }
 
+    @Test
+    void crearCopiaRechazaSiLaInstantaneaTieneVariasCuentas() throws Exception {
+        // El repositorio aún dice una cuenta, pero otra se registró antes del VACUUM INTO
+        execute(database, "INSERT INTO users (username, password) VALUES ('otra', 'hash')");
+
+        assertThatThrownBy(() -> service.createBackup(USER_ID))
+                .isInstanceOf(BusinessException.class)
+                .hasMessageContaining("única cuenta");
+        assertThat(tree(dataDir)).containsExactlyInAnyOrder("taskmaster.db", "avatars");
+    }
+
+    @Test
+    void avataresFueraDelDirectorioDeDatosNoEstaDisponible() throws Exception {
+        Path outside = root.resolve("otros/avatars");
+        Files.createDirectories(outside);
+        MockEnvironment env = new MockEnvironment()
+                .withProperty("spring.datasource.url", "jdbc:sqlite:" + database)
+                .withProperty("taskmaster.storage.avatars-dir", outside.toString());
+        service = new BackupService(dataSource, userRepository, passwordEncoder, env);
+
+        assertThat(service.getStatus().isAvailable()).isFalse();
+        assertThatThrownBy(() -> service.createBackup(USER_ID)).isInstanceOf(BusinessException.class);
+        assertThat(tree(dataDir)).containsExactlyInAnyOrder("taskmaster.db", "avatars");
+    }
+
     // -------------------------------------------------------------------------
     // Preparar restauración
     // -------------------------------------------------------------------------
@@ -198,6 +226,33 @@ class BackupServiceTest {
     }
 
     @Test
+    void contrasenaIncorrectaDescartaElCuerpoAntesDeRechazar() throws Exception {
+        ByteArrayInputStream body = new ByteArrayInputStream(createBackupBytes());
+
+        assertThatThrownBy(() -> service.stageRestore(USER_ID, "mala", body)).isInstanceOf(BusinessException.class);
+        assertThat(body.available()).as("el cuerpo se ha leído entero").isZero();
+    }
+
+    @Test
+    void variasCuentasDescartaElCuerpoAntesDeRechazar() throws Exception {
+        ByteArrayInputStream body = new ByteArrayInputStream(createBackupBytes());
+        lenient().when(userRepository.count()).thenReturn(2L);
+
+        assertThatThrownBy(() -> service.stageRestore(USER_ID, "buena", body)).isInstanceOf(BusinessException.class);
+        assertThat(body.available()).as("el cuerpo se ha leído entero").isZero();
+    }
+
+    @Test
+    void descartarElCuerpoDejaDeLeerAlPasarDelLimite() {
+        service = new BackupService(dataSource, userRepository, passwordEncoder, environment,
+                100, BackupService.MAX_DB_BYTES, BackupService.MAX_AVATAR_BYTES, BackupService.MAX_TOTAL_BYTES);
+        ByteArrayInputStream body = new ByteArrayInputStream(new byte[1_000_000]);
+
+        assertThatThrownBy(() -> service.stageRestore(USER_ID, "mala", body)).isInstanceOf(BusinessException.class);
+        assertThat(body.available()).as("no se lee más allá del límite").isGreaterThan(900_000);
+    }
+
+    @Test
     void rechazaUnFicheroQueNoEsZip() throws Exception {
         assertRejected("no soy un zip".getBytes(StandardCharsets.UTF_8));
     }
@@ -238,6 +293,26 @@ class BackupServiceTest {
         execute(db, "CREATE VIEW v AS SELECT * FROM users");
 
         assertRejected(validZip(db));
+    }
+
+    @Test
+    void rechazaSqliteConUnaTablaVirtual() throws Exception {
+        Path db = fixtures.resolve("virtual.db");
+        createDatabase(db, "carlos");
+        execute(db, "CREATE VIRTUAL TABLE buscar USING fts5(texto)");
+
+        assertRejected(validZip(db));
+    }
+
+    @Test
+    void rechazaZipConUnaEntradaTruncada() throws Exception {
+        Path db = fixtures.resolve("ok.db");
+        createDatabase(db, "carlos");
+        // El directorio central declara la mitad del tamaño comprimido real de la BD:
+        // al descomprimirla, el flujo se acaba antes de tiempo (EOFException)
+        byte[] truncated = halveCompressedSize(validZip(db), "taskmaster.db");
+
+        assertRejected(truncated);
     }
 
     @Test
@@ -358,6 +433,42 @@ class BackupServiceTest {
     }
 
     // -------------------------------------------------------------------------
+    // Aviso de restauración fallida
+    // -------------------------------------------------------------------------
+
+    @Test
+    void estadoAvisaDeUnaRestauracionFallidaHastaQueSeDescarta() throws Exception {
+        assertThat(service.getStatus().isLastRestoreFailed()).isFalse();
+        Files.writeString(dataDir.resolve("restore-failed.aviso"), "20261119-101530");
+
+        assertThat(service.getStatus().isLastRestoreFailed()).isTrue();
+
+        service.cancelPendingRestore(USER_ID);
+
+        assertThat(service.getStatus().isLastRestoreFailed()).isFalse();
+        assertThat(dataDir.resolve("restore-failed.aviso")).doesNotExist();
+    }
+
+    @Test
+    void prepararOtraRestauracionDescartaElAvisoDeFallo() throws Exception {
+        byte[] copia = createBackupBytes();
+        Files.writeString(dataDir.resolve("restore-failed.aviso"), "20261119-101530");
+
+        service.stageRestore(USER_ID, "buena", new ByteArrayInputStream(copia));
+
+        assertThat(service.getStatus().isLastRestoreFailed()).isFalse();
+        assertThat(service.getStatus().isRestorePending()).isTrue();
+    }
+
+    @Test
+    void sinDisponibilidadNoAvisaDeUnaRestauracionFallida() throws Exception {
+        Files.writeString(dataDir.resolve("restore-failed.aviso"), "20261119-101530");
+        lenient().when(userRepository.count()).thenReturn(2L);
+
+        assertThat(service.getStatus().isLastRestoreFailed()).isFalse();
+    }
+
+    // -------------------------------------------------------------------------
     // Cancelar
     // -------------------------------------------------------------------------
 
@@ -467,6 +578,31 @@ class BackupServiceTest {
         } catch (NoSuchAlgorithmException e) {
             throw new IllegalStateException(e);
         }
+    }
+
+    /**
+     * Divide entre dos el tamaño comprimido que declara el directorio central para la
+     * entrada indicada (cabecera {@code PK\1\2}: tamaño comprimido en el byte 20, longitud
+     * del nombre en el 28 y nombre desde el 46).
+     */
+    private static byte[] halveCompressedSize(byte[] zip, String name) {
+        byte[] result = zip.clone();
+        byte[] expected = name.getBytes(StandardCharsets.US_ASCII);
+        ByteBuffer buffer = ByteBuffer.wrap(result).order(ByteOrder.LITTLE_ENDIAN);
+        for (int i = 0; i + 46 <= result.length; i++) {
+            if (buffer.getInt(i) != 0x02014b50) {
+                continue;
+            }
+            int nameLength = Short.toUnsignedInt(buffer.getShort(i + 28));
+            byte[] actual = Arrays.copyOfRange(result, i + 46, i + 46 + nameLength);
+            if (Arrays.equals(actual, expected)) {
+                int compressed = buffer.getInt(i + 20);
+                assertThat(compressed).as("la entrada está comprimida").isGreaterThan(2);
+                buffer.putInt(i + 20, compressed / 2);
+                return result;
+            }
+        }
+        throw new AssertionError("No se encontró la entrada " + name + " en el directorio central");
     }
 
     private static byte[] replaceAll(byte[] source, String from, String to) {

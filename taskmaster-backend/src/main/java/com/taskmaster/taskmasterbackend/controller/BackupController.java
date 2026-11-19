@@ -55,9 +55,10 @@ public class BackupController {
 
     /**
      * GET /api/backup/status
-     * Indica si la copia de seguridad está disponible y si hay una restauración pendiente.
+     * Indica si la copia de seguridad está disponible, si hay una restauración pendiente
+     * y si la última no se pudo aplicar.
      *
-     * @return 200 OK con {@code available} y {@code restorePending}
+     * @return 200 OK con {@code available}, {@code restorePending} y {@code lastRestoreFailed}
      */
     @GetMapping("/status")
     public ResponseEntity<BackupStatusResponse> getStatus() {
@@ -105,6 +106,10 @@ public class BackupController {
      * <p>El cuerpo es el zip en bruto ({@code application/zip}), no multipart: el límite
      * global de multipart está pensado para avatares.</p>
      *
+     * <p>Si la contraseña o las cuentas no son válidas, el servicio lee y descarta el cuerpo
+     * antes de responder 400, para que la respuesta llegue al cliente en lugar de un corte
+     * de conexión.</p>
+     *
      * @param password    contraseña actual para confirmar la operación
      * @param body        contenido del zip
      * @param userDetails usuario autenticado inyectado por Spring Security
@@ -124,7 +129,7 @@ public class BackupController {
 
     /**
      * DELETE /api/backup/restore
-     * Cancela la restauración pendiente.
+     * Cancela la restauración pendiente y descarta el aviso de una restauración fallida.
      *
      * @param userDetails usuario autenticado inyectado por Spring Security
      * @return 204 No Content, o 400 si la copia no está disponible

@@ -12,6 +12,7 @@ import java.nio.file.Path;
 import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.Optional;
+import java.util.regex.Pattern;
 
 /**
  * Rutas efectivas de los datos de TaskMaster que intervienen en la copia de seguridad
@@ -27,8 +28,14 @@ import java.util.Optional;
  *   <li>{@code restore-pending/}: copia validada que se aplicará en el siguiente arranque.</li>
  *   <li>{@code restore-previous/<marca>/}: estado anterior a cada restauración aplicada.</li>
  *   <li>{@code restore-failed-<marca>/}: copia pendiente cuya aplicación falló.</li>
- *   <li>{@code backup-tmp-*}, {@code restore-upload-*}, {@code restore-staging-*}: temporales.</li>
+ *   <li>{@code restore-failed.aviso}: aviso de que la última restauración no se aplicó.</li>
+ *   <li>{@code backup-tmp-<uuid>}, {@code restore-upload-<uuid>.zip},
+ *       {@code restore-staging-<uuid>}: temporales.</li>
  * </ul>
+ *
+ * <p>El directorio de avatares tiene que colgar del directorio de datos: la restauración
+ * lo mueve junto a la base de datos y lo guarda en {@code restore-previous/}. Si no es así,
+ * la copia de seguridad no está disponible (ver {@link #avatarsInDataDir()}).</p>
  *
  * @param database   ruta absoluta y normalizada del fichero de la base de datos
  * @param avatarsDir ruta absoluta y normalizada del directorio de avatares
@@ -72,6 +79,24 @@ public record BackupPaths(Path database, Path avatarsDir) {
 
     /** Prefijo de las restauraciones pendientes cuya aplicación falló o se descartó. */
     public static final String RESTORE_FAILED_PREFIX = "restore-failed-";
+
+    /**
+     * Fichero que deja {@code PendingRestoreApplier} cuando una restauración falla o se
+     * descarta, para avisar en Ajustes. Se borra al cancelar o al preparar otra restauración.
+     */
+    public static final String RESTORE_FAILED_NOTICE = "restore-failed.aviso";
+
+    /** UUID en minúsculas, como los que genera {@link java.util.UUID#randomUUID()}. */
+    private static final String UUID_REGEX = "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}";
+
+    /**
+     * Nombres exactos de los temporales que crean la copia y la restauración: prefijo y UUID
+     * (y {@code .zip} en los zips). Cualquier otro fichero con el mismo prefijo no es nuestro.
+     */
+    public static final Pattern TEMPORARY_NAME = Pattern.compile(
+            "^(" + Pattern.quote(BACKUP_TMP_PREFIX) + UUID_REGEX + "(\\.zip)?"
+                    + "|" + Pattern.quote(RESTORE_UPLOAD_PREFIX) + UUID_REGEX + "\\.zip"
+                    + "|" + Pattern.quote(RESTORE_STAGING_PREFIX) + UUID_REGEX + ")$");
 
     /**
      * Resuelve las rutas a partir del {@link Environment} efectivo.
@@ -152,6 +177,21 @@ public record BackupPaths(Path database, Path avatarsDir) {
     /** @return directorio raíz de los estados anteriores a cada restauración */
     public Path previousRoot() {
         return dataDir().resolve(PREVIOUS_DIR);
+    }
+
+    /** @return aviso de que la última restauración no se pudo aplicar */
+    public Path failedNotice() {
+        return dataDir().resolve(RESTORE_FAILED_NOTICE);
+    }
+
+    /**
+     * Indica si el directorio de avatares cuelga del directorio de datos (y no es él mismo).
+     * Si no, la restauración movería avatares fuera de la carpeta de datos y no se ofrece.
+     *
+     * @return {@code true} si el directorio de avatares está dentro del de datos
+     */
+    public boolean avatarsInDataDir() {
+        return avatarsDir.startsWith(dataDir()) && !avatarsDir.equals(dataDir());
     }
 
     /**

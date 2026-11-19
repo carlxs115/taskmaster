@@ -84,6 +84,32 @@ class BackupPathsTest {
     }
 
     @Test
+    void avataresDentroOFueraDelDirectorioDeDatos() {
+        Path db = tempDir.resolve("datos/taskmaster.db");
+
+        assertThat(new BackupPaths(db, tempDir.resolve("datos/avatars")).avatarsInDataDir()).isTrue();
+        assertThat(new BackupPaths(db, tempDir.resolve("datos/sub/avatars")).avatarsInDataDir()).isTrue();
+        assertThat(new BackupPaths(db, tempDir.resolve("otros/avatars")).avatarsInDataDir()).isFalse();
+        assertThat(new BackupPaths(db, tempDir.resolve("datos2/avatars")).avatarsInDataDir()).isFalse();
+        assertThat(new BackupPaths(db, tempDir.resolve("datos")).avatarsInDataDir()).isFalse();
+        assertThat(new BackupPaths(db, tempDir).avatarsInDataDir()).isFalse();
+    }
+
+    @Test
+    void nombresDeTemporales() {
+        String uuid = "0f8fad5b-d9cb-469f-a165-70867728950e";
+
+        assertThat(BackupPaths.TEMPORARY_NAME.matcher("backup-tmp-" + uuid).matches()).isTrue();
+        assertThat(BackupPaths.TEMPORARY_NAME.matcher("backup-tmp-" + uuid + ".zip").matches()).isTrue();
+        assertThat(BackupPaths.TEMPORARY_NAME.matcher("restore-upload-" + uuid + ".zip").matches()).isTrue();
+        assertThat(BackupPaths.TEMPORARY_NAME.matcher("restore-staging-" + uuid).matches()).isTrue();
+        assertThat(BackupPaths.TEMPORARY_NAME.matcher("backup-tmp-notas.txt").matches()).isFalse();
+        assertThat(BackupPaths.TEMPORARY_NAME.matcher("restore-upload-" + uuid).matches()).isFalse();
+        assertThat(BackupPaths.TEMPORARY_NAME.matcher("restore-staging-" + uuid + ".zip").matches()).isFalse();
+        assertThat(BackupPaths.TEMPORARY_NAME.matcher("backup-tmp-" + uuid.toUpperCase()).matches()).isFalse();
+    }
+
+    @Test
     void lasVariablesDeEntornoMandanComoEnElEntornoDePruebas() {
         MockEnvironment env = new MockEnvironment()
                 .withProperty("spring.datasource.url", "jdbc:sqlite:" + tempDir.resolve("real/taskmaster.db"))

@@ -151,11 +151,23 @@ public class BackupService {
         this.dataSource = dataSource;
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
-        this.paths = BackupPaths.resolve(environment).orElse(null);
+        this.paths = BackupPaths.resolve(environment).filter(BackupService::avatarsInDataDir).orElse(null);
         this.maxUploadBytes = maxUploadBytes;
         this.maxDbBytes = maxDbBytes;
         this.maxAvatarBytes = maxAvatarBytes;
         this.maxTotalBytes = maxTotalBytes;
+    }
+
+    /**
+     * Comprueba que el directorio de avatares cuelga del de datos; si no, la función no
+     * está disponible (la restauración tendría que mover avatares fuera de esa carpeta).
+     */
+    private static boolean avatarsInDataDir(BackupPaths paths) {
+        if (!paths.avatarsInDataDir()) {
+            log.warn("El directorio de avatares no está dentro del de datos; la copia de seguridad no está disponible");
+            return false;
+        }
+        return true;
     }
 
     // -------------------------------------------------------------------------
@@ -163,13 +175,20 @@ public class BackupService {
     // -------------------------------------------------------------------------
 
     /**
-     * Devuelve si la copia de seguridad está disponible y si hay una restauración pendiente.
+     * Devuelve si la copia de seguridad está disponible, si hay una restauración pendiente
+     * y si la última no se pudo aplicar.
+     *
+     * <p>El aviso de restauración fallida es el fichero {@code restore-failed.aviso} que deja
+     * {@code PendingRestoreApplier}. Solo se informa cuando la función está disponible, que
+     * es cuando el usuario puede descartarlo ({@code DELETE /api/backup/restore}).</p>
      *
      * @return estado de la copia de seguridad
      */
     public BackupStatusResponse getStatus() {
+        boolean available = isAvailable();
         boolean pending = paths != null && Files.exists(paths.readyMarker());
-        return new BackupStatusResponse(isAvailable(), pending);
+        boolean lastFailed = available && Files.exists(paths.failedNotice());
+        return new BackupStatusResponse(available, pending, lastFailed);
     }
 
     // -------------------------------------------------------------------------
@@ -184,7 +203,8 @@ public class BackupService {
      *
      * @param userId identificador del usuario que la pide
      * @return ruta del zip creado
-     * @throws BusinessException si la copia no está disponible (varias cuentas)
+     * @throws BusinessException si la copia no está disponible (varias cuentas, también si
+     *                           la instantánea ya tiene más de una)
      */
     public Path createBackup(Long userId) {
         ensureAvailable();
@@ -197,6 +217,11 @@ public class BackupService {
             Files.createDirectories(workDir);
             Path snapshot = workDir.resolve(BackupPaths.BACKUP_DATABASE_ENTRY);
             vacuumInto(snapshot);
+            // Entre la comprobación de arriba y el VACUUM se pudo registrar otra cuenta:
+            // la instantánea es la que manda (los temporales los borra el finally)
+            if (countSnapshotUsers(snapshot) > 1) {
+                throw new BusinessException(UNAVAILABLE_MESSAGE);
+            }
             writeZip(snapshot, zip);
             ok = true;
             log.info("Copia de seguridad creada para usuario id: {} ({} bytes)", userId, Files.size(zip));
@@ -222,6 +247,10 @@ public class BackupService {
      * <p>Si la copia no es válida no queda ningún fichero: se borran el zip subido y
      * el directorio de extracción.</p>
      *
+     * <p>Los rechazos que no dependen del fichero (contraseña, cuentas) leen y descartan
+     * antes el cuerpo, hasta el tamaño máximo: si no, Tomcat solo descarta una parte, corta
+     * la conexión y el cliente ve un error de conexión en lugar del 400.</p>
+     *
      * @param userId   identificador del usuario que la pide
      * @param password contraseña actual, como confirmación
      * @param body     contenido del zip
@@ -233,12 +262,11 @@ public class BackupService {
     public RestoreStagedResponse stageRestore(Long userId, String password, InputStream body) {
         restoreLock.lock();
         try {
-            User user = userRepository.findById(userId)
-                    .orElseThrow(() -> new ResourceNotFoundException("Usuario no encontrado con id: " + userId));
-            if (password == null || !passwordEncoder.matches(password, user.getPassword())) {
-                throw new BusinessException("La contraseña no es correcta");
+            RuntimeException rejection = earlyRejection(userId, password);
+            if (rejection != null) {
+                discardBody(body);
+                throw rejection;
             }
-            ensureAvailable();
 
             String id = UUID.randomUUID().toString();
             Path upload = paths.dataDir().resolve(BackupPaths.RESTORE_UPLOAD_PREFIX + id + ".zip");
@@ -246,7 +274,7 @@ public class BackupService {
             boolean staged = false;
             try {
                 copyLimited(body, upload, maxUploadBytes, () ->
-                        new ResponseStatusException(HttpStatus.PAYLOAD_TOO_LARGE, TOO_LARGE_MESSAGE));
+                        new ResponseStatusException(HttpStatus.PAYLOAD_TOO_LARGE, TOO_LARGE_MESSAGE), null);
                 extract(upload, staging);
                 checkManifest(staging.resolve(MANIFEST_ENTRY));
                 List<String> usernames = validateDatabase(staging.resolve(BackupPaths.BACKUP_DATABASE_ENTRY));
@@ -255,6 +283,8 @@ public class BackupService {
                 BackupPaths.deleteRecursively(paths.pendingDir());
                 Files.move(staging, paths.pendingDir(), StandardCopyOption.ATOMIC_MOVE);
                 staged = true;
+                // El aviso de una restauración fallida anterior ya no aplica
+                deleteQuietly(paths.failedNotice());
 
                 log.info("Restauración preparada para usuario id: {}; se aplicará al reiniciar", userId);
                 return new RestoreStagedResponse(usernames);
@@ -272,7 +302,8 @@ public class BackupService {
     }
 
     /**
-     * Cancela la restauración pendiente, si la hay.
+     * Cancela la restauración pendiente, si la hay, y descarta el aviso de una
+     * restauración fallida.
      *
      * @param userId identificador del usuario que la pide
      * @throws BusinessException si la copia no está disponible (varias cuentas)
@@ -282,6 +313,7 @@ public class BackupService {
         restoreLock.lock();
         try {
             BackupPaths.deleteRecursively(paths.pendingDir());
+            Files.deleteIfExists(paths.failedNotice());
             log.info("Restauración pendiente cancelada por usuario id: {}", userId);
         } catch (IOException e) {
             throw new UncheckedIOException("No se pudo cancelar la restauración pendiente", e);
@@ -303,6 +335,46 @@ public class BackupService {
     private void ensureAvailable() {
         if (!isAvailable()) {
             throw new BusinessException(UNAVAILABLE_MESSAGE);
+        }
+    }
+
+    /**
+     * Comprueba lo que no depende del fichero subido: usuario, contraseña y cuentas.
+     *
+     * @return la excepción con la que se rechaza la petición, o {@code null} si puede seguir
+     */
+    private RuntimeException earlyRejection(Long userId, String password) {
+        User user = userRepository.findById(userId).orElse(null);
+        if (user == null) {
+            return new ResourceNotFoundException("Usuario no encontrado con id: " + userId);
+        }
+        if (password == null || !passwordEncoder.matches(password, user.getPassword())) {
+            return new BusinessException("La contraseña no es correcta");
+        }
+        if (!isAvailable()) {
+            return new BusinessException(UNAVAILABLE_MESSAGE);
+        }
+        return null;
+    }
+
+    /**
+     * Lee y descarta el cuerpo de una petición que se va a rechazar, para que la respuesta
+     * llegue al cliente. Deja de leer al pasar de {@code maxUploadBytes}: un cuerpo mayor
+     * se rechazaría de todos modos y no merece la pena leerlo entero.
+     *
+     * @param body cuerpo de la petición
+     */
+    private void discardBody(InputStream body) {
+        byte[] buffer = new byte[8192];
+        long total = 0;
+        try {
+            int read;
+            while (total <= maxUploadBytes && (read = body.read(buffer)) != -1) {
+                total += read;
+            }
+        } catch (IOException e) {
+            // El cliente cortó el envío: no hay nada más que descartar
+            log.debug("No se pudo descartar el cuerpo de una restauración rechazada: {}", e.getMessage());
         }
     }
 
@@ -335,6 +407,24 @@ public class BackupService {
             }
         } catch (SQLException e) {
             throw new IllegalStateException("No se pudo copiar la base de datos", e);
+        }
+    }
+
+    /**
+     * Cuenta los usuarios de la instantánea recién creada, abierta en solo lectura.
+     *
+     * @param snapshot instantánea de la base de datos
+     * @return número de usuarios
+     */
+    private static long countSnapshotUsers(Path snapshot) {
+        SQLiteConfig config = new SQLiteConfig();
+        config.setReadOnly(true);
+        try (Connection connection = DriverManager.getConnection("jdbc:sqlite:" + snapshot, config.toProperties());
+             Statement statement = connection.createStatement();
+             ResultSet result = statement.executeQuery("SELECT count(*) FROM users")) {
+            return result.next() ? result.getLong(1) : 0;
+        } catch (SQLException e) {
+            throw new IllegalStateException("No se pudo leer la copia de la base de datos", e);
         }
     }
 
@@ -448,11 +538,18 @@ public class BackupService {
                 // La BD tiene su límite; el manifiesto y cada avatar, el de un avatar
                 long limit = entry.getName().equals(BackupPaths.BACKUP_DATABASE_ENTRY) ? maxDbBytes : maxAvatarBytes;
                 long remaining = maxTotalBytes - total;
-                try (InputStream in = zip.getInputStream(entry)) {
-                    total += copyLimited(in, target, Math.min(limit, remaining),
-                            () -> new BusinessException(TOO_LARGE_MESSAGE));
-                } catch (ZipException e) {
+                InputStream in;
+                try {
+                    in = zip.getInputStream(entry);
+                } catch (IOException e) {
                     throw new BusinessException(INVALID_BACKUP_MESSAGE);
+                }
+                // Un error al leer la entrada (zip truncado, datos comprimidos dañados) es
+                // un fichero no válido; uno al escribir, un error del equipo
+                try (in) {
+                    total += copyLimited(in, target, Math.min(limit, remaining),
+                            () -> new BusinessException(TOO_LARGE_MESSAGE),
+                            () -> new BusinessException(INVALID_BACKUP_MESSAGE));
                 }
             }
         } catch (IllegalArgumentException e) {
@@ -509,8 +606,9 @@ public class BackupService {
      * TaskMaster y devuelve sus usuarios.
      *
      * <p>Se abre en solo lectura y con {@code trusted_schema} desactivado. Se rechazan las
-     * bases de datos con triggers o vistas: Hibernate no crea ninguno y un trigger
-     * ejecutaría SQL ajeno en cada escritura.</p>
+     * bases de datos con triggers, vistas o tablas virtuales: Hibernate no crea ninguno, un
+     * trigger ejecutaría SQL ajeno en cada escritura y una tabla virtual depende de módulos
+     * que no controlamos.</p>
      *
      * @param database fichero extraído
      * @return nombres de usuario, en orden alfabético
@@ -557,8 +655,10 @@ public class BackupService {
                 throw new BusinessException(INVALID_BACKUP_MESSAGE);
             }
 
+            // LIKE no distingue mayúsculas; 'CREATE VIRTUAL%' cubre cualquier espaciado posterior
             try (ResultSet result = statement.executeQuery(
-                    "SELECT count(*) FROM sqlite_master WHERE type IN ('trigger', 'view')")) {
+                    "SELECT count(*) FROM sqlite_master WHERE type IN ('trigger', 'view')"
+                            + " OR sql LIKE 'CREATE VIRTUAL%'")) {
                 if (!result.next() || result.getLong(1) != 0) {
                     throw new BusinessException(INVALID_BACKUP_MESSAGE);
                 }
@@ -587,21 +687,35 @@ public class BackupService {
      * Copia un flujo a un fichero nuevo cortando en cuanto supera el límite.
      * No se fía de los tamaños que declare el zip: cuenta los bytes reales.
      *
-     * @param in       flujo de origen
-     * @param target   fichero de destino, que no debe existir
-     * @param limit    número máximo de bytes
-     * @param tooLarge excepción que se lanza si se supera el límite
+     * @param in         flujo de origen
+     * @param target     fichero de destino, que no debe existir
+     * @param limit      número máximo de bytes
+     * @param tooLarge   excepción que se lanza si se supera el límite
+     * @param unreadable excepción que se lanza si falla la lectura del origen, o {@code null}
+     *                   para propagar la {@link IOException}
      * @return bytes copiados
-     * @throws IOException si falla la lectura o la escritura
+     * @throws IOException si falla la escritura (o la lectura, sin {@code unreadable})
      */
     private static long copyLimited(InputStream in, Path target, long limit,
-                                    Supplier<? extends RuntimeException> tooLarge)
+                                    Supplier<? extends RuntimeException> tooLarge,
+                                    Supplier<? extends RuntimeException> unreadable)
             throws IOException {
         byte[] buffer = new byte[8192];
         long total = 0;
         try (OutputStream out = Files.newOutputStream(target, StandardOpenOption.CREATE_NEW)) {
-            int read;
-            while ((read = in.read(buffer)) != -1) {
+            while (true) {
+                int read;
+                try {
+                    read = in.read(buffer);
+                } catch (IOException e) {
+                    if (unreadable == null) {
+                        throw e;
+                    }
+                    throw unreadable.get();
+                }
+                if (read == -1) {
+                    break;
+                }
                 total += read;
                 if (total > limit) {
                     throw tooLarge.get();
