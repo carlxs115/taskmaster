@@ -32,6 +32,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
+import java.io.IOException;
 import java.net.URLEncoder;
 import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
@@ -87,6 +88,7 @@ public class SettingsController {
     @FXML private Label restoreStatusLabel;
     @FXML private Label backupUnavailableLabel;
     @FXML private VBox restorePendingBox;
+    @FXML private VBox restoreFailedBox;
 
     /** Tamaño máximo de una copia aceptado por el backend (256 MB). */
     private static final long MAX_BACKUP_BYTES = 256L * 1024 * 1024;
@@ -422,10 +424,15 @@ public class SettingsController {
     // -------------------------------------------------------------------------
 
     /**
-     * Consulta al backend si la copia de seguridad está disponible y si hay una
-     * restauración pendiente, y actualiza botones y avisos en consecuencia.
+     * Consulta al backend si la copia de seguridad está disponible, si hay una
+     * restauración pendiente y si la última falló, y actualiza botones y avisos.
+     *
+     * <p>Se llama desde el hilo de JavaFX: oculta antes los mensajes de estado de las
+     * operaciones anteriores (p. ej. «Copia guardada») para que no queden a la vista.</p>
      */
     private void loadBackupStatus() {
+        backupStatusLabel.setVisible(false);
+        restoreStatusLabel.setVisible(false);
         Thread thread = new Thread(() -> {
             try {
                 HttpResponse<String> response = AppContext.getInstance()
@@ -435,11 +442,13 @@ public class SettingsController {
                 JsonNode json = objectMapper.readTree(response.body());
                 boolean available = json.path("available").asBoolean(false);
                 boolean pending = json.path("restorePending").asBoolean(false);
+                boolean failed = json.path("lastRestoreFailed").asBoolean(false);
                 Platform.runLater(() -> {
                     createBackupButton.setDisable(!available);
                     restoreBackupButton.setDisable(!available);
                     setShown(backupUnavailableLabel, !available);
                     setShown(restorePendingBox, pending);
+                    setShown(restoreFailedBox, failed);
                 });
             } catch (Exception e) {
                 log.error("Error al cargar el estado de la copia de seguridad: {}", e.getMessage());
@@ -583,10 +592,25 @@ public class SettingsController {
         Thread thread = new Thread(() -> {
             try {
                 String encodedPassword = URLEncoder.encode(password, StandardCharsets.UTF_8);
-                HttpResponse<String> response = AppContext.getInstance()
-                        .getApiService()
-                        .postFile("/api/backup/restore?password=" + encodedPassword,
-                                file.toPath(), "application/zip");
+                HttpResponse<String> response;
+                try {
+                    response = AppContext.getInstance()
+                            .getApiService()
+                            .postFile("/api/backup/restore?password=" + encodedPassword,
+                                    file.toPath(), "application/zip");
+                } catch (IOException e) {
+                    // Si el backend sigue respondiendo, cortó el envío al rechazar la copia
+                    // (p. ej. tras un 413 a mitad de lectura): es un error de la copia, no de conexión
+                    log.error("Error al enviar la copia de seguridad: {}", e.getMessage());
+                    String key = isBackendReachable()
+                            ? "settings.backup.restore.error"
+                            : "settings.connection.error";
+                    Platform.runLater(() -> {
+                        restoreBackupButton.setDisable(false);
+                        showBackupStatus(restoreStatusLabel, lm.get(key), false);
+                    });
+                    return;
+                }
                 int status = response.statusCode();
 
                 if (status == 202) {
@@ -620,6 +644,20 @@ public class SettingsController {
     }
 
     /**
+     * Comprueba si el backend responde, con {@code /api/auth/ping} (no requiere sesión).
+     *
+     * @return {@code true} si el backend contesta con cualquier código HTTP
+     */
+    private boolean isBackendReachable() {
+        try {
+            AppContext.getInstance().getApiService().get("/api/auth/ping");
+            return true;
+        } catch (Exception e) {
+            return false;
+        }
+    }
+
+    /**
      * Informa de que la restauración queda preparada y ofrece cerrar TaskMaster
      * para aplicarla en el siguiente arranque.
      *
@@ -648,25 +686,30 @@ public class SettingsController {
     }
 
     /**
-     * Cancela la restauración pendiente en el backend y recarga el estado.
+     * Cancela la restauración pendiente en el backend (y descarta el aviso de una
+     * restauración fallida) y recarga el estado.
      */
     @FXML
     private void handleCancelRestore() {
         Thread thread = new Thread(() -> {
+            boolean ok;
             try {
                 HttpResponse<String> response = AppContext.getInstance()
                         .getApiService()
                         .delete("/api/backup/restore");
-                if (response.statusCode() != 204 && response.statusCode() != 200) {
-                    Platform.runLater(() -> showBackupStatus(restoreStatusLabel,
-                            lm.get("settings.connection.error"), false));
-                }
+                ok = response.statusCode() == 204 || response.statusCode() == 200;
             } catch (Exception e) {
                 log.error("Error al cancelar la restauración: {}", e.getMessage());
-                Platform.runLater(() -> showBackupStatus(restoreStatusLabel,
-                        lm.get("settings.connection.error"), false));
+                ok = false;
             }
-            Platform.runLater(this::loadBackupStatus);
+            boolean success = ok;
+            Platform.runLater(() -> {
+                // Recargar oculta los mensajes de estado; el error, si lo hay, se muestra después
+                loadBackupStatus();
+                if (!success) {
+                    showBackupStatus(restoreStatusLabel, lm.get("settings.connection.error"), false);
+                }
+            });
         }, "settings-cancel-restore");
         thread.setDaemon(true);
         thread.start();

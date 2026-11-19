@@ -133,6 +133,12 @@
                 <Button text="%settings.backup.restore.cancel" onAction="#handleCancelRestore"
                         styleClass="btn-danger"/>
             </VBox>
+            <!-- Aviso de una restauración que no se pudo aplicar; «Cerrar» lo descarta en el backend -->
+            <VBox fx:id="restoreFailedBox" spacing="10" styleClass="card" visible="false" managed="false">
+                <Label text="%settings.backup.restore.failed" styleClass="profile-section-title"
+                       wrapText="true"/>
+                <Button text="%common.close" onAction="#handleCancelRestore" styleClass="btn-confirm-accent"/>
+            </VBox>
             <VBox spacing="12" styleClass="card">
                 <HBox alignment="CENTER_LEFT" spacing="8">
                     <FontIcon iconLiteral="fas-download" styleClass="settings-card-icon"/>
