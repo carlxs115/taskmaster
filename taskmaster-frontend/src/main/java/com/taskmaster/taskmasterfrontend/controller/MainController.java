@@ -1584,6 +1584,10 @@ public class MainController {
                     LanguageManager.getInstance().getBundle()
             );
             T view = loader.load();
+            // Ajustes refresca proyectos y tareas tras importar datos
+            if (loader.getController() instanceof SettingsController sc) {
+                sc.setOnDataImported(() -> { loadProjects(); reloadTasks(); });
+            }
             HBox.setHgrow(view, Priority.ALWAYS);
             view.setUserData("settings");
             setSidebarActive(sidebarBtn);

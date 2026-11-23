@@ -90,8 +90,21 @@ public class SettingsController {
     @FXML private VBox restorePendingBox;
     @FXML private VBox restoreFailedBox;
 
+    // ── Exportar e importar datos ──
+    @FXML private Button exportJsonButton;
+    @FXML private Button exportCsvButton;
+    @FXML private Button importButton;
+    @FXML private Label exportStatusLabel;
+    @FXML private Label importStatusLabel;
+
     /** Tamaño máximo de una copia aceptado por el backend (256 MB). */
     private static final long MAX_BACKUP_BYTES = 256L * 1024 * 1024;
+
+    /** Tamaño máximo de un archivo de importación aceptado por el backend (32 MB). */
+    private static final long MAX_IMPORT_BYTES = 32L * 1024 * 1024;
+
+    /** Se ejecuta tras una importación correcta para refrescar proyectos y tareas. */
+    private Runnable onDataImported;
 
     private final ObjectMapper objectMapper = new ObjectMapper();
     private final LanguageManager lm = LanguageManager.getInstance();
@@ -149,6 +162,8 @@ public class SettingsController {
             timeFormatStatusLabel.setVisible(false);
             backupStatusLabel.setVisible(false);
             restoreStatusLabel.setVisible(false);
+            exportStatusLabel.setVisible(false);
+            importStatusLabel.setVisible(false);
         });
 
         // Combo de formato de fecha
@@ -716,6 +731,175 @@ public class SettingsController {
     }
 
     /**
+     * Registra la acción que refresca la barra lateral y las tareas tras importar datos.
+     *
+     * @param onDataImported acción a ejecutar en el hilo de JavaFX
+     */
+    public void setOnDataImported(Runnable onDataImported) {
+        this.onDataImported = onDataImported;
+    }
+
+    /** Pide dónde guardar la exportación en JSON y la descarga del backend. */
+    @FXML
+    private void handleExportJson() {
+        exportData("/api/data/export/json", "settings.data.chooser.json",
+                "JSON (*.json)", "*.json", "taskmaster-datos-" + LocalDate.now() + ".json");
+    }
+
+    /** Pide dónde guardar la exportación en CSV (en el idioma de la interfaz) y la descarga. */
+    @FXML
+    private void handleExportCsv() {
+        exportData("/api/data/export/csv?lang=" + (lm.isSpanish() ? "es" : "en"),
+                "settings.data.chooser.csv", "CSV (*.csv)", "*.csv",
+                "taskmaster-tareas-" + LocalDate.now() + ".csv");
+    }
+
+    /**
+     * Elige el destino y descarga una exportación en un hilo secundario.
+     *
+     * @param path        ruta de la API que genera el archivo
+     * @param titleKey    clave del título del selector de archivos
+     * @param filterName  descripción del filtro de extensión
+     * @param filterGlob  patrón del filtro de extensión
+     * @param initialName nombre de archivo propuesto
+     */
+    private void exportData(String path, String titleKey, String filterName, String filterGlob,
+                            String initialName) {
+        FileChooser chooser = new FileChooser();
+        chooser.setTitle(lm.get(titleKey));
+        chooser.getExtensionFilters().add(new FileChooser.ExtensionFilter(filterName, filterGlob));
+        chooser.setInitialFileName(initialName);
+        File file = chooser.showSaveDialog(ownerWindow());
+        if (file == null) return;
+
+        exportJsonButton.setDisable(true);
+        exportCsvButton.setDisable(true);
+        exportStatusLabel.setVisible(false);
+        Thread thread = new Thread(() -> {
+            boolean ok;
+            try {
+                AppContext.getInstance().getApiService().downloadToFile(path, file.toPath());
+                ok = true;
+            } catch (Exception e) {
+                log.error("Error al exportar los datos: {}", e.getMessage());
+                ok = false;
+            }
+            boolean success = ok;
+            Platform.runLater(() -> {
+                exportJsonButton.setDisable(false);
+                exportCsvButton.setDisable(false);
+                showBackupStatus(exportStatusLabel,
+                        lm.get(success ? "settings.data.export.done" : "settings.data.export.error"),
+                        success);
+            });
+        }, "settings-export-data");
+        thread.setDaemon(true);
+        thread.start();
+    }
+
+    /**
+     * Elige un archivo JSON exportado, pide confirmación y lo envía al backend,
+     * que lo valida entero y lo añade como datos nuevos de la cuenta.
+     */
+    @FXML
+    private void handleImport() {
+        FileChooser chooser = new FileChooser();
+        chooser.setTitle(lm.get("settings.data.chooser.import"));
+        chooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("JSON (*.json)", "*.json"));
+        File file = chooser.showOpenDialog(ownerWindow());
+        if (file == null) return;
+
+        importStatusLabel.setVisible(false);
+        if (file.length() > MAX_IMPORT_BYTES) {
+            showBackupStatus(importStatusLabel, lm.get("settings.data.import.error.size"), false);
+            return;
+        }
+
+        Alert confirm = new Alert(Alert.AlertType.CONFIRMATION);
+        confirm.setTitle(lm.get("settings.data.import.title"));
+        confirm.setHeaderText(lm.get("settings.data.import.confirm.header"));
+        confirm.setContentText(lm.get("settings.data.import.confirm.content"));
+
+        ((Button) confirm.getDialogPane().lookupButton(ButtonType.OK))
+                .setText(lm.get("common.confirm"));
+        ((Button) confirm.getDialogPane().lookupButton(ButtonType.CANCEL))
+                .setText(lm.get("common.cancel"));
+
+        confirm.showAndWait().ifPresent(r -> {
+            if (r == ButtonType.OK) importDataAsync(file);
+        });
+    }
+
+    /**
+     * Envía el archivo al backend en un hilo secundario y gestiona la respuesta.
+     *
+     * @param file archivo JSON elegido
+     */
+    private void importDataAsync(File file) {
+        importButton.setDisable(true);
+        Thread thread = new Thread(() -> {
+            try {
+                HttpResponse<String> response;
+                try {
+                    response = AppContext.getInstance()
+                            .getApiService()
+                            .postFile("/api/data/import", file.toPath(), "application/json");
+                } catch (IOException e) {
+                    // Si el backend sigue respondiendo, cortó el envío al rechazar el archivo
+                    // (p. ej. tras un 413 a mitad de lectura): es un error del archivo, no de conexión
+                    log.error("Error al enviar el archivo de importación: {}", e.getMessage());
+                    String key = isBackendReachable()
+                            ? "settings.data.import.error.generic"
+                            : "settings.connection.error";
+                    Platform.runLater(() -> {
+                        importButton.setDisable(false);
+                        showBackupStatus(importStatusLabel, lm.get(key), false);
+                    });
+                    return;
+                }
+                int status = response.statusCode();
+
+                if (status == 200) {
+                    JsonNode json = objectMapper.readTree(response.body());
+                    String message = MessageFormat.format(lm.get("settings.data.import.done"),
+                            json.path("projects").asInt(), json.path("tasks").asInt(),
+                            json.path("workLogs").asInt(), json.path("dependencies").asInt());
+                    Platform.runLater(() -> {
+                        importButton.setDisable(false);
+                        showBackupStatus(importStatusLabel, message, true);
+                        if (onDataImported != null) onDataImported.run();
+                    });
+                } else if (status == 400) {
+                    String detail = objectMapper.readTree(response.body()).path("error").asText("");
+                    String message = detail.isBlank()
+                            ? lm.get("settings.data.import.error.generic")
+                            : MessageFormat.format(lm.get("settings.data.import.error"), detail);
+                    Platform.runLater(() -> {
+                        importButton.setDisable(false);
+                        showBackupStatus(importStatusLabel, message, false);
+                    });
+                } else {
+                    String key = status == 413
+                            ? "settings.data.import.error.size"
+                            : "settings.data.import.error.generic";
+                    Platform.runLater(() -> {
+                        importButton.setDisable(false);
+                        showBackupStatus(importStatusLabel, lm.get(key), false);
+                    });
+                }
+            } catch (Exception e) {
+                log.error("Error al importar los datos: {}", e.getMessage());
+                Platform.runLater(() -> {
+                    importButton.setDisable(false);
+                    showBackupStatus(importStatusLabel, lm.get("settings.connection.error"), false);
+                });
+            }
+        }, "settings-import-data");
+        thread.setDaemon(true);
+        thread.start();
+    }
+
+    /**
      * Aplica el idioma seleccionado, lo persiste localmente y recarga
      * la vista de ajustes tras una breve pausa para que el mensaje sea visible.
      */
@@ -749,6 +933,10 @@ public class SettingsController {
                     getClass().getResource("/com/taskmaster/taskmasterfrontend/settings-view.fxml"),
                     lm.getBundle());
             VBox newView = loader.load();
+            // La vista recargada conserva el refresco tras importar datos
+            if (loader.getController() instanceof SettingsController sc) {
+                sc.setOnDataImported(onDataImported);
+            }
             HBox.setHgrow(newView, Priority.ALWAYS);
             newView.setUserData("settings");
 
