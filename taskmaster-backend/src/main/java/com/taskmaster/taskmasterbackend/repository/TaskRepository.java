@@ -305,4 +305,30 @@ public interface TaskRepository extends JpaRepository<Task, Long> {
         deleteInvalidDependencies();
         deleteOrphanWorkLogs();
     }
+
+    // -------------------------------------------------------------------------
+    // Exportación de datos por cuenta (FUN-2)
+    // -------------------------------------------------------------------------
+
+    /**
+     * Devuelve todas las tareas y subtareas activas (no borradas) de un usuario.
+     *
+     * @param userId identificador del usuario
+     * @return tareas activas del usuario, sin ningún orden concreto
+     */
+    List<Task> findByUserIdAndDeletedFalse(Long userId);
+
+    /**
+     * Devuelve las dependencias entre tareas de un usuario como pares
+     * {@code [id de la tarea, id de la tarea de la que depende]}.
+     *
+     * <p>Filtra el dueño de las <b>dos</b> puntas: {@code task_dependencies} no tiene claves
+     * foráneas efectivas (ROB-3) y una fila que cruzara usuarios filtraría datos ajenos (SEG-8).</p>
+     *
+     * @param userId identificador del usuario
+     * @return pares {@code [taskId, dependsOnTaskId]}
+     */
+    @Query("SELECT t.id, d.id FROM Task t JOIN t.dependencies d " +
+           "WHERE t.user.id = :userId AND d.user.id = :userId")
+    List<Object[]> findDependencyPairsByUserId(@Param("userId") Long userId);
 }
