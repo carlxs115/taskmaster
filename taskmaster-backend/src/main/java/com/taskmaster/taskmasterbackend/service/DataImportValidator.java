@@ -62,7 +62,13 @@ public class DataImportValidator {
     /** Máximo de caracteres de una referencia local. */
     static final int MAX_REF = 64;
 
-    private static final BigDecimal MAX_DURATION = new BigDecimal("9999.99");
+    /**
+     * Tope de la duración estimada: de cordura y holgado, porque la API y la interfaz solo exigen
+     * que sea al menos 0,1 y no fijan máximo.
+     */
+    private static final BigDecimal MAX_DURATION = new BigDecimal("1000000");
+    /** Máximo de decimales de duraciones y horas: la API y la interfaz no limitan la escala. */
+    private static final int MAX_SCALE = 6;
     private static final BigDecimal MIN_HOURS = new BigDecimal("0.1");
     private static final BigDecimal MAX_HOURS = new BigDecimal("24");
 
@@ -414,14 +420,14 @@ public class DataImportValidator {
             return;
         }
         if (duration.signum() <= 0 || duration.compareTo(MAX_DURATION) > 0) {
-            throw fail(path, "debe ser mayor que 0 y como máximo 9999,99");
+            throw fail(path, "debe ser mayor que 0 y como máximo 1000000");
         }
         checkScale(duration, path);
     }
 
     private static void checkScale(BigDecimal value, String path) {
-        if (value.stripTrailingZeros().scale() > 2) {
-            throw fail(path, "admite como máximo 2 decimales");
+        if (value.stripTrailingZeros().scale() > MAX_SCALE) {
+            throw fail(path, "admite como máximo " + MAX_SCALE + " decimales");
         }
     }
 

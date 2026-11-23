@@ -222,6 +222,32 @@ class DataTransferServiceTest {
     }
 
     @Test
+    void idaYVueltaConservaDuracionesYHorasFueraDelRangoAntiguo() {
+        Task grande = task("TareaGrande", usuarioA, null, null, TaskCategory.PERSONAL);
+        grande.setEstimatedDuration(new BigDecimal("12345"));
+        em.persist(grande);
+        Task decimal = task("TareaDecimal", usuarioA, null, null, TaskCategory.PERSONAL);
+        decimal.setEstimatedDuration(new BigDecimal("1.125"));
+        em.persist(decimal);
+        em.persist(workLog(decimal, "2026-11-22", "1.125", "tres decimales"));
+        em.flush();
+        em.clear();
+
+        User vacio = em.persist(user("usuario-vacio-decimales"));
+        em.flush();
+        service.importJson(vacio.getId(), new ByteArrayInputStream(service.exportJson(usuarioA.getId())));
+        em.flush();
+        em.clear();
+
+        List<Task> copias = taskRepository.findByUserIdAndDeletedFalse(vacio.getId());
+        assertThat(tarea(copias, "TareaGrande").getEstimatedDuration()).isEqualByComparingTo("12345");
+        Task copiaDecimal = tarea(copias, "TareaDecimal");
+        assertThat(copiaDecimal.getEstimatedDuration()).isEqualByComparingTo("1.125");
+        assertThat(workLogRepository.findByTaskId(copiaDecimal.getId())).singleElement()
+                .satisfies(r -> assertThat(r.getHours()).isEqualByComparingTo("1.125"));
+    }
+
+    @Test
     void importarEnUnaCuentaVaciaReproduceLaExportacionExacta() throws IOException {
         User vacio = em.persist(user("usuario-vacio"));
         em.flush();

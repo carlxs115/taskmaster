@@ -176,10 +176,12 @@ class DataImportValidatorTest {
     void rechazaHorasFueraDeRangoOConDemasiadosDecimales() {
         rechaza(tareaConRegistro(registro("2026-11-20", "0")), "workLogs[0].hours");
         rechaza(tareaConRegistro(registro("2026-11-20", "25")), "workLogs[0].hours");
-        rechaza(tareaConRegistro(registro("2026-11-20", "1.234")), "workLogs[0].hours");
+        rechaza(tareaConRegistro(registro("2026-11-20", "1.1234567")), "workLogs[0].hours");
         assertThatCode(() -> aceptar(validator, tareaConRegistro(registro("2026-11-20", "24"))))
                 .doesNotThrowAnyException();
         assertThatCode(() -> aceptar(validator, tareaConRegistro(registro("2026-11-20", "0.1"))))
+                .doesNotThrowAnyException();
+        assertThatCode(() -> aceptar(validator, tareaConRegistro(registro("2026-11-20", "1.125"))))
                 .doesNotThrowAnyException();
     }
 
@@ -196,8 +198,20 @@ class DataImportValidatorTest {
                 "projects[0].estimatedDuration");
         rechaza(conProyecto("\"name\":\"P\",\"category\":\"TRABAJO\",\"tasks\":[{\"title\":\"A\","
                 + "\"estimatedDuration\":0}]"), "projects[0].tasks[0].estimatedDuration");
-        rechaza(conProyecto("\"name\":\"P\",\"category\":\"TRABAJO\",\"estimatedDuration\":10000"),
+        rechaza(conProyecto("\"name\":\"P\",\"category\":\"TRABAJO\",\"estimatedDuration\":1000000.01"),
                 "projects[0].estimatedDuration");
+        rechaza(conProyecto("\"name\":\"P\",\"category\":\"TRABAJO\",\"estimatedDuration\":1.1234567"),
+                "projects[0].estimatedDuration");
+        rechaza(conProyecto("\"name\":\"P\",\"category\":\"TRABAJO\",\"tasks\":[{\"title\":\"A\","
+                + "\"estimatedDuration\":1000000.01}]"), "projects[0].tasks[0].estimatedDuration");
+    }
+
+    @Test
+    void aceptaDuracionesGrandesOConVariosDecimales() {
+        assertThatCode(() -> aceptar(validator, conProyecto("\"name\":\"P\",\"category\":\"TRABAJO\","
+                + "\"estimatedDuration\":12345,\"tasks\":[{\"title\":\"A\",\"estimatedDuration\":1.125},"
+                + "{\"title\":\"B\",\"estimatedDuration\":1000000}]")))
+                .doesNotThrowAnyException();
     }
 
     @Test
