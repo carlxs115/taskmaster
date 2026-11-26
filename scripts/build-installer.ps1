@@ -6,9 +6,9 @@
     Encadena el empaquetado de ambos módulos con el Maven Wrapper, genera un
     runtime reducido con jlink y crea el instalador con jpackage (WiX 3.x).
 
-    Requisitos: Windows 10 o superior, JDK 21 (java, jlink y jpackage en el PATH
-    o JAVA_HOME definido) y, para -Tipo exe, WiX Toolset 3.x (candle.exe y
-    light.exe en el PATH).
+    Requisitos: Windows 10 o superior, JDK 21 (java, jlink y jpackage en el
+    PATH; JAVA_HOME, si está definido, solo se usa para localizar jmods) y, para
+    -Tipo exe, WiX Toolset 3.x (candle.exe y light.exe en el PATH).
 
     Todo lo temporal queda en taskmaster-frontend\target\installer, que el
     script puede borrar y recrear. Nunca borra nada fuera de esa carpeta.
@@ -107,7 +107,7 @@ Comprobar-Comando 'java' 'Instala un JDK 21 y añade su carpeta bin al PATH.'
 Comprobar-Comando 'jlink' 'Hace falta un JDK 21 completo, no solo un JRE.'
 Comprobar-Comando 'jpackage' 'Hace falta un JDK 21 completo, no solo un JRE.'
 
-$versionJdk = (& jlink --version | Select-Object -First 1)
+$versionJdk = @(& jlink --version)[0]
 Comprobar-Salida 'jlink --version'
 if ($versionJdk -notmatch '^(\d+)') {
     Fallar "No se reconoce la versión del JDK: $versionJdk"
