@@ -133,11 +133,11 @@ Al arrancar la aplicación, el backend se lanza automáticamente como proceso hi
 
 #### Generar el instalador de Windows
 
-El instalador se construye con `scripts/build-installer.ps1`, que reproduce el `.exe` publicado en GitHub Releases.
+El instalador se construye con `scripts/build-installer.ps1`, que genera un instalador equivalente al `.exe` publicado en GitHub Releases.
 
 Requisitos, en una máquina Windows 10 o superior:
 
-- JDK 21 completo (`java`, `jlink` y `jpackage` en el `PATH`, o `JAVA_HOME` apuntando a él).
+- JDK 21 completo, con `java`, `jlink` y `jpackage` en el `PATH`. Si `JAVA_HOME` está definido, debe apuntar a ese mismo JDK: el script lo usa para localizar `jmods`.
 - [WiX Toolset 3.x](https://wixtoolset.org/docs/wix3/) con `candle.exe` y `light.exe` en el `PATH`. JDK 21 no admite WiX 4 ni 5.
 
 Desde PowerShell, en la raíz del repositorio:
@@ -164,7 +164,7 @@ El script:
 El resultado queda en `taskmaster-frontend\target\installer\dist\TaskMaster-<versión>.exe`. El instalador final se sube a mano a GitHub Releases.
 
 > [!NOTE]
-> El script no se ha podido ejecutar todavía en Windows: el encadenado jar, runtime e imagen y el arranque del backend con ese runtime se han comprobado en Linux con `-Tipo app-image`, pero el análisis del propio script y `jpackage --type exe` con WiX siguen sin verificar.
+> El script no se ha podido ejecutar todavía en Windows: el encadenado jar, runtime e imagen y el arranque del backend con ese runtime se han comprobado en Linux con comandos equivalentes y `jpackage --type app-image`, pero el análisis del propio script y `jpackage --type exe` con WiX siguen sin verificar.
 
 ### Linux — Scripts
 
