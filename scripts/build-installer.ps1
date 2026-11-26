@@ -45,6 +45,11 @@ $ErrorActionPreference = 'Stop'
 # construcción sea reproducible.
 $DependencyPlugin = 'org.apache.maven.plugins:maven-dependency-plugin:3.8.1'
 
+# UpgradeCode del MSI. Es el que jpackage derivó para la v1.0.0 (publicada con
+# --vendor Carlos): se fija para que cada versión nueva actualice la instalada
+# en lugar de instalarse al lado, aunque cambie --vendor. No debe cambiar nunca.
+$UpgradeUuid = 'AA391B20-AFDB-34D7-9C63-09E0933D5A2D'
+
 # Módulos del runtime. Salen de jdeps sobre el backend (Spring Boot, Hibernate y
 # SQLite se ejecutan con el mismo runtime que el frontend, porque MainApp lanza
 # el backend con su propio java.home) más el module-info del frontend y
@@ -234,7 +239,7 @@ $argumentos = @(
     '--copyright', '2026 Carlos Riera Molina'
 )
 if ($Tipo -eq 'exe') {
-    $argumentos += @('--win-menu', '--win-shortcut', '--win-dir-chooser')
+    $argumentos += @('--win-menu', '--win-shortcut', '--win-dir-chooser', '--win-upgrade-uuid', $UpgradeUuid)
 }
 & jpackage @argumentos
 Comprobar-Salida 'jpackage'
