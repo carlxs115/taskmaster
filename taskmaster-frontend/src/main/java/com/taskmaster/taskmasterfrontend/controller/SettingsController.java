@@ -11,8 +11,13 @@ import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Cursor;
 import javafx.scene.Node;
+import javafx.scene.control.Alert;
+import javafx.scene.control.Button;
+import javafx.scene.control.ButtonBar;
+import javafx.scene.control.ButtonType;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.Label;
+import javafx.scene.control.PasswordField;
 import javafx.scene.control.RadioButton;
 import javafx.scene.layout.FlowPane;
 import javafx.scene.layout.HBox;
@@ -20,11 +25,21 @@ import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Circle;
+import javafx.stage.FileChooser;
+import javafx.stage.Window;
 import javafx.util.Duration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.File;
+import java.io.IOException;
+import java.net.URLEncoder;
 import java.net.http.HttpResponse;
+import java.nio.charset.StandardCharsets;
+import java.text.MessageFormat;
+import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Locale;
 
 /**
@@ -66,6 +81,31 @@ public class SettingsController {
     @FXML private FlowPane themesContainer;
     @FXML private Label themeStatusLabel;
 
+    // ── Copia de seguridad ──
+    @FXML private Button createBackupButton;
+    @FXML private Button restoreBackupButton;
+    @FXML private Label backupStatusLabel;
+    @FXML private Label restoreStatusLabel;
+    @FXML private Label backupUnavailableLabel;
+    @FXML private VBox restorePendingBox;
+    @FXML private VBox restoreFailedBox;
+
+    // ── Exportar e importar datos ──
+    @FXML private Button exportJsonButton;
+    @FXML private Button exportCsvButton;
+    @FXML private Button importButton;
+    @FXML private Label exportStatusLabel;
+    @FXML private Label importStatusLabel;
+
+    /** Tamaño máximo de una copia aceptado por el backend (256 MB). */
+    private static final long MAX_BACKUP_BYTES = 256L * 1024 * 1024;
+
+    /** Tamaño máximo de un archivo de importación aceptado por el backend (32 MB). */
+    private static final long MAX_IMPORT_BYTES = 32L * 1024 * 1024;
+
+    /** Se ejecuta tras una importación correcta para refrescar proyectos y tareas. */
+    private Runnable onDataImported;
+
     private final ObjectMapper objectMapper = new ObjectMapper();
     private final LanguageManager lm = LanguageManager.getInstance();
 
@@ -102,6 +142,7 @@ public class SettingsController {
     @FXML
     public void initialize() {
         loadSettings();
+        loadBackupStatus();
 
         // Preseleccionamos el idioma activo
         if (lm.isSpanish()) langEs.setSelected(true);
@@ -119,6 +160,10 @@ public class SettingsController {
             languageStatusLabel.setVisible(false);
             retentionStatusLabel.setVisible(false);
             timeFormatStatusLabel.setVisible(false);
+            backupStatusLabel.setVisible(false);
+            restoreStatusLabel.setVisible(false);
+            exportStatusLabel.setVisible(false);
+            importStatusLabel.setVisible(false);
         });
 
         // Combo de formato de fecha
@@ -389,6 +434,471 @@ public class SettingsController {
         thread.start();
     }
 
+    // -------------------------------------------------------------------------
+    // Copia de seguridad
+    // -------------------------------------------------------------------------
+
+    /**
+     * Consulta al backend si la copia de seguridad está disponible, si hay una
+     * restauración pendiente y si la última falló, y actualiza botones y avisos.
+     *
+     * <p>Se llama desde el hilo de JavaFX: oculta antes los mensajes de estado de las
+     * operaciones anteriores (p. ej. «Copia guardada») para que no queden a la vista.</p>
+     */
+    private void loadBackupStatus() {
+        backupStatusLabel.setVisible(false);
+        restoreStatusLabel.setVisible(false);
+        Thread thread = new Thread(() -> {
+            try {
+                HttpResponse<String> response = AppContext.getInstance()
+                        .getApiService()
+                        .get("/api/backup/status");
+                if (response.statusCode() != 200) return;
+                JsonNode json = objectMapper.readTree(response.body());
+                boolean available = json.path("available").asBoolean(false);
+                boolean pending = json.path("restorePending").asBoolean(false);
+                boolean failed = json.path("lastRestoreFailed").asBoolean(false);
+                Platform.runLater(() -> {
+                    createBackupButton.setDisable(!available);
+                    restoreBackupButton.setDisable(!available);
+                    setShown(backupUnavailableLabel, !available);
+                    setShown(restorePendingBox, pending);
+                    setShown(restoreFailedBox, failed);
+                });
+            } catch (Exception e) {
+                log.error("Error al cargar el estado de la copia de seguridad: {}", e.getMessage());
+            }
+        }, "settings-backup-status");
+        thread.setDaemon(true);
+        thread.start();
+    }
+
+    /** Muestra u oculta un nodo sin que reserve espacio cuando está oculto. */
+    private void setShown(Node node, boolean shown) {
+        node.setVisible(shown);
+        node.setManaged(shown);
+    }
+
+    /**
+     * Muestra un mensaje de estado en la etiqueta indicada.
+     *
+     * @param label   etiqueta de estado
+     * @param text    texto ya traducido
+     * @param success {@code true} para el color de éxito, {@code false} para el de error
+     */
+    private void showBackupStatus(Label label, String text, boolean success) {
+        label.setText(text);
+        label.setStyle("-fx-text-fill: " + (success ? "#2ecc71" : "#e74c3c") + ";");
+        label.setVisible(true);
+    }
+
+    /** Ventana propietaria de los diálogos de esta vista. */
+    private Window ownerWindow() {
+        return backupStatusLabel.getScene() != null ? backupStatusLabel.getScene().getWindow() : null;
+    }
+
+    /**
+     * Pide al usuario dónde guardar la copia y la descarga del backend.
+     */
+    @FXML
+    private void handleCreateBackup() {
+        FileChooser chooser = new FileChooser();
+        chooser.setTitle(lm.get("settings.backup.chooser.save"));
+        chooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("ZIP (*.zip)", "*.zip"));
+        chooser.setInitialFileName("taskmaster-copia-" + LocalDate.now() + ".zip");
+        File file = chooser.showSaveDialog(ownerWindow());
+        if (file == null) return;
+
+        createBackupButton.setDisable(true);
+        backupStatusLabel.setVisible(false);
+        Thread thread = new Thread(() -> {
+            boolean ok;
+            try {
+                AppContext.getInstance().getApiService().downloadToFile("/api/backup", file.toPath());
+                ok = true;
+            } catch (Exception e) {
+                log.error("Error al crear la copia de seguridad: {}", e.getMessage());
+                ok = false;
+            }
+            boolean success = ok;
+            Platform.runLater(() -> {
+                createBackupButton.setDisable(false);
+                showBackupStatus(backupStatusLabel,
+                        lm.get(success ? "settings.backup.create.done" : "settings.backup.create.error"),
+                        success);
+            });
+        }, "settings-create-backup");
+        thread.setDaemon(true);
+        thread.start();
+    }
+
+    /**
+     * Elige una copia, pide la contraseña y una segunda confirmación y la envía
+     * al backend, que la valida y la deja pendiente hasta el próximo arranque.
+     */
+    @FXML
+    private void handleRestoreBackup() {
+        FileChooser chooser = new FileChooser();
+        chooser.setTitle(lm.get("settings.backup.chooser.open"));
+        chooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("ZIP (*.zip)", "*.zip"));
+        File file = chooser.showOpenDialog(ownerWindow());
+        if (file == null) return;
+
+        restoreStatusLabel.setVisible(false);
+        if (file.length() > MAX_BACKUP_BYTES) {
+            showBackupStatus(restoreStatusLabel, lm.get("settings.backup.restore.error.size"), false);
+            return;
+        }
+
+        PasswordField pf = new PasswordField();
+        pf.setPromptText(lm.get("common.password.prompt"));
+
+        Label warningLabel = new Label(lm.get("settings.backup.restore.warning"));
+        warningLabel.setWrapText(true);
+        warningLabel.setStyle("-fx-font-weight: bold; -fx-text-fill: #e74c3c;");
+
+        VBox content = new VBox(8, warningLabel, pf);
+
+        Alert dialog = new Alert(Alert.AlertType.CONFIRMATION);
+        dialog.setTitle(lm.get("settings.backup.restore.title"));
+        dialog.setHeaderText(null);
+        dialog.getDialogPane().setContent(content);
+        Platform.runLater(pf::requestFocus);
+
+        ((Button) dialog.getDialogPane().lookupButton(ButtonType.OK))
+                .setText(lm.get("common.confirm"));
+        ((Button) dialog.getDialogPane().lookupButton(ButtonType.CANCEL))
+                .setText(lm.get("common.cancel"));
+
+        dialog.showAndWait().ifPresent(result -> {
+            if (result != ButtonType.OK) return;
+
+            String password = pf.getText();
+            if (password.isBlank()) {
+                showBackupStatus(restoreStatusLabel, lm.get("settings.backup.password.empty"), false);
+                return;
+            }
+
+            // Segunda confirmación antes de una operación que sustituye todos los datos
+            Alert confirm = new Alert(Alert.AlertType.CONFIRMATION);
+            confirm.setTitle(lm.get("settings.backup.restore.title"));
+            confirm.setHeaderText(lm.get("settings.backup.restore.confirm.header"));
+            confirm.setContentText(lm.get("settings.backup.restore.confirm.content"));
+
+            ((Button) confirm.getDialogPane().lookupButton(ButtonType.OK))
+                    .setText(lm.get("common.confirm"));
+            ((Button) confirm.getDialogPane().lookupButton(ButtonType.CANCEL))
+                    .setText(lm.get("common.cancel"));
+
+            confirm.showAndWait().ifPresent(r -> {
+                if (r == ButtonType.OK) restoreBackupAsync(password, file);
+            });
+        });
+    }
+
+    /**
+     * Envía la copia al backend en un hilo secundario y gestiona la respuesta.
+     *
+     * @param password contraseña confirmada por el usuario
+     * @param file     copia elegida
+     */
+    private void restoreBackupAsync(String password, File file) {
+        restoreBackupButton.setDisable(true);
+        Thread thread = new Thread(() -> {
+            try {
+                String encodedPassword = URLEncoder.encode(password, StandardCharsets.UTF_8);
+                HttpResponse<String> response;
+                try {
+                    response = AppContext.getInstance()
+                            .getApiService()
+                            .postFile("/api/backup/restore?password=" + encodedPassword,
+                                    file.toPath(), "application/zip");
+                } catch (IOException e) {
+                    // Si el backend sigue respondiendo, cortó el envío al rechazar la copia
+                    // (p. ej. tras un 413 a mitad de lectura): es un error de la copia, no de conexión
+                    log.error("Error al enviar la copia de seguridad: {}", e.getMessage());
+                    String key = isBackendReachable()
+                            ? "settings.backup.restore.error"
+                            : "settings.connection.error";
+                    Platform.runLater(() -> {
+                        restoreBackupButton.setDisable(false);
+                        showBackupStatus(restoreStatusLabel, lm.get(key), false);
+                    });
+                    return;
+                }
+                int status = response.statusCode();
+
+                if (status == 202) {
+                    List<String> usernames = new ArrayList<>();
+                    for (JsonNode name : objectMapper.readTree(response.body()).path("usernames")) {
+                        usernames.add(name.asText());
+                    }
+                    Platform.runLater(() -> {
+                        restoreBackupButton.setDisable(false);
+                        showRestoreReadyDialog(usernames);
+                    });
+                } else {
+                    String key = status == 413
+                            ? "settings.backup.restore.error.size"
+                            : "settings.backup.restore.error";
+                    Platform.runLater(() -> {
+                        restoreBackupButton.setDisable(false);
+                        showBackupStatus(restoreStatusLabel, lm.get(key), false);
+                    });
+                }
+            } catch (Exception e) {
+                log.error("Error al preparar la restauración: {}", e.getMessage());
+                Platform.runLater(() -> {
+                    restoreBackupButton.setDisable(false);
+                    showBackupStatus(restoreStatusLabel, lm.get("settings.connection.error"), false);
+                });
+            }
+        }, "settings-restore-backup");
+        thread.setDaemon(true);
+        thread.start();
+    }
+
+    /**
+     * Comprueba si el backend responde, con {@code /api/auth/ping} (no requiere sesión).
+     *
+     * @return {@code true} si el backend contesta con cualquier código HTTP
+     */
+    private boolean isBackendReachable() {
+        try {
+            AppContext.getInstance().getApiService().get("/api/auth/ping");
+            return true;
+        } catch (Exception e) {
+            return false;
+        }
+    }
+
+    /**
+     * Informa de que la restauración queda preparada y ofrece cerrar TaskMaster
+     * para aplicarla en el siguiente arranque.
+     *
+     * @param usernames cuentas que contiene la copia
+     */
+    private void showRestoreReadyDialog(List<String> usernames) {
+        ButtonType closeButton = new ButtonType(lm.get("settings.backup.restore.close"),
+                ButtonBar.ButtonData.OK_DONE);
+        ButtonType laterButton = new ButtonType(lm.get("settings.backup.restore.later"),
+                ButtonBar.ButtonData.CANCEL_CLOSE);
+
+        Alert dialog = new Alert(Alert.AlertType.INFORMATION,
+                MessageFormat.format(lm.get("settings.backup.restore.ready.content"),
+                        String.join(", ", usernames)),
+                closeButton, laterButton);
+        dialog.setTitle(lm.get("settings.backup.restore.ready.title"));
+        dialog.setHeaderText(lm.get("settings.backup.restore.ready.title"));
+
+        boolean close = dialog.showAndWait().filter(b -> b == closeButton).isPresent();
+        if (close) {
+            // Platform.exit() acaba llamando a MainApp.stop(), que también para el backend
+            Platform.exit();
+        } else {
+            loadBackupStatus();
+        }
+    }
+
+    /**
+     * Cancela la restauración pendiente en el backend (y descarta el aviso de una
+     * restauración fallida) y recarga el estado.
+     */
+    @FXML
+    private void handleCancelRestore() {
+        Thread thread = new Thread(() -> {
+            boolean ok;
+            try {
+                HttpResponse<String> response = AppContext.getInstance()
+                        .getApiService()
+                        .delete("/api/backup/restore");
+                ok = response.statusCode() == 204 || response.statusCode() == 200;
+            } catch (Exception e) {
+                log.error("Error al cancelar la restauración: {}", e.getMessage());
+                ok = false;
+            }
+            boolean success = ok;
+            Platform.runLater(() -> {
+                // Recargar oculta los mensajes de estado; el error, si lo hay, se muestra después
+                loadBackupStatus();
+                if (!success) {
+                    showBackupStatus(restoreStatusLabel, lm.get("settings.connection.error"), false);
+                }
+            });
+        }, "settings-cancel-restore");
+        thread.setDaemon(true);
+        thread.start();
+    }
+
+    /**
+     * Registra la acción que refresca la barra lateral y las tareas tras importar datos.
+     *
+     * @param onDataImported acción a ejecutar en el hilo de JavaFX
+     */
+    public void setOnDataImported(Runnable onDataImported) {
+        this.onDataImported = onDataImported;
+    }
+
+    /** Pide dónde guardar la exportación en JSON y la descarga del backend. */
+    @FXML
+    private void handleExportJson() {
+        exportData("/api/data/export/json", "settings.data.chooser.json",
+                "JSON (*.json)", "*.json", "taskmaster-datos-" + LocalDate.now() + ".json");
+    }
+
+    /** Pide dónde guardar la exportación en CSV (en el idioma de la interfaz) y la descarga. */
+    @FXML
+    private void handleExportCsv() {
+        exportData("/api/data/export/csv?lang=" + (lm.isSpanish() ? "es" : "en"),
+                "settings.data.chooser.csv", "CSV (*.csv)", "*.csv",
+                "taskmaster-tareas-" + LocalDate.now() + ".csv");
+    }
+
+    /**
+     * Elige el destino y descarga una exportación en un hilo secundario.
+     *
+     * @param path        ruta de la API que genera el archivo
+     * @param titleKey    clave del título del selector de archivos
+     * @param filterName  descripción del filtro de extensión
+     * @param filterGlob  patrón del filtro de extensión
+     * @param initialName nombre de archivo propuesto
+     */
+    private void exportData(String path, String titleKey, String filterName, String filterGlob,
+                            String initialName) {
+        FileChooser chooser = new FileChooser();
+        chooser.setTitle(lm.get(titleKey));
+        chooser.getExtensionFilters().add(new FileChooser.ExtensionFilter(filterName, filterGlob));
+        chooser.setInitialFileName(initialName);
+        File file = chooser.showSaveDialog(ownerWindow());
+        if (file == null) return;
+
+        exportJsonButton.setDisable(true);
+        exportCsvButton.setDisable(true);
+        exportStatusLabel.setVisible(false);
+        Thread thread = new Thread(() -> {
+            boolean ok;
+            try {
+                AppContext.getInstance().getApiService().downloadToFile(path, file.toPath());
+                ok = true;
+            } catch (Exception e) {
+                log.error("Error al exportar los datos: {}", e.getMessage());
+                ok = false;
+            }
+            boolean success = ok;
+            Platform.runLater(() -> {
+                exportJsonButton.setDisable(false);
+                exportCsvButton.setDisable(false);
+                showBackupStatus(exportStatusLabel,
+                        lm.get(success ? "settings.data.export.done" : "settings.data.export.error"),
+                        success);
+            });
+        }, "settings-export-data");
+        thread.setDaemon(true);
+        thread.start();
+    }
+
+    /**
+     * Elige un archivo JSON exportado, pide confirmación y lo envía al backend,
+     * que lo valida entero y lo añade como datos nuevos de la cuenta.
+     */
+    @FXML
+    private void handleImport() {
+        FileChooser chooser = new FileChooser();
+        chooser.setTitle(lm.get("settings.data.chooser.import"));
+        chooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("JSON (*.json)", "*.json"));
+        File file = chooser.showOpenDialog(ownerWindow());
+        if (file == null) return;
+
+        importStatusLabel.setVisible(false);
+        if (file.length() > MAX_IMPORT_BYTES) {
+            showBackupStatus(importStatusLabel, lm.get("settings.data.import.error.size"), false);
+            return;
+        }
+
+        Alert confirm = new Alert(Alert.AlertType.CONFIRMATION);
+        confirm.setTitle(lm.get("settings.data.import.title"));
+        confirm.setHeaderText(lm.get("settings.data.import.confirm.header"));
+        confirm.setContentText(lm.get("settings.data.import.confirm.content"));
+
+        ((Button) confirm.getDialogPane().lookupButton(ButtonType.OK))
+                .setText(lm.get("common.confirm"));
+        ((Button) confirm.getDialogPane().lookupButton(ButtonType.CANCEL))
+                .setText(lm.get("common.cancel"));
+
+        confirm.showAndWait().ifPresent(r -> {
+            if (r == ButtonType.OK) importDataAsync(file);
+        });
+    }
+
+    /**
+     * Envía el archivo al backend en un hilo secundario y gestiona la respuesta.
+     *
+     * @param file archivo JSON elegido
+     */
+    private void importDataAsync(File file) {
+        importButton.setDisable(true);
+        Thread thread = new Thread(() -> {
+            try {
+                HttpResponse<String> response;
+                try {
+                    response = AppContext.getInstance()
+                            .getApiService()
+                            .postFile("/api/data/import", file.toPath(), "application/json");
+                } catch (IOException e) {
+                    // Si el backend sigue respondiendo, cortó el envío al rechazar el archivo
+                    // (p. ej. tras un 413 a mitad de lectura): es un error del archivo, no de conexión
+                    log.error("Error al enviar el archivo de importación: {}", e.getMessage());
+                    String key = isBackendReachable()
+                            ? "settings.data.import.error.generic"
+                            : "settings.connection.error";
+                    Platform.runLater(() -> {
+                        importButton.setDisable(false);
+                        showBackupStatus(importStatusLabel, lm.get(key), false);
+                    });
+                    return;
+                }
+                int status = response.statusCode();
+
+                if (status == 200) {
+                    JsonNode json = objectMapper.readTree(response.body());
+                    String message = MessageFormat.format(lm.get("settings.data.import.done"),
+                            json.path("projects").asInt(), json.path("tasks").asInt(),
+                            json.path("workLogs").asInt(), json.path("dependencies").asInt());
+                    Platform.runLater(() -> {
+                        importButton.setDisable(false);
+                        showBackupStatus(importStatusLabel, message, true);
+                        if (onDataImported != null) onDataImported.run();
+                    });
+                } else if (status == 400) {
+                    String detail = objectMapper.readTree(response.body()).path("error").asText("");
+                    String message = detail.isBlank()
+                            ? lm.get("settings.data.import.error.generic")
+                            : MessageFormat.format(lm.get("settings.data.import.error"), detail);
+                    Platform.runLater(() -> {
+                        importButton.setDisable(false);
+                        showBackupStatus(importStatusLabel, message, false);
+                    });
+                } else {
+                    String key = status == 413
+                            ? "settings.data.import.error.size"
+                            : "settings.data.import.error.generic";
+                    Platform.runLater(() -> {
+                        importButton.setDisable(false);
+                        showBackupStatus(importStatusLabel, lm.get(key), false);
+                    });
+                }
+            } catch (Exception e) {
+                log.error("Error al importar los datos: {}", e.getMessage());
+                Platform.runLater(() -> {
+                    importButton.setDisable(false);
+                    showBackupStatus(importStatusLabel, lm.get("settings.connection.error"), false);
+                });
+            }
+        }, "settings-import-data");
+        thread.setDaemon(true);
+        thread.start();
+    }
+
     /**
      * Aplica el idioma seleccionado, lo persiste localmente y recarga
      * la vista de ajustes tras una breve pausa para que el mensaje sea visible.
@@ -423,6 +933,10 @@ public class SettingsController {
                     getClass().getResource("/com/taskmaster/taskmasterfrontend/settings-view.fxml"),
                     lm.getBundle());
             VBox newView = loader.load();
+            // La vista recargada conserva el refresco tras importar datos
+            if (loader.getController() instanceof SettingsController sc) {
+                sc.setOnDataImported(onDataImported);
+            }
             HBox.setHgrow(newView, Priority.ALWAYS);
             newView.setUserData("settings");
 

@@ -119,6 +119,83 @@
                         styleClass="btn-confirm-accent"/>
                 <Label fx:id="retentionStatusLabel" styleClass="profile-rate-value" visible="false"/>
             </VBox>
+
+            <!-- COPIA DE SEGURIDAD -->
+            <HBox alignment="CENTER_LEFT" spacing="8">
+                <FontIcon iconLiteral="fas-database" styleClass="settings-section-icon"/>
+                <Label text="%settings.section.backup" styleClass="settings-section-label"/>
+            </HBox>
+            <Label fx:id="backupUnavailableLabel" text="%settings.backup.unavailable"
+                   styleClass="stat-card-label" wrapText="true" visible="false" managed="false"/>
+            <VBox fx:id="restorePendingBox" spacing="10" styleClass="card" visible="false" managed="false">
+                <Label text="%settings.backup.restore.pending" styleClass="profile-section-title"
+                       wrapText="true"/>
+                <Button text="%settings.backup.restore.cancel" onAction="#handleCancelRestore"
+                        styleClass="btn-danger"/>
+            </VBox>
+            <!-- Aviso de una restauración que no se pudo aplicar; «Cerrar» lo descarta en el backend -->
+            <VBox fx:id="restoreFailedBox" spacing="10" styleClass="card" visible="false" managed="false">
+                <Label text="%settings.backup.restore.failed" styleClass="profile-section-title"
+                       wrapText="true"/>
+                <Button text="%common.close" onAction="#handleCancelRestore" styleClass="btn-confirm-accent"/>
+            </VBox>
+            <VBox spacing="12" styleClass="card">
+                <HBox alignment="CENTER_LEFT" spacing="8">
+                    <FontIcon iconLiteral="fas-download" styleClass="settings-card-icon"/>
+                    <Label text="%settings.backup.create.title" styleClass="profile-section-title"/>
+                </HBox>
+                <Label text="%settings.backup.create.description" styleClass="stat-card-label"
+                       wrapText="true"/>
+                <Button fx:id="createBackupButton" text="%settings.backup.create.button"
+                        onAction="#handleCreateBackup" styleClass="btn-confirm-accent"/>
+                <Label fx:id="backupStatusLabel" styleClass="profile-rate-value" visible="false"/>
+            </VBox>
+            <VBox spacing="12" styleClass="card">
+                <HBox alignment="CENTER_LEFT" spacing="8">
+                    <FontIcon iconLiteral="fas-upload" styleClass="settings-card-icon"/>
+                    <Label text="%settings.backup.restore.title" styleClass="profile-section-title"/>
+                </HBox>
+                <Label text="%settings.backup.restore.description" styleClass="stat-card-label"
+                       wrapText="true"/>
+                <Label text="%settings.backup.restore.warning" styleClass="stat-card-label"
+                       style="-fx-text-fill: #e74c3c; -fx-font-weight: bold;" wrapText="true"/>
+                <Button fx:id="restoreBackupButton" text="%settings.backup.restore.button"
+                        onAction="#handleRestoreBackup" styleClass="btn-danger"/>
+                <Label fx:id="restoreStatusLabel" styleClass="profile-rate-value" visible="false"/>
+            </VBox>
+
+            <!-- EXPORTAR E IMPORTAR DATOS -->
+            <HBox alignment="CENTER_LEFT" spacing="8">
+                <FontIcon iconLiteral="fas-exchange-alt" styleClass="settings-section-icon"/>
+                <Label text="%settings.section.data" styleClass="settings-section-label"/>
+            </HBox>
+            <VBox spacing="12" styleClass="card">
+                <HBox alignment="CENTER_LEFT" spacing="8">
+                    <FontIcon iconLiteral="fas-file-export" styleClass="settings-card-icon"/>
+                    <Label text="%settings.data.export.title" styleClass="profile-section-title"/>
+                </HBox>
+                <Label text="%settings.data.export.description" styleClass="stat-card-label"
+                       wrapText="true"/>
+                <HBox spacing="12" alignment="CENTER_LEFT">
+                    <Button fx:id="exportJsonButton" text="%settings.data.export.json"
+                            onAction="#handleExportJson" styleClass="btn-confirm-accent"/>
+                    <Button fx:id="exportCsvButton" text="%settings.data.export.csv"
+                            onAction="#handleExportCsv" styleClass="btn-confirm-accent"/>
+                </HBox>
+                <Label fx:id="exportStatusLabel" styleClass="profile-rate-value" visible="false"/>
+            </VBox>
+            <VBox spacing="12" styleClass="card">
+                <HBox alignment="CENTER_LEFT" spacing="8">
+                    <FontIcon iconLiteral="fas-file-import" styleClass="settings-card-icon"/>
+                    <Label text="%settings.data.import.title" styleClass="profile-section-title"/>
+                </HBox>
+                <Label text="%settings.data.import.description" styleClass="stat-card-label"
+                       wrapText="true"/>
+                <Button fx:id="importButton" text="%settings.data.import.button"
+                        onAction="#handleImport" styleClass="btn-confirm-accent"/>
+                <Label fx:id="importStatusLabel" styleClass="profile-rate-value" wrapText="true"
+                       visible="false"/>
+            </VBox>
         </VBox>
     </ScrollPane>
 </VBox>

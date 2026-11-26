@@ -6,10 +6,14 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.ByteArrayOutputStream;
+import java.io.InputStream;
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
 import java.util.Base64;
 
 /**
@@ -274,6 +278,65 @@ public class ApiService {
         }
 
         return response.body();
+    }
+
+    /**
+     * Descarga con autenticación un recurso binario directamente a un fichero,
+     * sin cargarlo entero en memoria. El contenido se escribe primero en un
+     * temporal junto al destino y solo se mueve a él si la descarga termina
+     * bien, de modo que nunca queda un fichero a medias.
+     *
+     * @param endpoint ruta del endpoint
+     * @param target   fichero de destino (se sobrescribe si existe)
+     * @throws Exception si el servidor responde con un código distinto de 200
+     *                   o si se produce un error de red o de escritura
+     */
+    public void downloadToFile(String endpoint, Path target) throws Exception {
+        HttpRequest request = HttpRequest.newBuilder()
+                .uri(URI.create(BASE_URL + endpoint))
+                .header("Authorization", getAuthHeader())
+                .GET()
+                .build();
+        HttpResponse<InputStream> response =
+                httpClient.send(request, HttpResponse.BodyHandlers.ofInputStream());
+
+        try (InputStream body = response.body()) {
+            if (response.statusCode() != 200) {
+                // SEGURIDAD: no incluimos el endpoint en el mensaje de error
+                log.error("Error HTTP {} al descargar a fichero", response.statusCode());
+                throw new RuntimeException("Error HTTP " + response.statusCode());
+            }
+
+            Path absolute = target.toAbsolutePath();
+            Path temp = Files.createTempFile(absolute.getParent(), "taskmaster-descarga-", ".tmp");
+            try {
+                Files.copy(body, temp, StandardCopyOption.REPLACE_EXISTING);
+                Files.move(temp, absolute, StandardCopyOption.REPLACE_EXISTING);
+            } finally {
+                Files.deleteIfExists(temp);
+            }
+        }
+    }
+
+    /**
+     * Envía una petición POST con autenticación y el contenido de un fichero
+     * como cuerpo en bruto (sin multipart).
+     *
+     * @param endpoint    ruta del endpoint
+     * @param file        fichero cuyo contenido se envía como cuerpo
+     * @param contentType tipo MIME del cuerpo (p.ej. {@code "application/zip"})
+     * @return respuesta HTTP del servidor
+     * @throws Exception si se produce un error de red o de lectura del fichero
+     */
+    public HttpResponse<String> postFile(String endpoint, Path file, String contentType) throws Exception {
+        HttpRequest request = HttpRequest.newBuilder()
+                .uri(URI.create(BASE_URL + endpoint))
+                .header("Authorization", getAuthHeader())
+                .header("Content-Type", contentType)
+                .POST(HttpRequest.BodyPublishers.ofFile(file))
+                .build();
+
+        return httpClient.send(request, HttpResponse.BodyHandlers.ofString());
     }
 
     /**
