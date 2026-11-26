@@ -102,6 +102,9 @@ taskmaster/
 │           ├── help/            # Manual de usuario HTML autocontenido
 │           └── images/          # Iconos de la aplicación (multi-resolución)
 │
+├── scripts/
+│   └── build-installer.ps1      # Construye el instalador de Windows (jlink + jpackage + WiX)
+│
 ├── install.sh                   # Instalador de Java 21 para Linux (detecta gestor de paquetes)
 └── start.sh                     # Script de arranque Linux (compila el backend y abre la app)
 ```
@@ -115,6 +118,7 @@ La comunicación entre frontend y backend se realiza mediante API REST interna s
 | Windows (instalador) | Windows 10 o superior — sin requisitos adicionales |
 | Linux (scripts) | Java 21 se instala automáticamente con `install.sh` |
 | Desde el código fuente | JDK 21+ (Maven se incluye mediante `mvnw`) |
+| Generar el instalador de Windows | Windows 10 o superior, JDK 21 y WiX Toolset 3.x en el `PATH` |
 
 > [!NOTE]
 > La base de datos SQLite se crea automáticamente en el primer arranque. No se requiere instalar ni configurar ningún motor de base de datos.
@@ -126,6 +130,41 @@ La comunicación entre frontend y backend se realiza mediante API REST interna s
 Descarga `TaskMaster-1.0.0.exe` desde [GitHub Releases](https://github.com/carlxs115/taskmaster/releases/tag/v1.0.0) e instálalo normalmente. El instalador incluye un JRE personalizado (jlink + jpackage + WiX), no requiere tener Java instalado en el sistema.
 
 Al arrancar la aplicación, el backend se lanza automáticamente como proceso hijo y se cierra al salir.
+
+#### Generar el instalador de Windows
+
+El instalador se construye con `scripts/build-installer.ps1`, que reproduce el `.exe` publicado en GitHub Releases.
+
+Requisitos, en una máquina Windows 10 o superior:
+
+- JDK 21 completo (`java`, `jlink` y `jpackage` en el `PATH`, o `JAVA_HOME` apuntando a él).
+- [WiX Toolset 3.x](https://wixtoolset.org/docs/wix3/) con `candle.exe` y `light.exe` en el `PATH`. JDK 21 no admite WiX 4 ni 5.
+
+Desde PowerShell, en la raíz del repositorio:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File scripts\build-installer.ps1
+```
+
+Parámetros opcionales:
+
+| Parámetro | Por defecto | Descripción |
+|---|---|---|
+| `-Version` | `1.0.0` | Versión del instalador; da nombre a `TaskMaster-<versión>.exe` |
+| `-Tipo` | `exe` | `exe` genera el instalador; `app-image` genera solo la carpeta de la aplicación, sin necesitar WiX |
+| `-Salida` | `taskmaster-frontend\target\installer\dist` | Carpeta de destino |
+
+El script:
+
+- empaqueta el backend y el frontend con el Maven Wrapper (`mvnw.cmd`, sin ejecutar los tests);
+- copia las dependencias del frontend, con las bibliotecas de JavaFX para Windows;
+- genera con `jlink` un runtime que incluye también los módulos que necesita el backend, porque el frontend lo lanza con su mismo Java;
+- crea con `jpackage` el instalador, con el JAR del backend junto al del frontend.
+
+El resultado queda en `taskmaster-frontend\target\installer\dist\TaskMaster-<versión>.exe`. El instalador final se sube a mano a GitHub Releases.
+
+> [!NOTE]
+> El script no se ha podido ejecutar todavía en Windows: el encadenado jar, runtime e imagen y el arranque del backend con ese runtime se han comprobado en Linux con `-Tipo app-image`, pero el análisis del propio script y `jpackage --type exe` con WiX siguen sin verificar.
 
 ### Linux — Scripts
 
