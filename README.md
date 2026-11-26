@@ -127,7 +127,7 @@ La comunicación entre frontend y backend se realiza mediante API REST interna s
 
 ### Windows — Instalador
 
-Descarga `TaskMaster-1.0.0.exe` desde [GitHub Releases](https://github.com/carlxs115/taskmaster/releases/tag/v1.0.0) e instálalo normalmente. El instalador incluye un JRE personalizado (jlink + jpackage + WiX), no requiere tener Java instalado en el sistema.
+Descarga `TaskMaster-<versión>.exe` de la [última versión en GitHub Releases](https://github.com/carlxs115/taskmaster/releases/latest) e instálalo normalmente. El instalador incluye un JRE personalizado (jlink + jpackage + WiX), no requiere tener Java instalado en el sistema. Si ya tienes instalada una versión anterior, el instalador la actualiza y conserva tus datos.
 
 Al arrancar la aplicación, el backend se lanza automáticamente como proceso hijo y se cierra al salir.
 
@@ -150,7 +150,7 @@ Parámetros opcionales:
 
 | Parámetro | Por defecto | Descripción |
 |---|---|---|
-| `-Version` | `1.0.0` | Versión del instalador; da nombre a `TaskMaster-<versión>.exe` |
+| `-Version` | `1.1.0` | Versión del instalador; da nombre a `TaskMaster-<versión>.exe` |
 | `-Tipo` | `exe` | `exe` genera el instalador; `app-image` genera solo la carpeta de la aplicación, sin necesitar WiX |
 | `-Salida` | `taskmaster-frontend\target\installer\dist` | Carpeta de destino |
 
@@ -159,12 +159,22 @@ El script:
 - empaqueta el backend y el frontend con el Maven Wrapper (`mvnw.cmd`, sin ejecutar los tests);
 - copia las dependencias del frontend, con las bibliotecas de JavaFX para Windows;
 - genera con `jlink` un runtime que incluye también los módulos que necesita el backend, porque el frontend lo lanza con su mismo Java;
-- crea con `jpackage` el instalador, con el JAR del backend junto al del frontend.
+- crea con `jpackage` el instalador, con el JAR del backend junto al del frontend y un UpgradeCode fijo, para que cada versión actualice la anterior en lugar de instalarse a su lado.
 
-El resultado queda en `taskmaster-frontend\target\installer\dist\TaskMaster-<versión>.exe`. El instalador final se sube a mano a GitHub Releases.
+El resultado queda en `taskmaster-frontend\target\installer\dist\TaskMaster-<versión>.exe`.
 
-> [!NOTE]
-> El script no se ha podido ejecutar todavía en Windows: el encadenado jar, runtime e imagen y el arranque del backend con ese runtime se han comprobado en Linux con comandos equivalentes y `jpackage --type app-image`, pero el análisis del propio script y `jpackage --type exe` con WiX siguen sin verificar.
+#### Publicar una versión
+
+El workflow [`instalador-windows.yml`](.github/workflows/instalador-windows.yml) ejecuta el script en un runner de Windows de GitHub Actions, así que no hace falta tener Windows a mano:
+
+1. Cambia `about.version` en `messages_es.properties` y `messages_en.properties` y el valor por defecto de `-Version` en el script.
+2. Escribe las notas de la versión en `.github/release-notes/v<versión>.md`.
+3. Con esos cambios en `main`, crea y sube el tag: `git tag v<versión> && git push origin v<versión>`.
+4. El workflow genera el `.exe` y su SHA-256 y crea con ellos un **borrador** de release. Revísalo en GitHub y publícalo.
+
+Para probar el instalador sin publicar nada, lanza el workflow a mano desde *Actions → Instalador de Windows → Run workflow* con la versión. El `.exe` queda como artefacto del workflow durante 14 días.
+
+El workflow falla si el tag no tiene la forma `vX.Y.Z`, si `about.version` no coincide con la versión o si faltan las notas.
 
 ### Linux — Scripts
 
