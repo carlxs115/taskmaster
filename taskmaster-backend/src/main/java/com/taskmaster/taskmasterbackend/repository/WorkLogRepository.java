@@ -54,4 +54,13 @@ public interface WorkLogRepository extends JpaRepository<WorkLog, Long> {
      * @param userId identificador del usuario propietario de las tareas
      */
     void deleteByTaskUserId(Long userId);
+
+    /**
+     * Devuelve todos los registros de trabajo de las tareas de un usuario.
+     * {@code WorkLog} no guarda dueño: se llega a él por el de su tarea.
+     *
+     * @param userId identificador del usuario propietario de las tareas
+     * @return registros de trabajo del usuario, sin ningún orden concreto
+     */
+    List<WorkLog> findByTaskUserId(Long userId);
 }

@@ -52,6 +52,7 @@ para planes de pago. TaskMaster parte de un planteamiento diferente.
 - **14 temas visuales** — Modo claro, oscuro y variantes de color.
 - **Internacionalización** — Interfaz disponible en español e inglés.
 - **Manual de usuario integrado** — Documentación HTML accesible directamente desde la aplicación.
+- **Exportación e importación de datos** — Exporta tus proyectos y tareas en JSON (para volver a importarlos en cualquier cuenta, sin borrar nada) o en CSV (para hojas de cálculo).
 
 ## Stack tecnológico
 
@@ -191,7 +192,6 @@ La documentación se genera en `target/site/apidocs/` dentro de cada módulo.
 
 Las siguientes funcionalidades están identificadas como líneas de trabajo futuro:
 
-- [ ] **Exportación e importación de datos** (JSON / CSV) para copias de seguridad y migración.
 - [ ] **Estimación de tiempo** por tarea, complementando el WorkLog existente.
 - [ ] **Dependencias entre tareas** para gestión de proyectos más avanzada.
 - [ ] **Autenticación JWT** en sustitución de HTTP Basic para mejorar la seguridad de sesión.
