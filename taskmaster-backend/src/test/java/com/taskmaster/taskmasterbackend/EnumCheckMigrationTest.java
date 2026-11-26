@@ -168,6 +168,21 @@ class EnumCheckMigrationTest {
     }
 
     @Test
+    void siFallaTrasBorrarLaTablaDeshaceElBorrado() throws SQLException {
+        createActivityLogV100();
+        // La vista hace fallar el RENAME, que va después del DROP de la tabla original
+        execute(insertLog(1, "LOGIN"), insertLog(2, "LOGOUT"),
+                "create view activity_log_view as select * from activity_log");
+        List<String> before = schema();
+
+        assertThatCode(() -> migration.migrate()).doesNotThrowAnyException();
+
+        assertThat(schema()).isEqualTo(before);
+        assertThat(query("SELECT id || ':' || action_type FROM activity_log ORDER BY id"))
+                .containsExactly("1:LOGIN", "2:LOGOUT");
+    }
+
+    @Test
     void registraTodosLosCamposEnumerated() throws ClassNotFoundException {
         ClassPathScanningCandidateComponentProvider scanner = new ClassPathScanningCandidateComponentProvider(false);
         scanner.addIncludeFilter(new AnnotationTypeFilter(Entity.class));

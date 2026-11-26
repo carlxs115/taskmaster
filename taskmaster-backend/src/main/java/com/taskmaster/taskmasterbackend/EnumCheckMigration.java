@@ -149,6 +149,7 @@ public class EnumCheckMigration {
     private void rebuild(Connection connection, String table, String newCreateSql) throws SQLException {
         String newTable = table + NEW_TABLE_SUFFIX;
         boolean autoCommit = connection.getAutoCommit();
+        boolean committed = false;
         connection.setAutoCommit(false);
         try (Statement st = connection.createStatement()) {
             List<String> indexes = indexSql(connection, table);
@@ -168,10 +169,13 @@ public class EnumCheckMigration {
                 st.executeUpdate(index);
             }
             connection.commit();
-        } catch (SQLException | RuntimeException e) {
-            connection.rollback();
-            throw e;
+            committed = true;
         } finally {
+            // Ante cualquier fallo (también un Error) se deshace antes de restaurar el autocommit,
+            // que con sqlite-jdbc confirmaría una reconstrucción a medias
+            if (!committed) {
+                connection.rollback();
+            }
             connection.setAutoCommit(autoCommit);
         }
     }
