@@ -1,0 +1,154 @@
+# Genera el instalador de Windows (TaskMaster-<versión>.exe) con
+# scripts/build-installer.ps1 en un runner de Windows.
+#
+# - Al subir un tag vX.Y.Z: construye el .exe y crea un borrador de release con
+#   el .exe, su SHA-256 y las notas de .github/release-notes/vX.Y.Z.md. El borrador se
+#   revisa y se publica a mano desde GitHub.
+# - A mano (Actions > Instalador de Windows > Run workflow): construye el .exe
+#   de la versión indicada y lo deja solo como artefacto del workflow, sin
+#   release. Sirve para probar el instalador antes de etiquetar.
+# - En los PR que tocan el script o este workflow: construye el .exe de la
+#   versión de about.version y lo deja como artefacto, sin release.
+name: Instalador de Windows
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+  pull_request:
+    paths:
+      - 'scripts/build-installer.ps1'
+      - '.github/workflows/instalador-windows.yml'
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Versión X.Y.Z (debe coincidir con about.version)'
+        required: true
+
+permissions:
+  contents: write
+
+concurrency:
+  group: instalador-windows-${{ github.ref }}
+  cancel-in-progress: false
+
+env:
+  # WiX Toolset 3.14.1: JDK 21 solo admite WiX 3.x y windows-latest no lo trae.
+  WIX_URL: https://github.com/wixtoolset/wix3/releases/download/wix3141rtm/wix314-binaries.zip
+  WIX_SHA256: 6ac824e1642d6f7277d0ed7ea09411a508f6116ba6fae0aa5f2c7daa2ff43d31
+
+jobs:
+  instalador:
+    runs-on: windows-latest
+    timeout-minutes: 45
+    steps:
+      - name: Descargar el código
+        uses: actions/checkout@v7
+
+      - name: Comprobar la versión
+        id: version
+        shell: pwsh
+        env:
+          VERSION_MANUAL: ${{ inputs.version }}
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $i18n = 'taskmaster-frontend/src/main/resources/com/taskmaster/taskmasterfrontend/i18n'
+          $i18nEs = "$i18n/messages_es.properties"
+          if ($env:GITHUB_REF_TYPE -eq 'tag') {
+              $version = $env:GITHUB_REF_NAME -replace '^v', ''
+          }
+          elseif ($env:GITHUB_EVENT_NAME -eq 'workflow_dispatch') {
+              $version = $env:VERSION_MANUAL
+          }
+          else {
+              # PR: la versión que muestra la ventana Acerca de.
+              $linea = Select-String -LiteralPath $i18nEs -Pattern '^about\.version=.* (\S+)$' | Select-Object -First 1
+              if (-not $linea) { throw "No se encuentra about.version en $i18nEs" }
+              $version = $linea.Matches[0].Groups[1].Value
+          }
+          # WiX solo acepta versiones numéricas.
+          if ($version -notmatch '^\d+\.\d+\.\d+$') {
+              throw "Versión no válida: '$version' (se espera X.Y.Z)."
+          }
+          # La ventana Acerca de debe mostrar la misma versión que el instalador.
+          foreach ($fichero in @($i18nEs, "$i18n/messages_en.properties")) {
+              $linea = Select-String -LiteralPath $fichero -Pattern '^about\.version=' | Select-Object -First 1
+              if (-not $linea -or $linea.Line -notmatch (' ' + [regex]::Escape($version) + '$')) {
+                  throw "about.version de $fichero no es $version. Actualízalo antes de etiquetar."
+              }
+          }
+          if ($env:GITHUB_REF_TYPE -eq 'tag') {
+              $notas = ".github/release-notes/v$version.md"
+              if (-not (Test-Path -LiteralPath $notas)) {
+                  throw "Faltan las notas de la versión: $notas"
+              }
+              "notas=$notas" >> $env:GITHUB_OUTPUT
+          }
+          "version=$version" >> $env:GITHUB_OUTPUT
+
+      - name: Instalar JDK 21
+        uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: '21'
+          cache: maven
+
+      - name: Instalar WiX Toolset 3.14.1
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $zip = Join-Path $env:RUNNER_TEMP 'wix314-binaries.zip'
+          $destino = Join-Path $env:RUNNER_TEMP 'wix'
+          Invoke-WebRequest -Uri $env:WIX_URL -OutFile $zip
+          $hash = (Get-FileHash -LiteralPath $zip -Algorithm SHA256).Hash
+          if ($hash -ne $env:WIX_SHA256) {
+              throw "SHA-256 de WiX inesperado: $hash"
+          }
+          Expand-Archive -LiteralPath $zip -DestinationPath $destino
+          $destino >> $env:GITHUB_PATH
+
+      - name: Generar el instalador
+        shell: pwsh
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          powershell -NoProfile -ExecutionPolicy Bypass -File scripts\build-installer.ps1 -Version $env:VERSION
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+      - name: Calcular el SHA-256
+        id: exe
+        shell: pwsh
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $exe = "taskmaster-frontend\target\installer\dist\TaskMaster-$env:VERSION.exe"
+          $hash = (Get-FileHash -LiteralPath $exe -Algorithm SHA256).Hash.ToLower()
+          $sha = "$exe.sha256"
+          # Formato de sha256sum: «<hash>  <fichero>».
+          [System.IO.File]::WriteAllText($sha, "$hash  TaskMaster-$env:VERSION.exe`n")
+          "exe=$exe" >> $env:GITHUB_OUTPUT
+          "sha=$sha" >> $env:GITHUB_OUTPUT
+
+      - name: Guardar el instalador como artefacto
+        uses: actions/upload-artifact@v7
+        with:
+          name: TaskMaster-${{ steps.version.outputs.version }}
+          path: |
+            ${{ steps.exe.outputs.exe }}
+            ${{ steps.exe.outputs.sha }}
+          if-no-files-found: error
+          retention-days: 14
+
+      - name: Crear el borrador de la release
+        if: github.ref_type == 'tag'
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VERSION: ${{ steps.version.outputs.version }}
+          NOTAS: ${{ steps.version.outputs.notas }}
+          EXE: ${{ steps.exe.outputs.exe }}
+          SHA: ${{ steps.exe.outputs.sha }}
+        run: |
+          gh release create $env:GITHUB_REF_NAME $env:EXE $env:SHA --draft --verify-tag --title "TaskMaster v$env:VERSION" --notes-file $env:NOTAS
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
