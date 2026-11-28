@@ -42,10 +42,11 @@ import java.util.regex.Pattern;
  * borrado de la antigua, renombrado y recreación de sus índices.</p>
  *
  * <p>Se ejecuta en {@code @PostConstruct}: inyectar el {@link EntityManagerFactory} garantiza
- * que el {@code ddl-auto=update} ya ha terminado, y el servidor web aún no acepta peticiones
+ * que Flyway (V1 en una BD nueva o <i>baseline</i> en una anterior, ROB-3) y el
+ * {@code ddl-auto=update} ya han terminado, y el servidor web aún no acepta peticiones
  * (arranca cuando todos los singletons existen). Un fallo se registra y no impide el arranque.</p>
  *
- * <p>Si algún día el esquema tiene claves foráneas reales (ROB-3), la reconstrucción tendrá que
+ * <p>Si una migración de Flyway añade claves foráneas reales, la reconstrucción tendrá que
  * desactivarlas antes ({@code PRAGMA foreign_keys=OFF}, fuera de la transacción).</p>
  *
  * @author Carlos
