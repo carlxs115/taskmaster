@@ -109,21 +109,6 @@ public class UserController {
     }
 
     /**
-     * GET /api/users/{id}/avatar
-     * Devuelve la foto de perfil de cualquier usuario por su identificador.
-     * Requiere autenticación pero no necesariamente ser el propio usuario,
-     * ya que los avatares son datos no sensibles (solo imagen de perfil).
-     *
-     * @param id identificador del usuario cuyo avatar se quiere obtener
-     * @return 200 OK con la imagen, o 404 si el usuario no tiene avatar
-     * @throws IOException si ocurre un error al leer el fichero del disco
-     */
-    @GetMapping("/{id}/avatar")
-    public ResponseEntity<byte[]> getUserAvatar(@PathVariable Long id) throws IOException {
-        return buildAvatarResponse(id);
-    }
-
-    /**
      * DELETE /api/users/me/avatar
      * Elimina la foto de perfil del usuario autenticado del disco y de la base de datos.
      * El frontend volverá a mostrar las iniciales del usuario como placeholder.
