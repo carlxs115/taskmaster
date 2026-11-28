@@ -130,6 +130,9 @@ public class MainController {
     /** Referencia al controlador de papelera para poder refrescarlo tras operaciones. */
     private TrashController trashController;
 
+    /** Controlador del perfil mientras está visible; {@code null} en cualquier otro caso. */
+    private ProfileController profileController;
+
     private final ObjectMapper objectMapper = new ObjectMapper()
             .registerModule(new JavaTimeModule());
 
@@ -280,6 +283,7 @@ public class MainController {
             });
 
             swapMainAreaWith(profileView);
+            profileController = controller;
         } catch (IOException e) {
             showAlert("error.open.profile");
         }
@@ -1784,6 +1788,7 @@ public class MainController {
      * del {@link HBox} central del BorderPane raíz.
      */
     private void clearOverlays() {
+        profileController = null;
         getCenterHBox().getChildren().removeIf(IS_OVERLAY);
     }
 
@@ -2022,7 +2027,7 @@ public class MainController {
             );
             VBox root = loader.load();
             NewProjectController controller = loader.getController();
-            controller.setOnProjectCreated(() -> { loadProjects(); reloadTasks(); });
+            controller.setOnProjectCreated(() -> { loadProjects(); reloadTasks(); refreshProfile(); });
             showAsDialog(root, lm.get("new.project.title"));
         } catch (IOException e) {
             showAlert("error.open.dialog");
@@ -2051,7 +2056,7 @@ public class MainController {
                 controller.setPreSelectedCategory(selectedCategory);
             }
 
-            controller.setOnTaskCreated(this::reloadTasks);
+            controller.setOnTaskCreated(() -> { reloadTasks(); refreshProfile(); });
             showAsDialog(root, lm.get("new.task.title"));
         } catch (IOException e) {
             showAlert("error.open.dialog");
@@ -2132,6 +2137,7 @@ public class MainController {
                             loadProjects();
                             reloadTasks();
                             if (trashController != null) trashController.refresh();
+                            refreshProfile();
                         } else {
                             showAlert("error.delete.project");
                         }
@@ -2263,6 +2269,13 @@ public class MainController {
     // -------------------------------------------------------------------------
     // Helpers de navegación
     // -------------------------------------------------------------------------
+
+    /**
+     * Refresca estadísticas y registro del perfil si está visible.
+     */
+    private void refreshProfile() {
+        if (profileController != null) profileController.refresh();
+    }
 
     /**
      * Recarga la vista activa (proyecto, categoría, todas las tareas o home) según el estado de navegación actual.
