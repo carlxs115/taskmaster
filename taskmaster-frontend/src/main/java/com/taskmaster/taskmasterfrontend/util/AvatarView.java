@@ -87,18 +87,21 @@ public class AvatarView extends StackPane {
     }
 
     /**
-     * Carga el avatar del usuario indicado.
+     * Carga el avatar del usuario autenticado, siempre con {@code /api/users/me/avatar}:
+     * el backend no sirve el avatar de otros usuarios.
      *
      * <p>Si {@code hasAvatar} es {@code false} o {@code userId} es {@code null},
      * muestra el fallback de iniciales directamente sin realizar ninguna
      * petición HTTP. En caso contrario, descarga la imagen en un hilo
-     * secundario y actualiza el componente al recibirla.</p>
+     * secundario y actualiza el componente al recibirla. El {@code userId} no
+     * forma parte de la petición: solo sirve para no pedir nada sin sesión y para
+     * el nombre del hilo y el log.</p>
      *
-     * @param userId    identificador del usuario
+     * @param userId    identificador del usuario autenticado
      * @param username  nombre de usuario, usado para el fallback de iniciales
      * @param hasAvatar {@code true} si el usuario tiene una foto subida
      */
-    public void loadForUser(Long userId, String username, boolean hasAvatar) {
+    private void loadForUser(Long userId, String username, boolean hasAvatar) {
         // Pintamos el fallback de inmediato para tener algo visible mientras carga
         renderFallback(username);
 
@@ -110,7 +113,7 @@ public class AvatarView extends StackPane {
         Thread avatarThread = new Thread(() -> {
             try {
                 ApiService api = AppContext.getInstance().getApiService();
-                byte[] bytes = api.getBytes("/api/users/" + userId + "/avatar");
+                byte[] bytes = api.getBytes("/api/users/me/avatar");
 
                 if (bytes != null && bytes.length > 0) {
                     Image image = new Image(new ByteArrayInputStream(bytes));
