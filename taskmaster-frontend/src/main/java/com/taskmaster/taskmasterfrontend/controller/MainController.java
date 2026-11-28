@@ -2027,7 +2027,7 @@ public class MainController {
             );
             VBox root = loader.load();
             NewProjectController controller = loader.getController();
-            controller.setOnProjectCreated(() -> { loadProjects(); reloadTasks(); refreshProfile(); });
+            controller.setOnProjectCreated(() -> { loadProjects(); reloadTasks(); });
             showAsDialog(root, lm.get("new.project.title"));
         } catch (IOException e) {
             showAlert("error.open.dialog");
@@ -2056,7 +2056,7 @@ public class MainController {
                 controller.setPreSelectedCategory(selectedCategory);
             }
 
-            controller.setOnTaskCreated(() -> { reloadTasks(); refreshProfile(); });
+            controller.setOnTaskCreated(this::reloadTasks);
             showAsDialog(root, lm.get("new.task.title"));
         } catch (IOException e) {
             showAlert("error.open.dialog");
