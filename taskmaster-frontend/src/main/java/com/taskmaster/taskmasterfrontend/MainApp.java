@@ -3,8 +3,10 @@ package com.taskmaster.taskmasterfrontend;
 import com.taskmaster.taskmasterfrontend.util.LanguageManager;
 import com.taskmaster.taskmasterfrontend.util.ThemeManager;
 import javafx.application.Application;
+import javafx.application.Platform;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Scene;
+import javafx.scene.control.Alert;
 import javafx.scene.image.Image;
 import javafx.stage.Stage;
 import org.slf4j.Logger;
@@ -13,11 +15,15 @@ import org.slf4j.LoggerFactory;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.InetAddress;
+import java.net.InetSocketAddress;
+import java.net.ServerSocket;
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.nio.file.Path;
+import java.text.MessageFormat;
 import java.time.Duration;
 import java.util.Locale;
 
@@ -26,11 +32,14 @@ import java.util.Locale;
  *
  * <p>Punto de entrada de la aplicación JavaFX. Se encarga de:</p>
  * <ul>
- *   <li>Arrancar el proceso del backend Spring Boot antes de mostrar la UI</li>
+ *   <li>Comprobar que el puerto del backend está libre y, si lo está, arrancar el
+ *       proceso del backend Spring Boot antes de mostrar la UI</li>
+ *   <li>Reutilizar el backend de TaskMaster que ya escuche en ese puerto, o avisar
+ *       y salir si lo ocupa otro programa</li>
  *   <li>Esperar a que el backend esté listo para aceptar peticiones</li>
  *   <li>Inicializar la ventana principal ({@link Stage})</li>
  *   <li>Cargar la vista de login y aplicar el tema y el idioma iniciales</li>
- *   <li>Detener el proceso del backend al cerrar la aplicación</li>
+ *   <li>Detener el proceso del backend al cerrar la aplicación (solo si lo lanzó ella)</li>
  * </ul>
  *
  * @author Carlos
@@ -54,8 +63,21 @@ public class MainApp extends Application {
     /** Segundos máximos que esperamos a que el backend arranque. */
     private static final int BACKEND_TIMEOUT_SECONDS = 30;
 
-    /** Proceso del backend lanzado al iniciar la app. */
+    /** Quién atiende el puerto del backend al arrancar la app. */
+    private enum BackendState {
+        /** El puerto estaba libre y la app lanzó su propio backend. */
+        OWN_PROCESS,
+        /** El puerto lo ocupaba ya un backend de TaskMaster y se reutiliza. */
+        EXTERNAL_TASKMASTER,
+        /** El puerto lo ocupa otro programa: la app no arranca. */
+        PORT_BUSY
+    }
+
+    /** Proceso del backend lanzado al iniciar la app (nulo si no se lanzó ninguno). */
     private Process backendProcess;
+
+    /** Resultado de la comprobación del puerto; lo escribe {@code init()} y lo lee {@code start()}. */
+    private volatile BackendState backendState = BackendState.OWN_PROCESS;
 
     // -------------------------------------------------------------------------
     // Ciclo de vida de JavaFX
@@ -64,8 +86,10 @@ public class MainApp extends Application {
     /**
      * Se ejecuta antes de {@link #start(Stage)}, en el hilo de inicialización de JavaFX.
      *
-     * <p>Arranca el proceso del backend y espera a que esté listo antes de
-     * mostrar la interfaz de usuario.</p>
+     * <p>Comprueba el puerto del backend. Si está libre, arranca el proceso del
+     * backend y espera a que esté listo. Si lo ocupa un backend de TaskMaster
+     * (el ping responde 200), lo reutiliza sin lanzar nada. Si lo ocupa otro
+     * programa, no lanza nada y deja que {@link #start(Stage)} avise al usuario.</p>
      *
      * @throws Exception si el backend no puede iniciarse o no responde a tiempo
      */
@@ -89,29 +113,44 @@ public class MainApp extends Application {
             }
             pw.flush();
 
-            try {
-                pw.println("Llamando a startBackend()...");
-                pw.flush();
-                startBackend();
-                pw.println("Backend iniciado OK, PID: " + backendProcess.pid());
-                pw.flush();
-            } catch (Exception e) {
-                pw.println("ERROR startBackend: " + e.getClass().getName() + ": " + e.getMessage());
-                e.printStackTrace(pw);
-                pw.flush();
-                throw e;
-            }
+            if (isPortFree()) {
+                backendState = BackendState.OWN_PROCESS;
+                try {
+                    pw.println("Llamando a startBackend()...");
+                    pw.flush();
+                    startBackend();
+                    pw.println("Backend iniciado OK, PID: " + backendProcess.pid());
+                    pw.flush();
+                } catch (Exception e) {
+                    pw.println("ERROR startBackend: " + e.getClass().getName() + ": " + e.getMessage());
+                    e.printStackTrace(pw);
+                    pw.flush();
+                    throw e;
+                }
 
-            try {
-                pw.println("Esperando al backend...");
+                try {
+                    pw.println("Esperando al backend...");
+                    pw.flush();
+                    waitForBackend();
+                    pw.println("Backend listo");
+                    pw.flush();
+                } catch (Exception e) {
+                    pw.println("ERROR waitForBackend: " + e.getMessage());
+                    pw.flush();
+                    throw e;
+                }
+            } else if (isTaskMasterRunning()) {
+                backendState = BackendState.EXTERNAL_TASKMASTER;
+                log.info("Puerto {} ocupado por un backend de TaskMaster: se reutiliza", BACKEND_PORT);
+                pw.println("Puerto " + BACKEND_PORT
+                        + " ocupado por un backend de TaskMaster: se reutiliza, no se lanza hijo");
                 pw.flush();
-                waitForBackend();
-                pw.println("Backend listo");
+            } else {
+                backendState = BackendState.PORT_BUSY;
+                log.warn("Puerto {} ocupado por otro programa: no se lanza el backend", BACKEND_PORT);
+                pw.println("Puerto " + BACKEND_PORT
+                        + " ocupado por otro programa: no se lanza el backend");
                 pw.flush();
-            } catch (Exception e) {
-                pw.println("ERROR waitForBackend: " + e.getMessage());
-                pw.flush();
-                throw e;
             }
         }
     }
@@ -128,6 +167,12 @@ public class MainApp extends Application {
      */
     @Override
     public void start(Stage stage) throws IOException {
+        if (backendState == BackendState.PORT_BUSY) {
+            showPortBusyAlert();
+            Platform.exit();
+            return;
+        }
+
         FXMLLoader fxmlLoader = new FXMLLoader(
                 MainApp.class.getResource("/com/taskmaster/taskmasterfrontend/login-view.fxml"),
                 LanguageManager.getInstance().getBundle()
@@ -158,12 +203,13 @@ public class MainApp extends Application {
     /**
      * Se ejecuta al cerrar la aplicación.
      *
-     * <p>Detiene el proceso del backend si sigue en ejecución, liberando
-     * el puerto 8080 y los recursos asociados.</p>
+     * <p>Detiene el proceso del backend si lo lanzó esta instancia y sigue en
+     * ejecución, liberando el puerto 8080 y los recursos asociados.</p>
      *
      */
     @Override
     public void stop() {
+        // Con EXTERNAL_TASKMASTER o PORT_BUSY backendProcess es nulo: no se mata nada ajeno
         if (backendProcess != null && backendProcess.isAlive()) {
             backendProcess.destroy();
             log.info("Backend detenido");
@@ -173,6 +219,95 @@ public class MainApp extends Application {
     // -------------------------------------------------------------------------
     // Gestión del backend
     // -------------------------------------------------------------------------
+
+    /**
+     * Muestra el aviso de que el puerto del backend lo ocupa otro programa.
+     *
+     * <p>Se muestra antes de aplicar ningún tema, por lo que usa el estilo por
+     * defecto de JavaFX.</p>
+     */
+    private void showPortBusyAlert() {
+        LanguageManager lm = LanguageManager.getInstance();
+        Alert alert = new Alert(Alert.AlertType.ERROR);
+        alert.setTitle(lm.get("startup.port.busy.title"));
+        alert.setHeaderText(null);
+        alert.setContentText(MessageFormat.format(
+                lm.get("startup.port.busy.content"), String.valueOf(BACKEND_PORT)));
+        alert.showAndWait();
+    }
+
+    /**
+     * Indica si el puerto del backend está libre.
+     *
+     * <p>Intenta enlazarlo en {@code 127.0.0.1}, la misma dirección que usa el backend
+     * ({@code server.address}), de modo que el resultado coincide con lo que le pasaría
+     * al backend al arrancar. Misma lógica que {@code PendingRestoreApplier.isPortFree}.</p>
+     *
+     * @return {@code true} si se puede enlazar el puerto
+     */
+    private static boolean isPortFree() {
+        try (ServerSocket socket = new ServerSocket()) {
+            socket.bind(new InetSocketAddress(InetAddress.getByName("127.0.0.1"), BACKEND_PORT));
+            return true;
+        } catch (IOException e) {
+            return false;
+        }
+    }
+
+    /** Crea el cliente HTTP con el que se sondea el backend. */
+    private static HttpClient pingClient() {
+        return HttpClient.newBuilder()
+                .connectTimeout(Duration.ofMillis(1000))
+                .build();
+    }
+
+    /** Crea la petición de sondeo al endpoint público de ping del backend. */
+    private static HttpRequest pingRequest() {
+        return HttpRequest.newBuilder()
+                .uri(URI.create("http://127.0.0.1:" + BACKEND_PORT + "/api/auth/ping"))
+                .timeout(Duration.ofMillis(1000))
+                .GET()
+                .build();
+    }
+
+    /**
+     * Comprueba si el ping del backend responde 200.
+     *
+     * @return {@code true} solo con un 200; {@code false} con otro código o cualquier error
+     */
+    private static boolean isBackendPingOk(HttpClient client, HttpRequest request) {
+        try {
+            return client.send(request, HttpResponse.BodyHandlers.discarding()).statusCode() == 200;
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            return false;
+        } catch (Exception e) {
+            return false;
+        }
+    }
+
+    /**
+     * Comprueba si el proceso que ocupa el puerto es un backend de TaskMaster.
+     *
+     * <p>Reintenta durante unos 3 s (6 intentos cada 500 ms) porque otra instancia
+     * que esté arrancando ya tiene el puerto enlazado pero puede tardar en responder.</p>
+     *
+     * @return {@code true} si el ping responde 200 en algún intento
+     */
+    private boolean isTaskMasterRunning() throws InterruptedException {
+        HttpClient client = pingClient();
+        HttpRequest request = pingRequest();
+        for (int attempt = 1; attempt <= 6; attempt++) {
+            if (isBackendPingOk(client, request)) {
+                return true;
+            }
+            if (attempt < 6) {
+                //noinspection BusyWait
+                Thread.sleep(500);
+            }
+        }
+        return false;
+    }
 
     private String findJavaExecutable() {
         // En Windows el ejecutable es java.exe, en Linux/Mac es java
@@ -249,48 +384,37 @@ public class MainApp extends Application {
     }
 
     /**
-     * Espera a que el backend esté listo para aceptar peticiones HTTP.
-     *
-     * <p>Realiza peticiones cada 500 ms al endpoint indicado hasta que responde
-     * (con cualquier código HTTP) o se agota el tiempo de espera.</p>
-     *
-     * @throws Exception si el backend no responde antes de agotar el tiempo
-     */
-    /**
      * Espera a que el backend esté completamente listo para aceptar peticiones HTTP.
      *
      * <p>En lugar de comprobar solo la conexión TCP (que se abre antes de que
      * Hibernate termine de inicializar el esquema), realiza peticiones HTTP reales
-     * al endpoint de autenticación hasta obtener cualquier respuesta HTTP válida.
-     * Esto garantiza que Spring Boot y JPA están completamente operativos antes
-     * de que el frontend empiece a hacer llamadas a la API.</p>
+     * al endpoint de ping cada 500 ms hasta obtener un 200. Esto garantiza que
+     * Spring Boot y JPA están completamente operativos antes de que el frontend
+     * empiece a hacer llamadas a la API. Si el proceso hijo muere mientras tanto,
+     * deja de esperar.</p>
      *
-     * @throws Exception si el backend no responde en {@link #BACKEND_TIMEOUT_SECONDS} segundos
+     * @throws Exception si el backend termina antes de responder o no responde
+     *                   en {@link #BACKEND_TIMEOUT_SECONDS} segundos
      */
     private void waitForBackend() throws Exception {
         long deadline = System.currentTimeMillis() + BACKEND_TIMEOUT_SECONDS * 1000L;
-        String probeUrl = "http://127.0.0.1:" + BACKEND_PORT + "/api/auth/ping";
 
         log.info("Esperando a que el backend esté listo...");
 
-        HttpClient client = HttpClient.newBuilder()
-                .connectTimeout(Duration.ofMillis(1000))
-                .build();
-        HttpRequest request = HttpRequest.newBuilder()
-                .uri(URI.create(probeUrl))
-                .timeout(Duration.ofMillis(1000))
-                .GET()
-                .build();
+        HttpClient client = pingClient();
+        HttpRequest request = pingRequest();
 
         while (System.currentTimeMillis() < deadline) {
-            try {
-                client.send(request, HttpResponse.BodyHandlers.discarding());
-                log.info("Backend listo (HTTP respondiendo en puerto {})", BACKEND_PORT);
+            if (isBackendPingOk(client, request)) {
+                log.info("Backend listo (ping 200 en puerto {})", BACKEND_PORT);
                 return;
-            } catch (Exception ignored) {
-                //noinspection BusyWait
-                Thread.sleep(500);
             }
+            if (backendProcess != null && !backendProcess.isAlive()) {
+                throw new RuntimeException("El backend terminó (código "
+                        + backendProcess.exitValue() + ") antes de responder");
+            }
+            //noinspection BusyWait
+            Thread.sleep(500);
         }
 
         throw new RuntimeException("El backend no respondió en " + BACKEND_TIMEOUT_SECONDS + " segundos");
