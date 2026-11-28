@@ -58,7 +58,7 @@ para planes de pago. TaskMaster parte de un planteamiento diferente.
 
 | Capa | Tecnología |
 |---|---|
-| Backend | Spring Boot 3.5, Spring Data JPA, Hibernate, Spring Security |
+| Backend | Spring Boot 3.5, Spring Data JPA, Hibernate, Flyway, Spring Security |
 | Frontend | JavaFX 21, FXML, CSS (sistema de temas con variables) |
 | Base de datos | SQLite embebida (sin servidor externo) |
 | Iconografía | Ikonli 12.3 + FontAwesome 5 |
