@@ -28,10 +28,10 @@
     Carpeta de destino. Por defecto taskmaster-frontend\target\installer\dist.
 
 .EXAMPLE
-    powershell -ExecutionPolicy Bypass -File scripts\build-installer.ps1 -Version 1.1.0
+    powershell -ExecutionPolicy Bypass -File scripts\build-installer.ps1 -Version 1.1.1
 #>
 param(
-    [string]$Version = '1.1.0',
+    [string]$Version = '1.1.1',
     [ValidateSet('exe', 'app-image')]
     [string]$Tipo = 'exe',
     [string]$Salida = ''

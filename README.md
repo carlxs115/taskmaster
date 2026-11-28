@@ -150,7 +150,7 @@ Parámetros opcionales:
 
 | Parámetro | Por defecto | Descripción |
 |---|---|---|
-| `-Version` | `1.1.0` | Versión del instalador; da nombre a `TaskMaster-<versión>.exe` |
+| `-Version` | `1.1.1` | Versión del instalador; da nombre a `TaskMaster-<versión>.exe` |
 | `-Tipo` | `exe` | `exe` genera el instalador; `app-image` genera solo la carpeta de la aplicación, sin necesitar WiX |
 | `-Salida` | `taskmaster-frontend\target\installer\dist` | Carpeta de destino |
 
