@@ -344,6 +344,16 @@ public class ProfileController {
         thread.start();
     }
 
+    /**
+     * Recarga las estadísticas y el historial de actividad.
+     * Puede llamarse desde el controlador padre cuando algo cambia fuera del perfil
+     * (por ejemplo, al mandar un proyecto a la papelera desde el sidebar).
+     */
+    public void refresh() {
+        loadStats();
+        loadActivityLog();
+    }
+
     // -------------------------------------------------------------------------
     // Renderizado
     // -------------------------------------------------------------------------
